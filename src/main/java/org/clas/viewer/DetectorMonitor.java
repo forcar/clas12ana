@@ -1,6 +1,7 @@
 package org.clas.viewer;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -11,9 +12,13 @@ import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
@@ -21,6 +26,7 @@ import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.task.IDataEventListener;
@@ -35,11 +41,13 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private DataGroup              detectorSummary   = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                 detectorPanel     = null;
+    private JPanel                   actionPanel     = null;
     private EmbeddedCanvasTabbed   detectorCanvas    = null;
     private DetectorPane2D         detectorView      = null;
     private ButtonGroup            bG1               = null;
     private int                    numberOfEvents;
     private Boolean                sectorButtons     = false;
+    private Boolean                     sliderPane   = false;
     private int                 detectorActiveSector = 1;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
@@ -59,6 +67,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public int eventResetTime_current[]=new int[19];
     public int eventResetTime_default[]=new int[19];    
+    
+    public double zMin=0.001, zMax=1.0, zMinLab, zMaxLab;
     
     public DetectorMonitor(String name){
         GStyle.getAxisAttributesX().setTitleFontSize(18);
@@ -188,7 +198,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public boolean isTrigMaskSet(int mask)   {return (getFDTrigger()&mask)!=0;}
     public boolean isGoodECALTrigger(int is) {return (testTrigger)? is==getECALTriggerSector():true;}    
     public int           getElecTrigger()    {return getFDTrigger()&0x1;}
-    public int     getElecTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>1)/0.301+1:0);} 
+    public int     getElecTriggerSector()    {return (int) (isGoodFD() ? Math.log10((getFDTrigger()&0x7e)>>1)/0.301+1:0);} 
     public int     getECALTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>19)/0.301+1:0);}       
     public int     getPCALTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>13)/0.301+1:0);}       
     public int     getHTCCTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>7)/0.301+1:0);} 
@@ -235,6 +245,10 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     	    this.sectorButtons = flag;
     }
     
+    public void useSliderPane(boolean flag) {
+    	    this.sliderPane = flag;
+    }
+    
     public int getActiveSector() {
     	    return detectorActiveSector;
     }
@@ -257,18 +271,26 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         getDetectorPanel().setLayout(new BorderLayout());
         drawDetector();
         JSplitPane   splitPane = new JSplitPane();
+        actionPanel = new JPanel();
+        actionPanel.setLayout(new FlowLayout());
         splitPane.setLeftComponent(getDetectorView());
         splitPane.setRightComponent(getDetectorCanvas());
         if(flagDetectorView) {
             getDetectorPanel().add(splitPane,BorderLayout.CENTER);  
         }
         else {
-            getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER); 
-            if (sectorButtons) getDetectorPanel().add(getButtonPane(),BorderLayout.PAGE_END);  
+            getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
+            getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
         }
         createHistos();
         plotHistos(); 
         if (sectorButtons) bS2.doClick();
+    }
+    
+    public JPanel packActionPanel() {
+        if (sectorButtons) actionPanel.add(getButtonPane()); 
+        if    (sliderPane) actionPanel.add(getSliderPane());
+    	    return actionPanel;
     }
     
     public JPanel getButtonPane() {
@@ -291,6 +313,38 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         //buttonPane.add(tbBtn);       
         return buttonPane;
     } 
+    
+    public JPanel getSliderPane() {
+    	    JPanel sliderPane = new JPanel();
+        JLabel xLabel = new JLabel("Z-Range:");
+        RangeSlider slider = new RangeSlider();
+        slider.setMinimum((int)  0.1);
+        slider.setMaximum((int)  500.);
+        slider.setValue((int) 0.1);
+        slider.setUpperValue((int) 500.);            
+        zMin =     slider.getValue();
+        zMax = 0.1*slider.getUpperValue();
+        zMinLab = Math.pow(10, zMin/10); zMaxLab = Math.pow(10, zMax/10);
+        JLabel rangeSliderValue1 = new JLabel("" + String.format("%4.0f", zMinLab));
+        JLabel rangeSliderValue2 = new JLabel("" + String.format("%4.0f", zMaxLab));
+        sliderPane.add(xLabel);
+        sliderPane.add(rangeSliderValue1);
+        sliderPane.add(slider);
+        sliderPane.add(rangeSliderValue2);           
+        slider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                RangeSlider slider = (RangeSlider) e.getSource();
+                zMin =     slider.getValue();
+                zMax = 0.1*slider.getUpperValue();
+                zMinLab = Math.pow(10, zMin/10); zMaxLab = Math.pow(10, zMax/10);
+                rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
+                rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
+                plotHistos();
+            }
+        });  
+        
+        return sliderPane;
+    }  
     
     public void actionPerformed(ActionEvent e) {
         // TODO Auto-generated method stub

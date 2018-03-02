@@ -189,7 +189,8 @@ public class ECmonitor  extends DetectorMonitor {
 	    }
     	    }   
         
-    	int bitsec = getECALTriggerSector(); 
+        int bitsec = getECALTriggerSector(); 
+        
         if(bitsec>0&&bitsec<7) this.getDataGroup().getItem(bitsec,0,0).getH2F("mipADC"+bitsec).fill(pcsum[bitsec-1], ecsum[bitsec-1]);
                 
         if(event.hasBank("ECAL::tdc")==true){
