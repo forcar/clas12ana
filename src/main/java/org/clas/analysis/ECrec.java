@@ -19,11 +19,12 @@ public class ECrec extends DetectorMonitor {
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
     IndexedTable time;
     
-    public static float TOFFSET = 436; 
+//    public static float TOFFSET = 436; 
+    public static float TOFFSET = 125; 
     
     public ECrec(String name) {
         super(name);
-        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Peak Time","Cluster Time");
+        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Peak Time","Cluster Time","TDIF");
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init(false);
@@ -34,13 +35,14 @@ public class ECrec extends DetectorMonitor {
     
     @Override
     public void createHistos() {    	
-        createTDCHistos(0,0,0);
-        createTDCHistos(0,0,1);
-        createTDCHistos(0,0,2);
-        createTDCHistos(0,0,3);
-        createTDCHistos(0,0,4);    
-        createTDCHistos(0,0,5);    
-        createTDCHistos(0,0,6);    
+        createTDCHistos(0,0,0,200,400);
+        createTDCHistos(0,0,1,200,400);
+        createTDCHistos(0,0,2,200,400);
+        createTDCHistos(0,0,3,200,400);
+        createTDCHistos(0,0,4,200,400);    
+        createTDCHistos(0,0,5,200,400);    
+        createTDCHistos(0,0,6,200,400);    
+        createTDCHistos(0,0,7,-50.,50.);    
     }
 
     @Override        
@@ -52,6 +54,7 @@ public class ECrec extends DetectorMonitor {
     	    plotTDCHistos(4);    	    	    
     	    plotTDCHistos(5);    	    	    
     	    plotTDCHistos(6);    	    	    
+    	    plotTDCHistos(7);    	    	    
     }
     
     public int getDet(int layer) {
@@ -74,6 +77,7 @@ public class ECrec extends DetectorMonitor {
 	   DataGroup dg4 = this.getDataGroup().getItem(0,0,4);
 	   DataGroup dg5 = this.getDataGroup().getItem(0,0,5);
 	   DataGroup dg6 = this.getDataGroup().getItem(0,0,6);
+	   DataGroup dg7 = this.getDataGroup().getItem(0,0,7);
     	
        String[] layer = new String[]{"pcal","ecin","ecou"};
        String[] view  = new String[]{"u","v","w"};
@@ -96,7 +100,7 @@ public class ECrec extends DetectorMonitor {
                tdcd    = bank.getInt("TDC",i)*tps;
                tdcdc   = tdcd-phase;
                if(is>0&&is<7&&tdcd>0) {
-                   if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);                          
+                   if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
                        dg0.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcd,  ip+0.5);               
                        dg1.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcdc, ip+0.5);                      
                        if (is==trigger_sect) {
@@ -128,6 +132,7 @@ public class ECrec extends DetectorMonitor {
                    tdc  = new float[list.size()];
                    for (int ii=0; ii<tdcc.length; ii++) {
                	      float tdif = (tdcc[ii]-TOFFSET)-t; 
+                      dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdif, ip+0.5); 
             	          if (Math.abs(tdif)<30&&tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
                    }
                    dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcm, ip+0.5); 
@@ -136,8 +141,12 @@ public class ECrec extends DetectorMonitor {
                }
            }
        }    
-           
-       engine.processDataEvent(event); 
+       
+       event.removeBank("ECAL::hits");        
+       event.removeBank("ECAL::peaks");        
+       event.removeBank("ECAL::clusters");        
+       event.removeBank("ECAL::calib");        
+        engine.processDataEvent(event); 
        
         if(event.hasBank("ECAL::clusters")){
            	DataBank  bank = event.getBank("ECAL::clusters");
@@ -169,12 +178,10 @@ public class ECrec extends DetectorMonitor {
        	
     }
     
-    public void createTDCHistos(int i, int j, int k) {
+    public void createTDCHistos(int i, int j, int k, double tmin, double tmax) {
     	
         DataGroup dg = new DataGroup(3,2);
         H2F h;  
-        
-        double tmin=500,tmax=700;
         
         for (int is=1; is<7; is++) {
             h = new H2F("tdc_pcal_u_"+is,"tdc_pcal_u_"+is,100, tmin, tmax, 68, 1., 69.);
