@@ -39,6 +39,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECana;
+import org.clas.analysis.ECrec;
 import org.clas.detectors.*;
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -67,7 +68,7 @@ import org.jlab.elog.LogEntry;
 public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ChangeListener {
     
     List<DetectorPane2D> DetectorPanels     = new ArrayList<DetectorPane2D>();
-    JTabbedPane tabbedpane           	    = null;
+    JTabbedPane tabbedpane           	   = null;
     JPanel mainPanel 			           = null;
     JMenuBar menuBar                        = null;
     JTextPane clas12Textinfo                = new JTextPane();
@@ -112,7 +113,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     */
     
     DetectorMonitor[] monitors = {
-    		new ECana("ECa") 
+    		new ECana("ECa"), 
+    		new ECrec("ECr")
     }  ;  
         
     public EventViewer() {    	
@@ -295,10 +297,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         tabbedpane.addChangeListener(this);
         
        
-        for(int k =0; k<this.monitors.length; k++) {
+        for(int k=0; k<this.monitors.length; k++) {
                 this.tabbedpane.add(this.monitors[k].getDetectorPanel(), this.monitors[k].getDetectorName());
-        	        this.monitors[k].getDetectorView().getView().addDetectorListener(this);
-                        
+        	        this.monitors[k].getDetectorView().getView().addDetectorListener(this);                        
         }
         
         this.processorPane.addEventListener(this);

@@ -390,29 +390,6 @@ public class ECana  extends DetectorMonitor {
 	    c.cd(8); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("pp_ecou_wp_"+s); c.draw(h2);	    
                        
     } 
-   
-    public static H2F  divide(H2F h1, H2F h2){
-    	
-        if((h1.getXAxis().getNBins()!=h2.getXAxis().getNBins())||
-                (h1.getYAxis().getNBins()!=h2.getYAxis().getNBins())
-                ){
-            System.out.println("[H2D::divide] error : histograms have inconsistent bins");
-            return null;
-        }
-        H2F h2div = new H2F(h1.getName()+"_DIV",
-                h1.getXAxis().getNBins(),h1.getXAxis().min(),h1.getXAxis().max(),
-                h1.getYAxis().getNBins(),h1.getYAxis().min(),h1.getYAxis().max()
-        );
-        for(int bx = 0; bx < h1.getXAxis().getNBins();bx++){
-            for(int by = 0; by < h1.getYAxis().getNBins();by++){
-            	 System.out.println(h1.getBinContent(bx, by)+" "+h2.getBinContent(bx, by));
-            	 if(h2.getBinContent(bx, by)!=0){
-                    h2div.setBinContent(bx, by, h1.getBinContent(bx, by)/h2.getBinContent(bx, by));
-             }
-            }
-        }
-        return h2div;
-    }
     
     @Override
     public void processEvent(DataEvent event) {
