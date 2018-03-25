@@ -24,7 +24,7 @@ public class ECrec extends DetectorMonitor {
     
     public ECrec(String name) {
         super(name);
-        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Peak Time","Cluster Time","TDIF");
+        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Hit Time","Peak Time","Cluster Time","TDIF");
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init(false);
@@ -35,14 +35,15 @@ public class ECrec extends DetectorMonitor {
     
     @Override
     public void createHistos() {    	
-        createTDCHistos(0,0,0,200,400);
-        createTDCHistos(0,0,1,200,400);
-        createTDCHistos(0,0,2,200,400);
-        createTDCHistos(0,0,3,200,400);
-        createTDCHistos(0,0,4,200,400);    
-        createTDCHistos(0,0,5,200,400);    
-        createTDCHistos(0,0,6,200,400);    
-        createTDCHistos(0,0,7,-50.,50.);    
+        createTDCHistos(0,0,0,150,350,"TDC (ns)");
+        createTDCHistos(0,0,1,150,350,"TDC (ns)");
+        createTDCHistos(0,0,2,150,350,"TDC (ns)");
+        createTDCHistos(0,0,3,150,350,"TDC (ns)");
+        createTDCHistos(0,0,4,150,350,"TDC (ns)");    
+        createTDCHistos(0,0,5,150,350,"TDC (ns)");    
+        createTDCHistos(0,0,6,150,350,"TDC (ns)");    
+        createTDCHistos(0,0,7,150,350,"TDC (ns)");    
+        createTDCHistos(0,0,8,-50.,50.,"FADC-TDC (ns)");    
     }
 
     @Override        
@@ -55,6 +56,7 @@ public class ECrec extends DetectorMonitor {
     	    plotTDCHistos(5);    	    	    
     	    plotTDCHistos(6);    	    	    
     	    plotTDCHistos(7);    	    	    
+    	    plotTDCHistos(8);    	    	    
     }
     
     public int getDet(int layer) {
@@ -78,6 +80,7 @@ public class ECrec extends DetectorMonitor {
 	   DataGroup dg5 = this.getDataGroup().getItem(0,0,5);
 	   DataGroup dg6 = this.getDataGroup().getItem(0,0,6);
 	   DataGroup dg7 = this.getDataGroup().getItem(0,0,7);
+	   DataGroup dg8 = this.getDataGroup().getItem(0,0,8);
     	
        String[] layer = new String[]{"pcal","ecin","ecou"};
        String[] view  = new String[]{"u","v","w"};
@@ -132,7 +135,7 @@ public class ECrec extends DetectorMonitor {
                    tdc  = new float[list.size()];
                    for (int ii=0; ii<tdcc.length; ii++) {
                	      float tdif = (tdcc[ii]-TOFFSET)-t; 
-                      dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdif, ip+0.5); 
+                      dg8.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdif, ip+0.5); 
             	          if (Math.abs(tdif)<30&&tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
                    }
                    dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcm, ip+0.5); 
@@ -145,8 +148,20 @@ public class ECrec extends DetectorMonitor {
        event.removeBank("ECAL::hits");        
        event.removeBank("ECAL::peaks");        
        event.removeBank("ECAL::clusters");        
-       event.removeBank("ECAL::calib");        
-        engine.processDataEvent(event); 
+       event.removeBank("ECAL::calib");
+       
+       engine.processDataEvent(event); 
+       
+       if(event.hasBank("ECAL::hits")){
+          	DataBank  bank = event.getBank("ECAL::hits");
+            for(int loop = 0; loop < bank.rows(); loop++){
+               int   is = bank.getByte("sector", loop);
+               int   il = bank.getByte("layer", loop); 
+               int   ip = bank.getByte("strip", loop);
+               float  t = bank.getFloat("time", loop)-phase;
+               if (is==trigger_sect) dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(t, ip+0.5); 
+            }
+       }
        
         if(event.hasBank("ECAL::clusters")){
            	DataBank  bank = event.getBank("ECAL::clusters");
@@ -154,72 +169,72 @@ public class ECrec extends DetectorMonitor {
             for(int loop = 0; loop < bank.rows(); loop++){
                 int   is = bank.getByte("sector", loop);
                 int   il = bank.getByte("layer", loop);
-                int  idU = bank.getByte("idU", loop);
-                int  idV = bank.getByte("idU", loop);
-                int  idW = bank.getByte("idU", loop);
                 float  e = bank.getFloat("energy",loop)*1000;
                 float  t = bank.getFloat("time",loop)-phase;
                 int   iU = (bank.getInt("coordU", loop)-4)/8;
                 int   iV = (bank.getInt("coordV", loop)-4)/8;
                 int   iW = (bank.getInt("coordW", loop)-4)/8;
+                int  idU = bank.getByte("idU", loop);
+                int  idV = bank.getByte("idV", loop);
+                int  idW = bank.getByte("idW", loop);
                 float tu = bank2.getFloat("time", idU)-phase;
                 float tv = bank2.getFloat("time", idV)-phase;
                 float tw = bank2.getFloat("time", idW)-phase;
                 if (is==trigger_sect) {
-                  dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tu,iU+0.5); 
-                  dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tv,iV+0.5); 
-                  dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tw,iW+0.5); 
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(t,iU+0.5); 
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(t,iV+0.5); 
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(t,iW+0.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tu,iU+0.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tv,iV+0.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tw,iW+0.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(t,iU+0.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(t,iV+0.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(t,iW+0.5); 
                 }
             }
         }
        	
     }
     
-    public void createTDCHistos(int i, int j, int k, double tmin, double tmax) {
+    public void createTDCHistos(int i, int j, int k, double tmin, double tmax, String txt) {
     	
         DataGroup dg = new DataGroup(3,2);
         H2F h;  
         
         for (int is=1; is<7; is++) {
             h = new H2F("tdc_pcal_u_"+is,"tdc_pcal_u_"+is,100, tmin, tmax, 68, 1., 69.);
-            h.setTitleX("Sector "+is+" PCAL TDC");
+            h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
             h = new H2F("tdc_pcal_v_"+is,"tdc_pcal_v_"+is,100, tmin, tmax, 62, 1., 63.);
-            h.setTitleX("Sector "+is+" PCAL TDC");
+            h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
             h = new H2F("tdc_pcal_w_"+is,"tdc_pcal_w_"+is,100, tmin, tmax, 62, 1., 63.);
-            h.setTitleX("Sector "+is+" PCAL TDC");
+            h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1); 
             
             h = new H2F("tdc_ecin_u_"+is,"tdc_ecin_u_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN TDC");
+            h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
             h = new H2F("tdc_ecin_v_"+is,"tdc_ecin_v_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN TDC");
+            h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
             h = new H2F("tdc_ecin_w_"+is,"tdc_ecin_w_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN TDC");
+            h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1); 
             
             h = new H2F("tdc_ecou_u_"+is,"tdc_ecou_u_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU TDC");
+            h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
             h = new H2F("tdc_ecou_v_"+is,"tdc_ecou_v_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU TDC");
+            h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
             h = new H2F("tdc_ecou_w_"+is,"tdc_ecou_w_"+is,100, tmin, tmax, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU TDC");
+            h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1);              
         }    
