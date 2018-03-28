@@ -163,8 +163,11 @@ public class ECrec extends DetectorMonitor {
             }
        }
        
-        if(event.hasBank("ECAL::clusters")){
-           	DataBank  bank = event.getBank("ECAL::clusters");
+//       System.out.println(" ");
+//       System.out.println("New Event");
+       
+       if(event.hasBank("ECAL::clusters")){
+            DataBank  bank = event.getBank("ECAL::clusters");
         	    DataBank  bank2 = event.getBank("ECAL::peaks");
             for(int loop = 0; loop < bank.rows(); loop++){
                 int   is = bank.getByte("sector", loop);
@@ -174,12 +177,16 @@ public class ECrec extends DetectorMonitor {
                 int   iU = (bank.getInt("coordU", loop)-4)/8;
                 int   iV = (bank.getInt("coordV", loop)-4)/8;
                 int   iW = (bank.getInt("coordW", loop)-4)/8;
-                int  idU = bank.getByte("idU", loop);
-                int  idV = bank.getByte("idV", loop);
-                int  idW = bank.getByte("idW", loop);
+                int  idU = bank.getByte("idU", loop)-1;
+                int  idV = bank.getByte("idV", loop)-1;
+                int  idW = bank.getByte("idW", loop)-1;
                 float tu = bank2.getFloat("time", idU)-phase;
                 float tv = bank2.getFloat("time", idV)-phase;
                 float tw = bank2.getFloat("time", idW)-phase;
+//                if (is==2) {
+//                System.out.println("u,v,w=     "+iU+" "+iV+" "+iW);
+//                System.out.println("is,il,e,t= "+is+" "+il+" "+e+" "+t);
+//                }
                 if (is==trigger_sect) {
                   dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tu,iU+0.5); 
                   dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tv,iV+0.5); 
@@ -189,7 +196,7 @@ public class ECrec extends DetectorMonitor {
                   dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(t,iW+0.5); 
                 }
             }
-        }
+       }
        	
     }
     

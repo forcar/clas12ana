@@ -76,7 +76,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     EmbeddedCanvasTabbed CLAS12Canvas       = null;
     
     CLASDecoder                clasDecoder = new CLASDecoder();
-           
+         
     private int canvasUpdateTime   = 2000;
     private int analysisUpdateTime = 100;
     private int runNumber     = 2284;
