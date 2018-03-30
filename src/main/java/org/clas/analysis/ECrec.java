@@ -9,6 +9,7 @@ import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.io.hipo.HipoDataBank;
 import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
@@ -18,13 +19,17 @@ public class ECrec extends DetectorMonitor {
     ECEngine engine = new ECEngine();
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
     IndexedTable time;
+    String[] layer = new String[]{"pcal","ecin","ecou"};
+    String[] view  = new String[]{"u","v","w"};   
+    int trigger_sect = 0;
+    float phase = 0;
     
-//    public static float TOFFSET = 436; 
-    public static float TOFFSET = 125; 
+//  static float TOFFSET = 436; 
+    static float TOFFSET = 125; 
     
     public ECrec(String name) {
         super(name);
-        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Hit Time","Peak Time","Cluster Time","TDIF");
+        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Hit Time","Peak Time","Cluster Time","TDIF","STTDIF");
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init(false);
@@ -44,6 +49,7 @@ public class ECrec extends DetectorMonitor {
         createTDCHistos(0,0,6,150,350,"TDC (ns)");    
         createTDCHistos(0,0,7,150,350,"TDC (ns)");    
         createTDCHistos(0,0,8,-50.,50.,"FADC-TDC (ns)");    
+        createTDCHistos(0,0,9,0.,50.,"TDC-START (ns)");    
     }
 
     @Override        
@@ -57,6 +63,7 @@ public class ECrec extends DetectorMonitor {
     	    plotTDCHistos(6);    	    	    
     	    plotTDCHistos(7);    	    	    
     	    plotTDCHistos(8);    	    	    
+    	    plotTDCHistos(9);    	    	    
     }
     
     public int getDet(int layer) {
@@ -72,27 +79,31 @@ public class ECrec extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {  
     	
- 	   DataGroup dg0 = this.getDataGroup().getItem(0,0,0);
-	   DataGroup dg1 = this.getDataGroup().getItem(0,0,1);
-	   DataGroup dg2 = this.getDataGroup().getItem(0,0,2);
-	   DataGroup dg3 = this.getDataGroup().getItem(0,0,3);
-	   DataGroup dg4 = this.getDataGroup().getItem(0,0,4);
-	   DataGroup dg5 = this.getDataGroup().getItem(0,0,5);
-	   DataGroup dg6 = this.getDataGroup().getItem(0,0,6);
-	   DataGroup dg7 = this.getDataGroup().getItem(0,0,7);
-	   DataGroup dg8 = this.getDataGroup().getItem(0,0,8);
-    	
-       String[] layer = new String[]{"pcal","ecin","ecou"};
-       String[] view  = new String[]{"u","v","w"};
-       
-       float      tps =  (float) 0.02345;
-       float     tdcd,tdcdc =  0;
+       trigger_sect = getElecTriggerSector(); 
+       phase = getTriggerPhase()*4;
+       processRaw(event);
+       processRec(event);
+//       processEB(event);
               
+    }
+    
+    public void processRaw(DataEvent event) {
+    	
+  	   DataGroup dg0 = this.getDataGroup().getItem(0,0,0);
+ 	   DataGroup dg1 = this.getDataGroup().getItem(0,0,1);
+ 	   DataGroup dg2 = this.getDataGroup().getItem(0,0,2);
+ 	   DataGroup dg3 = this.getDataGroup().getItem(0,0,3);
+ 	   DataGroup dg4 = this.getDataGroup().getItem(0,0,4);
+ 	   DataGroup dg8 = this.getDataGroup().getItem(0,0,8);
+ 	   
+ 	   float      tps =  (float) 0.02345;
+       float     tdcd,tdcdc =  0;
+        
        tdcs.clear();
-       
+        
        int trigger_sect = getElecTriggerSector(); 
        float phase = getTriggerPhase()*4;
-       
+        
        if(event.hasBank("ECAL::tdc")==true){
            DataBank  bank = event.getBank("ECAL::tdc");
            int rows = bank.rows();
@@ -113,7 +124,7 @@ public class ECrec extends DetectorMonitor {
                }
            }
        } 
-       
+        
        if(event.hasBank("ECAL::adc")==true){
            DataBank  bank = event.getBank("ECAL::adc");
            int rows = bank.rows();
@@ -134,24 +145,32 @@ public class ECrec extends DetectorMonitor {
                    list = tdcs.getItem(is,il,ip); tdcc=new Float[list.size()]; list.toArray(tdcc);
                    tdc  = new float[list.size()];
                    for (int ii=0; ii<tdcc.length; ii++) {
-               	      float tdif = (tdcc[ii]-TOFFSET)-t; 
+              	      float tdif = (tdcc[ii]-TOFFSET)-t; 
                       dg8.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdif, ip+0.5); 
             	          if (Math.abs(tdif)<30&&tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
                    }
-                   dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcm, ip+0.5); 
                    double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
+                   dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcm, ip+0.5); 
                    dg4.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcmc,ip+0.5); 
                }
            }
-       }    
-       
+       }    	
+    }
+    
+    public void processRec(DataEvent event) {
+    	
+  	   DataGroup dg5 = this.getDataGroup().getItem(0,0,5);
+  	   DataGroup dg6 = this.getDataGroup().getItem(0,0,6);
+  	   DataGroup dg7 = this.getDataGroup().getItem(0,0,7);
+  	   DataGroup dg9 = this.getDataGroup().getItem(0,0,9);
+  	   
        event.removeBank("ECAL::hits");        
        event.removeBank("ECAL::peaks");        
        event.removeBank("ECAL::clusters");        
        event.removeBank("ECAL::calib");
-       
+        
        engine.processDataEvent(event); 
-       
+        
        if(event.hasBank("ECAL::hits")){
           	DataBank  bank = event.getBank("ECAL::hits");
             for(int loop = 0; loop < bank.rows(); loop++){
@@ -162,10 +181,14 @@ public class ECrec extends DetectorMonitor {
                if (is==trigger_sect) dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(t, ip+0.5); 
             }
        }
+      
+       float stt = 0;
        
-//       System.out.println(" ");
-//       System.out.println("New Event");
-       
+       if(event.hasBank("REC::Event")){
+    	      DataBank bank = event.getBank("REC::Event");
+    	      stt = bank.getFloat("STTime", 0);
+       }
+       		        
        if(event.hasBank("ECAL::clusters")){
             DataBank  bank = event.getBank("ECAL::clusters");
         	    DataBank  bank2 = event.getBank("ECAL::peaks");
@@ -183,21 +206,53 @@ public class ECrec extends DetectorMonitor {
                 float tu = bank2.getFloat("time", idU)-phase;
                 float tv = bank2.getFloat("time", idV)-phase;
                 float tw = bank2.getFloat("time", idW)-phase;
-//                if (is==2) {
-//                System.out.println("u,v,w=     "+iU+" "+iV+" "+iW);
-//                System.out.println("is,il,e,t= "+is+" "+il+" "+e+" "+t);
-//                }
+                float tdif = t-stt+phase;
                 if (is==trigger_sect) {
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tu,iU+0.5); 
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tv,iV+0.5); 
-                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tw,iW+0.5); 
-                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(t,iU+0.5); 
-                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(t,iV+0.5); 
-                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(t,iW+0.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tu,iU+1.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tv,iV+1.5); 
+                  dg6.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tw,iW+1.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(t,iU+1.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(t,iV+1.5); 
+                  dg7.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(t,iW+1.5); 
+                  dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tdif,iU+1.5); 
+                  dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tdif,iV+1.5); 
+                  dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tdif,iW+1.5); 
                 }
             }
-       }
-       	
+       }    	
+    }
+    
+    void processEB(DataEvent event) {
+    	
+    	    int setdetsector = 1;
+    	
+		if(event.hasBank("REC::Particle") 
+		&& event.hasBank("REC::Calorimeter")  
+		&& event.hasBank("REC::Scintillator")  
+		&& event.hasBank("REC::Event")  
+		&& event.hasBank("ECAL::clusters") 
+		&& event.hasBank("ECAL::adc")  
+		&& event.hasBank("ECAL::tdc")  
+		&& event.hasBank("RUN::rf")) {
+			HipoDataBank recpart = (HipoDataBank) event.getBank("REC::Particle");
+			float p = 0;
+			int npart  = 0;
+			int nelec  = 0;
+			for(int parti = 0; parti < recpart.rows(); parti++){
+				if(recpart.getInt("pid", parti) == 11){
+					nelec++;
+					HipoDataBank reccal = (HipoDataBank) event.getBank("REC::Calorimeter");
+					for(int i = 0; i < reccal.rows(); i++){
+						short pindex  = reccal.getShort("pindex", i);
+						byte detector = reccal.getByte("detector", i);
+						byte sector   = reccal.getByte("sector", i);
+						if(pindex != parti &&  detector == 7) npart++;
+	
+					}					   
+                }
+            }
+            System.out.println("elec,part = "+nelec +" "+npart );
+        }
     }
     
     public void createTDCHistos(int i, int j, int k, double tmin, double tmax, String txt) {
