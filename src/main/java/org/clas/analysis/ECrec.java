@@ -29,7 +29,7 @@ public class ECrec extends DetectorMonitor {
     
     public ECrec(String name) {
         super(name);
-        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Hit Time","Peak Time","Cluster Time","TDIF","STTDIF");
+        this.setDetectorTabNames("Raw TDC","PhaseCorr TDC","Triggered TDC","Matched TDC","Calib TDC","Hit Time","Peak Time","Cluster Time","TDIF","STTDIF","STTDIFC");
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init(false);
@@ -50,6 +50,7 @@ public class ECrec extends DetectorMonitor {
         createTDCHistos(0,0,7,150,350,"TDC (ns)");    
         createTDCHistos(0,0,8,-50.,50.,"FADC-TDC (ns)");    
         createTDCHistos(0,0,9,0.,50.,"TDC-START (ns)");    
+        createTDCHistos(0,0,10,-10.,10.,"TDC-START-PATH/c (ns)");    
     }
 
     @Override        
@@ -64,6 +65,7 @@ public class ECrec extends DetectorMonitor {
     	    plotTDCHistos(7);    	    	    
     	    plotTDCHistos(8);    	    	    
     	    plotTDCHistos(9);    	    	    
+    	    plotTDCHistos(10);    	    	    
     }
     
     public int getDet(int layer) {
@@ -163,6 +165,7 @@ public class ECrec extends DetectorMonitor {
   	   DataGroup dg6 = this.getDataGroup().getItem(0,0,6);
   	   DataGroup dg7 = this.getDataGroup().getItem(0,0,7);
   	   DataGroup dg9 = this.getDataGroup().getItem(0,0,9);
+  	   DataGroup dg10 = this.getDataGroup().getItem(0,0,10);
   	   
        event.removeBank("ECAL::hits");        
        event.removeBank("ECAL::peaks");        
@@ -188,7 +191,18 @@ public class ECrec extends DetectorMonitor {
     	      DataBank bank = event.getBank("REC::Event");
     	      stt = bank.getFloat("STTime", 0);
        }
-       		        
+       
+       IndexedList<Float> pathlist = new IndexedList<Float>(2);
+       
+       if(event.hasBank("REC::Calorimeter")) {
+           DataBank  bank = event.getBank("REC::Calorimeter");
+           for(int loop = 0; loop < bank.rows(); loop++){
+               int   is = bank.getByte("sector", loop);
+               int   il = bank.getByte("layer", loop);
+               if(!pathlist.hasItem(is,il)) pathlist.add(bank.getFloat("path", loop),is,il);    
+           }
+       }
+         		        
        if(event.hasBank("ECAL::clusters")){
             DataBank  bank = event.getBank("ECAL::clusters");
         	    DataBank  bank2 = event.getBank("ECAL::peaks");
@@ -217,43 +231,17 @@ public class ECrec extends DetectorMonitor {
                   dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tdif,iU+1.5); 
                   dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tdif,iV+1.5); 
                   dg9.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tdif,iW+1.5); 
+                  float path = pathlist.hasItem(is,il) ? (float) pathlist.getItem(is,il):0;
+                  if(path>0) {
+                     dg10.getH2F("tdc_"+layer[getDet(il)]+"_"+"u_"+is).fill(tdif-path/29.97,iU+1.5); 
+                     dg10.getH2F("tdc_"+layer[getDet(il)]+"_"+"v_"+is).fill(tdif-path/29.97,iV+1.5); 
+                     dg10.getH2F("tdc_"+layer[getDet(il)]+"_"+"w_"+is).fill(tdif-path/29.97,iW+1.5); 
+                  }
                 }
             }
        }    	
     }
-    
-    void processEB(DataEvent event) {
-    	
-    	    int setdetsector = 1;
-    	
-		if(event.hasBank("REC::Particle") 
-		&& event.hasBank("REC::Calorimeter")  
-		&& event.hasBank("REC::Scintillator")  
-		&& event.hasBank("REC::Event")  
-		&& event.hasBank("ECAL::clusters") 
-		&& event.hasBank("ECAL::adc")  
-		&& event.hasBank("ECAL::tdc")  
-		&& event.hasBank("RUN::rf")) {
-			HipoDataBank recpart = (HipoDataBank) event.getBank("REC::Particle");
-			float p = 0;
-			int npart  = 0;
-			int nelec  = 0;
-			for(int parti = 0; parti < recpart.rows(); parti++){
-				if(recpart.getInt("pid", parti) == 11){
-					nelec++;
-					HipoDataBank reccal = (HipoDataBank) event.getBank("REC::Calorimeter");
-					for(int i = 0; i < reccal.rows(); i++){
-						short pindex  = reccal.getShort("pindex", i);
-						byte detector = reccal.getByte("detector", i);
-						byte sector   = reccal.getByte("sector", i);
-						if(pindex != parti &&  detector == 7) npart++;
-	
-					}					   
-                }
-            }
-            System.out.println("elec,part = "+nelec +" "+npart );
-        }
-    }
+
     
     public void createTDCHistos(int i, int j, int k, double tmin, double tmax, String txt) {
     	
