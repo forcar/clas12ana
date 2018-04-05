@@ -62,7 +62,6 @@ public class ECana  extends DetectorMonitor {
     
     public ECana(String name) {
         super(name);
-
         this.setDetectorTabNames("E/P v P","E/P v ThV","E/P v ThD","EPC/P v ThD","EECi/P v ThD","EECo/P v ThD","E/P v XY","E/P v UVW","PIM v UVW","PIP v UVW");
         this.useSectorButtons(true);
         this.useSliderPane(true);

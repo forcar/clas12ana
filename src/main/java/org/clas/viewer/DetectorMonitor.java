@@ -44,14 +44,18 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private JPanel                   actionPanel     = null;
     private EmbeddedCanvasTabbed   detectorCanvas    = null;
     private DetectorPane2D         detectorView      = null;
-    private ButtonGroup            bG1               = null;
+    private ButtonGroup                          bG1 = null;
+    private ButtonGroup                          bG2 = null;
+    private ButtonGroup                          bG3 = null;
     private int                    numberOfEvents;
     private Boolean                sectorButtons     = false;
     private Boolean                     sliderPane   = false;
     private int                 detectorActiveSector = 1;
+    private int                   detectorActiveView = 0;
+    private int                  detectorActiveLayer = 0;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
-    private JRadioButton bS1,bS2,bS3,bS4,bS5,bS6;
+    private JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox        tbBtn;
     
     public int bitsec = 0;
@@ -250,7 +254,15 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public int getActiveSector() {
-    	    return detectorActiveSector;
+	    return detectorActiveSector;
+    }
+    
+    public int getActiveLayer() {
+	    return detectorActiveLayer;
+    }
+    
+    public int getActiveView() {
+	    return detectorActiveView;
     }
     
     public int getNumberOfEvents() {
@@ -284,7 +296,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         }
         createHistos();
         plotHistos(); 
-        if (sectorButtons) bS2.doClick();
+//        if (sectorButtons) {bS2.doClick();bpcal.doClick();bu.doClick();}
+        if (sectorButtons) {bS2.doClick();}
     }
     
     public JPanel packActionPanel() {
@@ -294,7 +307,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public JPanel getButtonPane() {
-    	    bG1 = new ButtonGroup();
         JPanel buttonPane = new JPanel();
         bS1 = new JRadioButton("Sector 1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
         bS2 = new JRadioButton("Sector 2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
@@ -302,15 +314,18 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         bS4 = new JRadioButton("Sector 4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this); 
         bS5 = new JRadioButton("Sector 5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this);  
         bS6 = new JRadioButton("Sector 6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
-        bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);
-        //tbBtn = new JCheckBox("TrigBit");
-        //tbBtn.addItemListener(new ItemListener() {
-        //    public void itemStateChanged(ItemEvent e) {
-        //    	  isTB = e.getStateChange()==ItemEvent.SELECTED;
-        //    }
-        //});         
-        //tbBtn.setSelected(false);        
-        //buttonPane.add(tbBtn);       
+	    bG1 = new ButtonGroup(); bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);
+        bS2.setSelected(true);        
+        bpcal = new JRadioButton("PCAL"); buttonPane.add(bpcal); bpcal.setActionCommand("0"); bpcal.addActionListener(this);
+        becin = new JRadioButton("ECin"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
+        becou = new JRadioButton("ECou"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
+        bG2 = new ButtonGroup(); bG2.add(bpcal); bG2.add(becin); bG2.add(becou);
+        bpcal.setSelected(true);
+        bu = new JRadioButton("U"); buttonPane.add(bu); bu.setActionCommand("0"); bu.addActionListener(this);
+        bv = new JRadioButton("V"); buttonPane.add(bv); bv.setActionCommand("1"); bv.addActionListener(this); 
+        bw = new JRadioButton("W"); buttonPane.add(bw); bw.setActionCommand("2"); bw.addActionListener(this); 
+        bG3 = new ButtonGroup(); bG3.add(bu); bG3.add(bv); bG3.add(bw);
+        bu.setSelected(true);                
         return buttonPane;
     } 
     
@@ -348,7 +363,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public void actionPerformed(ActionEvent e) {
         // TODO Auto-generated method stub
-        this.detectorActiveSector   = Integer.parseInt(bG1.getSelection().getActionCommand());
+        this.detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
+        this.detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
+        this.detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         plotHistos();
     } 
     
