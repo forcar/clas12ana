@@ -33,6 +33,8 @@ public class ECrec extends DetectorMonitor {
     
 //  static float TOFFSET = 436; 
     static float TOFFSET = 125; 
+	float      tps =  (float) 0.02345;
+	float[] shiftTV = {0,20,0,0,0,0}; //Run 3050 t0 calibration
     
     public ECrec(String name) {
         super(name);
@@ -48,7 +50,12 @@ public class ECrec extends DetectorMonitor {
         		                     "TDC-STT",
         		                     "TDC-STT-PATH",
         		                     "RESID v PATH",
-        		                     "RESID v ENERGY");
+        		                     "RESID v ENERGY",
+        		                     "LEFF v TDC ",
+        		                     "DTEXP v TDC ",
+        		                     "LEFF v TDCTWC ",
+        		                     "DTEXP v TDCTWC ");
+
         
         this.useSectorButtons(true);
         this.useSliderPane(true);
@@ -69,10 +76,14 @@ public class ECrec extends DetectorMonitor {
         createTDCHistos(0,0,6,150,350,"TDC (ns)");    
         createTDCHistos(0,0,7,150,350,"TDC (ns)");    
         createTDCHistos(0,0,8,-50.,50.,"FADC-TDC (ns)");    
-        createTDCHistos(0,0,9,0.,50.,"TDC-STT (ns)");    
-        createTDCHistos(0,0,10,-10.,10.,"TDC-STT-PATH/c (ns)"); 
+        createTDCHistos(0,0,9,0.,50.,"TDC-Tvert (ns)");    
+        createTDCHistos(0,0,10,-10.,10.,"TDC-Tvert-PATH/c (ns)"); 
         createUVWHistos(0,0,11,700,800,-5,5,"PATH","RESID ");
         createUVWHistos(0,0,12,0,3000,-5,5,"ENERGY","RESID ");
+        createUVWHistos(0,0,13,200,270,0,450,"TDC","LEFF ");
+        createUVWHistos(0,0,14,190,300,-8,30,"TDC","TEXP ");
+        createUVWHistos(0,0,15,200,270,0,450,"TDCC","LEFF ");
+        createUVWHistos(0,0,16,190,300,-8,30,"TDCC","TEXP ");
     }
 
     @Override        
@@ -90,6 +101,10 @@ public class ECrec extends DetectorMonitor {
     	    plotTDCHistos(10); 
     	    plotUVWHistos(11);
     	    plotUVWHistos(12);
+    	    plotUVWHistos(13);
+    	    plotUVWHistos(14);
+    	    plotUVWHistos(15);
+    	    plotUVWHistos(16);
     }
     
     public int getDet(int layer) {
@@ -122,7 +137,6 @@ public class ECrec extends DetectorMonitor {
  	   DataGroup dg4 = this.getDataGroup().getItem(0,0,4);
  	   DataGroup dg8 = this.getDataGroup().getItem(0,0,8);
  	   
- 	   float      tps =  (float) 0.02345;
        float     tdcd,tdcdc =  0;
         
        tdcs.clear();
@@ -192,6 +206,10 @@ public class ECrec extends DetectorMonitor {
   	   DataGroup dg10 = this.getDataGroup().getItem(0,0,10);
   	   DataGroup dg11 = this.getDataGroup().getItem(0,0,11);
   	   DataGroup dg12 = this.getDataGroup().getItem(0,0,12);
+  	   DataGroup dg13 = this.getDataGroup().getItem(0,0,13);
+  	   DataGroup dg14 = this.getDataGroup().getItem(0,0,14);
+  	   DataGroup dg15 = this.getDataGroup().getItem(0,0,15);
+  	   DataGroup dg16 = this.getDataGroup().getItem(0,0,16);
   	   
        event.removeBank("ECAL::hits");        
        event.removeBank("ECAL::peaks");        
@@ -215,7 +233,7 @@ public class ECrec extends DetectorMonitor {
             }
        }
       
-       float stt = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
+       float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);       
        
@@ -231,7 +249,7 @@ public class ECrec extends DetectorMonitor {
                if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
            }
        }
-         		        
+       
        if(event.hasBank("ECAL::clusters")){
             DataBank  bank = event.getBank("ECAL::clusters");
     	        DataBank  bank2 = event.getBank("ECAL::calib");
@@ -243,18 +261,24 @@ public class ECrec extends DetectorMonitor {
                 int   iU = (bank.getInt("coordU", loop)-4)/8;
                 int   iV = (bank.getInt("coordV", loop)-4)/8;
                 int   iW = (bank.getInt("coordW", loop)-4)/8;
-                int  idU = bank.getByte("idU", loop)-1;
-                int  idV = bank.getByte("idV", loop)-1;
-                int  idW = bank.getByte("idW", loop)-1;
-                float tu = (float) clusters.get(loop).getTime(0)-phase;
-                float tv = (float) clusters.get(loop).getTime(1)-phase;
-                float tw = (float) clusters.get(loop).getTime(2)-phase;
+                float    tu = (float) clusters.get(loop).getTime(0)-phase;
+                float    tv = (float) clusters.get(loop).getTime(1)-phase;
+                float    tw = (float) clusters.get(loop).getTime(2)-phase;
+                float  tdcu = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getRawTime()-phase;
+                float  tdcv = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getRawTime()-phase;
+                float  tdcw = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getRawTime()-phase;
+                float tdcuc = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getTWCTime()-phase;
+                float tdcvc = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getTWCTime()-phase;
+                float tdcwc = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getTWCTime()-phase;
+                float leffu = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getTdist();
+                float leffv = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getTdist();
+                float leffw = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getTdist();                 
 //                float tu = bank2.getFloat("recTU", idU)-phase;
 //                float tv = bank2.getFloat("recTV", idV)-phase;
 //                float tw = bank2.getFloat("recTW", idW)-phase;
-                float tudif = tu-stt+phase;
-                float tvdif = tv-stt+phase;
-                float twdif = tw-stt+phase;
+                float tudif = tu-Tvertex+phase;
+                float tvdif = tv-Tvertex+phase;
+                float twdif = tw-Tvertex+phase;
                 
                 if (is==trigger_sect){
                 	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(tu,iU+1.5);
@@ -276,6 +300,9 @@ public class ECrec extends DetectorMonitor {
                         	    float tudifp = tudif-path/29.97f;
                         	    float tvdifp = tvdif-path/29.97f;
                         	    float twdifp = twdif-path/29.97f;
+                        	    float texpu = path/29.97f + leffu/18.1f + Tvertex - phase - shiftTV[is-1];
+                        	    float texpv = path/29.97f + leffv/18.1f + Tvertex - phase - shiftTV[is-1];
+                        	    float texpw = path/29.97f + leffw/18.1f + Tvertex - phase - shiftTV[is-1];                            
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(tudifp,iU+1.5);
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is).fill(tvdifp,iV+1.5);
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is).fill(twdifp,iW+1.5);
@@ -284,7 +311,19 @@ public class ECrec extends DetectorMonitor {
                     	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(path,twdifp);                    	    	    
                     	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_u"+(iU+1)+"_s"+is).fill(ener,tudifp);
                     	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_v"+(iV+1)+"_s"+is).fill(ener,tvdifp);
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(ener,twdifp);                    	    	    
+                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(ener,twdifp);
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_u"+(iU+1)+"_s"+is).fill(tdcu,leffu);
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_v"+(iV+1)+"_s"+is).fill(tdcv,leffv);
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(tdcw,leffw);
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_u"+(iU+1)+"_s"+is).fill(tdcu,tdcu-texpu);
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_v"+(iV+1)+"_s"+is).fill(tdcv,tdcv-texpv);
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(tdcw,tdcw-texpw);                                	                    	    	    
+                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_u"+(iU+1)+"_s"+is).fill(tdcuc,leffu);
+                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_v"+(iV+1)+"_s"+is).fill(tdcvc,leffv);
+                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(tdcwc,leffw);
+                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_u"+(iU+1)+"_s"+is).fill(tdcuc,tdcuc-texpu);
+                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_v"+(iV+1)+"_s"+is).fill(tdcvc,tdcvc-texpv);
+                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_w"+(iW+1)+"_s"+is).fill(tdcwc,tdcwc-texpw);                                	                    	    	    
                     	    } 
                     }
                 }
@@ -426,11 +465,11 @@ public class ECrec extends DetectorMonitor {
        double x1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getXAxis().min();
        double x2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getXAxis().max();
        
-       F1D f1 = new F1D("p0","[a]",x1,x2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
+//       F1D f1 = new F1D("p0","[a]",x1,x2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
        
        for (int ip=1; ip<ipmax; ip++ ) {
     	      c.cd(ip-1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+ip+"_s"+s); c.draw(h2);    	      
-    	      c.draw(f1,"same");
+//    	      c.draw(f1,"same");
        }
        
     }

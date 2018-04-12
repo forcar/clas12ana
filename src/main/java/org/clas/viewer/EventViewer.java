@@ -39,6 +39,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECana;
+import org.clas.analysis.ECcal;
 import org.clas.analysis.ECrec;
 import org.clas.detectors.*;
 import org.jlab.detector.decode.CLASDecoder;
@@ -113,6 +114,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     */
     
     DetectorMonitor[] monitors = {
+//    		new ECcal("ECcal")
     		new ECana("ECa"), 
     		new ECrec("ECt")
     }  ;  
