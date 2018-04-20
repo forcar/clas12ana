@@ -75,10 +75,18 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public double zMin=0.001, zMax=1.0, zMinLab, zMaxLab;
     
     public DetectorMonitor(String name){
-        GStyle.getAxisAttributesX().setTitleFontSize(18);
+        GStyle.getAxisAttributesX().setTitleFontSize(14);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
-        GStyle.getAxisAttributesY().setTitleFontSize(18);
+        GStyle.getAxisAttributesY().setTitleFontSize(14);
         GStyle.getAxisAttributesY().setLabelFontSize(14);
+        GStyle.getAxisAttributesZ().setLabelFontSize(14); 
+        GStyle.getAxisAttributesX().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesY().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesZ().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesX().setTitleFontName("Avenir");
+        GStyle.getAxisAttributesY().setTitleFontName("Avenir");
+        GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
+        
         this.detectorName = name;
         this.detectorPanel  = new JPanel();
         this.detectorCanvas = new EmbeddedCanvasTabbed();
