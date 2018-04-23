@@ -77,7 +77,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     EmbeddedCanvasTabbed CLAS12Canvas       = null;
     
     CLASDecoder                clasDecoder = new CLASDecoder();
-         
+       
     private int canvasUpdateTime   = 2000;
     private int analysisUpdateTime = 100;
     private int runNumber     = 2284;
@@ -115,7 +115,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     DetectorMonitor[] monitors = {
 //    		new ECcal("ECcal")
-    		new ECana("ECa"), 
+    		new ECana("ECa"),
     		new ECrec("ECt")
     }  ;  
         
@@ -668,40 +668,32 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     @Override
     public void dataEventAction(DataEvent event) {
     	
-       // EvioDataEvent decodedEvent = deco.DecodeEvent(event, decoder, table);
-        //decodedEvent.show();
-            	    
         HipoDataEvent hipo = null;
         
 	    if(event!=null ){
-            //event.show();
-            
+
             if(event instanceof EvioDataEvent){
              	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
                 DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
-//                DataBank  trigger = clasDecoder.createTriggerBank(hipo);
                 hipo.appendBanks(header);
-//                hipo.appendBank(trigger);
-                if(this.runNumber != this.getRunNumber(hipo)) {
-//                this.saveToFile("mon12_histo_run_" + runNumber + ".hipo");
-                    this.runNumber = this.getRunNumber(hipo);
-                    System.out.println("Setting run number to: " +this.runNumber);
-                    resetEventListener();
-                    this.clas12Textinfo.setText("\nrun number: "+this.runNumber + "\nmode:" + "\nfile:" + "\n");
-//                    this.clas12Textinfo.updateUI();
-                }
             } 
             else {
                 hipo = (HipoDataEvent) event;    
             }
             
-//          for(int k=0; k<this.monitors.length; k++) {
-          for(int k=0; k<this.monitors.length; k++) {
+            if(this.runNumber != this.getRunNumber(hipo)) {
+                this.runNumber = this.getRunNumber(hipo);
+                System.out.println("Setting run number to: " +this.runNumber);
+                resetEventListener();
+                this.clas12Textinfo.setText("\nrun number: "+this.runNumber + "\nmode:" + "\nfile:" + "\n");
+            }
+            
+            for(int k=0; k<this.monitors.length; k++) {
                 this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
                 this.monitors[k].setTriggerWord(getTriggerWord(hipo));   
                 this.monitors[k].dataEventAction(hipo);
-          }      
-	}
+            }      
+	    }
     }
 
     public void loadHistosFromFile(String fileName) {

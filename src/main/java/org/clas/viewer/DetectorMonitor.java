@@ -440,6 +440,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         String folder = this.getDetectorName() + "/";
         System.out.println("Reading from: " + folder);
         DataGroup sum = this.getDetectorSummary();
+        if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();
         int nds   = nrows*ncols;
@@ -452,13 +453,16 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             }
         }            
         this.setDetectorSummary(newSum);
+        
+        }
+        
         Map<Long, DataGroup> map = this.getDataGroup().getMap();
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
             Long key = entry.getKey();
             DataGroup group = entry.getValue();
-            nrows = group.getRows();
-            ncols = group.getColumns();
-            nds   = nrows*ncols;
+            int nrows = group.getRows();
+            int ncols = group.getColumns();
+            int nds   = nrows*ncols;
             DataGroup newGroup = new DataGroup(ncols,nrows);
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = group.getData(i);
@@ -477,6 +481,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         dir.mkdir(folder);
         dir.cd(folder);
         DataGroup sum = this.getDetectorSummary();
+        if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();
         int nds   = nrows*ncols;
@@ -486,13 +491,15 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
                 System.out.println("\t --> " + ds.getName());
                 dir.addDataSet(ds);
             }
-        }            
+        }      
+        }
+        
         Map<Long, DataGroup> map = this.getDataGroup().getMap();
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
             DataGroup group = entry.getValue();
-            nrows = group.getRows();
-            ncols = group.getColumns();
-            nds   = nrows*ncols;
+            int nrows = group.getRows();
+            int ncols = group.getColumns();
+            int nds   = nrows*ncols;
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = group.getData(i);
                 for(IDataSet ds : dsList){

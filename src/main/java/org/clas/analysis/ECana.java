@@ -83,32 +83,32 @@ public class ECana  extends DetectorMonitor {
         H2F h;
         
         for(int i=1; i<7; i++) {
-            h = new H2F("ep.p"+i,50,0.5,10.5, 50, 0., 0.5);
+            h = new H2F("ep_p"+i,50,0.5,10.5, 50, 0., 0.5);
             h.setTitleX("Sector "+i+" Momentum (GeV)");
             h.setTitleY("E / P");
             h.setTitle("");
             dg.addDataSet(h, 1);
-            h = new H2F("ep.thv"+i,30,6.,36., 50, 0., 0.5);
+            h = new H2F("ep_thv"+i,30,6.,36., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" Vertex Theta (deg)");
             h.setTitleY("E / P");
             h.setTitle("");
             dg.addDataSet(h, 1);
-            h = new H2F("ep.thd"+i,48,3.,27., 50, 0., 0.5);
+            h = new H2F("ep_thd"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" Detector Theta (deg)");
             h.setTitleY("E / P");
             h.setTitle("");
             dg.addDataSet(h, 1);
-           h = new H2F("ep.th0"+i,48,3.,27., 50, 0., 0.5);
+           h = new H2F("ep_th0"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" PC Theta (deg)");
             h.setTitleY("EPC / P");
             h.setTitle("");
             dg.addDataSet(h, 1);
-            h = new H2F("ep.th1"+i,48,3.,27., 50, 0., 0.5);
+            h = new H2F("ep_th1"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" ECi Theta (deg)");
             h.setTitleY("EECi / P");
             h.setTitle("");
             dg.addDataSet(h, 1);
-            h = new H2F("ep.th2"+i,48,3.,27., 50, 0., 0.5);
+            h = new H2F("ep_th2"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" ECo Theta (deg)");
             h.setTitleY("EECo / P");
             h.setTitle("");
@@ -269,7 +269,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 60*zMax);
-            c.draw(dg.getH2F("ep.p"+is));
+            c.draw(dg.getH2F("ep_p"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("E/P v ThV");
@@ -280,7 +280,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            c.draw(dg.getH2F("ep.thv"+is));
+            c.draw(dg.getH2F("ep_thv"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("E/P v ThD");
@@ -291,7 +291,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            c.draw(dg.getH2F("ep.thd"+is));
+            c.draw(dg.getH2F("ep_thd"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("EPC/P v ThD");
@@ -302,7 +302,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            c.draw(dg.getH2F("ep.th0"+is));
+            c.draw(dg.getH2F("ep_th0"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("EECi/P v ThD");
@@ -313,7 +313,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            c.draw(dg.getH2F("ep.th1"+is));
+            c.draw(dg.getH2F("ep_th1"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("EECo/P v ThD");
@@ -324,7 +324,7 @@ public class ECana  extends DetectorMonitor {
             c.cd(is-1);
             c.getPad().getAxisZ().setLog(getLogZ());
             c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            c.draw(dg.getH2F("ep.th2"+is));
+            c.draw(dg.getH2F("ep_th2"+is));
         }
         
 	    c = this.getDetectorCanvas().getCanvas("E/P v XY");
@@ -457,12 +457,12 @@ public class ECana  extends DetectorMonitor {
         
 		if(e_mom>Ebeam*0.02 && sf > 0.02 && trig_track_ind>-1 && e_sect==trig_sect){
 			if(e_sect>0&&e_sect<7){            
-	              dg.getH2F("ep.p"+e_sect).fill(e_mom,sf);
-	              dg.getH2F("ep.thv"+e_sect).fill(e_theta,sf);
-	              dg.getH2F("ep.thd"+e_sect).fill(e_ecal_TH[0],sf);
-	              dg.getH2F("ep.th0"+e_sect).fill(e_ecal_TH[0],sf0);
-	              dg.getH2F("ep.th1"+e_sect).fill(e_ecal_TH[1],sf1);
-	              dg.getH2F("ep.th2"+e_sect).fill(e_ecal_TH[2],sf2);	              
+	              dg.getH2F("ep_p"+e_sect).fill(e_mom,sf);
+	              dg.getH2F("ep_thv"+e_sect).fill(e_theta,sf);
+	              dg.getH2F("ep_thd"+e_sect).fill(e_ecal_TH[0],sf);
+	              dg.getH2F("ep_th0"+e_sect).fill(e_ecal_TH[0],sf0);
+	              dg.getH2F("ep_th1"+e_sect).fill(e_ecal_TH[1],sf1);
+	              dg.getH2F("ep_th2"+e_sect).fill(e_ecal_TH[2],sf2);	              
                   dg.getH2F("ep_pcal_up_"+e_sect).fill(sf0<0.5?sf0:0., iU[0]);
                   dg.getH2F("ep_pcal_vp_"+e_sect).fill(sf0<0.5?sf0:0., iV[0]);
                   dg.getH2F("ep_pcal_wp_"+e_sect).fill(sf0<0.5?sf0:0., iW[0]);

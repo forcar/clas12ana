@@ -34,7 +34,7 @@ public class ECrec extends DetectorMonitor {
 //  static float TOFFSET = 436; 
     static float TOFFSET = 125; 
 	float      tps =  (float) 0.02345;
-	float[] shiftTV = {0,20,0,0,0,0}; //Run 3050 t0 calibration
+	float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     
     public ECrec(String name) {
         super(name);
@@ -51,12 +51,13 @@ public class ECrec extends DetectorMonitor {
         		                     "RESID v STRIP",
         		                     "RESID v PATH",
         		                     "RESID v ENERGY",
-        		                     "LEFF v TDC ",
-        		                     "DTEXP v TDC ",
-        		                     "LEFF v TDCTWC ",
-        		                     "DTEXP v TDCTWC ");
-
-        
+        		                     "RESID v LEFF",
+        		                     "RESID v TIME ",
+        		                     "ADC v TDC",
+        		                     "ADC v TDCTWC",
+        		                     "ADCHI v TDCTWCC",
+        		                     "LEFF v TDCTWC",
+        		                     "TVERT v LEFF");       
         this.useSectorButtons(true);
         this.useSliderPane(true);
         engine.init();       
@@ -80,10 +81,13 @@ public class ECrec extends DetectorMonitor {
         createTDCHistos(0,0,10,-10.,10.,"TIME-Tvert-PATH/c (ns)"); 
         createUVWHistos(0,0,11,700,800,-5,5,"PATH","RESID ");
         createUVWHistos(0,0,12,0,3000,-5,5,"ENERGY","RESID ");
-        createUVWHistos(0,0,13,200,270,0,450,"TDC","LEFF ");
-        createUVWHistos(0,0,14,190,300,-8,30,"TDC","TEXP ");
-        createUVWHistos(0,0,15,200,270,0,450,"TDCC","LEFF ");
-        createUVWHistos(0,0,16,190,300,-8,30,"TDCC","TEXP ");
+        createUVWHistos(0,0,13,0,430,-5,5,"LEFF","RESID ");
+        createUVWHistos(0,0,14,190,220,-5,5,"TIME","RESID ");
+        createUVWHistos(0,0,15,180,240,0,6000,"TDC","ADC ");
+        createUVWHistos(0,0,16,180,240,0,6000,"TDCC","ADC ");
+        createUVWHistos(0,0,17,180,240,0,12000,"TDCC","ADC ");
+        createUVWHistos(0,0,18,200,270,0,430,"TDCC","LEFF ");
+        createUVWHistos(0,0,19,160,190,0,430,"TVERT","LEFF ");
     }
 
     @Override        
@@ -105,6 +109,9 @@ public class ECrec extends DetectorMonitor {
     	    plotUVWHistos(14);
     	    plotUVWHistos(15);
     	    plotUVWHistos(16);
+    	    plotUVWHistos(17);
+    	    plotUVWHistos(18);
+    	    plotUVWHistos(19);
     }
     
     public int getDet(int layer) {
@@ -155,11 +162,11 @@ public class ECrec extends DetectorMonitor {
                tdcdc   = tdcd-phase;
                if(is>0&&is<7&&tdcd>0) {
                    if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
-                       dg0.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcd,  ip+0.5);               
-                       dg1.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcdc, ip+0.5);                      
+                       dg0.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+0).fill(tdcd,  ip+0.5);               
+                       dg1.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+1).fill(tdcdc, ip+0.5);                      
                        if (is==trigger_sect) {
                     	       tdcs.getItem(is,il,ip).add(tdcdc);
-                           dg2.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcdc, ip+0.5);  
+                           dg2.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+2).fill(tdcdc, ip+0.5);  
                        }
                }
            }
@@ -186,12 +193,12 @@ public class ECrec extends DetectorMonitor {
                    tdc  = new float[list.size()];
                    for (int ii=0; ii<tdcc.length; ii++) {
               	      float tdif = (tdcc[ii]-TOFFSET)-t; 
-                      dg8.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdif, ip+0.5); 
+                      dg8.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+8).fill(tdif, ip+0.5); 
             	          if (Math.abs(tdif)<30&&tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
                    }
                    double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
-                   dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcm, ip+0.5); 
-                   dg4.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(tdcmc,ip+0.5); 
+                   dg3.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+3).fill(tdcm, ip+0.5); 
+                   dg4.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+4).fill(tdcmc,ip+0.5); 
                }
            }
        }    	
@@ -210,6 +217,9 @@ public class ECrec extends DetectorMonitor {
   	   DataGroup dg14 = this.getDataGroup().getItem(0,0,14);
   	   DataGroup dg15 = this.getDataGroup().getItem(0,0,15);
   	   DataGroup dg16 = this.getDataGroup().getItem(0,0,16);
+  	   DataGroup dg17 = this.getDataGroup().getItem(0,0,17);
+  	   DataGroup dg18 = this.getDataGroup().getItem(0,0,18);
+  	   DataGroup dg19 = this.getDataGroup().getItem(0,0,19);
   	   
        event.removeBank("ECAL::hits");        
        event.removeBank("ECAL::peaks");        
@@ -229,7 +239,7 @@ public class ECrec extends DetectorMonitor {
                int   il = bank.getByte("layer", loop); 
                int   ip = bank.getByte("strip", loop);
                float  t = bank.getFloat("time", loop)-phase;
-               if (is==trigger_sect) dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is).fill(t, ip+0.5); 
+               if (is==trigger_sect) dg5.getH2F("tdc_"+layer[getDet(il)]+"_"+view[getLay(il)-1]+"_"+is+"_"+5).fill(t, ip+0.5); 
             }
        }
        
@@ -253,45 +263,52 @@ public class ECrec extends DetectorMonitor {
             DataBank  bank1 = event.getBank("ECAL::clusters");
     	        DataBank  bank2 = event.getBank("ECAL::calib");
             for(int loop = 0; loop < bank1.rows(); loop++){
-                int   is = bank1.getByte("sector", loop);
-                int   il = bank1.getByte("layer", loop);
+                int     is = bank1.getByte("sector", loop);
+                int     il = bank1.getByte("layer", loop);
                 float ener = bank1.getFloat("energy",loop)*1000;
-                float  t = bank1.getFloat("time",loop)-phase;
-                int   iU = (bank1.getInt("coordU", loop)-4)/8;
-                int   iV = (bank1.getInt("coordV", loop)-4)/8;
-                int   iW = (bank1.getInt("coordW", loop)-4)/8;
+                float    t = bank1.getFloat("time",loop)-phase;
+                int     iU = (bank1.getInt("coordU", loop)-4)/8;
+                int     iV = (bank1.getInt("coordV", loop)-4)/8;
+                int     iW = (bank1.getInt("coordW", loop)-4)/8;
                 
-                float    tu = (float) clusters.get(loop).getTime(0)-phase;
+                float    tu = (float) clusters.get(loop).getTime(0)-phase; //clusters correct their peak times for leff
                 float    tv = (float) clusters.get(loop).getTime(1)-phase;
                 float    tw = (float) clusters.get(loop).getTime(2)-phase;
+                
+                float tudif = tu-Tvertex+phase;
+                float tvdif = tv-Tvertex+phase;
+                float twdif = tw-Tvertex+phase;
+                              
                 int      iu =         clusters.get(loop).getPeak(0).getMaxStrip();
                 int      iv =         clusters.get(loop).getPeak(1).getMaxStrip();
                 int      iw =         clusters.get(loop).getPeak(2).getMaxStrip();
+                int    adcu =         clusters.get(loop).getPeak(0).getMaxECStrip().getADC();
+                int    adcv =         clusters.get(loop).getPeak(1).getMaxECStrip().getADC();
+                int    adcw =         clusters.get(loop).getPeak(2).getMaxECStrip().getADC();
                 float  tdcu = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getRawTime()-phase;
                 float  tdcv = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getRawTime()-phase;
                 float  tdcw = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getRawTime()-phase;
                 float tdcuc = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getTWCTime()-phase;
                 float tdcvc = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getTWCTime()-phase;
                 float tdcwc = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getTWCTime()-phase;
+                float tdcucc =(float) clusters.get(loop).getPeak(0).getMaxECStrip().getTime()-phase; // peaks do not make leff time corrections
+                float tdcvcc =(float) clusters.get(loop).getPeak(1).getMaxECStrip().getTime()-phase;
+                float tdcwcc =(float) clusters.get(loop).getPeak(2).getMaxECStrip().getTime()-phase;
                 
                 float leffu = (float) clusters.get(loop).getPeak(0).getMaxECStrip().getTdist();
                 float leffv = (float) clusters.get(loop).getPeak(1).getMaxECStrip().getTdist();
-                float leffw = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getTdist();                 
-                
-                float tudif = tu-Tvertex+phase;
-                float tvdif = tv-Tvertex+phase;
-                float twdif = tw-Tvertex+phase;
-                
+                float leffw = (float) clusters.get(loop).getPeak(2).getMaxECStrip().getTdist();       
+                                
                 if (is==trigger_sect){
-                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(tu,iu); //Peak times
-                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is).fill(tv,iv);
-                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is).fill(tw,iw);
-                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(t,iu); //Cluster times
-                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is).fill(t,iv);
-                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is).fill(t,iw);
-                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(tudif,iu); //TIME-STT
-                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is).fill(tvdif,iv);
-                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is).fill(twdif,iw);
+                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is+"_"+6).fill(tu,iu); //Peak times (no leff correction)
+                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is+"_"+6).fill(tv,iv);
+                	    dg6.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is+"_"+6).fill(tw,iw);
+                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is+"_"+7).fill(t,iu); //Cluster times
+                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is+"_"+7).fill(t,iv);
+                	    dg7.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is+"_"+7).fill(t,iw);
+                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is+"_"+9).fill(tudif,iu); //TIME-STT
+                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is+"_"+9).fill(tvdif,iv);
+                	    dg9.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is+"_"+9).fill(twdif,iw);
                   
                     if (pathlist.hasItem(is,il,loop)) {
                     	    DataBank  bankc = event.getBank("REC::Calorimeter");
@@ -305,29 +322,38 @@ public class ECrec extends DetectorMonitor {
                         	    float texpu = path/29.97f + leffu/18.1f + Tvertex - phase - shiftTV[is-1];
                         	    float texpv = path/29.97f + leffv/18.1f + Tvertex - phase - shiftTV[is-1];
                         	    float texpw = path/29.97f + leffw/18.1f + Tvertex - phase - shiftTV[is-1];   
- 
-                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is).fill(tudifp,iu); //TIME-STT-PATH
-                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is).fill(tvdifp,iv);
-                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is).fill(twdifp,iw);
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(path,tudifp); 
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(path,tvdifp);
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(path,twdifp);                    	    	    
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(ener,tudifp);
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(ener,tvdifp);
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(ener,twdifp);
-                    	    	    
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(tdcu,leffu);
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(tdcv,leffv);
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(tdcw,leffw);
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(tdcu,tdcu-texpu);
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(tdcv,tdcv-texpv);
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(tdcw,tdcw-texpw);                                	                    	    	    
-                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(tdcuc,leffu);
-                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(tdcvc,leffv);
-                    	    	    dg15.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(tdcwc,leffw);
-                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is).fill(tdcuc,tdcuc-texpu);
-                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is).fill(tdcvc,tdcvc-texpv);
-                    	    	    dg16.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is).fill(tdcwc,tdcwc-texpw);                                	                    	    	    
+                      
+                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is+"_"+10).fill(tudifp,iu); //TIME-STT-PATH
+                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is+"_"+10).fill(tvdifp,iv);
+                    	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is+"_"+10).fill(twdifp,iw);
+                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+11).fill(path,tudifp); 
+                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+11).fill(path,tvdifp);
+                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+11).fill(path,twdifp);                    	    	    
+                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+12).fill(ener,tudifp);
+                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+12).fill(ener,tvdifp);
+                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+12).fill(ener,twdifp);                    	    	    
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+13).fill(leffu,tudifp);
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+13).fill(leffv,tvdifp);
+                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+13).fill(leffw,twdifp);                    	    	    
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+14).fill(tu-shiftTV[is-1],tudifp); // no leff correction
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+14).fill(tv-shiftTV[is-1],tvdifp);
+                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+14).fill(tw-shiftTV[is-1],twdifp);                                	                    	    	                                   	                    	    	                      	    
+            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+15).fill(tdcu-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+15).fill(tdcv-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+15).fill(tdcw-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+16).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+16).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+16).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+17).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+17).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+17).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+18).fill(tdcuc,leffu);
+                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+18).fill(tdcvc,leffv);
+                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+18).fill(tdcwc,leffw);                    	    
+            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffu);
+            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffv);
+            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffw);  
+            	    	            
                     	    } 
                     }
                 }
@@ -347,45 +373,45 @@ public class ECrec extends DetectorMonitor {
         for (int is=1; is<7; is++) {
         	   
         	   for (int ip=1; ip<npmts[0]+1; ip++) {
-               h = new H2F("tdc_pcal_u"+ip+"_s"+is,"tdc_pcal_u"+ip+"_s"+is,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("tdc_pcal_u"+ip+"_s"+is+"_"+k,"tdc_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"U"+ip);
                dg.addDataSet(h, 1);  
-               h = new H2F("tdc_pcal_v"+ip+"_s"+is,"tdc_pcal_v"+ip+"_s"+is,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("tdc_pcal_v"+ip+"_s"+is+"_"+k,"tdc_pcal_v"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"V"+ip);
                dg.addDataSet(h, 1);  
-               h = new H2F("tdc_pcal_w"+ip+"_s"+is,"tdc_pcal_w"+ip+"_s"+is,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("tdc_pcal_w"+ip+"_s"+is+"_"+k,"tdc_pcal_w"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"W"+ip); 
                dg.addDataSet(h, 1);  
         	   }
         	   
         	   for (int ip=1; ip<npmts[1]+1; ip++) {
-                   h = new H2F("tdc_ecin_u"+ip+"_s"+is,"tdc_ecin_u"+ip+"_s"+is,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecin_u"+ip+"_s"+is+"_"+k,"tdc_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
                    dg.addDataSet(h, 1);
-                   h = new H2F("tdc_ecin_v"+ip+"_s"+is,"tdc_ecin_v"+ip+"_s"+is,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecin_v"+ip+"_s"+is+"_"+k,"tdc_ecin_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
                    dg.addDataSet(h, 1);
-                   h = new H2F("tdc_ecin_w"+ip+"_s"+is,"tdc_ecin_w"+ip+"_s"+is,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecin_w"+ip+"_s"+is+"_"+k,"tdc_ecin_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
                    dg.addDataSet(h, 1);
            }
         	   
         	   for (int ip=1; ip<npmts[2]+1; ip++) {
-                   h = new H2F("tdc_ecou_u"+ip+"_s"+is,"tdc_ecou_u"+ip+"_s"+is,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecou_u"+ip+"_s"+is+"_"+k,"tdc_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
                    dg.addDataSet(h, 1);
-                   h = new H2F("tdc_ecou_v"+ip+"_s"+is,"tdc_ecou_v"+ip+"_s"+is,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecou_v"+ip+"_s"+is+"_"+k,"tdc_ecou_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
                    dg.addDataSet(h, 1);
-                   h = new H2F("tdc_ecou_w"+ip+"_s"+is,"tdc_ecou_w"+ip+"_s"+is,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("tdc_ecou_w"+ip+"_s"+is+"_"+k,"tdc_ecou_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
                    dg.addDataSet(h, 1);
@@ -402,41 +428,41 @@ public class ECrec extends DetectorMonitor {
         H2F h;  
         
         for (int is=1; is<7; is++) {
-            h = new H2F("tdc_pcal_u_"+is,"tdc_pcal_u_"+is,100, tmin, tmax, 68, 1., 69.);
+            h = new H2F("tdc_pcal_u_"+is+"_"+k,"tdc_pcal_u_"+is+"_"+k,100, tmin, tmax, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
-            h = new H2F("tdc_pcal_v_"+is,"tdc_pcal_v_"+is,100, tmin, tmax, 62, 1., 63.);
+            h = new H2F("tdc_pcal_v_"+is+"_"+k,"tdc_pcal_v_"+is+"_"+k,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
-            h = new H2F("tdc_pcal_w_"+is,"tdc_pcal_w_"+is,100, tmin, tmax, 62, 1., 63.);
+            h = new H2F("tdc_pcal_w_"+is+"_"+k,"tdc_pcal_w_"+is+"_"+k,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1); 
             
-            h = new H2F("tdc_ecin_u_"+is,"tdc_ecin_u_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecin_u_"+is+"_"+k,"tdc_ecin_u_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
-            h = new H2F("tdc_ecin_v_"+is,"tdc_ecin_v_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecin_v_"+is+"_"+k,"tdc_ecin_v_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
-            h = new H2F("tdc_ecin_w_"+is,"tdc_ecin_w_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecin_w_"+is+"_"+k,"tdc_ecin_w_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1); 
             
-            h = new H2F("tdc_ecou_u_"+is,"tdc_ecou_u_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecou_u_"+is+"_"+k,"tdc_ecou_u_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("U");    
             dg.addDataSet(h, 1);  
-            h = new H2F("tdc_ecou_v_"+is,"tdc_ecou_v_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecou_v_"+is+"_"+k,"tdc_ecou_v_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("V");        
             dg.addDataSet(h, 1);            
-            h = new H2F("tdc_ecou_w_"+is,"tdc_ecou_w_"+is,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecou_w_"+is+"_"+k,"tdc_ecou_w_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("W");  
             dg.addDataSet(h, 1);              
@@ -465,19 +491,19 @@ public class ECrec extends DetectorMonitor {
        case 2: c.divide(6, 6); ipmax=37;
        }
        
-       double x1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getXAxis().min();
-       double x2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getXAxis().max();
-       double y1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getYAxis().min();
-       double y2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s).getYAxis().max();
+       double x1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().min();
+       double x2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().max();
+       double y1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().min();
+       double y2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().max();
        
        F1D f1 = new F1D("p0","[a]",x1,x2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
        double a0 = 100;
       
        for (int ip=1; ip<ipmax; ip++ ) {
-    	      if(index==16) a0 = time.getDoubleValue("a0", s, 3*l+(v+1), ip)+shiftTV[s-1];
-    	      c.cd(ip-1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+ip+"_s"+s); c.draw(h2);    	      
+//    	      if(index==16) a0 = time.getDoubleValue("a0", s, 3*l+(v+1), ip)+shiftTV[s-1];
+    	      c.cd(ip-1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+ip+"_s"+s+"_"+index); c.draw(h2);    	      
     	      c.draw(f1,"same"); 
-    	      if(index==16&&a0<y2&&a0>y1) {F1D f2 = new F1D("p0","[a]",x1,x2); f2.setLineColor(2); f2.setLineStyle(1);f2.setParameter(0,a0);c.draw(f2,"same");}
+//    	      if(index==16&&a0<y2&&a0>y1) {F1D f2 = new F1D("p0","[a]",x1,x2); f2.setLineColor(2); f2.setLineStyle(1);f2.setParameter(0,a0);c.draw(f2,"same");}
        }
        
     }
@@ -493,15 +519,15 @@ public class ECrec extends DetectorMonitor {
        
        int s = getActiveSector();
        
-       c.cd(0); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_u_"+s); c.draw(h2);
-       c.cd(1); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_v_"+s); c.draw(h2);
-       c.cd(2); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_w_"+s); c.draw(h2);
-       c.cd(3); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_u_"+s); c.draw(h2);
-       c.cd(4); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_v_"+s); c.draw(h2);
-       c.cd(5); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_w_"+s); c.draw(h2);
-       c.cd(6); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_u_"+s); c.draw(h2);
-       c.cd(7); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_v_"+s); c.draw(h2);
-       c.cd(8); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_w_"+s); c.draw(h2);	
+       c.cd(0); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_u_"+s+"_"+index); c.draw(h2);
+       c.cd(1); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_v_"+s+"_"+index); c.draw(h2);
+       c.cd(2); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_pcal_w_"+s+"_"+index); c.draw(h2);
+       c.cd(3); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_u_"+s+"_"+index); c.draw(h2);
+       c.cd(4); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_v_"+s+"_"+index); c.draw(h2);
+       c.cd(5); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecin_w_"+s+"_"+index); c.draw(h2);
+       c.cd(6); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_u_"+s+"_"+index); c.draw(h2);
+       c.cd(7); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_v_"+s+"_"+index); c.draw(h2);
+       c.cd(8); c.getPad().getAxisZ().setLog(getLogZ());   h2 = dg.getH2F("tdc_ecou_w_"+s+"_"+index); c.draw(h2);	
     	
     }
     
