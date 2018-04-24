@@ -808,7 +808,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void saveHistosToFile(String fileName) {
-        // TXT table summary FILE //
         TDirectory dir = new TDirectory();
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].writeDataGroup(dir);

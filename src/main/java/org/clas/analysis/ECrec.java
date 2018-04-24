@@ -363,7 +363,7 @@ public class ECrec extends DetectorMonitor {
     
     public void createUVWHistos(int i, int j, int k, int xmin, int xmax, int ymin, int ymax, String xtxt, String ytxt ) {
     	
-        DataGroup dg = new DataGroup(3,2);
+        DataGroup dg = new DataGroup(1,1);
         H2F h;   
         
         int xbins=50, ybins=50; double sca1=1.0,sca2=1.0;
@@ -376,45 +376,45 @@ public class ECrec extends DetectorMonitor {
                h = new H2F("tdc_pcal_u"+ip+"_s"+is+"_"+k,"tdc_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"U"+ip);
-               dg.addDataSet(h, 1);  
+               dg.addDataSet(h,0);  
                h = new H2F("tdc_pcal_v"+ip+"_s"+is+"_"+k,"tdc_pcal_v"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"V"+ip);
-               dg.addDataSet(h, 1);  
+               dg.addDataSet(h,0);  
                h = new H2F("tdc_pcal_w"+ip+"_s"+is+"_"+k,"tdc_pcal_w"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"W"+ip); 
-               dg.addDataSet(h, 1);  
+               dg.addDataSet(h,0);  
         	   }
         	   
         	   for (int ip=1; ip<npmts[1]+1; ip++) {
                    h = new H2F("tdc_ecin_u"+ip+"_s"+is+"_"+k,"tdc_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
                    h = new H2F("tdc_ecin_v"+ip+"_s"+is+"_"+k,"tdc_ecin_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
                    h = new H2F("tdc_ecin_w"+ip+"_s"+is+"_"+k,"tdc_ecin_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
            }
         	   
         	   for (int ip=1; ip<npmts[2]+1; ip++) {
                    h = new H2F("tdc_ecou_u"+ip+"_s"+is+"_"+k,"tdc_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
                    h = new H2F("tdc_ecou_v"+ip+"_s"+is+"_"+k,"tdc_ecou_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
                    h = new H2F("tdc_ecou_w"+ip+"_s"+is+"_"+k,"tdc_ecou_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
-                   dg.addDataSet(h, 1);
+                   dg.addDataSet(h,0);
            }
         }
         
@@ -424,48 +424,48 @@ public class ECrec extends DetectorMonitor {
   
     public void createTDCHistos(int i, int j, int k, double tmin, double tmax, String txt) {
     	
-        DataGroup dg = new DataGroup(3,2);
+        DataGroup dg = new DataGroup(1,1);
         H2F h;  
         
         for (int is=1; is<7; is++) {
             h = new H2F("tdc_pcal_u_"+is+"_"+k,"tdc_pcal_u_"+is+"_"+k,100, tmin, tmax, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("U");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("tdc_pcal_v_"+is+"_"+k,"tdc_pcal_v_"+is+"_"+k,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("V");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("tdc_pcal_w_"+is+"_"+k,"tdc_pcal_w_"+is+"_"+k,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt);
             h.setTitleY("W");  
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
             
             h = new H2F("tdc_ecin_u_"+is+"_"+k,"tdc_ecin_u_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("U");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("tdc_ecin_v_"+is+"_"+k,"tdc_ecin_v_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("V");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("tdc_ecin_w_"+is+"_"+k,"tdc_ecin_w_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt);
             h.setTitleY("W");  
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
             
             h = new H2F("tdc_ecou_u_"+is+"_"+k,"tdc_ecou_u_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("U");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("tdc_ecou_v_"+is+"_"+k,"tdc_ecou_v_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("V");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("tdc_ecou_w_"+is+"_"+k,"tdc_ecou_w_"+is+"_"+k,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt);
             h.setTitleY("W");  
-            dg.addDataSet(h, 1);              
+            dg.addDataSet(h,0);              
         }    
         
         this.getDataGroup().add(dg,i,j,k);

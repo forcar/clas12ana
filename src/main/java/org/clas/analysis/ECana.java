@@ -79,7 +79,7 @@ public class ECana  extends DetectorMonitor {
         String[] layer = new String[]{"PCAL","ECin","ECout"};
         String[] view  = new String[]{"u","v","w"};
         
-        DataGroup dg = new DataGroup(3,2);
+        DataGroup dg = new DataGroup(1,1);
         H2F h;
         
         for(int i=1; i<7; i++) {
@@ -87,32 +87,32 @@ public class ECana  extends DetectorMonitor {
             h.setTitleX("Sector "+i+" Momentum (GeV)");
             h.setTitleY("E / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
             h = new H2F("ep_thv"+i,30,6.,36., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" Vertex Theta (deg)");
             h.setTitleY("E / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
             h = new H2F("ep_thd"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" Detector Theta (deg)");
             h.setTitleY("E / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
            h = new H2F("ep_th0"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" PC Theta (deg)");
             h.setTitleY("EPC / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
             h = new H2F("ep_th1"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" ECi Theta (deg)");
             h.setTitleY("EECi / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
             h = new H2F("ep_th2"+i,48,3.,27., 50, 0., 0.5);
             h.setTitleX("Sector "+i+" ECo Theta (deg)");
             h.setTitleY("EECo / P");
             h.setTitle("");
-            dg.addDataSet(h, 1);
+            dg.addDataSet(h,0);
         }
         
         String tit1[] = {"PCAL EVENTS","ECIN EVENTS","ECOUT EVENTS"};
@@ -120,134 +120,134 @@ public class ECana  extends DetectorMonitor {
         String tit3[] = {"SF v PCAL","SF v ECIN","SF v ECOUT"};
         
         for (int i=1; i<4; i++) {
-            h = new H2F("ep_xyc_e"+i,200, -200., 200., 200, -200.,200);   h.setTitle(tit1[i-1]); dg.addDataSet(h, 1); 
-            h = new H2F("ep_xyc_w"+i,200, -200., 200., 200, -200.,200);                          dg.addDataSet(h, 1); 
-            h = new H2F("ep_xyc_ww"+i,200, -200., 200., 200, -200.,200);                         dg.addDataSet(h, 1); 
-            h = new H2F("ep_xyc_sf"+i,200, -200., 200., 200, -200.,200);  h.setTitle(tit2[i-1]); dg.addDataSet(h, 1);  
-            h = new H2F("ep_xyc_sff"+i,200, -200., 200., 200, -200.,200); h.setTitle(tit3[i-1]); dg.addDataSet(h, 1);  
+            h = new H2F("ep_xyc_e"+i,200, -200., 200., 200, -200.,200);   h.setTitle(tit1[i-1]); dg.addDataSet(h,0); 
+            h = new H2F("ep_xyc_w"+i,200, -200., 200., 200, -200.,200);                          dg.addDataSet(h,0); 
+            h = new H2F("ep_xyc_ww"+i,200, -200., 200., 200, -200.,200);                         dg.addDataSet(h,0); 
+            h = new H2F("ep_xyc_sf"+i,200, -200., 200., 200, -200.,200);  h.setTitle(tit2[i-1]); dg.addDataSet(h,0);  
+            h = new H2F("ep_xyc_sff"+i,200, -200., 200., 200, -200.,200); h.setTitle(tit3[i-1]); dg.addDataSet(h,0);  
         }
         
         for (int is=1; is<7; is++) {
             h = new H2F("ep_pcal_up_"+is,"ep_pcal_up_"+is,25, 0., 0.5, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL SF");
             h.setTitleY("coordU");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("ep_pcal_vp_"+is,"ep_pcal_vp_"+is,25, 0., 0.5, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL SF");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("ep_pcal_wp_"+is,"ep_pcal_wp_"+is,25, 0., 0.5, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL SF");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             
             h = new H2F("ep_ecin_up_"+is,"ep_ecin_up_"+is,25, 0., 0.3, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin SF");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("ep_ecin_vp_"+is,"ep_ecin_vp_"+is,25, 0., 0.3, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin SF");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
             h = new H2F("ep_ecin_wp_"+is,"ep_ecin_wp_"+is,25, 0., 0.3, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin SF");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
            
             h = new H2F("ep_ecou_up_"+is,"ep_ecou_up_"+is,25, 0., 0.1, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou SF");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("ep_ecou_vp_"+is,"ep_ecou_vp_"+is,25, 0., 0.1, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou SF");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("ep_ecou_wp_"+is,"ep_ecou_wp_"+is,25, 0., 0.1, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou SF");
             h.setTitleY("coordW");
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
         }   
         
         for (int is=1; is<7; is++) {
             h = new H2F("pm_pcal_up_"+is,"pm_pcal_up_"+is,25, 0., 60., 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL PIM (MeV)");
             h.setTitleY("coordU");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pm_pcal_vp_"+is,"pm_pcal_vp_"+is,25, 0., 60., 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL PIM (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("pm_pcal_wp_"+is,"pm_pcal_wp_"+is,25, 0., 60., 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL PIM (MeV)");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             
             h = new H2F("pm_ecin_up_"+is,"pm_ecin_up_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIM (MeV)");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pm_ecin_vp_"+is,"pm_ecin_vp_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIM (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
             h = new H2F("pm_ecin_wp_"+is,"pm_ecin_wp_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIM (MeV)");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
            
             h = new H2F("pm_ecou_up_"+is,"pm_ecou_up_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIM (MeV)");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pm_ecou_vp_"+is,"pm_ecou_vp_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIM (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pm_ecou_wp_"+is,"pm_ecou_wp_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIM (MeV)");
             h.setTitleY("coordW");
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
         }  
         
         for (int is=1; is<7; is++) {
             h = new H2F("pp_pcal_up_"+is,"pp_pcal_up_"+is,25, 0., 60., 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL PIP (MeV)");
             h.setTitleY("coordU");    
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pp_pcal_vp_"+is,"pp_pcal_vp_"+is,25, 0., 60., 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL PIP (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);            
+            dg.addDataSet(h,0);            
             h = new H2F("pp_pcal_wp_"+is,"pp_pcal_wp_"+is,25, 0., 60., 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL PIP (MeV)");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             
             h = new H2F("pp_ecin_up_"+is,"pp_ecin_up_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIP (MeV)");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pp_ecin_vp_"+is,"pp_ecin_vp_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIP (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
             h = new H2F("pp_ecin_wp_"+is,"pp_ecin_wp_"+is,25, 0., 60., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECin PIP (MeV)");
             h.setTitleY("coordW");  
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
            
             h = new H2F("pp_ecou_up_"+is,"pp_ecou_up_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIP (MeV)");
             h.setTitleY("coordU");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pp_ecou_vp_"+is,"pp_ecou_vp_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIP (MeV)");
             h.setTitleY("coordV");        
-            dg.addDataSet(h, 1);  
+            dg.addDataSet(h,0);  
             h = new H2F("pp_ecou_wp_"+is,"pp_ecou_wp_"+is,25, 0., 80., 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECou PIP (MeV)");
             h.setTitleY("coordW");
-            dg.addDataSet(h, 1); 
+            dg.addDataSet(h,0); 
         }         
         
         this.getDataGroup().add(dg,0,0,0);
