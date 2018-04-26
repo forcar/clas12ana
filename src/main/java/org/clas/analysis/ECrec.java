@@ -326,33 +326,33 @@ public class ECrec extends DetectorMonitor {
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_u_"+is+"_"+10).fill(tudifp,iu); //TIME-STT-PATH
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_v_"+is+"_"+10).fill(tvdifp,iv);
                     	    	    dg10.getH2F("tdc_"+layer[getDet(il)]+"_w_"+is+"_"+10).fill(twdifp,iw);
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+11).fill(path,tudifp); 
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+11).fill(path,tvdifp);
-                    	    	    dg11.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+11).fill(path,twdifp);                    	    	    
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+12).fill(ener,tudifp);
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+12).fill(ener,tvdifp);
-                    	    	    dg12.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+12).fill(ener,twdifp);                    	    	    
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+13).fill(leffu,tudifp);
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+13).fill(leffv,tvdifp);
-                    	    	    dg13.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+13).fill(leffw,twdifp);                    	    	    
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+14).fill(tu-shiftTV[is-1],tudifp); // no leff correction
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+14).fill(tv-shiftTV[is-1],tvdifp);
-                    	    	    dg14.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+14).fill(tw-shiftTV[is-1],twdifp);                                	                    	    	                                   	                    	    	                      	    
-            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+15).fill(tdcu-shiftTV[is-1]/2-leffu/18.1,adcu);
-            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+15).fill(tdcv-shiftTV[is-1]/2-leffv/18.1,adcv);
-            	    	            dg15.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+15).fill(tdcw-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
-            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+16).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
-            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+16).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
-            	    	            dg16.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+16).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
-            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+17).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
-            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+17).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
-            	    	            dg17.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+17).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
-                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+18).fill(tdcuc,leffu);
-                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+18).fill(tdcvc,leffv);
-                    	    	    dg18.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+18).fill(tdcwc,leffw);                    	    
-            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffu);
-            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffv);
-            	    	            dg19.getH2F("tdc_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffw);  
+                    	    	    dg11.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+11).fill(path,tudifp); 
+                    	    	    dg11.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+11).fill(path,tvdifp);
+                    	    	    dg11.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+11).fill(path,twdifp);                    	    	    
+                    	    	    dg12.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+12).fill(ener,tudifp);
+                    	    	    dg12.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+12).fill(ener,tvdifp);
+                    	    	    dg12.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+12).fill(ener,twdifp);                    	    	    
+                    	    	    dg13.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+13).fill(leffu,tudifp);
+                    	    	    dg13.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+13).fill(leffv,tvdifp);
+                    	    	    dg13.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+13).fill(leffw,twdifp);                    	    	    
+                    	    	    dg14.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+14).fill(tu-shiftTV[is-1],tudifp); // no leff correction
+                    	    	    dg14.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+14).fill(tv-shiftTV[is-1],tvdifp);
+                    	    	    dg14.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+14).fill(tw-shiftTV[is-1],twdifp);                                	                    	    	                                   	                    	    	                      	    
+            	    	            dg15.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+15).fill(tdcu-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg15.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+15).fill(tdcv-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg15.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+15).fill(tdcw-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+            	    	            dg16.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+16).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg16.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+16).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg16.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+16).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+            	    	            dg17.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+17).fill(tdcuc-shiftTV[is-1]/2-leffu/18.1,adcu);
+            	    	            dg17.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+17).fill(tdcvc-shiftTV[is-1]/2-leffv/18.1,adcv);
+            	    	            dg17.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+17).fill(tdcwc-shiftTV[is-1]/2-leffw/18.1,adcw);                    	         
+                    	    	    dg18.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+18).fill(tdcuc,leffu);
+                    	    	    dg18.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+18).fill(tdcvc,leffv);
+                    	    	    dg18.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+18).fill(tdcwc,leffw);                    	    
+            	    	            dg19.getH2F("uvw_"+layer[getDet(il)]+"_u"+iu+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffu);
+            	    	            dg19.getH2F("uvw_"+layer[getDet(il)]+"_v"+iv+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffv);
+            	    	            dg19.getH2F("uvw_"+layer[getDet(il)]+"_w"+iw+"_s"+is+"_"+19).fill(Tvertex-shiftTV[is-1]-phase,leffw);  
             	    	            
                     	    } 
                     }
@@ -373,45 +373,45 @@ public class ECrec extends DetectorMonitor {
         for (int is=1; is<7; is++) {
         	   
         	   for (int ip=1; ip<npmts[0]+1; ip++) {
-               h = new H2F("tdc_pcal_u"+ip+"_s"+is+"_"+k,"tdc_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k,"uvw_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"U"+ip);
                dg.addDataSet(h,0);  
-               h = new H2F("tdc_pcal_v"+ip+"_s"+is+"_"+k,"tdc_pcal_v"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("uvw_pcal_v"+ip+"_s"+is+"_"+k,"uvw_pcal_v"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"V"+ip);
                dg.addDataSet(h,0);  
-               h = new H2F("tdc_pcal_w"+ip+"_s"+is+"_"+k,"tdc_pcal_w"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
+               h = new H2F("uvw_pcal_w"+ip+"_s"+is+"_"+k,"uvw_pcal_w"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                h.setTitleX("Sector "+is+" PCAL "+xtxt);
                h.setTitleY(ytxt+"W"+ip); 
                dg.addDataSet(h,0);  
         	   }
         	   
         	   for (int ip=1; ip<npmts[1]+1; ip++) {
-                   h = new H2F("tdc_ecin_u"+ip+"_s"+is+"_"+k,"tdc_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k,"uvw_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
                    dg.addDataSet(h,0);
-                   h = new H2F("tdc_ecin_v"+ip+"_s"+is+"_"+k,"tdc_ecin_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecin_v"+ip+"_s"+is+"_"+k,"uvw_ecin_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
                    dg.addDataSet(h,0);
-                   h = new H2F("tdc_ecin_w"+ip+"_s"+is+"_"+k,"tdc_ecin_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecin_w"+ip+"_s"+is+"_"+k,"uvw_ecin_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECIN "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
                    dg.addDataSet(h,0);
            }
         	   
         	   for (int ip=1; ip<npmts[2]+1; ip++) {
-                   h = new H2F("tdc_ecou_u"+ip+"_s"+is+"_"+k,"tdc_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k,"uvw_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"U"+ip);
                    dg.addDataSet(h,0);
-                   h = new H2F("tdc_ecou_v"+ip+"_s"+is+"_"+k,"tdc_ecou_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecou_v"+ip+"_s"+is+"_"+k,"uvw_ecou_v"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"V"+ip);
                    dg.addDataSet(h,0);
-                   h = new H2F("tdc_ecou_w"+ip+"_s"+is+"_"+k,"tdc_ecou_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
+                   h = new H2F("uvw_ecou_w"+ip+"_s"+is+"_"+k,"uvw_ecou_w"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                    h.setTitleX("Sector "+is+" ECOU "+xtxt);
                    h.setTitleY(ytxt+"W"+ip);
                    dg.addDataSet(h,0);
@@ -491,17 +491,17 @@ public class ECrec extends DetectorMonitor {
        case 2: c.divide(6, 6); ipmax=37;
        }
        
-       double x1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().min();
-       double x2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().max();
-       double y1 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().min();
-       double y2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().max();
+       double x1 = dg.getH2F("uvw_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().min();
+       double x2 = dg.getH2F("uvw_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getXAxis().max();
+       double y1 = dg.getH2F("uvw_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().min();
+       double y2 = dg.getH2F("uvw_"+layer[l]+"_"+view[v]+1+"_s"+s+"_"+index).getYAxis().max();
        
        F1D f1 = new F1D("p0","[a]",x1,x2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
        double a0 = 100;
       
        for (int ip=1; ip<ipmax; ip++ ) {
 //    	      if(index==16) a0 = time.getDoubleValue("a0", s, 3*l+(v+1), ip)+shiftTV[s-1];
-    	      c.cd(ip-1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = dg.getH2F("tdc_"+layer[l]+"_"+view[v]+ip+"_s"+s+"_"+index); c.draw(h2);    	      
+    	      c.cd(ip-1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = dg.getH2F("uvw_"+layer[l]+"_"+view[v]+ip+"_s"+s+"_"+index); c.draw(h2);    	      
     	      c.draw(f1,"same"); 
 //    	      if(index==16&&a0<y2&&a0>y1) {F1D f2 = new F1D("p0","[a]",x1,x2); f2.setLineColor(2); f2.setLineStyle(1);f2.setParameter(0,a0);c.draw(f2,"same");}
        }
@@ -513,6 +513,7 @@ public class ECrec extends DetectorMonitor {
     	   H2F h2;
  	   DataGroup     dg = this.getDataGroup().getItem(0,0,index);	   
        EmbeddedCanvas c = this.getDetectorCanvas().getCanvas(this.getDetectorTabNames().get(index));
+       
        
        c.setGridX(false); c.setGridY(false);
        c.divide(3, 3);

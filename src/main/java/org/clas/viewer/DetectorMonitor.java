@@ -24,6 +24,7 @@ import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.ui.RangeSlider;
@@ -86,6 +87,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesX().setTitleFontName("Avenir");
         GStyle.getAxisAttributesY().setTitleFontName("Avenir");
         GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
+        GStyle.getAxisAttributesZ().setLog(true);
         
         this.detectorName = name;
         this.detectorPanel  = new JPanel();
@@ -509,5 +511,21 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             }
         }
     }
-        
+    
+    public void drawGroup(EmbeddedCanvas c, DataGroup group) {
+        int nrows = group.getRows();
+        int ncols = group.getColumns();
+        c.divide(ncols, nrows); 	    
+        int nds = nrows * ncols;
+        for (int i = 0; i < nds; i++) {
+            List<IDataSet> dsList = group.getData(i);
+            //System.out.println(" pad = " + i + " size = " + dsList.size());
+            c.cd(i);  String opt = " ";
+            for (IDataSet ds : dsList) {
+//                System.out.println("\t --> " + ds.getName());
+            	   c.draw(ds,opt); opt="same";
+            }
+        } 	       	
+    }
+    
 }
