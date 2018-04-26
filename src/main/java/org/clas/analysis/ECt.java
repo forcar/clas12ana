@@ -251,12 +251,12 @@ public class ECt extends DetectorMonitor {
                     	    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
                     	    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop));
                     	    for (int i=0; i<3; i++) {                    	 
-                             float tu    = (float) clusters.get(loop).getTime(i)-phase; //clusters correct their peak times for leff
+                             float tu    = (float) clusters.get(loop).getTime(i)-phase; 
                              int  ip     =         clusters.get(loop).getPeak(i).getMaxStrip();
                              int  adc    =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
                              float tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime()-phase;
                              float tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime()-phase;
-                             float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime()-phase; // peaks do not make leff time corrections
+                             float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime()-phase; 
                              float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
                              float tdif  = tu  - Tvertex + phase;
                              float tdifp = tdif - path/29.97f;
@@ -267,15 +267,15 @@ public class ECt extends DetectorMonitor {
                              if (bankp.getInt("pid",pin)==11) {
                             	    h = (H2F) this.getDataGroup().getItem(is,0,10).getData(il+i-1).get(0);  h.fill(tdifp, ip);
                             	    h = (H2F) this.getDataGroup().getItem(is,il+i,11).getData(ip-1).get(0); h.fill(path, tdifp);
-                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,12).getData(ip-1).get(0); h.fill(ener, tdifp);  
-                    	    	    	    h = (H2F) this.getDataGroup().getItem(is,il+i,13).getData(ip-1).get(0); h.fill(leff, tdifp);  
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,14).getData(ip-1).get(0); h.fill(tu-shiftTV[is-1], tdifp);  
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,15).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/18.1, adc);  
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,16).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc); 
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,17).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc);  
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,18).getData(ip-1).get(0); h.fill(tdcc, leff);  
-                    	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,19).getData(ip-1).get(0); h.fill(Tvertex-shiftTV[is-1]-phase,leff); 	
-                    	    	    } 	      
+                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,12).getData(ip-1).get(0); h.fill(ener, tdifp);
+                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,13).getData(ip-1).get(0); h.fill(leff, tdifp);
+                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,14).getData(ip-1).get(0); h.fill(tu  -shiftTV[is-1], tdifp);  
+                    	    	        h = (H2F) this.getDataGroup().getItem(is,il+i,15).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/18.1, adc);
+                    	    	        h = (H2F) this.getDataGroup().getItem(is,il+i,16).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc);
+                    	    	        h = (H2F) this.getDataGroup().getItem(is,il+i,17).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc);
+                    	    	        h = (H2F) this.getDataGroup().getItem(is,il+i,18).getData(ip-1).get(0); h.fill(tdcc, leff);
+                    	    	        h = (H2F) this.getDataGroup().getItem(is,il+i,19).getData(ip-1).get(0); h.fill(Tvertex-shiftTV[is-1]-phase,leff); 	
+                             } 	      
                     	    } 
                     }
                 }
@@ -292,25 +292,25 @@ public class ECt extends DetectorMonitor {
         if (k==12) {sca1=0.5; sca2=0.3;}
         
         for (int is=1; is<7; is++) {      
-          	DataGroup dg1 = new DataGroup(8,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
+            DataGroup dg1 = new DataGroup(8,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
             f1 = new F1D("p0","[a]",xmin,xmax); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
             for (int ip=1; ip<npmts[0]+1; ip++) {
-            	    h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k,"uvw_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
+                h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k,"uvw_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt);
                 h.setTitleY(ytxt+"U"+ip);       
-                dg1.addDataSet(h,ip-1);   dg1.addDataSet(f1,ip-1);
+                dg1.addDataSet(h,ip-1); dg1.addDataSet(f1,ip-1);
                 h = new H2F("uvw_pcal_v"+ip+"_s"+is+"_"+k,"uvw_pcal_v"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt);
                 h.setTitleY(ytxt+"V"+ip);
-                dg2.addDataSet(h,ip-1);  dg2.addDataSet(f1,ip-1);
+                dg2.addDataSet(h,ip-1); dg2.addDataSet(f1,ip-1);
                 h = new H2F("uvw_pcal_w"+ip+"_s"+is+"_"+k,"uvw_pcal_w"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt);
                 h.setTitleY(ytxt+"W"+ip); 
-                dg3.addDataSet(h,ip-1);  dg3.addDataSet(f1,ip-1);
+                dg3.addDataSet(h,ip-1); dg3.addDataSet(f1,ip-1);
      	    }
             this.getDataGroup().add(dg1,is,1,k); this.getDataGroup().add(dg2,is,2,k); this.getDataGroup().add(dg3,is,3,k);
             
-          	DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
+            DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
             f1 = new F1D("p0","[a]",xmin*sca1,xmax*sca1); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[1]+1; ip++) {
                 h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k,"uvw_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
@@ -329,7 +329,7 @@ public class ECt extends DetectorMonitor {
      	    }
             this.getDataGroup().add(dg4,is,4,k); this.getDataGroup().add(dg5,is,5,k); this.getDataGroup().add(dg6,is,6,k);
      	   
-          	DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
+            DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
             f1 = new F1D("p0","[a]",xmin*sca2,xmax*sca2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[2]+1; ip++) {
                 h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k,"uvw_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);

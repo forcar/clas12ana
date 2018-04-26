@@ -265,7 +265,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         CLAS12View.add(clas12Design);
         CLAS12View.add(clas12Text,BorderLayout.PAGE_END);
 
-        tabbedpane.add(splitPanel,"Summary");
+//        tabbedpane.add(splitPanel,"Summary");
         tabbedpane.addChangeListener(this);
         
        
@@ -275,9 +275,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }
         
         this.processorPane.addEventListener(this);
-        
-        this.tabbedpane.add(new Contact(),"Contacts");        
-        this.tabbedpane.add(new Acronyms(),"Acronyms");
         
         this.setCanvasUpdate(canvasUpdateTime);
         this.plotSummaries();
