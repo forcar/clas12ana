@@ -13,7 +13,7 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
 
-public class ECana  extends DetectorMonitor {
+public class ECa  extends DetectorMonitor {
 
     private final int[] npaddles = new int[]{68,62,62,36,36,36,36,36,36};
     
@@ -60,7 +60,7 @@ public class ECana  extends DetectorMonitor {
 	public int CVT_ndf;
 	public LorentzVector VB, VT, Ve, VG1, VG2, VPI0, VPIP, VPIM;        
     
-    public ECana(String name) {
+    public ECa(String name) {
         super(name);
         this.setDetectorTabNames("E/P v P","E/P v ThV","E/P v ThD","EPC/P v ThD","EECi/P v ThD","EECo/P v ThD","E/P v XY","E/P v UVW","PIM v UVW","PIP v UVW");
         this.useSectorButtons(true);

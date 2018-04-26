@@ -38,9 +38,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import org.clas.analysis.ECana;
-import org.clas.analysis.ECcal;
-import org.clas.analysis.ECrec;
+import org.clas.analysis.ECa;
 import org.clas.analysis.ECt;
 import org.clas.detectors.*;
 import org.jlab.detector.decode.CLASDecoder;
@@ -86,37 +84,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public String outPath = "/Users/lcsmith/CLAS12ANA";
     
-    // detector monitors
-    /*
     DetectorMonitor[] monitors = {
-        
-                new BMTmonitor("BMT"),        // 0
-                new BSTmonitor("BST"),        // 1
-                new CNDmonitor("CND"),        // 2
-                new CTOFmonitor("CTOF"),      // 3
-                new DCmonitor("DC"),          // 4
-                new ECmonitor("ECAL"),        // 5
-                new FMTmonitor("FMT"),        // 6
-                new FTCALmonitor("FTCAL"),    // 7
-                new FTHODOmonitor("FTHODO"),  // 8
-                new FTOFmonitor("FTOF"),      // 9
-                new FTTRKmonitor("FTTRK"),    // 10
-                new HTCCmonitor("HTCC"),      // 11
-                new LTCCmonitor("LTCC"),      // 12
-                new RICHmonitor("RICH"),      // 13
-                new RECmonitor("RECON"),      // 14
-             //   new TRKmonitor("TRK"),        // 15
-                new RFmonitor("RF"),          // 15
-                new HELmonitor("HEL"),        // 16
-                new FCUPmonitor("Faraday Cup"),  // 17
-                new TRIGGERmonitor("Trigger"),   // 18
-     
-    };
-    */
-    
-    DetectorMonitor[] monitors = {
-//    		new ECcal("ECcal")
-    		new ECana("ECa"),
+    		new ECa("ECa"),
     		new ECt("ECt")
     }  ;  
         

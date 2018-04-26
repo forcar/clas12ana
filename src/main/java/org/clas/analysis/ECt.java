@@ -35,9 +35,9 @@ public class ECt extends DetectorMonitor {
     float phase = 0;
     
 //  static float TOFFSET = 436; 
-    static float TOFFSET = 125; 
-	float      tps =  (float) 0.02345;
-	float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
+    static float TOFFSET = 125;
+    float      tps =  (float) 0.02345;
+    float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     
     public ECt(String name) {
         super(name);
@@ -116,32 +116,21 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(18);
     	    plotUVWHistos(19);
     }
-    
-    public int getDet(int layer) {
-        int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
-        return il[layer-1];
-     }
-    
-    public int getLay(int layer) {
-        int[] il = {1,2,3,1,2,3,1,2,3}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
-        return il[layer-1];
-    }
-    
+
     @Override
     public void processEvent(DataEvent event) {  
     	
        trigger_sect = getElecTriggerSector(); 
-       phase = getTriggerPhase()*4;
+       phase        = getTriggerPhase()*4;
        processRaw(event);
        processRec(event);
-//       processEB(event);
-              
+             
     }
     
     public void processRaw(DataEvent event) {
     	
-       H2F h;       
- 	   float     tdcd,tdcdc =  0;
+       H2F h;
+       float tdcd,tdcdc =  0;
         
        tdcs.clear();
         
@@ -238,10 +227,10 @@ public class ECt extends DetectorMonitor {
        
        for(int loop = 0; loop < bank.rows(); loop++){
     	       int   is = bank.getByte("sector", loop);
-           int   il = bank.getByte("layer", loop); 
-           int   in = bank.getShort("index", loop);
-           int  det = bank.getByte("detector", loop);
-           if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
+    	       int   il = bank.getByte("layer", loop);
+    	       int   in = bank.getShort("index", loop);
+    	       int  det = bank.getByte("detector", loop);
+    	       if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
        }
        
        if(event.hasBank("ECAL::clusters")){
@@ -276,9 +265,9 @@ public class ECt extends DetectorMonitor {
                              h = (H2F) this.getDataGroup().getItem(is,0,7).getData(il+i-1).get(0); h.fill(t,  ip);
                              h = (H2F) this.getDataGroup().getItem(is,0,9).getData(il+i-1).get(0); h.fill(tdif, ip);
                              if (bankp.getInt("pid",pin)==11) {
-                    	    	       	h = (H2F) this.getDataGroup().getItem(is,0,10).getData(il+i-1).get(0);  h.fill(tdifp, ip);  
-                    	    	    	    h = (H2F) this.getDataGroup().getItem(is,il+i,11).getData(ip-1).get(0); h.fill(path, tdifp);  
-                    	    	       	h = (H2F) this.getDataGroup().getItem(is,il+i,12).getData(ip-1).get(0); h.fill(ener, tdifp);  
+                            	    h = (H2F) this.getDataGroup().getItem(is,0,10).getData(il+i-1).get(0);  h.fill(tdifp, ip);
+                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,11).getData(ip-1).get(0); h.fill(path, tdifp);
+                            	    h = (H2F) this.getDataGroup().getItem(is,il+i,12).getData(ip-1).get(0); h.fill(ener, tdifp);  
                     	    	    	    h = (H2F) this.getDataGroup().getItem(is,il+i,13).getData(ip-1).get(0); h.fill(leff, tdifp);  
                     	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,14).getData(ip-1).get(0); h.fill(tu-shiftTV[is-1], tdifp);  
                     	    	     	h = (H2F) this.getDataGroup().getItem(is,il+i,15).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/18.1, adc);  
