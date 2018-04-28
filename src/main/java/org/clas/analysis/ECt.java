@@ -36,6 +36,8 @@ public class ECt extends DetectorMonitor {
     
 //  static float TOFFSET = 436; 
     static float TOFFSET = 125;
+    static float veff = 17.5f;
+    static float    c = 29.98f;
     float      tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     
@@ -65,6 +67,7 @@ public class ECt extends DetectorMonitor {
         this.useSliderPane(true);
         engine.init();       
         engine.setVariation("default");
+        engine.setVeff(veff);
         time = engine.getConstantsManager().getConstants(3050, "/calibration/ec/timing");
         this.init(false);
     }
@@ -235,9 +238,9 @@ public class ECt extends DetectorMonitor {
        
        if(event.hasBank("ECAL::clusters")){
             DataBank  bank1 = event.getBank("ECAL::clusters");
-    	        DataBank  bank2 = event.getBank("ECAL::calib");
+            DataBank  bank2 = event.getBank("ECAL::calib");
             for(int loop = 0; loop < bank1.rows(); loop++){
-                int     is = bank1.getByte("sector", loop);
+                int is = bank1.getByte("sector", loop);
                 if (is==trigger_sect){
                     int     il = bank1.getByte("layer", loop);
                     float ener = bank1.getFloat("energy",loop)*1000;
@@ -259,8 +262,8 @@ public class ECt extends DetectorMonitor {
                              float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime()-phase; 
                              float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
                              float tdif  = tu  - Tvertex + phase;
-                             float tdifp = tdif - path/29.97f;
-                             float texp  = path/29.97f + leff/18.1f + Tvertex - phase - shiftTV[is-1];
+                             float tdifp = tdif - path/c;
+                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1];
                              h = (H2F) this.getDataGroup().getItem(is,0,6).getData(il+i-1).get(0); h.fill(tu, ip);
                              h = (H2F) this.getDataGroup().getItem(is,0,7).getData(il+i-1).get(0); h.fill(t,  ip);
                              h = (H2F) this.getDataGroup().getItem(is,0,9).getData(il+i-1).get(0); h.fill(tdif, ip);
@@ -270,9 +273,9 @@ public class ECt extends DetectorMonitor {
                                 h = (H2F) this.getDataGroup().getItem(is,il+i,12).getData(ip-1).get(0); h.fill(ener, tdifp);
                                 h = (H2F) this.getDataGroup().getItem(is,il+i,13).getData(ip-1).get(0); h.fill(leff, tdifp);
                                 h = (H2F) this.getDataGroup().getItem(is,il+i,14).getData(ip-1).get(0); h.fill(tu  -shiftTV[is-1], tdifp);  
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,15).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/18.1, adc);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,16).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,17).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/18.1, adc);
+                                h = (H2F) this.getDataGroup().getItem(is,il+i,15).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/veff, adc);
+                                h = (H2F) this.getDataGroup().getItem(is,il+i,16).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/veff, adc);
+                                h = (H2F) this.getDataGroup().getItem(is,il+i,17).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/veff, adc);
                                 h = (H2F) this.getDataGroup().getItem(is,il+i,18).getData(ip-1).get(0); h.fill(tdcc, leff);
                                 h = (H2F) this.getDataGroup().getItem(is,il+i,19).getData(ip-1).get(0); h.fill(Tvertex-shiftTV[is-1]-phase,leff); 	
                              } 	      
@@ -293,7 +296,8 @@ public class ECt extends DetectorMonitor {
         
         for (int is=1; is<7; is++) {      
             DataGroup dg1 = new DataGroup(8,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
-            f1 = new F1D("p0","[a]",xmin,xmax); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
+            f1 = new F1D("p0"+is+1+k,"[a]",xmin,xmax); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
+           
             for (int ip=1; ip<npmts[0]+1; ip++) {
                 h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k,"uvw_pcal_u"+ip+"_s"+is+"_"+k,xbins,xmin,xmax,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"U"+ip);       
@@ -308,7 +312,7 @@ public class ECt extends DetectorMonitor {
             this.getDataGroup().add(dg1,is,1,k); this.getDataGroup().add(dg2,is,2,k); this.getDataGroup().add(dg3,is,3,k);
             
             DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
-            f1 = new F1D("p0","[a]",xmin*sca1,xmax*sca1); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
+            f1 = new F1D("p0"+is+2+k,"[a]",xmin*sca1,xmax*sca1); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[1]+1; ip++) {
                 h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k,"uvw_ecin_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca1,xmax*sca1,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt);  h.setTitleY(ytxt+"U"+ip); 
@@ -324,7 +328,7 @@ public class ECt extends DetectorMonitor {
             this.getDataGroup().add(dg4,is,4,k); this.getDataGroup().add(dg5,is,5,k); this.getDataGroup().add(dg6,is,6,k);
      	   
             DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
-            f1 = new F1D("p0","[a]",xmin*sca2,xmax*sca2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
+            f1 = new F1D("p0"+is+3+k,"[a]",xmin*sca2,xmax*sca2); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[2]+1; ip++) {
                 h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k,"uvw_ecou_u"+ip+"_s"+is+"_"+k,xbins,xmin*sca2,xmax*sca2,ybins,ymin,ymax);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt); h.setTitleY(ytxt+"U"+ip);

@@ -27,6 +27,7 @@ import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
@@ -81,6 +82,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesY().setTitleFontSize(14);
         GStyle.getAxisAttributesY().setLabelFontSize(14);
         GStyle.getAxisAttributesZ().setLabelFontSize(14); 
+        GStyle.getAxisAttributesX().setAxisGrid(false);
+        GStyle.getAxisAttributesY().setAxisGrid(false);
         GStyle.getAxisAttributesX().setLabelFontName("Avenir");
         GStyle.getAxisAttributesY().setLabelFontName("Avenir");
         GStyle.getAxisAttributesZ().setLabelFontName("Avenir");
