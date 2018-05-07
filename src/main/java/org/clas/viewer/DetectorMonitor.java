@@ -39,7 +39,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     private final String           detectorName;
     private ArrayList<String>      detectorTabNames  = new ArrayList();
-    private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(3);
+    private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(4);
     private DataGroup              detectorSummary   = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                 detectorPanel     = null;
@@ -49,27 +49,31 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private ButtonGroup                          bG1 = null;
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
-    private int                    numberOfEvents;
-    private Boolean                sectorButtons     = false;
-    private Boolean                     sliderPane   = false;
+    private int                       numberOfEvents = 0;
+    private Boolean                    sectorButtons = false;
+    private Boolean                       sliderPane = false;
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
+    
     private JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
-    private JCheckBox        tbBtn;
+    private JCheckBox tbBtn;
     
-    public int bitsec = 0;
-    public long trigger = 0;
+    public int        bitsec = 0;
+    public long      trigger = 0;
     public long triggerPhase = 0;
-    public long DC_max_occ = 15;
-    public int trigFD = 0;
-    public int trigCD = 0;
+    public int        trigFD = 0;
+    public int        trigCD = 0;
     
-    public boolean testTrigger = false;
+    public boolean   testTrigger = false;
     public boolean TriggerBeam[] = new boolean[32];
-    public int TriggerMask = 0;
+    public int       TriggerMask = 0;
+    
+    private int   runNumber = 0;
+    private int eventNumber = 0;
+    private int     viewRun = 0;  
     
     public int eventResetTime_current[]=new int[19];
     public int eventResetTime_default[]=new int[19];    
@@ -100,57 +104,41 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         
         eventResetTime_current[0]=0;
         eventResetTime_current[1]=0;
-        eventResetTime_current[2]=0;
-        eventResetTime_current[3]=0;
-        eventResetTime_current[4]=0;
-        eventResetTime_current[5]=0;
-        eventResetTime_current[6]=0;
-        eventResetTime_current[7]=0;
-        eventResetTime_current[8]=0;
-        eventResetTime_current[9]=0;
-        eventResetTime_current[10]=0;
-        eventResetTime_current[11]=0;
-        eventResetTime_current[12]=0;
-        eventResetTime_current[13]=0;
-        eventResetTime_current[14]=0;
-        eventResetTime_current[15]=0;
-        eventResetTime_current[16]=0;
-        eventResetTime_current[17]=0;
-        eventResetTime_current[18]=0;
-        
-        eventResetTime_default[0]=10000000;   // BMT
-        eventResetTime_default[1]=10000000;   // BST
-        eventResetTime_default[2]=10000000;   // CND
-        eventResetTime_default[3]=10000000;   // CTOF
-        eventResetTime_default[4]=10000000;   // DC
-        eventResetTime_default[5]=10000000;   // ECAL
-        eventResetTime_default[6]=10000000;   // FMT
-        eventResetTime_default[7]=10000000;   // FTCAL
-        eventResetTime_default[8]=10000000;   // FTHODO
-        eventResetTime_default[9]=10000000;   // FTOF
-        eventResetTime_default[10]=10000000;  // FTTRK
-        eventResetTime_default[11]=10000000;  // HTTC
-        eventResetTime_default[12]=10000000;  // LTTC
-        eventResetTime_default[13]=10000000;  // RICH
-        eventResetTime_default[14]=10000000;  // RECONN
-        eventResetTime_default[15]=10000000;  // RF
-        eventResetTime_default[16]=10000000;  // HEL
-        eventResetTime_default[17]=10000000;  // Faraday Cup
-        eventResetTime_default[18]=10000000;  // Trigger
      
-        for (int i=0; i<19; i++){
+        eventResetTime_default[0]=10000000;  
+        eventResetTime_default[1]=10000000;  
+     
+        for (int i=0; i<2; i++){
             eventResetTime_current[i]=eventResetTime_default[i];
         }
     }
-
+    
+    public void init() {
+        getDetectorPanel().setLayout(new BorderLayout());
+        actionPanel = new JPanel();
+        actionPanel.setLayout(new FlowLayout());
+        getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
+        getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
+        createHistos(0);
+        plotHistos(0); 
+        if (sectorButtons) {bS2.doClick();}
+    }
     
     public void analyze() {
         // analyze detector data at the end of data processing
     }
-
-    public void createHistos() {
+    
+    public void fillSummary() {
+       
+    }
+    
+    public void createHistos(int run) {
         // initialize canvas and create histograms
     }
+    
+    public void createSummary() {
+        // initialize canvas and create histograms
+    }   
     
     @Override
     public void dataEventAction(DataEvent event) {
@@ -188,25 +176,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public void setTestTrigger(boolean test) {
     	   this.testTrigger = test;
     }
-/*    
-    public boolean isGoodCDTrigger()       {return (testTrigger)? isGoodCD():true;}  
-    public boolean isGoodHTCCTrigger()     {return (testTrigger)? isGoodHTCC():true;}
-    public boolean isGoodFTOFTrigger()     {return (testTrigger)? isGoodFTOF():true;}
-    public boolean isGoodBSTTrigger()      {return (testTrigger)? isGoodBST():true;}
-    public boolean isGoodCTOFTrigger()     {return (testTrigger)? isGoodCTOF():true;}
-    public boolean isGoodCNDTrigger()      {return (testTrigger)? isGoodCND():true;}
-    public boolean isGoodBMTTrigger()      {return (testTrigger)? isGoodBMT():true;}
-    public boolean isGoodFD()              {return  this.trigFD>=256&&this.trigFD<=8196;}    
-    public boolean isGoodCD()              {return  isGoodBST()||isGoodCTOF()||isGoodCND()||isGoodBMT();}
-    public boolean isGoodHTCC()            {return  this.trigFD==1;}    
-    public boolean isGoodFTOF()            {return  isGoodFD();}   
-    public boolean isGoodBST()             {return  this.trigCD==256;}    
-    public boolean isGoodCTOF()            {return  this.trigCD==512;}
-    public boolean isGoodCND()             {return  this.trigCD==1024;}   
-    public boolean isGoodBMT()             {return  this.trigCD==2048;}       
-    public int     getFDTrigger()          {return (this.trigger>>16)&0x0000ffff;}    
-    public int     getCDTrigger()          {return this.trigger&0x00000fff;} 
-*/
     
     public int     getFDTrigger()            {return (int)(this.trigger)&0x000000000ffffffff;}
     public int     getCDTrigger()            {return (int)(this.trigger>>32)&0x00000000ffffffff;}
@@ -289,29 +258,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public Boolean getLogZ() {
 	    return this.detectorLogZ;
     }
-
-    public void init(boolean flagDetectorView) {
-        // initialize monitoring application
-        // detector view is shown if flag is true
-        getDetectorPanel().setLayout(new BorderLayout());
-        drawDetector();
-        JSplitPane   splitPane = new JSplitPane();
-        actionPanel = new JPanel();
-        actionPanel.setLayout(new FlowLayout());
-        splitPane.setLeftComponent(getDetectorView());
-        splitPane.setRightComponent(getDetectorCanvas());
-        if(flagDetectorView) {
-            getDetectorPanel().add(splitPane,BorderLayout.CENTER);  
-        }
-        else {
-            getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
-            getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
-        }
-        createHistos();
-        plotHistos(); 
-//        if (sectorButtons) {bS2.doClick();bpcal.doClick();bu.doClick();}
-        if (sectorButtons) {bS2.doClick();}
-    }
     
     public JPanel packActionPanel() {
         if (sectorButtons) actionPanel.add(getButtonPane()); 
@@ -346,9 +292,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     	    JPanel sliderPane = new JPanel();
         JLabel xLabel = new JLabel("Z-Range:");
         RangeSlider slider = new RangeSlider();
-        slider.setMinimum((int)  0.1);
+        slider.setMinimum((int)    1.);
         slider.setMaximum((int)  500.);
-        slider.setValue((int) 0.1);
+        slider.setValue((int) 1.);
         slider.setUpperValue((int) 500.);            
         zMin =     slider.getValue();
         zMax = 0.1*slider.getUpperValue();
@@ -362,12 +308,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         slider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 RangeSlider slider = (RangeSlider) e.getSource();
-                zMin =     slider.getValue();
+                zMin =     slider.getValue(); 
                 zMax = 0.1*slider.getUpperValue();
-                zMinLab = Math.pow(10, zMin/10); zMaxLab = Math.pow(10, zMax/10);
+                zMinLab = Math.pow(2, zMin/10); zMaxLab = Math.pow(10, zMax/10);
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
-                plotHistos();
+                plotHistos(getRunNumber());
             }
         });  
         
@@ -379,7 +325,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         this.detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         this.detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         this.detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
-        plotHistos();
+        plotHistos(getRunNumber());
     } 
     
     public void processEvent(DataEvent event) {
@@ -390,24 +336,26 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         // process event
     }
     
-    public void plotHistos() {
+    public void plotHistos(int run) {
 
     }
     
     public void printCanvas(String dir) {
         // print canvas to files
+        int run = this.getViewRun();
+        if(run==0) run = this.getRunNumber();
         for(int tab=0; tab<this.detectorTabNames.size(); tab++) {
-            String fileName = dir + "/" + this.detectorName + "_canvas" + tab + ".png";
+            String fileName = dir + "/" + this.detectorName + "_" + run + "_canvas" + tab + ".png";
             System.out.println(fileName);
             this.detectorCanvas.getCanvas(this.detectorTabNames.get(tab)).save(fileName);
         }
-    }
+    }   
     
     @Override
     public void resetEventListener() {
-        System.out.println("Resetting " + this.getDetectorName() + " histogram");
-        this.createHistos();
-        this.plotHistos();
+        System.out.println("Resetting " + this.getDetectorName() + " histogram for run "+this.getRunNumber());
+        this.createHistos(this.getRunNumber());
+        this.plotHistos(this.getRunNumber());
     }
     
     public void setCanvasUpdate(int time) {
@@ -435,10 +383,29 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public void setNumberOfEvents(int numberOfEvents) {
         this.numberOfEvents = numberOfEvents;
     }
+    
+    public void setEventNumber(int eventNumber) {
+        this.eventNumber = eventNumber;
+    }
 
+    public void setRunNumber(int runNumber) {
+        this.runNumber = runNumber;
+    }
+    
+    public int getEventNumber() {
+        return eventNumber;
+    }
+
+    public int getRunNumber() {
+        return runNumber;
+    }
+
+    public int getViewRun() {
+        return viewRun;
+    }   
+    
     @Override
-    public void timerUpdate() {
-        
+    public void timerUpdate() {      
     }
  
     public void readDataGroup(TDirectory dir) {
@@ -478,7 +445,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             }
             map.replace(key, newGroup);
         }
-        this.plotHistos();
+        this.plotHistos(this.getRunNumber());
     }
     
     public void writeDataGroup(TDirectory dir) {

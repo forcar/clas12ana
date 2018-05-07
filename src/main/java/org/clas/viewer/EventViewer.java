@@ -54,33 +54,35 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioDataEvent;
+import org.jlab.io.evio.EvioSource;
 import org.jlab.io.hipo.HipoDataEvent;
+import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.task.DataSourceProcessorPane;
 import org.jlab.io.task.IDataEventListener;
 import org.jlab.elog.LogEntry; 
-
         
 /**
  *
- * @author ziegler
+ * @author lcsmith
  */
 
 public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ChangeListener {
     
-    List<DetectorPane2D> DetectorPanels     = new ArrayList<DetectorPane2D>();
-    JTabbedPane tabbedpane           	   = null;
-    JPanel mainPanel 			           = null;
-    JMenuBar menuBar                        = null;
-    JTextPane clas12Textinfo                = new JTextPane();
-    DataSourceProcessorPane processorPane   = null;
-    EmbeddedCanvasTabbed CLAS12Canvas       = null;
+    JTabbedPane                  tabbedpane = null;
+    JPanel                        mainPanel = null;
+    JMenuBar                        menuBar = null;
+    DataSourceProcessorPane   processorPane = null;
     
+    CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder                clasDecoder = new CLASDecoder();
+    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
        
-    private int canvasUpdateTime   = 2000;
+    private int   canvasUpdateTime = 2000;
     private int analysisUpdateTime = 100;
-    private int runNumber     = 2284;
-    private int ccdbRunNumber = 0;
+    private int          runNumber = 2284;
+    private int        eventNumber = 0;
+    private int      ccdbRunNumber = 0;
+    String                 workDir = null;
     
     public String outPath = "/Users/lcsmith/CLAS12ANA";
     
@@ -91,54 +93,42 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
     public EventViewer() {    	
         		
-	// create menu bar
         menuBar = new JMenuBar();
         JMenuItem menuItem;
+        
         JMenu file = new JMenu("File");
-        file.setMnemonic(KeyEvent.VK_A);
         file.getAccessibleContext().setAccessibleDescription("File options");
-        menuItem = new JMenuItem("Open histograms file", KeyEvent.VK_O);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Load files...");
+        menuItem.getAccessibleContext().setAccessibleDescription("Load files");
+        menuItem.addActionListener(this);
+        file.add(menuItem);        
+        file.addSeparator();
+        menuItem = new JMenuItem("Open histograms file");
         menuItem.getAccessibleContext().setAccessibleDescription("Open histograms file");
         menuItem.addActionListener(this);
         file.add(menuItem);
-        menuItem = new JMenuItem("Save histograms to file", KeyEvent.VK_S);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Save histograms to file");
         menuItem.getAccessibleContext().setAccessibleDescription("Save histograms to file");
         menuItem.addActionListener(this);
         file.add(menuItem);
-        menuItem = new JMenuItem("Print histograms as png", KeyEvent.VK_B);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Print histograms as png");
         menuItem.getAccessibleContext().setAccessibleDescription("Print histograms as png");
         menuItem.addActionListener(this);
-        file.add(menuItem);
-        //menuItem = new JMenuItem("Create histogram PDF", KeyEvent.VK_P);
-        //menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
-        //menuItem.getAccessibleContext().setAccessibleDescription("Create historgram PDF");
-        //menuItem.addActionListener(this);
-        //file.add(menuItem);
-        
+        file.add(menuItem);       
         menuBar.add(file);
+        
         JMenu settings = new JMenu("Settings");
-        settings.setMnemonic(KeyEvent.VK_A);
         settings.getAccessibleContext().setAccessibleDescription("Choose monitoring parameters");
-        menuItem = new JMenuItem("Set GUI update interval", KeyEvent.VK_T);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Set GUI update interval");
         menuItem.getAccessibleContext().setAccessibleDescription("Set GUI update interval");
         menuItem.addActionListener(this);
         settings.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis log scale", KeyEvent.VK_L);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Set global z-axis log scale");
         menuItem.getAccessibleContext().setAccessibleDescription("Set global z-axis log scale");
         menuItem.addActionListener(this);
         settings.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis lin scale", KeyEvent.VK_R);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        menuItem = new JMenuItem("Set global z-axis lin scale");
         menuItem.getAccessibleContext().setAccessibleDescription("Set global z-axis lin scale");
-        menuItem.addActionListener(this);
-        settings.add(menuItem);
-        menuItem = new JMenuItem("Set DC occupancy scale max");
-        menuItem.getAccessibleContext().setAccessibleDescription("Set DC occupancy scale max");
         menuItem.addActionListener(this);
         settings.add(menuItem);
         menuItem = new JMenuItem("Set run number");
@@ -146,20 +136,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuItem.addActionListener(this);
         settings.add(menuItem);
         menuBar.add(settings);
-         
-        JMenu upload = new JMenu("Upload");
-        upload.setMnemonic(KeyEvent.VK_A);
-        upload.getAccessibleContext().setAccessibleDescription("Upload histograms to the Logbook");
-        menuItem = new JMenuItem("Upload all histos to the logbook");
-        menuItem.getAccessibleContext().setAccessibleDescription("Upload all histos to the logbook");
-        menuItem.addActionListener(this);
-        upload.add(menuItem);
-        menuItem = new JMenuItem("Upload occupancy histos to the logbook", KeyEvent.VK_U);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.CTRL_MASK));
-        menuItem.getAccessibleContext().setAccessibleDescription("Upload occupancy histos to the logbook");
-        menuItem.addActionListener(this);
-        upload.add(menuItem);
-        menuBar.add(upload);
         
         JMenu reset = new JMenu("Reset");
         reset.getAccessibleContext().setAccessibleDescription("Reset histograms");
@@ -223,77 +199,38 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
         mainPanel.add(tabbedpane);
         mainPanel.add(processorPane,BorderLayout.PAGE_END);
-        
-    
+           
         GStyle.getAxisAttributesX().setTitleFontSize(18);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
         GStyle.getAxisAttributesY().setTitleFontSize(18);
         GStyle.getAxisAttributesY().setLabelFontSize(14);
-        
-        CLAS12Canvas    = new EmbeddedCanvasTabbed("FD");
-        CLAS12Canvas.getCanvas("FD").divide(3,3);
-        CLAS12Canvas.getCanvas("FD").setGridX(false);
-        CLAS12Canvas.getCanvas("FD").setGridY(false); 
-        CLAS12Canvas.addCanvas("CD");
-        CLAS12Canvas.getCanvas("CD").divide(2,2);
-        CLAS12Canvas.getCanvas("CD").setGridX(false);
-        CLAS12Canvas.getCanvas("CD").setGridY(false);
-        CLAS12Canvas.addCanvas("FT");
-        CLAS12Canvas.getCanvas("FT").divide(1,3);
-        CLAS12Canvas.getCanvas("FT").setGridX(false);
-        CLAS12Canvas.getCanvas("FT").setGridY(false);
 
-        
-        JPanel    CLAS12View = new JPanel(new BorderLayout());
-        JSplitPane splitPanel = new JSplitPane();
-        splitPanel.setLeftComponent(CLAS12View);
-        splitPanel.setRightComponent(CLAS12Canvas);
-        JTextPane clas12Text   = new JTextPane();
-        clas12Text.setText("CLAS12\n monitoring plots\n V2.0\n");
-        clas12Text.setEditable(false);       
-        this.clas12Textinfo.setEditable(false);
-        StyledDocument styledDoc = clas12Text.getStyledDocument();
-        SimpleAttributeSet center = new SimpleAttributeSet();
-        StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
-        styledDoc.setParagraphAttributes(0, styledDoc.getLength(), center, false);
-        clas12Text.setBackground(CLAS12View.getBackground());
-        clas12Text.setFont(new Font("Avenir",Font.PLAIN,20));
-        JLabel clas12Design = this.getImage("https://www.jlab.org/Hall-B/clas12-web/sidebar/clas12-design.jpg",0.08);
-        JLabel clas12Logo   = this.getImage("https://www.jlab.org/Hall-B/pubs-web/logo/CLAS-frame-low.jpg", 0.3);
-//        CLAS12View.add(clas12Name,BorderLayout.PAGE_START);
-        CLAS12View.add(clas12Textinfo,BorderLayout.BEFORE_FIRST_LINE );
-        CLAS12View.add(clas12Design);
-        CLAS12View.add(clas12Text,BorderLayout.PAGE_END);
-
-//        tabbedpane.add(splitPanel,"Summary");
-        tabbedpane.addChangeListener(this);
-        
-       
         for(int k=0; k<this.monitors.length; k++) {
                 this.tabbedpane.add(this.monitors[k].getDetectorPanel(), this.monitors[k].getDetectorName());
         	        this.monitors[k].getDetectorView().getView().addDetectorListener(this);                        
         }
         
+        this.tabbedpane.addChangeListener(this);
+               
         this.processorPane.addEventListener(this);
         
         this.setCanvasUpdate(canvasUpdateTime);
-        this.plotSummaries();
         
     }
       
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
+        if(e.getActionCommand() == "Load files...") {
+            this.readFiles();
+        }           
         if(e.getActionCommand()=="Set GUI update interval") {
             this.chooseUpdateInterval();
         }
         if(e.getActionCommand()=="Set global z-axis log scale") {
-        	   for(int k=0; k<this.monitors.length; k++) {this.monitors[k].setLogZ(true);this.monitors[k].plotHistos();}
+        	   for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true);
         }
         if(e.getActionCommand()=="Set global z-axis lin scale") {
-           for(int k=0; k<this.monitors.length; k++) {this.monitors[k].setLogZ(false);this.monitors[k].plotHistos();}
-        }
-        if(e.getActionCommand()=="Set DC occupancy scale max") {
-           setDCRange(e.getActionCommand());
+           for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false);
         }
         if(e.getActionCommand()=="Set run number") {
            setRunNumber(e.getActionCommand());
@@ -314,9 +251,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         if(e.getActionCommand()=="Print histograms as png") {
             this.printHistosToFile();
         }
-        if(e.getActionCommand()=="Create histogram PDF") {
-            this.createHistoPDF();
-        }
+        
         if(e.getActionCommand()=="Save histograms to file") {
             DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
             String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + df.format(new Date()) + ".hipo";
@@ -331,221 +266,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }
             this.saveHistosToFile(fileName);
         }
-        
-        if(e.getActionCommand()=="Upload all histos to the logbook") {   
             
-            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-            String data = outPath + "/output" + "/clas12ana_" + this.runNumber + "_" + df.format(new Date());        
-            File theDir = new File(data);
-            // if the directory does not exist, create it
-            if (!theDir.exists()) {
-                boolean result = false;
-                try{theDir.mkdir();result = true;} 
-                catch(SecurityException se){}        
-                if(result){ System.out.println("Created directory: " + data);}
-            }
-            
-            String fileName1 = data + "/summary_FD.png";
-            System.out.println(fileName1);
-            CLAS12Canvas.getCanvas("FD").save(fileName1);
-            String fileName2 = data + "/summary_CD.png";
-            System.out.println(fileName2);
-            CLAS12Canvas.getCanvas("CD").save(fileName2);
-            String fileName3 = data + "/summary_FT.png";
-            System.out.println(fileName3);
-            CLAS12Canvas.getCanvas("FT").save(fileName3);
-            
-            for(int k=0; k<this.monitors.length; k++) {
-                this.monitors[k].printCanvas(data);
-            }
-            
-            LogEntry entry = new LogEntry("All online monitoring histograms for run number " + this.runNumber, "HBLOG");
-            
-            System.out.println("Starting to upload all monitoring plots");
-            
-            try{
-              entry.addAttachment(data+"/summary_FD.png", "Summary plots FD");
-              entry.addAttachment(data+"/summary_CD.png", "Summary plots CD");
-              entry.addAttachment(data+"/summary_FT.png", "Summary plots FT");
-              System.out.println("Summary plots uploaded");
-              entry.addAttachment(data+"/BMT_canvas0.png", "BMT occupancies");
-              entry.addAttachment(data+"/BMT_canvas1.png", "BMT occupancies c");
-              entry.addAttachment(data+"/BMT_canvas2.png", "BMT occupancies z");
-              entry.addAttachment(data+"/BMT_canvas3.png", "BMT time of max");
-              entry.addAttachment(data+"/BMT_canvas4.png", "BMT multiplicity");
-              System.out.println("BMT plots uploaded");
-              entry.addAttachment(data+"/BST_canvas0.png", "BST occupancies 2D");
-              entry.addAttachment(data+"/BST_canvas1.png", "BST occupancies 1D");
-              entry.addAttachment(data+"/BST_canvas2.png", "BST multiplicity"); 
-              System.out.println("BST plots uploaded");
-              entry.addAttachment(data+"/CND_canvas0.png", "CND ADC occupancies and spectra");
-              entry.addAttachment(data+"/CND_canvas1.png", "CND TDC occupancies and spectra");
-              System.out.println("CND plots uploaded");
-              entry.addAttachment(data+"/CTOF_canvas0.png", "CTOF ADC occupancies and spectra");
-              entry.addAttachment(data+"/CTOF_canvas1.png", "CTOF TDC occupancies and spectra");
-              System.out.println("CTOF plots uploaded");
-              entry.addAttachment(data+"/DC_canvas0.png", "DC occupancies raw");
-              entry.addAttachment(data+"/DC_canvas1.png", "DC occupancies normalized logarithmic scale");
-              entry.addAttachment(data+"/DC_canvas2.png", "DC occupancies normalized linear scale");
-              entry.addAttachment(data+"/DC_canvas3.png", "DC region occupancies");
-              entry.addAttachment(data+"/DC_canvas4.png", "DC TDC raw value distribution");
-              entry.addAttachment(data+"/DC_canvas5.png", "DC hit multiplicity");
-              System.out.println("DC plots uploaded");
-              entry.addAttachment(data+"/ECAL_canvas0.png", "ECAL ADC occupancies");
-              entry.addAttachment(data+"/ECAL_canvas1.png", "ECAL TDC occupancies");
-              entry.addAttachment(data+"/ECAL_canvas2.png", "ECAL ADC histograms");
-              entry.addAttachment(data+"/ECAL_canvas3.png", "ECAL FADC timing");
-              entry.addAttachment(data+"/ECAL_canvas4.png", "ECAL TDC histograms");
-              entry.addAttachment(data+"/ECAL_canvas5.png", "ECAL ADC sum");
-              System.out.println("ECAL plots uploaded");
-              //entry.addAttachment(data+"/Faraday Cup_canvas0.png", "Faraday Cup");
-              //System.out.println("Farady Cup plots uploaded");
-              entry.addAttachment(data+"/FMT_canvas0.png", "FMT occupancies 2D");
-              entry.addAttachment(data+"/FMT_canvas1.png", "FMT Time of Max");
-              entry.addAttachment(data+"/FMT_canvas2.png", "FMT occupancies 1D");
-              entry.addAttachment(data+"/FMT_canvas3.png", "FMT Multiplicity");
-              System.out.println("FMT plots uploaded");
-              entry.addAttachment(data+"/FTCAL_canvas0.png", "FTCAL");
-              System.out.println("FTCAL plot uploaded");
-              entry.addAttachment(data+"/FTHODO_canvas0.png", "FTHODO FADC occupancies");
-              entry.addAttachment(data+"/FTHODO_canvas1.png", "FTHODO FADC spectra");
-              System.out.println("FTHODO plots uploaded");
-              entry.addAttachment(data+"/FTOF_canvas0.png", "FTOF ADC occupancies");
-              entry.addAttachment(data+"/FTOF_canvas1.png", "FTOF TDC occupancies");
-              entry.addAttachment(data+"/FTOF_canvas2.png", "FTOF ADC histograms");
-              entry.addAttachment(data+"/FTOF_canvas3.png", "FTOF FADC timing");
-              entry.addAttachment(data+"/FTOF_canvas4.png", "FTOF TDC histograms");
-              entry.addAttachment(data+"/FTOF_canvas5.png", "FTOF GMEAN");
-              System.out.println("FTOF plots uploaded");
-              entry.addAttachment(data+"/FTTRK_canvas0.png", "FTTRK occupancies 2D");
-              entry.addAttachment(data+"/FTTRK_canvas1.png", "FTTRK occupancies 1D");
-              entry.addAttachment(data+"/FTTRK_canvas2.png", "FTTRK average time maximum");
-              entry.addAttachment(data+"/FTTRK_canvas3.png", "FTTRK ADC and time spectra");
-              System.out.println("FTTRK plots uploaded");
-              //entry.addAttachment(data+"/HEL_canvas0.png", "Helicity");
-              //System.out.println("Helicity plot uploaded");
-              entry.addAttachment(data+"/HTCC_canvas0.png", "HTCC occupancies");
-              entry.addAttachment(data+"/HTCC_canvas1.png", "HTCC ADC spectra");
-              entry.addAttachment(data+"/HTCC_canvas2.png", "HTCC FADC timing spectra");
-              //entry.addAttachment(data+"/HTCC_canvas3.png", "HTCC TDC spectra");
-              System.out.println("HTCC plots uploaded");
-              entry.addAttachment(data+"/LTCC_canvas0.png", "LTCC ADC occupancies and spectra");
-              entry.addAttachment(data+"/LTCC_canvas1.png", "LTCC FADC timing");
-              //entry.addAttachment(data+"/LTCC_canvas2.png", "LTCC TDC occupancies and spectra");
-              System.out.println("LTTC plots uploaded");
-              //entry.addAttachment(data+"/RECON_canvas0.png", "RECON CVT cosmic");
-              //entry.addAttachment(data+"/RECON_canvas1.png", "RECON CVT positive tracks");
-              //entry.addAttachment(data+"/RECON_canvas2.png", "RECON CVT negative tracks");
-              //entry.addAttachment(data+"/RECON_canvas3.png", "RECON DC tracks per event");
-              //entry.addAttachment(data+"/RECON_canvas4.png", "RECON DC hits per track");
-              //entry.addAttachment(data+"/RECON_canvas5.png", "RECON DC momentum");
-              //entry.addAttachment(data+"/RECON_canvas6.png", "RECON DC theta angle");
-              //System.out.println("RECON plots uploaded");
-              entry.addAttachment(data+"/RF_canvas0.png", "RF canvas 1");
-              entry.addAttachment(data+"/RF_canvas1.png", "RF canvas 2");
-              System.out.println("RF plots uploaded");
-              //entry.addAttachment(data+"/RICH_canvas0.png", "RICH occupancy");
-              //System.out.println("RICH plot uploaded");
-              entry.addAttachment(data+"/Trigger_canvas0.png", "Trigger bits");
-              //entry.addAttachment(data+"/Trigger_canvas1.png", "Trigger EC peak");
-              //entry.addAttachment(data+"/Trigger_canvas2.png", "Trigger EC cluster");
-              //entry.addAttachment(data+"/Trigger_canvas3.png", "Trigger HTCC cluster");
-              //entry.addAttachment(data+"/Trigger_canvas4.png", "Trigger FTOF cluster");
-              System.out.println("Trigger plots uploaded");
-
-              long lognumber = entry.submitNow();
-              System.out.println("Successfully submitted log entry number: " + lognumber); 
-            } catch(Exception exc){}
-              
-        }
-        
-        
-        if(e.getActionCommand()=="Upload occupancy histos to the logbook") {   
-                
-            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-            String data = outPath + "/output" + "/clas12ana_" + this.runNumber + "_" + df.format(new Date());        
-            File theDir = new File(data);
-            // if the directory does not exist, create it
-            if (!theDir.exists()) {
-                boolean result = false;
-                try{theDir.mkdir(); result = true;} 
-                catch(SecurityException se){}        
-                if(result){ System.out.println("Created directory: " + data);}
-            }
-            
-            String fileName1 = data + "/summary_FD.png";
-            System.out.println(fileName1);
-            CLAS12Canvas.getCanvas("FD").save(fileName1);
-            String fileName2 = data + "/summary_CD.png";
-            System.out.println(fileName2);
-            CLAS12Canvas.getCanvas("CD").save(fileName2);
-            String fileName3 = data + "/summary_FT.png";
-            System.out.println(fileName3);
-            CLAS12Canvas.getCanvas("FT").save(fileName3);
-            
-            for(int k=0; k<this.monitors.length; k++) {
-                this.monitors[k].printCanvas(data);
-            }
-            
-            LogEntry entry = new LogEntry("Occupancy online monitoring histograms for run number " + this.runNumber, "HBLOG");
-            
-            System.out.println("Starting to upload the occupancy plots");
-            
-            try{
-              entry.addAttachment(data+"/summary_FD.png", "Summary plots for the forward detector");
-              entry.addAttachment(data+"/summary_CD.png", "Summary plots for the central detector");
-              entry.addAttachment(data+"/summary_FT.png", "Summary plots for the forward tagger");
-              System.out.println("Summary plots uploaded");
-              entry.addAttachment(data+"/BMT_canvas0.png", "BMT occupancies");
-              entry.addAttachment(data+"/BMT_canvas1.png", "BMT occupancies c");
-              entry.addAttachment(data+"/BMT_canvas2.png", "BMT occupancies z");
-              System.out.println("BMT plots uploaded");
-              entry.addAttachment(data+"/BST_canvas0.png", "BST occupancies 2D");
-              entry.addAttachment(data+"/BST_canvas1.png", "BST occupancies 1D"); 
-              System.out.println("BST plots uploaded");
-              entry.addAttachment(data+"/CND_canvas0.png", "CND ADC occupancies and spectra");
-              entry.addAttachment(data+"/CND_canvas1.png", "CND TDC occupancies and spectra");
-              System.out.println("CND plots uploaded");
-              entry.addAttachment(data+"/CTOF_canvas0.png", "CTOF ADC occupancies and spectra");
-              entry.addAttachment(data+"/CTOF_canvas1.png", "CTOF TDC occupancies and spectra");
-              System.out.println("CTOF plots uploaded");
-              entry.addAttachment(data+"/DC_canvas0.png", "DC occupancies raw");
-              entry.addAttachment(data+"/DC_canvas1.png", "DC occupancies normalized logarithmic scale");
-              entry.addAttachment(data+"/DC_canvas2.png", "DC occupancies normalized linear scale");
-              entry.addAttachment(data+"/DC_canvas3.png", "DC region occupancies");
-              System.out.println("DC plots uploaded");
-              entry.addAttachment(data+"/ECAL_canvas0.png", "ECAL ADC occupancies");
-              entry.addAttachment(data+"/ECAL_canvas1.png", "ECAL TDC occupancies");
-              System.out.println("ECAL plots uploaded");
-              entry.addAttachment(data+"/FMT_canvas0.png", "FMT occupancies 2D");
-              entry.addAttachment(data+"/FMT_canvas2.png", "FMT occupancies 1D");
-              System.out.println("FMT plots uploaded");
-              entry.addAttachment(data+"/FTCAL_canvas0.png", "FTCAL");
-              System.out.println("FTCAL plot uploaded");
-              entry.addAttachment(data+"/FTHODO_canvas0.png", "FTHODO FADC occupancies");
-              System.out.println("FTHODO plot uploaded");
-              entry.addAttachment(data+"/FTOF_canvas0.png", "FTOF ADC occupancies");
-              entry.addAttachment(data+"/FTOF_canvas1.png", "FTOF TDC occupancies");
-              System.out.println("FTOF plots uploaded");
-              entry.addAttachment(data+"/FTTRK_canvas0.png", "FTTRK occupancies 2D");
-              entry.addAttachment(data+"/FTTRK_canvas1.png", "FTTRK occupancies 1D");
-              System.out.println("FTTRK plots uploaded");
-              entry.addAttachment(data+"/HTCC_canvas0.png", "HTCC occupancies");
-              System.out.println("HTCC plot uploaded");
-              entry.addAttachment(data+"/LTCC_canvas0.png", "LTCC occupancies and spectra");
-              System.out.println("LTCC plots uploaded");
-              //entry.addAttachment(data+"/RICH_canvas0.png", "RICH occupancy");
-              //System.out.println("RICH plot uploaded");
-              entry.addAttachment(data+"/Trigger_canvas0.png", "Trigger bits");
-              System.out.println("Trigger plots uploaded");
-            
-              long lognumber = entry.submitNow();
-              System.out.println("Successfully submitted log entry number: " + lognumber); 
-            } catch(Exception exc){}
-        }
-         
-         
-         if (e.getActionCommand()=="Default for all"){
+        if (e.getActionCommand()=="Default for all"){
             for (int k=0;k<monitors.length;k++){
                 this.monitors[k].eventResetTime_current[k] = this.monitors[k].eventResetTime_default[k];
             }
@@ -560,8 +282,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         if ( e.getActionCommand().substring(0, 5).equals("Reset")){
             resetHistograms(e.getActionCommand());
         }
-        
-        
+      
     }
 
     public void chooseUpdateInterval() {
@@ -631,7 +352,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }
         return rNum;
     }
-    
+/*    
     @Override
     public void dataEventAction(DataEvent event) {
     	
@@ -652,7 +373,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 this.runNumber = this.getRunNumber(hipo);
                 System.out.println("Setting run number to: " +this.runNumber);
                 resetEventListener();
-                this.clas12Textinfo.setText("\nrun number: "+this.runNumber + "\nmode:" + "\nfile:" + "\n");
             }
             
             for(int k=0; k<this.monitors.length; k++) {
@@ -662,34 +382,124 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }      
 	    }
     }
+*/    
+    @Override
+    public void dataEventAction(DataEvent event) {
+    	
+       // EvioDataEvent decodedEvent = deco.DecodeEvent(event, decoder, table);
+        //decodedEvent.show();
+        		
+        HipoDataEvent hipo = null;
+        
+        if(event!=null ){
+            //event.show();
 
-    public void loadHistosFromFile(String fileName) {
-        // TXT table summary FILE //
-        System.out.println("Opening file: " + fileName);
-        TDirectory dir = new TDirectory();
-        dir.readFile(fileName);
-        System.out.println(dir.getDirectoryList());
-        dir.cd();
-        dir.pwd();
-        
-        for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].readDataGroup(dir);
-        }
-        this.plotSummaries();
-    }
-
-    public void plotSummaries() {
-        
-        // ECAL 
-        this.CLAS12Canvas.getCanvas("FD").cd(4);
-        this.CLAS12Canvas.getCanvas("FD").getPad(4).getAxisZ().setLog(true);
-        if(this.monitors[0].getDetectorSummary()!=null) this.CLAS12Canvas.getCanvas("FD").draw(this.monitors[0].getDetectorSummary().getH2F("sumPCAL"));
-        this.CLAS12Canvas.getCanvas("FD").cd(5);
-        this.CLAS12Canvas.getCanvas("FD").getPad(5).getAxisZ().setLog(true);
-        if(this.monitors[0].getDetectorSummary()!=null) this.CLAS12Canvas.getCanvas("FD").draw(this.monitors[0].getDetectorSummary().getH2F("sumECin"));
-        
+            if(event instanceof EvioDataEvent){
+             	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
+                DataBank   header = clasDecoder.createHeaderBank(hipo, 0, 0, (float) 0, (float) 0);
+                hipo.appendBanks(header);
+            } 
+            else {
+                hipo = (HipoDataEvent) event;    
+            }
+            
+            int rNum = this.runNumber;
+            int eNum = this.eventNumber;
+            if(event.hasBank("RUN::config")) {
+                DataBank bank = event.getBank("RUN::config");
+                 rNum      = bank.getInt("run", 0);
+                 eNum      = bank.getInt("event", 0);
+            }
+            if(rNum!=0 && this.runNumber != rNum) {
+                this.runNumber = rNum;
+                for(int k=0; k<this.monitors.length; k++) {
+                    this.monitors[k].setRunNumber(this.runNumber);
+                }
+                for(int k=0; k<this.monitors.length; k++) {
+                    this.monitors[k].createHistos(this.runNumber);
+                    this.monitors[k].plotHistos(this.runNumber);
+                }
+            } 
+            this.eventNumber = eNum;
+            for(int k=0; k<this.monitors.length; k++) {
+                this.monitors[k].setEventNumber(this.eventNumber);
+            }
+            
+            for(int k=0; k<this.monitors.length; k++) {
+                this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
+                this.monitors[k].setTriggerWord(getTriggerWord(hipo));        	    
+                this.monitors[k].dataEventAction(hipo);
+            }      
+	}
     }
     
+    private void readFiles() {
+        EvioSource     evioReader = new EvioSource();
+        HipoDataSource hipoReader = new HipoDataSource();
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Choose input files directory...");
+        fc.setMultiSelectionEnabled(true);
+        fc.setAcceptAllFileFilterUsed(false);
+        File workingDirectory = new File(this.workDir);
+        fc.setCurrentDirectory(workingDirectory);
+        int returnValue = fc.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            int nf = 0;
+            for (File fd : fc.getSelectedFiles()) {
+                if (fd.isFile()) {
+                    if (fd.getName().contains(".evio") || fd.getName().contains(".hipo")) {
+                        Integer current = 0;
+                        Integer nevents = 0;
+                        DataEvent event = null;
+                        if(fd.getName().contains(".hipo")) {
+                            hipoReader.open(fd);
+                            current = hipoReader.getCurrentIndex();
+                            nevents = hipoReader.getSize();                            
+                        }
+                        else if(fd.getName().contains(".evio")) {
+                            evioReader.open(fd);
+                            current = evioReader.getCurrentIndex();
+                            nevents = evioReader.getSize();
+                        }
+                        System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());                        
+                        for (int k = 0; k < nevents; k++) {
+                            if(fd.getName().contains(".hipo")) {
+                                if (hipoReader.hasEvent()) {
+                                    event = hipoReader.getNextEvent();                          
+                                }
+                            }
+                            else if(fd.getName().contains(".evio")) {
+                                if (evioReader.hasEvent()) {
+                                    event = evioReader.getNextEvent();
+                                }
+                            }
+                            if(event != null) {
+                                this.dataEventAction(event);
+                                if(k % 10000 == 0) System.out.println("Read " + k + " events");
+                            }
+                        }
+                        for(int k=0; k<this.monitors.length; k++) {
+                            this.monitors[k].analyze();
+                            this.monitors[k].fillSummary();
+                            this.monitors[k].plotHistos(this.getRunNumber(event));
+                        }
+                        nf++;
+                    }
+                }
+            }
+//            this.updateTable();
+            System.out.println("Task completed");
+        }
+    }    
+       
+    @Override
+    public void resetEventListener() {
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].resetEventListener();
+            this.monitors[k].timerUpdate();
+        }      
+    }
+   
     public void printHistosToFile() {
         DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
         String data = outPath + "/output" + "/clas12ana_" + this.runNumber + "_" + df.format(new Date());        
@@ -709,16 +519,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }
         }
         
-        String fileName1 = data + "/summary_FD.png";
-        System.out.println(fileName1);
-        CLAS12Canvas.getCanvas("FD").save(fileName1);
-        String fileName2 = data + "/summary_CD.png";
-        System.out.println(fileName2);
-        CLAS12Canvas.getCanvas("CD").save(fileName2);
-        String fileName3 = data + "/summary_FT.png";
-        System.out.println(fileName3);
-        CLAS12Canvas.getCanvas("FT").save(fileName3);
-        
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].printCanvas(data);
         }
@@ -726,52 +526,18 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         System.out.println("Histogram pngs succesfully saved in: " + data);
     }
     
-    
-    public void createHistoPDF() {
-        /*
-        DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-        String data = System.getProperty("user.dir") + "/output" + "/clas12mon_" + this.runNumber + "_" + df.format(new Date());        
-        File theDir = new File(data);
-        // if the directory does not exist, create it
-        if (!theDir.exists()) {
-            boolean result = false;
-            try{
-                theDir.mkdir();
-                result = true;
-            } 
-            catch(SecurityException se){
-                //handle it
-            }        
-            if(result) {    
-            System.out.println("Created directory: " + data);
-            }
-        }
-        
-        String fileName = data + "/clas12_canvas.pdf";
-        System.out.println(fileName);
-        
-       // this.CLAS12Canvas.getCanvas("CLAS12-summary").save(fileName);
-        for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].printCanvas(data);
-        }
-        */
-    }
-    
-    
-    
+    public void loadHistosFromFile(String fileName) {
 
-    @Override
-    public void processShape(DetectorShape2D shape) {
-        System.out.println("SHAPE SELECTED = " + shape.getDescriptor());
-    }
-    
-    @Override
-    public void resetEventListener() {
+        System.out.println("Opening file: " + fileName);
+        TDirectory dir = new TDirectory();
+        dir.readFile(fileName);
+        System.out.println(dir.getDirectoryList());
+        dir.cd();
+        dir.pwd();
+        
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].resetEventListener();
-            this.monitors[k].timerUpdate();
-        }      
-        this.plotSummaries();
+            this.monitors[k].readDataGroup(dir);
+        }
     }
     
     public void saveHistosToFile(String fileName) {
@@ -786,12 +552,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public void setCanvasUpdate(int time) {
         System.out.println("Setting " + time + " ms update interval");
         this.canvasUpdateTime = time;
-        this.CLAS12Canvas.getCanvas("FD").initTimer(time);
-        this.CLAS12Canvas.getCanvas("FD").update();
-        this.CLAS12Canvas.getCanvas("CD").initTimer(time);
-        this.CLAS12Canvas.getCanvas("CD").update();
-        this.CLAS12Canvas.getCanvas("FT").initTimer(time);
-        this.CLAS12Canvas.getCanvas("FT").update();
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setCanvasUpdate(time);
         }
@@ -813,27 +573,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         JFrame frame = new JFrame("CLAS12Ana");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         EventViewer viewer = new EventViewer();
-        //frame.add(viewer.getPanel());
         frame.add(viewer.mainPanel);
         frame.setJMenuBar(viewer.menuBar);
         frame.setSize(1400, 800);
         frame.setVisible(true);
-    }
-    
-    
-    private void setDCRange(String actionCommand) {
-    
-        System.out.println("Set normalized DC occuopancy range maximum");
-        String  DC_scale = (String) JOptionPane.showInputDialog(null, "Set normalized DC occuopancy range maximum to ", " ", JOptionPane.PLAIN_MESSAGE, null, null, "15");
-        
-        if (DC_scale != null) { 
-            int DC_scale_max= 0;
-            try {DC_scale_max = Integer.parseInt(DC_scale);} 
-            catch (NumberFormatException f) {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");}
-            if (DC_scale_max > 0){ this.monitors[4].DC_max_occ = DC_scale_max;} 
-            else {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");}   
-        }
-        
     }
     
     private void setRunNumber(String actionCommand) {
@@ -860,7 +603,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
     private void resetHistograms(String actionCommand) {
         
-
         if (actionCommand=="Reset ECAL histograms"){
             System.out.println("Reset ECAL histograms");
          	int resetOption = JOptionPane.showConfirmDialog(null, "Do you want to automaticaly reset ECAL plots ?", " ", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -879,4 +621,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         
     }
+
+	@Override
+	public void processShape(DetectorShape2D arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

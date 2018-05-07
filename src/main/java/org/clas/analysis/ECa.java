@@ -65,14 +65,14 @@ public class ECa  extends DetectorMonitor {
         this.setDetectorTabNames("E/P v P","E/P v ThV","E/P v ThD","EPC/P v ThD","EECi/P v ThD","EECo/P v ThD","E/P v XY","E/P v UVW","PIM v UVW","PIP v UVW");
         this.useSectorButtons(true);
         this.useSliderPane(true);
-        this.init(false);
+        this.init();
         EB=12; Ebeam = 10.6f;
       	VB = new LorentzVector(0,0,Ebeam,Ebeam);
 	    VT = new LorentzVector(0,0,0,0.93827);
     }
 
     @Override
-    public void createHistos() {
+    public void createHistos(int run) {
         
         this.setNumberOfEvents(0);
          
@@ -250,16 +250,16 @@ public class ECa  extends DetectorMonitor {
             dg.addDataSet(h,0); 
         }         
         
-        this.getDataGroup().add(dg,0,0,0);
+        this.getDataGroup().add(dg,0,0,0,run);
         
     }
     
     @Override        
-    public void plotHistos() {    
+    public void plotHistos(int run) {    
     	
     	   EmbeddedCanvas c = new EmbeddedCanvas();
     	    
-    	   DataGroup dg = this.getDataGroup().getItem(0,0,0);
+    	   DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
     	   
     	    c = this.getDetectorCanvas().getCanvas("E/P v P");
         c.setGridX(false); c.setGridY(false);
@@ -393,7 +393,8 @@ public class ECa  extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {
     	
-    	    DataGroup dg = this.getDataGroup().getItem(0,0,0);
+    	    int run = getRunNumber();
+    	    DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
         
         if (this.getNumberOfEvents() >= super.eventResetTime_current[5] && super.eventResetTime_current[5] > 0){
             resetEventListener();
@@ -795,25 +796,18 @@ public class ECa  extends DetectorMonitor {
 
         }
     }
-    
-    @Override
-    public void resetEventListener() {
-        System.out.println("Resetting EC histogram");
-        this.createHistos();
-        this.plotHistos();
-    }
 
     @Override
     public void timerUpdate() {
     	
         for(int i=1; i<4; i++) {
-        H2F e  = this.getDataGroup().getItem(0,0,0).getH2F("ep_xyc_e"+i);
-        H2F w  = this.getDataGroup().getItem(0,0,0).getH2F("ep_xyc_w"+i);
-        H2F ww = this.getDataGroup().getItem(0,0,0).getH2F("ep_xyc_ww"+i);
+        H2F e  = this.getDataGroup().getItem(0,0,0,getRunNumber()).getH2F("ep_xyc_e"+i);
+        H2F w  = this.getDataGroup().getItem(0,0,0,getRunNumber()).getH2F("ep_xyc_w"+i);
+        H2F ww = this.getDataGroup().getItem(0,0,0,getRunNumber()).getH2F("ep_xyc_ww"+i);
         for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
         	    float ne = e.getDataBufferBin(loop);
-            if (ne>0) this.getDataGroup().getItem(0,0,0).getH2F("ep_xyc_sf"+i).setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);
-            if (ne>0) this.getDataGroup().getItem(0,0,0).getH2F("ep_xyc_sff"+i).setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);
+            if (ne>0) this.getDataGroup().getItem(0,0,0,getRunNumber()).getH2F("ep_xyc_sf"+i).setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);
+            if (ne>0) this.getDataGroup().getItem(0,0,0,getRunNumber()).getH2F("ep_xyc_sff"+i).setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);
         }
         }
 
