@@ -78,7 +78,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public int eventResetTime_current[]=new int[19];
     public int eventResetTime_default[]=new int[19];    
     
-    public double zMin=0.001, zMax=1.0, zMinLab, zMaxLab;
+    public double zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
+    public double slideMin=1, slideMax=500;
+    public  Boolean doSlider = false;
+    
+    public String[] layer = new String[]{"pcal","ecin","ecou"};
+    public String[]  view = new String[]{"u","v","w"};    
     
     public DetectorMonitor(String name){
         GStyle.getAxisAttributesX().setTitleFontSize(14);
@@ -94,7 +99,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesX().setTitleFontName("Avenir");
         GStyle.getAxisAttributesY().setTitleFontName("Avenir");
         GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
-        GStyle.getAxisAttributesZ().setLog(true);
+        GStyle.getAxisAttributesZ().setAxisAutoScale(true);
+//        GStyle.getAxisAttributesZ().setLog(true);
         
         this.detectorName = name;
         this.detectorPanel  = new JPanel();
@@ -292,13 +298,13 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     	    JPanel sliderPane = new JPanel();
         JLabel xLabel = new JLabel("Z-Range:");
         RangeSlider slider = new RangeSlider();
-        slider.setMinimum((int)    1.);
-        slider.setMaximum((int)  500.);
-        slider.setValue((int) 1.);
-        slider.setUpperValue((int) 500.);            
+        slider.setMinimum((int) slideMin);
+        slider.setMaximum((int) slideMax);
+        slider.setValue((int)slideMin);
+        slider.setUpperValue((int)slideMax);            
         zMin =     slider.getValue();
         zMax = 0.1*slider.getUpperValue();
-        zMinLab = Math.pow(10, zMin/10); zMaxLab = Math.pow(10, zMax/10);
+        zMinLab = Math.pow(2, zMin/10); zMaxLab = Math.pow(10, zMax/10);
         JLabel rangeSliderValue1 = new JLabel("" + String.format("%4.0f", zMinLab));
         JLabel rangeSliderValue2 = new JLabel("" + String.format("%4.0f", zMaxLab));
         sliderPane.add(xLabel);
@@ -316,7 +322,15 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
                 plotHistos(getRunNumber());
             }
         });  
-        
+        JCheckBox sliderBtn = new JCheckBox("Enable");
+        sliderBtn.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                doSlider = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;
+                plotHistos(getRunNumber());
+            }
+        });         
+        sliderBtn.setSelected(false);         
+        sliderPane.add(sliderBtn);        
         return sliderPane;
     }  
     
@@ -491,6 +505,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             List<IDataSet> dsList = group.getData(i);
             //System.out.println(" pad = " + i + " size = " + dsList.size());
             c.cd(i);  String opt = " ";
+            c.getPad().getAxisZ().setLog(getLogZ());
+            if( doSlider) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
+            if(!doSlider) c.getPad().getAxisZ().setAutoScale(true);
             for (IDataSet ds : dsList) {
 //                System.out.println("\t --> " + ds.getName());
             	   c.draw(ds,opt); opt="same";

@@ -27,8 +27,7 @@ public class ECt extends DetectorMonitor {
     ECEngine engine = new ECEngine();
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
     IndexedTable time = null;
-    String[] layer = new String[]{"pcal","ecin","ecou"};
-    String[]  view = new String[]{"u","v","w"};   
+
     int[]    npmts = new int[]{68,36,36};
     
     int trigger_sect = 0;
