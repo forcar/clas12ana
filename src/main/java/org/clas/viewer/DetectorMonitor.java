@@ -60,6 +60,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     private JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
+    private JCheckBox arBtn;
     
     public int        bitsec = 0;
     public long      trigger = 0;
@@ -80,7 +81,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public double zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
     public double slideMin=1, slideMax=500;
-    public  Boolean doSlider = false;
+    public  Boolean doAutoRange = false;
     
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
@@ -125,8 +126,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         actionPanel.setLayout(new FlowLayout());
         getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
         getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
-        createHistos(0);
-        plotHistos(0); 
+        createHistos(0);       
+        arBtn.setSelected(true);         
         if (sectorButtons) {bS2.doClick();}
     }
     
@@ -313,24 +314,23 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         sliderPane.add(rangeSliderValue2);           
         slider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                RangeSlider slider = (RangeSlider) e.getSource();
-                zMin =     slider.getValue(); 
-                zMax = 0.1*slider.getUpperValue();
-                zMinLab = Math.pow(2, zMin/10); zMaxLab = Math.pow(10, zMax/10);
+                RangeSlider slider = (RangeSlider) e.getSource();                
+                zMax = 0.1*slider.getUpperValue(); zMin = Math.min(slider.getValue(),zMax); 
+                zMaxLab = Math.pow(10, zMax/10); zMinLab = Math.pow(2, zMin/10); 
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
                 plotHistos(getRunNumber());
             }
         });  
-        JCheckBox sliderBtn = new JCheckBox("Enable");
-        sliderBtn.addItemListener(new ItemListener() {
+        arBtn = new JCheckBox("AutoRange");
+        arBtn.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                doSlider = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;
+                doAutoRange = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;
                 plotHistos(getRunNumber());
             }
         });         
-        sliderBtn.setSelected(false);         
-        sliderPane.add(sliderBtn);        
+        arBtn.setSelected(false);         
+        sliderPane.add(arBtn);        
         return sliderPane;
     }  
     
@@ -506,8 +506,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             //System.out.println(" pad = " + i + " size = " + dsList.size());
             c.cd(i);  String opt = " ";
             c.getPad().getAxisZ().setLog(getLogZ());
-            if( doSlider) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
-            if(!doSlider) c.getPad().getAxisZ().setAutoScale(true);
+            if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax);
+            if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
             for (IDataSet ds : dsList) {
 //                System.out.println("\t --> " + ds.getName());
             	   c.draw(ds,opt); opt="same";
