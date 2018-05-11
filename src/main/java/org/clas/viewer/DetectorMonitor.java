@@ -50,7 +50,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
     private int                       numberOfEvents = 0;
-    private Boolean                    sectorButtons = false;
+    public  Boolean                    sectorButtons = false;
     private Boolean                       sliderPane = false;
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
@@ -58,9 +58,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
     
-    private JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
-    private JCheckBox arBtn;
+    public JCheckBox arBtn;
     
     public int        bitsec = 0;
     public long      trigger = 0;
@@ -87,6 +87,26 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public String[]  view = new String[]{"u","v","w"};    
     
     public DetectorMonitor(String name){
+
+        initGStyle();
+        detectorName   = name;
+        detectorPanel  = new JPanel();
+        detectorCanvas = new EmbeddedCanvasTabbed();
+        detectorView   = new DetectorPane2D();
+        numberOfEvents = 0;
+        
+        eventResetTime_current[0]=0;
+        eventResetTime_current[1]=0;
+     
+        eventResetTime_default[0]=10000000;  
+        eventResetTime_default[1]=10000000;  
+     
+        for (int i=0; i<2; i++){
+            eventResetTime_current[i]=eventResetTime_default[i];
+        }
+    }
+    
+    public void initGStyle() {
         GStyle.getAxisAttributesX().setTitleFontSize(14);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
         GStyle.getAxisAttributesY().setTitleFontSize(14);
@@ -100,24 +120,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesX().setTitleFontName("Avenir");
         GStyle.getAxisAttributesY().setTitleFontName("Avenir");
         GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
-        GStyle.getAxisAttributesZ().setAxisAutoScale(true);
-//        GStyle.getAxisAttributesZ().setLog(true);
-        
-        this.detectorName = name;
-        this.detectorPanel  = new JPanel();
-        this.detectorCanvas = new EmbeddedCanvasTabbed();
-        this.detectorView   = new DetectorPane2D();
-        this.numberOfEvents = 0;
-        
-        eventResetTime_current[0]=0;
-        eventResetTime_current[1]=0;
-     
-        eventResetTime_default[0]=10000000;  
-        eventResetTime_default[1]=10000000;  
-     
-        for (int i=0; i<2; i++){
-            eventResetTime_current[i]=eventResetTime_default[i];
-        }
+        GStyle.getAxisAttributesZ().setAxisAutoScale(true);    	
     }
     
     public void init() {
@@ -126,9 +129,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         actionPanel.setLayout(new FlowLayout());
         getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
         getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
-        createHistos(0);       
-        arBtn.setSelected(true);         
-        if (sectorButtons) {bS2.doClick();}
     }
     
     public void analyze() {
@@ -150,7 +150,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     @Override
     public void dataEventAction(DataEvent event) {
         if (!testTriggerMask()) return;
-        this.setNumberOfEvents(this.getNumberOfEvents()+1);
+        setNumberOfEvents(getNumberOfEvents()+1);
         if (event.getType() == DataEventType.EVENT_START) {
 //            resetEventListener();
             processEvent(event);
@@ -169,23 +169,23 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void setTriggerPhase(long phase) {
-    	   this.triggerPhase = phase;
+    	   triggerPhase = phase;
     }
     
     public long getTriggerPhase() {
-    	    return this.triggerPhase;
+    	    return triggerPhase;
     }
     
     public void setTriggerWord(long trig) {
-    	   this.trigger = trig;
+    	   trigger = trig;
     }
     
     public void setTestTrigger(boolean test) {
-    	   this.testTrigger = test;
+    	   testTrigger = test;
     }
     
-    public int     getFDTrigger()            {return (int)(this.trigger)&0x000000000ffffffff;}
-    public int     getCDTrigger()            {return (int)(this.trigger>>32)&0x00000000ffffffff;}
+    public int     getFDTrigger()            {return (int)(trigger)&0x000000000ffffffff;}
+    public int     getCDTrigger()            {return (int)(trigger>>32)&0x00000000ffffffff;}
     public boolean isGoodFD()                {return  getFDTrigger()>0;}    
     public boolean isTrigBitSet(int bit)     {int mask=0; mask |= 1<<bit; return isTrigMaskSet(mask);}
     public boolean isTrigMaskSet(int mask)   {return (getFDTrigger()&mask)!=0;}
@@ -196,10 +196,10 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public int     getPCALTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>13)/0.301+1:0);}       
     public int     getHTCCTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>7)/0.301+1:0);} 
     
-    public int    getTriggerMask()        {return this.TriggerMask;}
-    public void   setTriggerMask(int bit) {this.TriggerMask|=(1<<bit);}  
-    public void clearTriggerMask(int bit) {this.TriggerMask&=~(1<<bit);}  
-    public boolean testTriggerMask()      {return this.TriggerMask!=0 ? isTrigMaskSet(this.TriggerMask):true;}
+    public int    getTriggerMask()        {return TriggerMask;}
+    public void   setTriggerMask(int bit) {TriggerMask|=(1<<bit);}  
+    public void clearTriggerMask(int bit) {TriggerMask&=~(1<<bit);}  
+    public boolean testTriggerMask()      {return TriggerMask!=0 ? isTrigMaskSet(TriggerMask):true;}
     public boolean isGoodTrigger(int bit) {return TriggerBeam[bit] ? isTrigBitSet(bit):true;}
    
     public EmbeddedCanvasTabbed getDetectorCanvas() {
@@ -235,11 +235,11 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void useSectorButtons(boolean flag) {
-    	    this.sectorButtons = flag;
+    	    sectorButtons = flag;
     }
     
     public void useSliderPane(boolean flag) {
-    	    this.sliderPane = flag;
+    	    sliderPane = flag;
     }
     
     public int getActiveSector() {
@@ -259,11 +259,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void setLogZ(boolean flag) {
-	    this.detectorLogZ = flag;
+	    detectorLogZ = flag;
+	    plotHistos(getRunNumber());
     }
     
     public Boolean getLogZ() {
-	    return this.detectorLogZ;
+	    return detectorLogZ;
     }
     
     public JPanel packActionPanel() {
@@ -335,10 +336,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }  
     
     public void actionPerformed(ActionEvent e) {
-        // TODO Auto-generated method stub
-        this.detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
-        this.detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
-        this.detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
+        detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
+        detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
+        detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         plotHistos(getRunNumber());
     } 
     
@@ -356,54 +356,54 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public void printCanvas(String dir) {
         // print canvas to files
-        int run = this.getViewRun();
-        if(run==0) run = this.getRunNumber();
-        for(int tab=0; tab<this.detectorTabNames.size(); tab++) {
-            String fileName = dir + "/" + this.detectorName + "_" + run + "_canvas" + tab + ".png";
+        int run = getViewRun();
+        if(run==0) run = getRunNumber();
+        for(int tab=0; tab<detectorTabNames.size(); tab++) {
+            String fileName = dir + "/" + detectorName + "_" + run + "_canvas" + tab + ".png";
             System.out.println(fileName);
-            this.detectorCanvas.getCanvas(this.detectorTabNames.get(tab)).save(fileName);
+            detectorCanvas.getCanvas(detectorTabNames.get(tab)).save(fileName);
         }
     }   
     
     @Override
     public void resetEventListener() {
-        System.out.println("Resetting " + this.getDetectorName() + " histogram for run "+this.getRunNumber());
-        this.createHistos(this.getRunNumber());
-        this.plotHistos(this.getRunNumber());
+        System.out.println("Resetting " +  getDetectorName() + " histogram for run "+ getRunNumber());
+        createHistos(getRunNumber());
+        plotHistos(getRunNumber());
     }
     
     public void setCanvasUpdate(int time) {
-        for(int tab=0; tab<this.detectorTabNames.size(); tab++) {
-            this.detectorCanvas.getCanvas(this.detectorTabNames.get(tab)).initTimer(time);
+        for(int tab=0; tab<detectorTabNames.size(); tab++) {
+            detectorCanvas.getCanvas(detectorTabNames.get(tab)).initTimer(time);
         }
     }
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
-        this.detectorCanvas = canvas;
+        detectorCanvas = canvas;
     }
     
     public void setDetectorTabNames(String... names) {
         for(String name : names) {
-            this.detectorTabNames.add(name);
+            detectorTabNames.add(name);
         }
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed(names);
-        this.setDetectorCanvas(canvas);
+        setDetectorCanvas(canvas);
     }
  
     public void setDetectorSummary(DataGroup group) {
-        this.detectorSummary = group;
+        detectorSummary = group;
     }
     
-    public void setNumberOfEvents(int numberOfEvents) {
-        this.numberOfEvents = numberOfEvents;
+    public void setNumberOfEvents(int num) {
+       numberOfEvents = num;
     }
     
-    public void setEventNumber(int eventNumber) {
-        this.eventNumber = eventNumber;
+    public void setEventNumber(int num) {
+       eventNumber = num;
     }
 
-    public void setRunNumber(int runNumber) {
-        this.runNumber = runNumber;
+    public void setRunNumber(int num) {
+       runNumber = num;
     }
     
     public int getEventNumber() {
@@ -423,9 +423,9 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
  
     public void readDataGroup(TDirectory dir) {
-        String folder = this.getDetectorName() + "/";
+        String folder = getDetectorName() + "/";
         System.out.println("Reading from: " + folder);
-        DataGroup sum = this.getDetectorSummary();
+        DataGroup sum = getDetectorSummary();
         if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();
@@ -438,7 +438,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
                 newSum.addDataSet(dir.getObject(folder, ds.getName()),i);
             }
         }            
-        this.setDetectorSummary(newSum);
+        setDetectorSummary(newSum);
         
         }
         
@@ -459,14 +459,14 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             }
             map.replace(key, newGroup);
         }
-        this.plotHistos(this.getRunNumber());
+        this.plotHistos(getRunNumber());
     }
     
     public void writeDataGroup(TDirectory dir) {
-        String folder = "/" + this.getDetectorName();
+        String folder = "/" + getDetectorName();
         dir.mkdir(folder);
         dir.cd(folder);
-        DataGroup sum = this.getDetectorSummary();
+        DataGroup sum = getDetectorSummary();
         if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();
@@ -480,7 +480,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         }      
         }
         
-        Map<Long, DataGroup> map = this.getDataGroup().getMap();
+        Map<Long, DataGroup> map = getDataGroup().getMap();
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
             DataGroup group = entry.getValue();
             int nrows = group.getRows();

@@ -79,7 +79,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
        
     private int   canvasUpdateTime = 2000;
     private int analysisUpdateTime = 100;
-    private int          runNumber = 2284;
+    private int          runNumber = 0;
     private int        eventNumber = 0;
     private int      ccdbRunNumber = 0;
     String                 workDir = null;
@@ -417,7 +417,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 }
                 for(int k=0; k<this.monitors.length; k++) {
                     this.monitors[k].createHistos(this.runNumber);
+                    this.monitors[k].initGStyle();
                     this.monitors[k].plotHistos(this.runNumber);
+                    this.monitors[k].arBtn.setSelected(true);         
+                    if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
                 }
             } 
             this.eventNumber = eNum;
@@ -481,6 +484,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                         for(int k=0; k<this.monitors.length; k++) {
                             this.monitors[k].analyze();
                             this.monitors[k].fillSummary();
+                            this.monitors[k].initGStyle();
                             this.monitors[k].plotHistos(this.getRunNumber(event));
                         }
                         nf++;
@@ -526,16 +530,28 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         System.out.println("Histogram pngs succesfully saved in: " + data);
     }
     
+    public int getFileRunNumber(String file) {
+    	   String[] tokens = file.split("_");
+    	   return Integer.parseInt(tokens[2]);
+    }
+    
     public void loadHistosFromFile(String fileName) {
 
         System.out.println("Opening file: " + fileName);
+        runNumber = getFileRunNumber(fileName);    
         TDirectory dir = new TDirectory();
         dir.readFile(fileName);
         System.out.println(dir.getDirectoryList());
         dir.cd();
         dir.pwd();
         
-        for(int k=0; k<this.monitors.length; k++) {
+        for(int k=0; k<this.monitors.length; k++) {        	   
+        	    this.monitors[k].setRunNumber(runNumber);
+            this.monitors[k].createHistos(this.monitors[k].getRunNumber());           
+            this.monitors[k].initGStyle();
+            this.monitors[k].plotHistos(this.monitors[k].getRunNumber());
+            this.monitors[k].arBtn.setSelected(true);         
+            if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
             this.monitors[k].readDataGroup(dir);
         }
     }

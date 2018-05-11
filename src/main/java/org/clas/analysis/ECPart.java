@@ -627,8 +627,8 @@ public class ECPart extends EBEngine {
   	 
     public static void main(String[] args){
     	   ECPart part = new ECPart();
-    	   part.pizeroDemo(args);
-//         part.electronDemo(args);
+//    	   part.pizeroDemo(args);
+       part.electronDemo(args);
     }
     
 }

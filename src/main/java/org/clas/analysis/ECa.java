@@ -112,13 +112,11 @@ public class ECa  extends DetectorMonitor {
     }
     
     public void plotADCHistos(int index) {
-   	    int run = getRunNumber();
-  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	       	
+  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,getRunNumber()));	       	
     }
     
     public void plotEOPHistos(int index) {
-   	    int run = getRunNumber();
-  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	       	
+  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));	       	
     }  
     
     public void plotXYZHistos(int index) {
