@@ -33,10 +33,11 @@ import org.jlab.utils.groups.IndexedList;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.rec.eb.EBCCDBEnum;
 
-public class ECPart extends EBEngine {
+public class ECPart  {
 	
-    EventBuilder                                     eb = new EventBuilder();
-    EBEngine                                        ebe = new EBEngine("Test");
+	public EventBuilder eb = null;
+	EBEngine ebe = new EBEngine("ECPART");
+	
     List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<List<DetectorResponse>>(); 
     IndexedList<List<DetectorResponse>>  singleNeutrals = new IndexedList<List<DetectorResponse>>(1);
     IndexedList<List<DetectorResponse>>      singleMIPs = new IndexedList<List<DetectorResponse>>(1);
@@ -68,10 +69,13 @@ public class ECPart extends EBEngine {
 
     public int[] mip = {0,0,0,0,1,0};
     
-    public ECPart() {
-        super("ECPART");
-      	this.init();    	 
-      	ebe.init(10);
+    public ECPart() {  
+    	    initccdb();
+    }
+    
+    public void initccdb() {	   
+	    ebe.init();
+        eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	
     }
     
     public void readMC(DataEvent event) {
@@ -143,8 +147,8 @@ public class ECPart extends EBEngine {
     
     public List<DetectorResponse>  readEC(DataEvent event){
         List<DetectorResponse> rEC = new ArrayList<DetectorResponse>();
-        eb.initEvent();
         Boolean isEvio = event instanceof EvioDataEvent;                  
+        eb.initEvent();
         if (isEvio) rEC =                  readEvioEvent(event, "ECDetector::clusters", DetectorType.ECAL); 
         if(!isEvio) rEC = DetectorResponse.readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
         eb.addDetectorResponses(rEC); 
@@ -271,11 +275,11 @@ public class ECPart extends EBEngine {
        
         switch (io) {       
         case "Inner": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(1), DetectorType.ECAL, is);
-                      index  = p.getDetectorHit(rEC,DetectorType.ECAL,4,EBCCDBConstants.getDouble(EBCCDBEnum.ECIN_MATCHING));
+                      index  = p.getDetectorHit(rEC,DetectorType.ECAL,4,eb.ccdb.getDouble(EBCCDBEnum.ECIN_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
                       distance = p.getDistance(rEC.get(index)).length();eec1=rEC.get(index).getEnergy();}
         case "Outer": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(2), DetectorType.ECAL, is); 
-                      index  = p.getDetectorHit(rEC,DetectorType.ECAL,7,EBCCDBConstants.getDouble(EBCCDBEnum.ECOUT_MATCHING));
+                      index  = p.getDetectorHit(rEC,DetectorType.ECAL,7,eb.ccdb.getDouble(EBCCDBEnum.ECOUT_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
                       distance = p.getDistance(rEC.get(index)).length();eec2=rEC.get(index).getEnergy();}
         }
@@ -497,7 +501,8 @@ public class ECPart extends EBEngine {
         DataGroup      dg_pi0 = new DataGroup(1,1);
         HipoDataSource reader = new HipoDataSource();
         ECEngine       engine = new ECEngine();
-        ECPart           part = new ECPart();
+        ECPart           part = new ECPart();  
+        
         H2F h2a,h2b,h2c,h2d;
         H1F h6,h7a,h7b,h8;
         int n2hit=0;
@@ -518,7 +523,7 @@ public class ECPart extends EBEngine {
             String inputFile = args[0];
             reader.open(inputFile);
         }
-                
+              
         engine.init();
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
@@ -626,9 +631,9 @@ public class ECPart extends EBEngine {
     }
   	 
     public static void main(String[] args){
-    	   ECPart part = new ECPart();
-//    	   part.pizeroDemo(args);
-       part.electronDemo(args);
+        ECPart part = new ECPart();  
+//     	part.pizeroDemo(args);
+        part.electronDemo(args);
     }
     
 }
