@@ -41,7 +41,6 @@ import javax.swing.text.StyledDocument;
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECt;
-import org.clas.detectors.*;
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorEventDecoder;
