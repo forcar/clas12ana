@@ -46,19 +46,22 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private JPanel                   actionPanel     = null;
     private EmbeddedCanvasTabbed   detectorCanvas    = null;
     private DetectorPane2D         detectorView      = null;
+    private ButtonGroup                          bG0 = null;
     private ButtonGroup                          bG1 = null;
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
     private int                       numberOfEvents = 0;
     public  Boolean                    sectorButtons = false;
     private Boolean                       sliderPane = false;
+    private int                     detectorActivePC = 1;
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
+    private Boolean                            usePC = false;
     
-    public JRadioButton bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
     public JCheckBox arBtn;
     
@@ -121,6 +124,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesY().setTitleFontName("Avenir");
         GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
         GStyle.getAxisAttributesZ().setAxisAutoScale(true);    	
+        GStyle.getGraphErrorsAttributes().setMarkerStyle(1);
+        GStyle.getGraphErrorsAttributes().setMarkerColor(2);
+        GStyle.getGraphErrorsAttributes().setMarkerSize(3);
+        GStyle.getGraphErrorsAttributes().setLineColor(2);
+        GStyle.getGraphErrorsAttributes().setLineWidth(1);
+        GStyle.getGraphErrorsAttributes().setFillStyle(1);   
     }
     
     public void init() {
@@ -239,7 +248,15 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void useSliderPane(boolean flag) {
-    	    sliderPane = flag;
+	    sliderPane = flag;
+    }    
+    
+    public void usePCCheckBox(boolean flag) {
+        usePC = flag;
+    }
+    
+    public int getActivePC() {
+    	    return detectorActivePC;
     }
     
     public int getActiveSector() {
@@ -275,6 +292,14 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public JPanel getButtonPane() {
         JPanel buttonPane = new JPanel();
+                
+        if(usePC) {
+        bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("1"); bP.addActionListener(this);
+        bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("2"); bC.addActionListener(this); 
+        bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC);
+        bP.setSelected(true);
+        }
+        
         bS1 = new JRadioButton("Sector 1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
         bS2 = new JRadioButton("Sector 2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
         bS3 = new JRadioButton("Sector 3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
@@ -336,6 +361,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }  
     
     public void actionPerformed(ActionEvent e) {
+    	    if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
@@ -459,6 +485,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             }
             map.replace(key, newGroup);
         }
+        this.analyze();
         this.plotHistos(getRunNumber());
     }
     

@@ -302,7 +302,7 @@ public class ECa  extends DetectorMonitor {
 			for (int i=0; i<3; i++) {
 				if(good_e){
 					h = (H2F) this.getDataGroup().getItem(0,0,3+i,run).getData(e_sect-1).get(0);     h.fill(e_ecal_TH[i],sff[i]);
-					h = (H2F) this.getDataGroup().getItem(0,0,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],1f);
+					h = (H2F) this.getDataGroup().getItem(0,0,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?1f:0);
 					h = (H2F) this.getDataGroup().getItem(0,1,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?sff[i]:0.);
 					h = (H2F) this.getDataGroup().getItem(0,2,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sf<0.5?sf:0.);
 					h = (H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+0).get(0); h.fill(sff[i]<0.5?sff[i]:0., iU[i]);

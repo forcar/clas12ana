@@ -39,6 +39,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECa;
+import org.clas.analysis.ECmip;
 import org.clas.analysis.ECt;
 import org.clas.detectors.*;
 import org.jlab.detector.decode.CLASDecoder;
@@ -88,7 +89,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     DetectorMonitor[] monitors = {
     		new ECa("ECa"),
-    		new ECt("ECt")
+    		new ECt("ECt"),
+    		new ECmip("ECmip")
     }  ;  
         
     public EventViewer() {    	
@@ -579,7 +581,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     @Override
     public void timerUpdate() {
-//        System.out.println("Time to update ...");
+        if(this.runNumber==0) return;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].timerUpdate();
         }

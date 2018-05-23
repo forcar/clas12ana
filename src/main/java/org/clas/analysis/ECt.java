@@ -252,9 +252,9 @@ public class ECt extends DetectorMonitor {
                     int     il = bank1.getByte("layer", loop);
                     float ener = bank1.getFloat("energy",loop)*1000;
                     float    t = bank1.getFloat("time",loop)-phase;
-                    int iU = (bank1.getInt("coordU", loop)-4)/8;
-                    int iV = (bank1.getInt("coordV", loop)-4)/8;
-                    int iW = (bank1.getInt("coordW", loop)-4)/8;
+                    int iU = (bank1.getInt("coordU", loop)-4)/8+1;
+                    int iV = (bank1.getInt("coordV", loop)-4)/8+1;
+                    int iW = (bank1.getInt("coordW", loop)-4)/8+1;
                     if (pathlist.hasItem(is,il,loop)) {
                     	    DataBank  bankc = event.getBank("REC::Calorimeter");
                     	    DataBank  bankp = event.getBank("REC::Particle");
