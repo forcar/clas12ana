@@ -338,11 +338,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         return bank.getLong("trigger", 0);
     }
     
-    public long getTriggerPhase(DataEvent event) {    	
+    public int getTriggerPhase(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");	        
         long timestamp = bank.getLong("timestamp",0);    
         int phase_offset = 1;
-        return ((timestamp%6)+phase_offset)%6; // TI derived phase correction due to TDC and FADC clock differences 
+        return (int) (4*((timestamp+phase_offset)%6)); // TI derived phase correction due to TDC and FADC clock differences 
     }
     
     private int getRunNumber(DataEvent event) {

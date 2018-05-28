@@ -67,7 +67,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public int        bitsec = 0;
     public long      trigger = 0;
-    public long triggerPhase = 0;
+    public int  triggerPhase = 0;
     public int        trigFD = 0;
     public int        trigCD = 0;
     
@@ -177,12 +177,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     }
     
-    public void setTriggerPhase(long phase) {
-    	   triggerPhase = phase;
+    public void setTriggerPhase(int phase) {
+    	   this.triggerPhase = phase;
     }
     
-    public long getTriggerPhase() {
-    	    return triggerPhase;
+    public int getTriggerPhase() {
+    	    return this.triggerPhase;
     }
     
     public void setTriggerWord(long trig) {

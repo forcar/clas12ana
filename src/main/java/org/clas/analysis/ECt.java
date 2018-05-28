@@ -31,13 +31,13 @@ public class ECt extends DetectorMonitor {
     int[]    npmts = new int[]{68,36,36};
     
     int trigger_sect = 0;
-    float phase = 0;
+    int        phase = 0;
     
 //  static float TOFFSET = 436; 
     static float TOFFSET = 125;
-    static float veff = 18.1f;
-    static float    c = 29.98f;
-    float      tps =  (float) 0.02345;
+    static float    veff = 18.1f;
+    static float       c = 29.98f;
+    float            tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     
     public ECt(String name) {
@@ -125,30 +125,24 @@ public class ECt extends DetectorMonitor {
     }
 
     @Override
-    public void processEvent(DataEvent event) {  
-    	
+    public void processEvent(DataEvent event) {      	
        trigger_sect = getElecTriggerSector(); 
-       phase        = getTriggerPhase()*4;
+       phase        = getTriggerPhase();
        processRaw(event);
-       processRec(event);
-             
+       processRec(event);             
     }
     
     public void processRaw(DataEvent event) {
     	
- 	   int run = getRunNumber();
        H2F h;
+ 	   int run = getRunNumber();
        float tdcd,tdcdc =  0;
         
        tdcs.clear();
-        
-       int trigger_sect = getElecTriggerSector(); 
-       float      phase = getTriggerPhase()*4;
-        
+       
        if(event.hasBank("ECAL::tdc")==true){
            DataBank  bank = event.getBank("ECAL::tdc");
-           int rows = bank.rows();
-           for(int i = 0; i < rows; i++){
+           for(int i = 0; i < bank.rows(); i++){
                int  is = bank.getByte("sector",i);
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);               
@@ -168,8 +162,7 @@ public class ECt extends DetectorMonitor {
         
        if(event.hasBank("ECAL::adc")==true){
            DataBank  bank = event.getBank("ECAL::adc");
-           int rows = bank.rows();
-           for(int i = 0; i < rows; i++){
+           for(int i = 0; i < bank.rows(); i++){
                int  is = bank.getByte("sector",i);
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);
