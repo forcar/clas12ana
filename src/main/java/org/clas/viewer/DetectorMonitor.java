@@ -22,8 +22,10 @@ import javax.swing.event.ChangeListener;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
+import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
@@ -540,6 +542,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             	   c.draw(ds,opt); opt="same";
             }
         } 	       	
-    }
+    } 
     
 }
