@@ -5,8 +5,10 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
+import org.clas.tools.FitData;
 import org.clas.viewer.DetectorMonitor;
 import org.dom4j.CDATA;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.graphics.EmbeddedCanvas;
@@ -26,15 +28,19 @@ public class ECt extends DetectorMonitor {
 
     ECEngine engine = new ECEngine();
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
-    IndexedTable time = null;
+    IndexedTable time = null, offset=null;
 
     int[]    npmts = new int[]{68,36,36};
+    
+    IndexedList<GraphErrors>  TDCSummary = new IndexedList<GraphErrors>(4);
+    IndexedList<FitData>         TDCFits = new IndexedList<FitData>(4);
+    Boolean                isAnalyzeDone = false;
     
     int trigger_sect = 0;
     int        phase = 0;
     
 //  static float TOFFSET = 436; 
-    static float TOFFSET = 125;
+    static float TOFFSET = 125f;
     static float    veff = 18.1f;
     static float       c = 29.98f;
     float            tps =  (float) 0.02345;
@@ -50,7 +56,7 @@ public class ECt extends DetectorMonitor {
         		                     "Hit Time",
         		                     "Peak Time",
         		                     "Cluster Time",
-        		                     "FADC-TIME",
+        		                     "TIME-FADC",
         		                     "TIME-TVERT",
         		                     "RESID v STRIP",
         		                     "RESID v PATH",
@@ -62,13 +68,16 @@ public class ECt extends DetectorMonitor {
         		                     "ADC v TTW",
         		                     "ADCHI v TTW",
         		                     "LEFF v TTW",
-        		                     "LEFF v TVERT");       
+        		                     "LEFF v TVERT",
+        		                     "TDIF");
+        
         this.useSectorButtons(true);
         this.useSliderPane(true);
         engine.init();       
         engine.setVariation("default");
         engine.setVeff(veff);
-        time = engine.getConstantsManager().getConstants(3050, "/calibration/ec/timing");
+        time   = engine.getConstantsManager().getConstants(3050, "/calibration/ec/timing");
+        offset = engine.getConstantsManager().getConstants(3050, "/calibration/ec/fadc_offset");
         this.init();
     }
     
@@ -83,11 +92,12 @@ public class ECt extends DetectorMonitor {
         createTDCHistos(5,150,350,"TIME (ns)");    
         createTDCHistos(6,150,350,"TIME (ns)");    
         createTDCHistos(7,150,350,"TIME (ns)");    
-        createTDCHistos(8,-50.,50.,"FADC-TIME (ns)");    
+        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
         createTDCHistos(9,  0.,50.,"T-TVERT (ns)");    
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
         createUVWHistos(11,700,800,-5,5,"PATH","RESID ");
         createUVWHistos(12,0,3000,-5,5,"ENERGY","RESID ");
+      
         createUVWHistos(13,0,430,-5,5,"LEFF","RESID ");
         createUVWHistos(14,190,220,-5,5,"T","RESID ");
         createUVWHistos(15,0,6000,-5,5,"ADC","RESID ");
@@ -122,169 +132,7 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(18);
     	    plotUVWHistos(19);
     	    plotUVWHistos(20);
-    }
-
-    @Override
-    public void processEvent(DataEvent event) {      	
-       trigger_sect = getElecTriggerSector(); 
-       phase        = getTriggerPhase();
-       processRaw(event);
-       processRec(event);             
-    }
-    
-    public void processRaw(DataEvent event) {
-    	
-       H2F h;
- 	   int run = getRunNumber();
-       float tdcd,tdcdc =  0;
-        
-       tdcs.clear();
-       
-       if(event.hasBank("ECAL::tdc")==true){
-           DataBank  bank = event.getBank("ECAL::tdc");
-           for(int i = 0; i < bank.rows(); i++){
-               int  is = bank.getByte("sector",i);
-               int  il = bank.getByte("layer",i);
-               int  ip = bank.getShort("component",i);               
-               tdcd    = bank.getInt("TDC",i)*tps;
-               tdcdc   = tdcd-phase;
-               if(is>0&&is<7&&tdcd>0) {
-                   if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
-              	       h = (H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0); h.fill(tdcd, ip);
-              	       h = (H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0); h.fill(tdcdc,ip);
-                       if (is==trigger_sect) {
-                    	       tdcs.getItem(is,il,ip).add(tdcdc);
-                  	       h = (H2F) this.getDataGroup().getItem(is,0,2,run).getData(il-1).get(0); h.fill(tdcdc,ip);
-                       }
-               }
-           }
-       } 
-        
-       if(event.hasBank("ECAL::adc")==true){
-           DataBank  bank = event.getBank("ECAL::adc");
-           for(int i = 0; i < bank.rows(); i++){
-               int  is = bank.getByte("sector",i);
-               int  il = bank.getByte("layer",i);
-               int  ip = bank.getShort("component",i);
-               int adc = Math.abs(bank.getInt("ADC",i));
-               float t = bank.getFloat("time",i);               
-               
-               Float[] tdcc; float[] tdc; float tmax = 1000; float tdcm = 1000;
-               
-               if (tdcs.hasItem(is,il,ip)) {
-        	           double a0 = time.getDoubleValue("a0", is, il, ip);
-        	           double a2 = time.getDoubleValue("a2", is, il, ip);
-                   List<Float> list = new ArrayList<Float>();
-                   list = tdcs.getItem(is,il,ip); tdcc=new Float[list.size()]; list.toArray(tdcc);
-                   tdc  = new float[list.size()];
-                   for (int ii=0; ii<tdcc.length; ii++) {
-              	      float tdif = (tdcc[ii]-TOFFSET)-t; 
-             	      h = (H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0); h.fill(tdif,ip);
-            	          if (Math.abs(tdif)<30&&tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
-                   }
-                   double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
-          	       h = (H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0); h.fill(tdcm,ip);
-          	       h = (H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0); h.fill(tdcmc,ip);
-               }
-           }
-       }    	
-    }
-    
-    public void processRec(DataEvent event) {
-  	   
-    	   int run = getRunNumber();
-    	   
-       event.removeBank("ECAL::hits");        
-       event.removeBank("ECAL::peaks");        
-       event.removeBank("ECAL::clusters");        
-       event.removeBank("ECAL::calib");
-        
-       engine.processDataEvent(event); 
-        
-       List<ECStrip>     strips = engine.getStrips();
-       List<ECPeak>       peaks = engine.getPeaks();
-       List<ECCluster> clusters = engine.getClusters();
-       
-       H2F h;
-       
-       if(event.hasBank("ECAL::hits")){
-          	DataBank  bank = event.getBank("ECAL::hits");
-            for(int loop = 0; loop < bank.rows(); loop++){
-               int   is = bank.getByte("sector", loop);
-               int   il = bank.getByte("layer", loop); 
-               int   ip = bank.getByte("strip", loop);
-               float  t = bank.getFloat("time", loop)-phase;
-               if (is==trigger_sect) {
-            	     h = (H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0); h.fill(t, ip);
-               }
-            }
-       }
-       
-       if(!(event.hasBank("REC::Calorimeter") && event.hasBank("REC::Particle"))) return;
-
-       float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
-       
-       IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
-       
-       DataBank  bank = event.getBank("REC::Calorimeter");
-       
-       for(int loop = 0; loop < bank.rows(); loop++){
-    	       int   is = bank.getByte("sector", loop);
-    	       int   il = bank.getByte("layer", loop);
-    	       int   in = bank.getShort("index", loop);
-    	       int  det = bank.getByte("detector", loop);
-    	       if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
-       }
-       
-       if(event.hasBank("ECAL::clusters")){
-            DataBank  bank1 = event.getBank("ECAL::clusters");
-            DataBank  bank2 = event.getBank("ECAL::calib");
-            for(int loop = 0; loop < bank1.rows(); loop++){
-                int is = bank1.getByte("sector", loop);
-                if (is==trigger_sect){
-                    int     il = bank1.getByte("layer", loop);
-                    float ener = bank1.getFloat("energy",loop)*1000;
-                    float    t = bank1.getFloat("time",loop)-phase;
-                    int iU = (bank1.getInt("coordU", loop)-4)/8+1;
-                    int iV = (bank1.getInt("coordV", loop)-4)/8+1;
-                    int iW = (bank1.getInt("coordW", loop)-4)/8+1;
-                    if (pathlist.hasItem(is,il,loop)) {
-                    	    DataBank  bankc = event.getBank("REC::Calorimeter");
-                    	    DataBank  bankp = event.getBank("REC::Particle");
-                    	    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
-                    	    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop));
-                    	    for (int i=0; i<3; i++) {                    	 
-                             float tu    = (float) clusters.get(loop).getTime(i)-phase; 
-                             int  ip     =         clusters.get(loop).getPeak(i).getMaxStrip();
-                             int  adc    =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
-                             float tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime()-phase;
-                             float tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime()-phase;
-                             float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime()-phase; 
-                             float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-                             float tdif  = tu  - Tvertex + phase;
-                             float tdifp = tdif - path/c;
-                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1];
-                             h = (H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0); h.fill(tu, ip);
-                             h = (H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0); h.fill(t,  ip);
-                             h = (H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0); h.fill(tdif, ip);
-                             if (bankp.getInt("pid",pin)==11) {
-                                h = (H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0);  h.fill(tdifp, ip);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0); h.fill(path, tdifp);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0); h.fill(ener, tdifp);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,13,run).getData(ip-1).get(0); h.fill(leff, tdifp);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0); h.fill(tu  -shiftTV[is-1], tdifp);  
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,15,run).getData(ip-1).get(0); h.fill(adc,  tdifp);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,16,run).getData(ip-1).get(0); h.fill(tdc -shiftTV[is-1]-leff/veff, adc);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/veff, adc);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0); h.fill(tdcc-shiftTV[is-1]-leff/veff, adc);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0); h.fill(tdcc, leff);
-                                h = (H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0); h.fill(Tvertex-shiftTV[is-1]-phase,leff); 	
-                             } 	      
-                    	    } 
-                    }
-                }
-            }
-       }    	
+    	    if(isAnalyzeDone) {updateUVW(21);}
     }
     
     public void createUVWHistos(int k, int xmin, int xmax, int ymin, int ymax, String xtxt, String ytxt) {
@@ -386,17 +234,223 @@ public class ECt extends DetectorMonitor {
         }            
 
     } 
-  
+    
+    @Override
+    public void processEvent(DataEvent event) {      	
+       trigger_sect = getElecTriggerSector(); 
+       phase        = getTriggerPhase();
+       processRaw(event);
+       processRec(event);             
+    }
+    
+    public void processRaw(DataEvent event) {
+    	
+       H2F h;
+ 	   int run = getRunNumber();
+       float tdcd,tdcdc =  0;
+        
+       tdcs.clear();
+       
+       if(event.hasBank("ECAL::tdc")==true){
+           DataBank  bank = event.getBank("ECAL::tdc");
+           for(int i = 0; i < bank.rows(); i++){
+               int  is = bank.getByte("sector",i);
+               int  il = bank.getByte("layer",i);
+               int  ip = bank.getShort("component",i);               
+               tdcd    = bank.getInt("TDC",i)*tps;
+               tdcdc   = tdcd-phase;
+               if(is>0&&is<7&&tdcd>0) {
+                   if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
+              	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd, ip); //raw time
+              	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc,ip); //phase corrected time
+                       if (is==trigger_sect) {
+                    	       tdcs.getItem(is,il,ip).add(tdcdc);
+                  	       ((H2F) this.getDataGroup().getItem(is,0,2,run).getData(il-1).get(0)).fill(tdcdc,ip); //triggered time
+                       }
+               }
+           }
+       } 
+        
+       if(event.hasBank("ECAL::adc")==true){
+           DataBank  bank = event.getBank("ECAL::adc");
+           for(int i = 0; i < bank.rows(); i++){
+               int  is = bank.getByte("sector",i);
+               int  il = bank.getByte("layer",i);
+               int  ip = bank.getShort("component",i);
+               int adc = Math.abs(bank.getInt("ADC",i));
+               float t = bank.getFloat("time",i) + (float) offset.getDoubleValue("offset",is,il,0);               
+               
+               Float[] tdcc; float[] tdc; float tmax = 1000; float tdcm = 1000;
+               
+               if (tdcs.hasItem(is,il,ip)) {
+        	           double a0 = time.getDoubleValue("a0", is, il, ip);
+        	           double a2 = time.getDoubleValue("a2", is, il, ip);
+                   List<Float> list = new ArrayList<Float>();
+                   list = tdcs.getItem(is,il,ip); tdcc=new Float[list.size()]; list.toArray(tdcc);
+                   tdc  = new float[list.size()];
+                   for (int ii=0; ii<tdcc.length; ii++) {
+              	      float tdif = (tdcc[ii]-TOFFSET)-t; 
+             	      ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
+            	          if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
+                   }
+                   double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
+          	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  //matched FADC/TDC
+          	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); //calibrated time
+               }
+           }
+       }    	
+    }
+    
+    public void processRec(DataEvent event) {
+  	   
+    	   int run = getRunNumber();
+    	   
+       event.removeBank("ECAL::hits");        
+       event.removeBank("ECAL::peaks");        
+       event.removeBank("ECAL::clusters");        
+       event.removeBank("ECAL::calib");
+        
+       engine.processDataEvent(event); 
+        
+       List<ECStrip>     strips = engine.getStrips();
+       List<ECPeak>       peaks = engine.getPeaks();
+       List<ECCluster> clusters = engine.getClusters();
+       
+       if(event.hasBank("ECAL::hits")){
+          	DataBank  bank = event.getBank("ECAL::hits");
+            for(int loop = 0; loop < bank.rows(); loop++){
+               int   is = bank.getByte("sector", loop);
+               int   il = bank.getByte("layer", loop); 
+               int   ip = bank.getByte("strip", loop);
+               float  t = bank.getFloat("time", loop);
+               if (is==trigger_sect) {
+            	      ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(t, ip); //calibrated triggered matched hits
+               }
+            }
+       }
+       
+       if(!(event.hasBank("REC::Calorimeter") && event.hasBank("REC::Particle"))) return;
+
+       float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
+       
+       IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
+       
+       DataBank  bank = event.getBank("REC::Calorimeter");
+       
+       for(int loop = 0; loop < bank.rows(); loop++){
+    	       int   is = bank.getByte("sector", loop);
+    	       int   il = bank.getByte("layer", loop);
+    	       int   in = bank.getShort("index", loop);
+    	       int  det = bank.getByte("detector", loop);
+    	       if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
+       }
+       
+       if(event.hasBank("ECAL::clusters")){
+            DataBank  bank1 = event.getBank("ECAL::clusters");
+            DataBank  bank2 = event.getBank("ECAL::calib");
+            for(int loop = 0; loop < bank1.rows(); loop++){
+                int is = bank1.getByte("sector", loop);
+                if (is==trigger_sect){
+                    int     il = bank1.getByte("layer", loop);
+                    float ener = bank1.getFloat("energy",loop)*1000;
+                    float    t = bank1.getFloat("time",loop);
+                    int iU = (bank1.getInt("coordU", loop)-4)/8+1;
+                    int iV = (bank1.getInt("coordV", loop)-4)/8+1;
+                    int iW = (bank1.getInt("coordW", loop)-4)/8+1;
+                    if (pathlist.hasItem(is,il,loop)) {
+                    	    DataBank  bankc = event.getBank("REC::Calorimeter");
+                    	    DataBank  bankp = event.getBank("REC::Particle");
+                    	    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
+                    	    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop));
+                    	    for (int i=0; i<3; i++) {                    	 
+                             float tu    = (float) clusters.get(loop).getTime(i); 
+                             int  ip     =         clusters.get(loop).getPeak(i).getMaxStrip();
+                             int  adc    =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
+                             float tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true);
+                             float tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
+                             float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
+                             float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
+                             float tdif  = tu  - Tvertex + phase;
+                             float tdifp = tdif - path/c;
+                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1]; //Tvertex-phase temporary!!
+                             ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip);
+                             ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip);
+                             ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
+                             if (bankp.getInt("pid",pin)==11) {
+                                ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, tdifp);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, tdifp);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,13,run).getData(ip-1).get(0)).fill(leff, tdifp);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0)).fill(tu  -shiftTV[is-1], tdifp);  
+                                ((H2F) this.getDataGroup().getItem(is,il+i,15,run).getData(ip-1).get(0)).fill(adc,  tdifp);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,16,run).getData(ip-1).get(0)).fill(tdc -shiftTV[is-1]-leff/veff, adc);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdcc, leff);
+                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1]-phase,leff); //Tvertex-phase temporary!! 	
+                             } 	      
+                    	    } 
+                    }
+                }
+            }
+       }    	
+    }
+    
+    private void updateUVW(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        c.divide(3, 3);
+        
+        int    is = getActiveSector(); 
+               
+        for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            c.cd(3*i+j); c.getPad(3*i+j).getAxisY().setLog(false); 
+            c.draw(TDCFits.getItem(is,i,j,0).getGraph());
+        }
+        }
+        
+    }  
+    
+    @Override
+    public void plotEvent(DataEvent de) {
+    	    analyze();
+    }
+
+    public void analyze() {    
+        System.out.println("I am in analyze()");
+        analyzeGraphs(1,7,0,3,0,3);
+        System.out.println("Finished");
+        isAnalyzeDone = true;
+    }
+    
+    public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
+        
+        H2F h2=null;
+        FitData fd = null;
+        int run=getRunNumber();
+        double min=-30,max=10;
+        for (int is=is1; is<is2; is++) {            
+            for (int id=id1; id<id2; id++) {
+                for (int il=0; il<3; il++) {
+                    h2 = (H2F) this.getDataGroup().getItem(is,0,8,run).getData(3*id+il).get(0);
+                    fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
+                    fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
+                    fd.initFit(min,max); fd.fitGraph("0"); TDCFits.add(fd,is,id,il,0);                    
+                }  
+            }            
+        }
+        
+    }
+    
     public void plotUVWHistos(int index) {
     	    int run = getRunNumber();
-//        getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)).draw(getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index));    	
 	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
     }
 
     
     public void plotTDCHistos(int index) {
     	    int run = getRunNumber();
-//        getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)).draw(getDataGroup().getItem(getActiveSector(),0,index));
     	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	    
     }
     

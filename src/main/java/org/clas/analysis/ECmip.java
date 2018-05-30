@@ -441,8 +441,6 @@ public class ECmip extends DetectorMonitor {
    
     }
 
-      
-    
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
