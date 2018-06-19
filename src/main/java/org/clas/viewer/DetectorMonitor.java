@@ -34,6 +34,7 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.task.IDataEventListener;
+import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 
 
@@ -90,6 +91,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
+    
+    public ECEngine engine = new ECEngine();
     
     public DetectorMonitor(String name){
 

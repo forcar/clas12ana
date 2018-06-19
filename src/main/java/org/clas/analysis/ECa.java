@@ -91,9 +91,9 @@ public class ECa  extends DetectorMonitor {
         createEOPHistos(4,48,  3.,27.,"ep_th1"," ECIN Theta (deg)",    "EECi / P");
         createEOPHistos(5,48,  3.,27.,"ep_th2"," ECOU Theta (deg)",    "EECo / P");
         createXYZHistos(6);
-        createADCHistos(7,0.5,0.3,0.1,"SF");
-        createADCHistos(8,60.,60.,80.,"PIM (MeV)");
-        createADCHistos(9,60.,60.,80.,"PIP (MeV)");        
+        createADCHistos(7,25,0.5,0.3,0.1,"SF");
+        createADCHistos(8,50,100.,100.,100.,"PIM (MeV)");
+        createADCHistos(9,50,100.,100.,100.,"PIP (MeV)");        
     }
     
     @Override    
@@ -180,10 +180,9 @@ public class ECa  extends DetectorMonitor {
         this.getDataGroup().add(dg3, 0,2,k,run);
     }
     
-    public void createADCHistos(int k, double x1, double x2, double x3, String txt) {
+    public void createADCHistos(int k, int nch, double x1, double x2, double x3, String txt) {
     	
 	    int run = getRunNumber();
-	    int nch = 25;
         H2F h;  
     
         for (int is=1; is<7; is++) {
@@ -243,18 +242,18 @@ public class ECa  extends DetectorMonitor {
 			
 		}
 		
-		//TRIGGER BIT SECTOR
+		// TRIGGER BIT SECTOR
       	int trigger_sect = getElecTriggerSector(); 
       	
-      	//HTCC*PCAL Q<0
+      	// HTCC*PCAL Q<0
       	if(event.hasBank("REC::Particle"))  trig_part_ind = makeTrigElectron(event.getBank("REC::Particle"),event); 
       	
-        //GET TB TRACK SECTOR, TRIG_TRACK_IND OF TRIG_PART_IND
+        // GET TB TRACK SECTOR, TRIG_TRACK_IND OF TRIG_PART_IND
 		if(event.hasBank("REC::Track") && 
 		   event.hasBank("TimeBasedTrkg::TBTracks")) getTrigTBTrack(event.getBank("TimeBasedTrkg::TBTracks"),event.getBank("REC::Track")); 
 		
 		// IS TRIG_PART_IND ID=11?
-		if(event.hasBank("REC::Particle"))     e_part_ind = makeElectron(event.getBank("REC::Particle")); 
+		if(event.hasBank("REC::Particle")) e_part_ind = makeElectron(event.getBank("REC::Particle")); 
 		
 		// FIND PION FOR COMPARISON
 		if(event.hasBank("REC::Particle")) makePiPlusPimPID(event.getBank("REC::Particle"));
@@ -289,35 +288,33 @@ public class ECa  extends DetectorMonitor {
         sff[1] = e_ecal_EL[1]/e_mom;
         sff[2] = e_ecal_EL[2]/e_mom;
         
-        H2F h; 
-        
         boolean good_e = e_sect>0&&e_sect<7, good_pim = pim_sect>0&&pim_sect<7, good_pip = pip_sect>0&&pip_sect<7 ; 
         
 		if(e_mom>Ebeam*0.02 && sf > 0.02 && trig_track_ind>-1 && e_sect==trig_sect){
 			if(good_e){
-                h = (H2F) this.getDataGroup().getItem(0,0,0,run).getData(e_sect-1).get(0); h.fill(e_mom,sf);
-                h = (H2F) this.getDataGroup().getItem(0,0,1,run).getData(e_sect-1).get(0); h.fill(e_theta,sf);
-                h = (H2F) this.getDataGroup().getItem(0,0,2,run).getData(e_sect-1).get(0); h.fill(e_ecal_TH[0],sf);
+				((H2F) this.getDataGroup().getItem(0,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);
+				((H2F) this.getDataGroup().getItem(0,0,1,run).getData(e_sect-1).get(0)).fill(e_theta,sf);
+				((H2F) this.getDataGroup().getItem(0,0,2,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[0],sf);
 			}
 			for (int i=0; i<3; i++) {
 				if(good_e){
-					h = (H2F) this.getDataGroup().getItem(0,0,3+i,run).getData(e_sect-1).get(0);     h.fill(e_ecal_TH[i],sff[i]);
-					h = (H2F) this.getDataGroup().getItem(0,0,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?1f:0);
-					h = (H2F) this.getDataGroup().getItem(0,1,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?sff[i]:0.);
-					h = (H2F) this.getDataGroup().getItem(0,2,6,run).getData(i).get(0); h.fill(-x_ecal[i], y_ecal[i],sf<0.5?sf:0.);
-					h = (H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+0).get(0); h.fill(sff[i]<0.5?sff[i]:0., iU[i]);
-					h = (H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+1).get(0); h.fill(sff[i]<0.5?sff[i]:0., iV[i]);
-					h = (H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+2).get(0); h.fill(sff[i]<0.5?sff[i]:0., iW[i]);				  
+					((H2F) this.getDataGroup().getItem(0,0,3+i,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[i],sff[i]);
+					((H2F) this.getDataGroup().getItem(0,0,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?1f:0);
+					((H2F) this.getDataGroup().getItem(0,1,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?sff[i]:0.);
+					((H2F) this.getDataGroup().getItem(0,2,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sf<0.5?sf:0.);
+					((H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+0).get(0)).fill(sff[i]<0.5?sff[i]:0., iU[i]);
+					((H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+1).get(0)).fill(sff[i]<0.5?sff[i]:0., iV[i]);
+					((H2F) this.getDataGroup().getItem(e_sect,0,7,run).getData(3*i+2).get(0)).fill(sff[i]<0.5?sff[i]:0., iW[i]);				  
 				}
 				if(good_pim) {
-                    h = (H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+0).get(0); h.fill(pim_ecal_EL[i], pim_iU[i]);
-                    h = (H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+1).get(0); h.fill(pim_ecal_EL[i], pim_iV[i]);
-                    h = (H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+2).get(0); h.fill(pim_ecal_EL[i], pim_iW[i]);				  
+					((H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+0).get(0)).fill(pim_ecal_EL[i], pim_iU[i]);
+					((H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+1).get(0)).fill(pim_ecal_EL[i], pim_iV[i]);
+					((H2F) this.getDataGroup().getItem(pim_sect,0,8,run).getData(3*i+2).get(0)).fill(pim_ecal_EL[i], pim_iW[i]);				  
 				}
 				if(good_pip) {
-                    h = (H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+0).get(0); h.fill(pip_ecal_EL[i], pip_iU[i]);
-                    h = (H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+1).get(0); h.fill(pip_ecal_EL[i], pip_iV[i]);
-                    h = (H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+2).get(0); h.fill(pip_ecal_EL[i], pip_iW[i]);						  
+					((H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+0).get(0)).fill(pip_ecal_EL[i], pip_iU[i]);
+					((H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+1).get(0)).fill(pip_ecal_EL[i], pip_iV[i]);
+					((H2F) this.getDataGroup().getItem(pip_sect,0,9,run).getData(3*i+2).get(0)).fill(pip_ecal_EL[i], pip_iW[i]);						  
 				}
 			}
 		}
@@ -448,12 +445,12 @@ public class ECa  extends DetectorMonitor {
 						}
 					}
 				}
-				int HTCCnphe = 0;
+				float HTCCnphe = 0;
 				if(event.hasBank("REC::Cherenkov")){
 					DataBank HTCCbank = event.getBank("REC::Cherenkov");
 					for(int l = 0; l < HTCCbank.rows(); l++){
 						if(HTCCbank.getShort("pindex",l)==k && HTCCbank.getInt("detector",l)==15){
-							HTCCnphe = HTCCbank.getInt("nphe",l);
+							HTCCnphe = HTCCbank.getFloat("nphe",l); //Change to FLOAT
 						}
 					}
 				}
@@ -493,7 +490,7 @@ public class ECa  extends DetectorMonitor {
 		         x_ecal[ind] = x; y_ecal[ind] = y;
 		         e_ecal_TH[ind] = (float) Math.toDegrees(Math.acos(z/r));
 		         e_ecal_EL[ind] += e;
-                 e_ecal_E += e;
+                 e_ecal_E       += e;
                  if(det==0) e_sect = bank.getByte("sector",k);
                  
                  iU[ind] = (clust.getInt("coordU", bind)-4)/8+1;
@@ -519,7 +516,7 @@ public class ECa  extends DetectorMonitor {
 		         pim_x_ecal[ind] = x; pim_y_ecal[ind] = y;
 		         pim_ecal_TH[ind] = (float) Math.toDegrees(Math.acos(z/r));
 		         pim_ecal_EL[ind] += e;
-                 pim_ecal_E += e;
+                 pim_ecal_E       += e;
                  if(det==0) pim_sect = bank.getByte("sector",k);
                  
                  pim_iU[ind] = (clust.getInt("coordU", bind)-4)/8+1;
@@ -530,8 +527,8 @@ public class ECa  extends DetectorMonitor {
 				 int ind = getDet(det);				
 		         pip_x_ecal[ind] = x; pim_y_ecal[ind] = y;
 		         pip_ecal_TH[ind] = (float) Math.toDegrees(Math.acos(z/r));
-		         pip_ecal_EL[ind] += e;
-                 pip_ecal_E += e;
+		         pip_ecal_EL[ind] +=  e;
+                 pip_ecal_E       +=  e;
                  if(det==0) pip_sect = bank.getByte("sector",k);
                 
                 pip_iU[ind] = (clust.getInt("coordU", bind)-4)/8+1;

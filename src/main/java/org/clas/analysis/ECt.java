@@ -9,6 +9,7 @@ import org.clas.tools.FitData;
 import org.clas.viewer.DetectorMonitor;
 import org.dom4j.CDATA;
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.graphics.EmbeddedCanvas;
@@ -26,9 +27,8 @@ import org.jlab.utils.groups.IndexedTable;
 
 public class ECt extends DetectorMonitor {
 
-    ECEngine engine = new ECEngine();
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
-    IndexedTable time = null, offset=null;
+    IndexedTable time = null, offset=null, goffset=null;
 
     int[]    npmts = new int[]{68,36,36};
     
@@ -38,12 +38,15 @@ public class ECt extends DetectorMonitor {
     
     int trigger_sect = 0;
     int        phase = 0;
+    Boolean     isMC = false;
     
 //  static float TOFFSET = 436; 
-    static float TOFFSET = 125f;
-    static float    veff = 18.1f;
-    static float       c = 29.98f;
-    float            tps =  (float) 0.02345;
+    static float   FTOFFSET = 0;
+    static float    TOFFSET = 0;
+    static float  TOFFSETMC = 180;
+    static float       veff = 18.1f;
+    static float          c = 29.98f;
+    float               tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     
     public ECt(String name) {
@@ -69,15 +72,14 @@ public class ECt extends DetectorMonitor {
         		                     "ADCHI v TTW",
         		                     "LEFF v TTW",
         		                     "LEFF v TVERT",
-        		                     "TDIF");
+        		                     "TDIF",
+        		                     "MISC");
         
         this.useSectorButtons(true);
         this.useSliderPane(true);
         engine.init();       
         engine.setVariation("default");
         engine.setVeff(veff);
-        time   = engine.getConstantsManager().getConstants(3050, "/calibration/ec/timing");
-        offset = engine.getConstantsManager().getConstants(3050, "/calibration/ec/fadc_offset");
         this.init();
     }
     
@@ -106,6 +108,8 @@ public class ECt extends DetectorMonitor {
         createUVWHistos(18,180,240,0,12000,"TTW","ADCHI ");
         createUVWHistos(19,200,270,0,430,"TTW","LEFF ");
         createUVWHistos(20,160,190,0,430,"TVERT","LEFF ");
+        
+        createMISCHistos(22,0,300,"Start Time","Counts");
     }
 
     @Override        
@@ -133,6 +137,18 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(19);
     	    plotUVWHistos(20);
     	    if(isAnalyzeDone) {updateUVW(21);}
+    	    plotMISCHistos(22);
+    }
+    
+    public void createMISCHistos(int k, int xmin, int xmax, String xtxt, String ytxt) {
+    	    H1F h;
+    	    DataGroup dg1 = new DataGroup(1,1);
+    	    int xbins = 100;
+    	    int run = getRunNumber();
+        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,xbins,xmin,xmax);
+        h.setTitleX(xtxt); h.setTitleY(ytxt);       
+        dg1.addDataSet(h,0);
+        this.getDataGroup().add(dg1,0,0,k,run);        
     }
     
     public void createUVWHistos(int k, int xmin, int xmax, int ymin, int ymax, String xtxt, String ytxt) {
@@ -236,7 +252,11 @@ public class ECt extends DetectorMonitor {
     } 
     
     @Override
-    public void processEvent(DataEvent event) {      	
+    public void processEvent(DataEvent event) {   
+    	   isMC = (getRunNumber()<100) ? true:false;
+       time    = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/timing");
+       offset  = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/fadc_offset");
+       goffset = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/fadc_global_offset");
        trigger_sect = getElecTriggerSector(); 
        phase        = getTriggerPhase();
        processRaw(event);
@@ -245,9 +265,8 @@ public class ECt extends DetectorMonitor {
     
     public void processRaw(DataEvent event) {
     	
-       H2F h;
  	   int run = getRunNumber();
-       float tdcd,tdcdc =  0;
+       FTOFFSET = (float) goffset.getDoubleValue("global_offset",0,0,0);
         
        tdcs.clear();
        
@@ -256,16 +275,16 @@ public class ECt extends DetectorMonitor {
            for(int i = 0; i < bank.rows(); i++){
                int  is = bank.getByte("sector",i);
                int  il = bank.getByte("layer",i);
-               int  ip = bank.getShort("component",i);               
-               tdcd    = bank.getInt("TDC",i)*tps;
-               tdcdc   = tdcd-phase;
+               int  ip = bank.getShort("component",i);   
+               float tdcd  = bank.getInt("TDC",i)*tps;
+               float tdcdc = tdcd-phase;
                if(is>0&&is<7&&tdcd>0) {
                    if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
-              	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd, ip); //raw time
-              	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc,ip); //phase corrected time
-                       if (is==trigger_sect) {
-                    	       tdcs.getItem(is,il,ip).add(tdcdc);
-                  	       ((H2F) this.getDataGroup().getItem(is,0,2,run).getData(il-1).get(0)).fill(tdcdc,ip); //triggered time
+              	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd, ip); // raw time
+              	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc,ip); // phase corrected time
+                       if (is==trigger_sect||isMC) {
+                    	       tdcs.getItem(is,il,ip).add((float)tdcdc);
+                  	       ((H2F) this.getDataGroup().getItem(is,0,2,run).getData(il-1).get(0)).fill(tdcdc,ip); // triggered time
                        }
                }
            }
@@ -278,24 +297,23 @@ public class ECt extends DetectorMonitor {
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);
                int adc = Math.abs(bank.getInt("ADC",i));
-               float t = bank.getFloat("time",i) + (float) offset.getDoubleValue("offset",is,il,0);               
+               float t = bank.getFloat("time",i) + (float) offset.getDoubleValue("offset",is,il,0);  // FADC-TDC offset (sector, UVW layer)              
                
-               Float[] tdcc; float[] tdc; float tmax = 1000; float tdcm = 1000;
+               Float[] tdcc; float tmax = 1000; float tdcm = 1000;
                
-               if (tdcs.hasItem(is,il,ip)) {
+               if (tdcs.hasItem(is,il,ip)) { // sector,layer,component FADC/TDC match
         	           double a0 = time.getDoubleValue("a0", is, il, ip);
         	           double a2 = time.getDoubleValue("a2", is, il, ip);
                    List<Float> list = new ArrayList<Float>();
                    list = tdcs.getItem(is,il,ip); tdcc=new Float[list.size()]; list.toArray(tdcc);
-                   tdc  = new float[list.size()];
-                   for (int ii=0; ii<tdcc.length; ii++) {
-              	      float tdif = (tdcc[ii]-TOFFSET)-t; 
+                   for (int ii=0; ii<tdcc.length; ii++) { // loop over TDC hits 
+              	      float tdif = (tdcc[ii]-FTOFFSET)-t; 
              	      ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
-            	          if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
+            	          if (Math.abs(tdif)<20 && tdif<tmax) {tmax = tdif; tdcm = tdcc[ii];}                	    
                    }
                    double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
-          	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  //matched FADC/TDC
-          	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); //calibrated time
+          	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  // matched FADC/TDC
+          	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); // calibrated time
                }
            }
        }    	
@@ -305,10 +323,13 @@ public class ECt extends DetectorMonitor {
   	   
     	   int run = getRunNumber();
     	   
-       event.removeBank("ECAL::hits");        
-       event.removeBank("ECAL::peaks");        
-       event.removeBank("ECAL::clusters");        
-       event.removeBank("ECAL::calib");
+    	   if(event.hasBank("ECAL::hits")) {
+          event.removeBank("ECAL::hits");        
+          event.removeBank("ECAL::peaks");        
+          event.removeBank("ECAL::clusters");        
+          event.removeBank("ECAL::calib");
+          event.removeBank("ECAL::moments");
+    	   }
         
        engine.processDataEvent(event); 
         
@@ -323,7 +344,7 @@ public class ECt extends DetectorMonitor {
                int   il = bank.getByte("layer", loop); 
                int   ip = bank.getByte("strip", loop);
                float  t = bank.getFloat("time", loop);
-               if (is==trigger_sect) {
+               if (is==trigger_sect||isMC) {
             	      ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(t, ip); //calibrated triggered matched hits
                }
             }
@@ -332,6 +353,7 @@ public class ECt extends DetectorMonitor {
        if(!(event.hasBank("REC::Calorimeter") && event.hasBank("REC::Particle"))) return;
 
        float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
+       ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(0).get(0)).fill(Tvertex);  
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
@@ -350,7 +372,7 @@ public class ECt extends DetectorMonitor {
             DataBank  bank2 = event.getBank("ECAL::calib");
             for(int loop = 0; loop < bank1.rows(); loop++){
                 int is = bank1.getByte("sector", loop);
-                if (is==trigger_sect){
+                if (is==trigger_sect||isMC){
                     int     il = bank1.getByte("layer", loop);
                     float ener = bank1.getFloat("energy",loop)*1000;
                     float    t = bank1.getFloat("time",loop);
@@ -370,9 +392,11 @@ public class ECt extends DetectorMonitor {
                              float tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
                              float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
                              float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-                             float tdif  = tu  - Tvertex + phase;
+//                             float tdif  = tu  - Tvertex + phase;
+                             float tdif  = tu  - Tvertex ;
                              float tdifp = tdif - path/c;
-                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1]; //Tvertex-phase temporary!!
+//                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1]; //Tvertex-phase temporary!!
+                             float texp  = path/c + leff/veff + Tvertex - shiftTV[is-1]; //Tvertex-phase temporary!!
                              ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip);
                              ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip);
                              ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
@@ -387,7 +411,8 @@ public class ECt extends DetectorMonitor {
                                 ((H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdcc, leff);
-                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1]-phase,leff); //Tvertex-phase temporary!! 	
+//                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1]-phase,leff); //Tvertex-phase temporary!! 	
+                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1],leff); //Tvertex-phase temporary!! 	
                              } 	      
                     	    } 
                     }
@@ -453,6 +478,11 @@ public class ECt extends DetectorMonitor {
     	    int run = getRunNumber();
     	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	    
     }
+    
+    public void plotMISCHistos(int index) {
+	    int run = getRunNumber();
+	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	    
+    }  
     
     @Override
     public void timerUpdate() {

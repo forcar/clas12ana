@@ -59,6 +59,7 @@ import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.task.DataSourceProcessorPane;
 import org.jlab.io.task.IDataEventListener;
+import org.jlab.utils.groups.IndexedTable;
 import org.jlab.elog.LogEntry; 
         
 /**
@@ -83,6 +84,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int        eventNumber = 0;
     private int      ccdbRunNumber = 0;
     String                 workDir = null;
+   
+    double PERIOD = 0;
+    int     PHASE = 0;
+    int    CYCLES = 0;
     
     public String outPath = "/Users/lcsmith/CLAS12ANA";
     
@@ -333,6 +338,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         return mainPanel;
     }
     
+    public void setTriggerPhaseConstants(int run) {
+		IndexedTable   jitter = this.monitors[1].engine.getConstantsManager().getConstants(run, "/calibration/ec/time_jitter");        
+        PERIOD = jitter.getDoubleValue("period",0,0,0);
+        PHASE  = jitter.getIntValue("phase",0,0,0); 
+        CYCLES = jitter.getIntValue("cycles",0,0,0);
+    }
+    
     public long getTriggerWord(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");	        
         return bank.getLong("trigger", 0);
@@ -341,8 +353,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public int getTriggerPhase(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");	        
         long timestamp = bank.getLong("timestamp",0);    
-        int phase_offset = 1;
-        return (int) (4*((timestamp+phase_offset)%6)); // TI derived phase correction due to TDC and FADC clock differences 
+        if (CYCLES==0) return 0;
+        return (int) (PERIOD*((timestamp+PHASE)%CYCLES)); // TI derived phase correction due to TDC and FADC clock differences 
     }
     
     private int getRunNumber(DataEvent event) {
@@ -406,6 +418,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             
             int rNum = this.runNumber;
             int eNum = this.eventNumber;
+            
             if(event.hasBank("RUN::config")) {
                 DataBank bank = event.getBank("RUN::config");
                  rNum      = bank.getInt("run", 0);
@@ -429,6 +442,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 this.monitors[k].setEventNumber(this.eventNumber);
             }
             
+            setTriggerPhaseConstants(this.runNumber);
+                        
             for(int k=0; k<this.monitors.length; k++) {
                 this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
                 this.monitors[k].setTriggerWord(getTriggerWord(hipo));        	    
@@ -465,7 +480,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                             current = evioReader.getCurrentIndex();
                             nevents = evioReader.getSize();
                         }
+
                         System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());                        
+
                         for (int k = 0; k < nevents; k++) {
                             if(fd.getName().contains(".hipo")) {
                                 if (hipoReader.hasEvent()) {
