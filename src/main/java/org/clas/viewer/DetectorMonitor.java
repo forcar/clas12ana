@@ -92,7 +92,24 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
     
-    public ECEngine engine = new ECEngine();
+    public ECEngine  engine = new ECEngine();    
+    public String variation = "default";
+    public String      geom = "2.5";
+    public String    config = "muon";   
+    
+    int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+    int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
+    int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+    
+    int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
+    int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
+    int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+        
+    double[] cerrMuon = {5.5,10.,10.};
+    double[] cerrPhot = {7,15.,20.};
+    double[] cerrElec = {10.,10.,10.};  
     
     public DetectorMonitor(String name){
 
@@ -101,17 +118,21 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
-        numberOfEvents = 0;
+        initPanel();
         
+        numberOfEvents = 0;        
         eventResetTime_current[0]=0;
-        eventResetTime_current[1]=0;
-     
+        eventResetTime_current[1]=0;     
         eventResetTime_default[0]=10000000;  
-        eventResetTime_default[1]=10000000;  
-     
+        eventResetTime_default[1]=10000000;       
         for (int i=0; i<2; i++){
             eventResetTime_current[i]=eventResetTime_default[i];
         }
+        
+    }
+    
+    public void init() {
+    	
     }
     
     public void initGStyle() {
@@ -137,13 +158,62 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getGraphErrorsAttributes().setFillStyle(1);   
     }
     
-    public void init() {
+    public void initPanel() {
         getDetectorPanel().setLayout(new BorderLayout());
         actionPanel = new JPanel();
         actionPanel.setLayout(new FlowLayout());
         getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
         getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
     }
+    
+    public void configEngine(String config) {
+        engine.init();
+        engine.isMC = false;
+        engine.setVariation(variation);
+       
+        engine.setStripThresholds(getStripThr(config, 0, 1),
+                                  getStripThr(config, 1, 1),
+                                  getStripThr(config, 2, 1));  
+        engine.setPeakThresholds(getPeakThr(config, 0, 1),
+                                 getPeakThr(config, 1, 1),
+                                 getPeakThr(config, 2, 1));  
+        engine.setClusterCuts(getClusterErr(config,0),
+                              getClusterErr(config,1),
+                              getClusterErr(config,2));    	
+    }
+    
+    public int getStripThr(String config, int idet, int layer) {
+        switch (config) {
+        case     "pi0": return sthrPhot[idet][layer-1] ;  
+        case    "phot": return sthrPhot[idet][layer-1] ; 
+        case    "muon": return sthrMuon[idet][layer-1] ;  
+        case    "elec": return sthrElec[idet][layer-1] ;
+        case    "none": return sthrZero[idet][layer-1] ;
+        }
+        return 0;
+     }
+    
+    public int getPeakThr(String config, int idet, int layer) {
+        switch (config) {
+        case     "pi0": return pthrPhot[idet][layer-1] ;  
+        case    "phot": return pthrPhot[idet][layer-1] ;  
+        case    "muon": return pthrMuon[idet][layer-1] ; 
+        case    "elec": return pthrElec[idet][layer-1] ;
+        case    "none": return pthrZero[idet][layer-1] ;
+        }
+        return 0;
+     }
+    
+    public float getClusterErr(String config, int idet) {
+        switch (config) {
+        case     "pi0": return (float) cerrPhot[idet] ;  
+        case    "phot": return (float) cerrPhot[idet] ;  
+        case    "muon": return (float) cerrMuon[idet] ; 
+        case    "elec": return (float) cerrElec[idet] ;
+        case    "none": return (float) cerrMuon[idet] ;
+        }
+        return 0;
+     } 
     
     public void analyze() {
         // analyze detector data at the end of data processing

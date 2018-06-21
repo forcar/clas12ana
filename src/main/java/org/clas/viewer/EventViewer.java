@@ -94,7 +94,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DetectorMonitor[] monitors = {
     		new ECa("ECa"),
     		new ECt("ECt"),
-    		new ECmip("ECmip")
+    		new ECmip("ECmip"),
+    		new ECpio("ECpi0")
     }  ;  
         
     public EventViewer() {    	

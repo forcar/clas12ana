@@ -69,6 +69,8 @@ public class ECPart  {
 
     public int[] mip = {0,0,0,0,1,0};
     
+    int photonMult = 12;
+    
     public ECPart() {  
     	    initccdb();
     }
@@ -277,7 +279,7 @@ public class ECPart  {
         case "Inner": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(1), DetectorType.ECAL, is);
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,4,eb.ccdb.getDouble(EBCCDBEnum.ECIN_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
-                      distance = p.getDistance(rEC.get(index)).length();eec1=rEC.get(index).getEnergy();}
+                      distance = p.getDistance(rEC.get(index)).length();eec1=rEC.get(index).getEnergy();} break;
         case "Outer": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(2), DetectorType.ECAL, is); 
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,7,eb.ccdb.getDouble(EBCCDBEnum.ECOUT_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
@@ -345,12 +347,39 @@ public class ECPart  {
         cpi0 = (e1c*cth1+e2c*cth2)/Math.sqrt(e1c*e1c+e2c*e2c+2*e1c*e2c*cth);
         
         g1.combine(g2, +1);
-                
-        //Require two photons in PCAL before calculating invariant mass
-        boolean pc12 = DetectorResponse.getListByLayer(p1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0  &&
-                       DetectorResponse.getListByLayer(p2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0;
+                               
+        return goodPhotons(photonMult,p1,p2) ? g1.mass2():0.0;
+    }
+    
+    public boolean goodPhotons(int test, DetectorParticle pp1, DetectorParticle pp2) {
+    	
+        //Require two photons in PCAL  
+        boolean pc12 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0  &&
+                       DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0;
         
-        return pc12 ? g1.mass2():0.0;
+       // Require photon 1 be in PCAL and ECin
+       boolean pcec1 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&           
+                       DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0; 
+
+       // Require photon 2 be in PCAL and ECin
+       boolean pcec2 = DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&
+                       DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0;  
+       
+       boolean goodPhotons = pc12;
+       
+       switch (test) {
+           case 121:  goodPhotons = pc12 && pcec1;          break;
+           case 122:  goodPhotons = pc12 && pcec2;          break;
+           case 120:  goodPhotons = pc12 && (pcec1||pcec2); break;
+           case 1212: goodPhotons = pc12 && (pcec1&&pcec2);
+       }
+       
+       return goodPhotons;
+       
+    }
+    
+    public void setGoodPhotons(int num) {
+    	this.photonMult = num;
     }
     
     public void setGeom(String geom) {
@@ -531,6 +560,7 @@ public class ECPart  {
         
         part.setThresholds("Pizero",engine);
         part.setGeom("2.5");
+        part.setGoodPhotons(12);
         
         double emax = 8.5;
         
@@ -562,15 +592,10 @@ public class ECPart  {
             double invmass = 1e3*Math.sqrt(part.getTwoPhotonInvMass(sec));
             
             boolean goodmass = invmass>0 && invmass<200;
-                                      
-            // Require photon 1 be in PCAL and ECin
-            boolean pcec1 = DetectorResponse.getListByLayer(part.p1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&           
-                            DetectorResponse.getListByLayer(part.p1.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0; 
             
-            // Require photon 2 be in PCAL and ECin
-            boolean pcec2 = DetectorResponse.getListByLayer(part.p2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&
-                            DetectorResponse.getListByLayer(part.p2.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0;
-            
+            boolean pcec1 = goodPhotons(121,part.p1,part.p2);
+            boolean pcec2 = goodPhotons(122,part.p1,part.p2);
+           
             if (goodmass) {
                 n2hit++;  h6.fill(part.refE);    	            
                 if(pcec1||pcec2) {n2rec1++; h7a.fill(part.refE);}
@@ -579,7 +604,7 @@ public class ECPart  {
                 if (pcec1||pcec2) {
                     h2a.fill(part.refE, invmass);                                    //Two-photon invariant mass                
                     h2b.fill(part.refE, part.X);                                     //Pizero energy asymmetry
-                    h2c.fill(part.refE,(Math.sqrt(part.tpi2)/part.refE));      //Pizero total energy error
+                    h2c.fill(part.refE,(Math.sqrt(part.tpi2)/part.refE));            //Pizero total energy error
                     h2d.fill(part.refE,Math.acos(part.cpi0)*180/Math.PI-part.refTH); //Pizero theta angle error
                     nimcut++; h8.fill(part.refE);
                 }

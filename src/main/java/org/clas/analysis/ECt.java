@@ -52,40 +52,39 @@ public class ECt extends DetectorMonitor {
     public ECt(String name) {
         super(name);
         this.setDetectorTabNames("Raw TDC",
-        		                     "PhaseCorr TDC",
-        		                     "Triggered TDC",
-        		                     "Matched TDC",
-        		                     "Calib TDC",
-        		                     "Hit Time",
-        		                     "Peak Time",
-        		                     "Cluster Time",
-        		                     "TIME-FADC",
-        		                     "TIME-TVERT",
-        		                     "RESID v STRIP",
-        		                     "RESID v PATH",
-        		                     "RESID v ENERGY",
-        		                     "RESID v LEFF",
-        		                     "RESID v TIME ",
-        		                     "RESID v ADC ",
-        		                     "ADC v TIME",
-        		                     "ADC v TTW",
-        		                     "ADCHI v TTW",
-        		                     "LEFF v TTW",
-        		                     "LEFF v TVERT",
-        		                     "TDIF",
-        		                     "MISC");
+                                 "PhaseCorr TDC",
+                                 "Triggered TDC",
+                                 "Matched TDC",
+                                 "Calib TDC",
+                                 "Hit Time",
+                                 "Peak Time",
+                                 "Cluster Time",
+                                 "TIME-FADC",
+                                 "TIME-TVERT",
+                                 "RESID v STRIP",
+                                 "RESID v PATH",
+                                 "RESID v ENERGY",
+                                 "RESID v LEFF",
+                                 "RESID v TIME ",
+                                 "RESID v ADC ",
+                                 "ADC v TIME",
+                                 "ADC v TTW",
+                                 "ADCHI v TTW",
+                                 "LEFF v TTW",
+                                 "LEFF v TVERT",
+                                 "TDIF",
+                                 "MISC");
         
         this.useSectorButtons(true);
         this.useSliderPane(true);
-        engine.init();       
-        engine.setVariation("default");
+        configEngine("muon");
         engine.setVeff(veff);
         this.init();
     }
     
     @Override
     public void createHistos(int run) {  
-    	    setRunNumber(run);
+        setRunNumber(run);
         createTDCHistos(0,150,350,"TIME (ns)");
         createTDCHistos(1,150,350,"TIME (ns)");
         createTDCHistos(2,150,350,"TIME (ns)");
@@ -141,10 +140,10 @@ public class ECt extends DetectorMonitor {
     }
     
     public void createMISCHistos(int k, int xmin, int xmax, String xtxt, String ytxt) {
-    	    H1F h;
-    	    DataGroup dg1 = new DataGroup(1,1);
-    	    int xbins = 100;
-    	    int run = getRunNumber();
+        H1F h;
+        DataGroup dg1 = new DataGroup(1,1);
+        int xbins = 100;
+        int run = getRunNumber();
         h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,xbins,xmin,xmax);
         h.setTitleX(xtxt); h.setTitleY(ytxt);       
         dg1.addDataSet(h,0);
@@ -212,7 +211,7 @@ public class ECt extends DetectorMonitor {
   
     public void createTDCHistos(int k, double tmin, double tmax, String txt) {
     	
-    	    int run = getRunNumber();
+        int run = getRunNumber();
         H2F h;  
         
         for (int is=1; is<7; is++) {
@@ -253,7 +252,7 @@ public class ECt extends DetectorMonitor {
     
     @Override
     public void processEvent(DataEvent event) {   
-    	   isMC = (getRunNumber()<100) ? true:false;
+       isMC = (getRunNumber()<100) ? true:false;
        time    = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/timing");
        offset  = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/fadc_offset");
        goffset = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/fadc_global_offset");
@@ -321,15 +320,15 @@ public class ECt extends DetectorMonitor {
     
     public void processRec(DataEvent event) {
   	   
-    	   int run = getRunNumber();
+       int run = getRunNumber();
     	   
-    	   if(event.hasBank("ECAL::hits")) {
+       if(event.hasBank("ECAL::hits")) {
           event.removeBank("ECAL::hits");        
           event.removeBank("ECAL::peaks");        
           event.removeBank("ECAL::clusters");        
           event.removeBank("ECAL::calib");
           event.removeBank("ECAL::moments");
-    	   }
+       }
         
        engine.processDataEvent(event); 
         
@@ -360,11 +359,11 @@ public class ECt extends DetectorMonitor {
        DataBank  bank = event.getBank("REC::Calorimeter");
        
        for(int loop = 0; loop < bank.rows(); loop++){
-    	       int   is = bank.getByte("sector", loop);
-    	       int   il = bank.getByte("layer", loop);
-    	       int   in = bank.getShort("index", loop);
-    	       int  det = bank.getByte("detector", loop);
-    	       if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
+          int   is = bank.getByte("sector", loop);
+          int   il = bank.getByte("layer", loop);
+          int   in = bank.getShort("index", loop);
+          int  det = bank.getByte("detector", loop);
+          if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
        }
        
        if(event.hasBank("ECAL::clusters")){
@@ -439,14 +438,14 @@ public class ECt extends DetectorMonitor {
     
     @Override
     public void plotEvent(DataEvent de) {
-    	    analyze();
+       analyze();
     }
 
     public void analyze() {    
-        System.out.println("I am in analyze()");
-        analyzeGraphs(1,7,0,3,0,3);
-        System.out.println("Finished");
-        isAnalyzeDone = true;
+       System.out.println("I am in analyze()");
+       analyzeGraphs(1,7,0,3,0,3);
+       System.out.println("Finished");
+       isAnalyzeDone = true;
     }
     
     public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
@@ -469,19 +468,19 @@ public class ECt extends DetectorMonitor {
     }
     
     public void plotUVWHistos(int index) {
-    	    int run = getRunNumber();
-	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
+       int run = getRunNumber();
+       drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
     }
 
     
     public void plotTDCHistos(int index) {
-    	    int run = getRunNumber();
-    	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	    
+       int run = getRunNumber();
+       drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	    
     }
     
     public void plotMISCHistos(int index) {
-	    int run = getRunNumber();
-	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	    
+       int run = getRunNumber();
+       drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	    
     }  
     
     @Override

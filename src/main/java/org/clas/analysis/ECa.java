@@ -82,7 +82,7 @@ public class ECa  extends DetectorMonitor {
 
     @Override
     public void createHistos(int run) {        
-    	    setRunNumber(run);
+        setRunNumber(run);
         this.setNumberOfEvents(0);        
         createEOPHistos(0,50,0.5,10.5,"ep_p",  " Momentum (GeV)",      "E / P");
         createEOPHistos(1,30,  6.,36.,"ep_thv"," VertexTheta (deg)",   "E / P");
