@@ -601,7 +601,7 @@ public class ECPart  {
                 if(pcec1||pcec2) {n2rec1++; h7a.fill(part.refE);}
                 if(pcec1&&pcec2) {n2rec2++; h7b.fill(part.refE);}
           
-                if (pcec1||pcec2) {
+                if (pcec1&&pcec2) {
                     h2a.fill(part.refE, invmass);                                    //Two-photon invariant mass                
                     h2b.fill(part.refE, part.X);                                     //Pizero energy asymmetry
                     h2c.fill(part.refE,(Math.sqrt(part.tpi2)/part.refE));            //Pizero total energy error
@@ -611,15 +611,15 @@ public class ECPart  {
             }
         }
         
-        H1F hrat1 = H1F.divide(h6,  part.h5); hrat1.setFillColor(2); hrat1.setTitleY("PC 2 Photon Eff");
-        H1F hrat2 = H1F.divide(h7a, part.h5); hrat2.setFillColor(2); hrat2.setTitleY("PC*EC 1 Photon Eff");
-        H1F hrat3 = H1F.divide(h7b, part.h5); hrat3.setFillColor(2); hrat3.setTitleY("PC*EC 2 Photon Eff");
-        H1F hrat4 = H1F.divide(h8, h6);  hrat4.setFillColor(2); hrat4.setTitleY("PC*EC NIMCUT Eff");
+        H1F hrat1 = H1F.divide(h6,  part.h5); hrat1.setFillColor(2); hrat1.setTitleY("PC 2 Photon Eff");    hrat1.setTitleX("Pizero Energy (GeV)");
+        H1F hrat2 = H1F.divide(h7a, part.h5); hrat2.setFillColor(2); hrat2.setTitleY("PC*EC 1 Photon Eff"); hrat2.setTitleX("Pizero Energy (GeV)");
+        H1F hrat3 = H1F.divide(h7b, part.h5); hrat3.setFillColor(2); hrat3.setTitleY("PC*EC 2 Photon Eff"); hrat3.setTitleX("Pizero Energy (GeV)");
+        H1F hrat4 = H1F.divide(h8, h6);  hrat4.setFillColor(2); hrat4.setTitleY("PC*EC NIMCUT Eff");        hrat4.setTitleX("Pizero Energy (GeV)");
         
-        H1F h1 = h2a.projectionY();  h1.setOptStat("1100") ; h1.setFillColor(4);
-        H1F h2 = h2b.projectionY();  h2.setOptStat("1100") ; h2.setFillColor(4);
-        H1F h3 = h2c.projectionY();  h3.setOptStat("1100") ; h3.setFillColor(4);
-        H1F h4 = h2d.projectionY();  h4.setOptStat("1100") ; h4.setFillColor(4);
+        H1F h1 = h2a.projectionY();  h1.setOptStat("1100") ; h1.setFillColor(4); h1.setTitleX("Two-Photon Invariant Mass (MeV)");
+        H1F h2 = h2b.projectionY();  h2.setOptStat("1100") ; h2.setFillColor(4); h2.setTitleX("X:(E1-E2)/(E1+E2)");
+        H1F h3 = h2c.projectionY();  h3.setOptStat("1100") ; h3.setFillColor(4); h3.setTitleX("Pizero Energy Error");
+        H1F h4 = h2d.projectionY();  h4.setOptStat("1100") ; h4.setFillColor(4); h4.setTitleX("Pizero Theta Error (deg)");
        
         System.out.println("THROWN TWOPHOTONS PCEC MATCH1 PCEC MATCH2 INVMASS CUT");
         System.out.println(part.n2mc+"     "+n2hit+"         "+n2rec1+"     "+n2rec2+"   "+nimcut);

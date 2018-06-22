@@ -1,7 +1,9 @@
 package org.clas.analysis;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.clas.tools.DataProvider;
 import org.clas.tools.TOFPaddle;
@@ -19,7 +21,9 @@ public class ECpi0 extends DetectorMonitor{
 	
 	ECPart part = new ECPart();
     List<TOFPaddle>     paddleList = null;
-    List<List<DetectorResponse>>   res = new ArrayList<List<DetectorResponse>>();    
+    List<List<DetectorResponse>>   res = new ArrayList<List<DetectorResponse>>();   
+    Map<String,Integer> smap = new HashMap<String,Integer>();
+    
     int[]   iidet = {1,4,7};
 	
     public ECpi0(String name) {
@@ -30,10 +34,10 @@ public class ECpi0 extends DetectorMonitor{
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init();
+        localinit();
     }
     
-    @Override
-    public void init() {
+    public void localinit() {
         configEngine("pi0");
         part.setGeom("2.5");  
         part.setConfig("pi0");  
@@ -81,14 +85,16 @@ public class ECpi0 extends DetectorMonitor{
                 String tag = var+"_"+is+"_"+j+"_"+k+"_"+run;
                 h = new H1F("pi0_"+tag,"pi0_"+tag, nch, x1, x2);
                 h.setTitleX("Sector Pair "+is+j+" "+txt);  
-                dg.addDataSet(h,n);  n++;
+                dg.addDataSet(h,n);  n++; 
+                smap.put(is+"_"+j,n);
             }
         }
         this.getDataGroup().add(dg,0,0,k,run);    	
     }
     
     @Override
-    public void processEvent(DataEvent event) {   
+    public void processEvent(DataEvent event) {  
+    	
         int run = getRunNumber();
  	   
         if(event.hasBank("ECAL::hits")) {
@@ -98,8 +104,10 @@ public class ECpi0 extends DetectorMonitor{
            event.removeBank("ECAL::calib");
            event.removeBank("ECAL::moments");
         } 
-        
+
         engine.processDataEvent(event); 
+        
+        if(!event.hasBank("ECAL::clusters")) return;
         
         DataBank ecBank = event.getBank("ECAL::clusters");
         
@@ -166,10 +174,10 @@ public class ECpi0 extends DetectorMonitor{
                 double     opa = Math.acos(part.cth)*180/3.14159;
                 
                 boolean badPizero = part.X>0.5 && opa<8;
-                if(part.iis[0]>0&&part.iis[1]>0&&!badPizero) {
+                if(invmass>0&&part.iis[0]>0&&part.iis[1]>0&&!badPizero) {
                                   
-                    if(part.iis[0]<=part.iis[1]) ((H1F) this.getDataGroup().getItem(part.iis[0],0,0,run).getData(part.iis[1]).get(0)).fill((float)invmass*1e3);
-                    if(part.iis[0]> part.iis[1]) ((H1F) this.getDataGroup().getItem(part.iis[1],0,0,run).getData(part.iis[0]).get(0)).fill((float)invmass*1e3);
+                    if(part.iis[0]==part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,0,run).getData(part.iis[0]-1).get(0)).fill((float)invmass*1e3);
+                    if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,1,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill((float)invmass*1e3);
 /*                
                 if(part.iis[0]==part.iis[1]) {
                     

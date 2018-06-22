@@ -40,6 +40,7 @@ import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECmip;
+import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECt;
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -95,7 +96,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     		new ECa("ECa"),
     		new ECt("ECt"),
     		new ECmip("ECmip"),
-    		new ECpio("ECpi0")
+    		new ECpi0("ECpi0")
     }  ;  
         
     public EventViewer() {    	

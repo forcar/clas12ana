@@ -118,7 +118,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
-        initPanel();
         
         numberOfEvents = 0;        
         eventResetTime_current[0]=0;
@@ -132,7 +131,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void init() {
-    	
+        initPanel();    	
     }
     
     public void initGStyle() {

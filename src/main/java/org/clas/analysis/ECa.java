@@ -450,7 +450,8 @@ public class ECa  extends DetectorMonitor {
 					DataBank HTCCbank = event.getBank("REC::Cherenkov");
 					for(int l = 0; l < HTCCbank.rows(); l++){
 						if(HTCCbank.getShort("pindex",l)==k && HTCCbank.getInt("detector",l)==15){
-							HTCCnphe = HTCCbank.getFloat("nphe",l); //Change to FLOAT
+//							HTCCnphe = HTCCbank.getFloat("nphe",l); //Change to FLOAT
+							HTCCnphe = HTCCbank.getShort("nphe",l); //Change to FLOAT
 						}
 					}
 				}
