@@ -92,6 +92,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public String outPath = "/Users/lcsmith/CLAS12ANA";
     
+    
     DetectorMonitor[] monitors = {
     		new ECa("ECa"),
     		new ECt("ECt"),
@@ -341,7 +342,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setTriggerPhaseConstants(int run) {
-		IndexedTable   jitter = this.monitors[1].engine.getConstantsManager().getConstants(run, "/calibration/ec/time_jitter");        
+		IndexedTable   jitter = this.monitors[0].engine.getConstantsManager().getConstants(run, "/calibration/ec/time_jitter");        
         PERIOD = jitter.getDoubleValue("period",0,0,0);
         PHASE  = jitter.getIntValue("phase",0,0,0); 
         CYCLES = jitter.getIntValue("cycles",0,0,0);
@@ -420,12 +421,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             
             int rNum = this.runNumber;
             int eNum = this.eventNumber;
-            
             if(event.hasBank("RUN::config")) {
                 DataBank bank = event.getBank("RUN::config");
                  rNum      = bank.getInt("run", 0);
                  eNum      = bank.getInt("event", 0);
             }
+            
             if(rNum!=0 && this.runNumber != rNum) {
                 this.runNumber = rNum;
                 for(int k=0; k<this.monitors.length; k++) {
@@ -439,13 +440,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
                 }
             } 
+           
             this.eventNumber = eNum;
+            
             for(int k=0; k<this.monitors.length; k++) {
                 this.monitors[k].setEventNumber(this.eventNumber);
             }
             
             setTriggerPhaseConstants(this.runNumber);
-                        
+            
             for(int k=0; k<this.monitors.length; k++) {
                 this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
                 this.monitors[k].setTriggerWord(getTriggerWord(hipo));        	    

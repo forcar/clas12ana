@@ -50,14 +50,16 @@ public class ECPart  {
     public double x1,y1,x2,y2;
     public double epc,eec1,eec2;
 //    public static int[] ip1,ip2,is1,is2;
-    public int[] iip = new int[2];
-    public int[] iis = new int[2];
-    public double[] x = new double[2];
-    public double[] y = new double[2];
+    public int[]    iis = new int[2];
+    public int[][]  iip = new int[2][3];
+    public double[][] x = new double[2][3];
+    public double[][] y = new double[2][3];
+    public double[][] t = new double[2][3];
     public double[] distance1 = new double[2];
     public double[] distance2 = new double[2];
     public double mpi0 = 0.1349764;
     public double melec = 0.000511;
+    public float c = 29.98f; 
     public String geom = "2.4";
     public String config = null;
     public double SF1 = 0.27;
@@ -72,12 +74,11 @@ public class ECPart  {
     int photonMult = 12;
     
     public ECPart() {  
-    	    initccdb();
+        initccdb();
     }
     
     public void initccdb() {	   
 	    ebe.init();
-        eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	
     }
     
     public void readMC(DataEvent event) {
@@ -147,12 +148,38 @@ public class ECPart  {
         return responseList;                      
     }
     
+    public static List<DetectorResponse>  readHipoEvent(DataEvent event, 
+            String bankName, DetectorType type){        
+            List<DetectorResponse> responseList = new ArrayList<DetectorResponse>();
+            if(event.hasBank(bankName)==true){
+                DataBank bank = event.getBank(bankName);
+                int nrows = bank.rows();
+                for(int row = 0; row < nrows; row++){
+                    int sector = bank.getByte("sector", row);
+                    int  layer = bank.getByte("layer",  row);
+                    DetectorResponse  response = new DetectorResponse(sector,layer,0);
+                    response.getDescriptor().setType(type);
+                    float x = bank.getFloat("x", row);
+                    float y = bank.getFloat("y", row);
+                    float z = bank.getFloat("z", row);
+                    response.setHitIndex(row);
+                    response.setPosition(x, y, z);
+                    response.setEnergy(bank.getFloat("energy", row));
+                    response.setTime(bank.getFloat("time", row));
+                    responseList.add(response);
+                }
+            }
+            return responseList;
+    }   
+    
     public List<DetectorResponse>  readEC(DataEvent event){
+        eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	
         List<DetectorResponse> rEC = new ArrayList<DetectorResponse>();
         Boolean isEvio = event instanceof EvioDataEvent;                  
         eb.initEvent();
         if (isEvio) rEC =                  readEvioEvent(event, "ECDetector::clusters", DetectorType.ECAL); 
-        if(!isEvio) rEC = DetectorResponse.readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
+//        if(!isEvio) rEC = DetectorResponse.readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
+        if(!isEvio) rEC =                  readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
         eb.addDetectorResponses(rEC); 
         return rEC;
     } 
@@ -216,13 +243,14 @@ public class ECPart  {
 //            System.out.println(Math.sqrt(rPC.getPosition().x()*rPC.getPosition().x()+
 //                                        rPC.getPosition().y()*rPC.getPosition().y()+
 //                                         rPC.getPosition().z()*rPC.getPosition().z()));
-            iip[ii] = rPC.getHitIndex();        
-            iis[ii] = rPC.getDescriptor().getSector();
-              x[ii] = rPC.getPosition().x();
-              y[ii] = rPC.getPosition().y();
+            iip[ii][0] = rPC.getHitIndex();  
+            iis[ii]    = rPC.getDescriptor().getSector();
+              x[ii][0] = rPC.getPosition().x();
+              y[ii][0] = rPC.getPosition().y();
+              t[ii][0] = rPC.getTime()-rPC.getPath()/c;;
              
-            distance1[ii] = doPCECMatch(p,"Inner");
-            distance2[ii] = doPCECMatch(p,"Outer");
+            distance1[ii] = doPCECMatch(p,ii,"Inner");
+            distance2[ii] = doPCECMatch(p,ii,"Outer");
             
         }
                 
@@ -243,17 +271,17 @@ public class ECPart  {
         List<DetectorParticle> particles = new ArrayList<DetectorParticle>();          
         List<DetectorResponse>      rEC  = new ArrayList<DetectorResponse>();        
         
-        rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector);
+        rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector); //get PCAL responses
         
         switch (rEC.size()) {
         case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector);
                 if (rEC2.size()>0) {
-                   particles.add(DetectorParticle.createNeutral(rEC.get(0)));
-                   particles.add(DetectorParticle.createNeutral(rEC2.get(0))); return particles;
+                   particles.add(DetectorParticle.createNeutral(rEC.get(0))); // make neutral particle 1 from PCAL sector 
+                   particles.add(DetectorParticle.createNeutral(rEC2.get(0))); return particles; // make neutral particle 2 from other PCAL sector
                 }
                 break;
-        case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                
-                particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles;
+        case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
+                particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
         }
        return particles;
     }
@@ -267,7 +295,7 @@ public class ECPart  {
         return (neut==1) ? singleNeutrals.getItem(isave):rEC;
     }
     
-    public double doPCECMatch(DetectorParticle p, String io) {
+    public double doPCECMatch(DetectorParticle p, int ii, String io) {
         
         int index=0;
         double distance = -10;
@@ -278,11 +306,15 @@ public class ECPart  {
         switch (io) {       
         case "Inner": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(1), DetectorType.ECAL, is);
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,4,eb.ccdb.getDouble(EBCCDBEnum.ECIN_MATCHING));
-                      if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
+                      if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0); 
+                      iip[ii][1] = rEC.get(index).getHitIndex(); 
+                      x[ii][1] = rEC.get(index).getPosition().x(); y[ii][1] = rEC.get(index).getPosition().y(); t[ii][1] = rEC.get(index).getTime()-rEC.get(index).getPath()/c;
                       distance = p.getDistance(rEC.get(index)).length();eec1=rEC.get(index).getEnergy();} break;
         case "Outer": rEC = DetectorResponse.getListBySector(unmatchedResponses.get(2), DetectorType.ECAL, is); 
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,7,eb.ccdb.getDouble(EBCCDBEnum.ECOUT_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
+                      iip[ii][2] = rEC.get(index).getHitIndex();
+                      x[ii][2] = rEC.get(index).getPosition().x(); y[ii][2] = rEC.get(index).getPosition().y(); t[ii][2] = rEC.get(index).getTime()-rEC.get(index).getPath()/c;
                       distance = p.getDistance(rEC.get(index)).length();eec2=rEC.get(index).getEnergy();}
         }
         
@@ -475,9 +507,9 @@ public class ECPart  {
             Boolean trig2 = good_pcal && !good_ecal && part.epc>0.12;
             		
             if (trig1||trig2) {
-            	   part.h6.fill(part.refE);
+               part.h6.fill(part.refE);
          	   h1.fill(energy,energy/part.refP);
-        	       h2.fill(part.refE,energy/part.refP);
+               h2.fill(part.refE,energy/part.refP);
                h3.fill(part.refP,energy);
             }
         }
@@ -491,25 +523,57 @@ public class ECPart  {
         
 	    ParallelSliceFitter fitter = new ParallelSliceFitter(h1);
         fitter.fitSlicesX();
-        GraphErrors sigGraph = fitter.getSigmaSlices();   
-          sigGraph.setTitleX("Measured Electron Energy (GeV)"); 	sigGraph.setMarkerSize(4); sigGraph.setMarkerStyle(1);
-        GraphErrors meanGraph = fitter.getMeanSlices();  meanGraph.setTitleX("Measured Electron Energy (GeV)");   	
-          meanGraph.setTitleX("Measured Electron Energy (GeV)"); 	meanGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
-//        for (int i=0; i<sigGraph.getDataSize(0); i++) {
-//        	  x[i] = 1/Math.sqrt(sigGraph.getDataX(i));
-//        }
         
-        canvas.divide(3,2);
+        GraphErrors sigGraph = fitter.getSigmaSlices();   
+        sigGraph.setTitleX("Measured Electron Energy (GeV)");  sigGraph.setTitleY("SIGMA(E/P)"); 	
+        sigGraph.setMarkerSize(4); sigGraph.setMarkerStyle(1);
+        
+        GraphErrors meanGraph = fitter.getMeanSlices();  
+        meanGraph.setTitleX("Measured Electron Energy (GeV)"); meanGraph.setTitleY("Sampling Fraction (E/P)"); 	
+        meanGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
+          
+        int npts = meanGraph.getDataSize(0)  ;
+        double[] xm  = new double[npts];
+        double[] ym  = new double[npts];
+        double[] yme = new double[npts];
+        double[] xs  = new double[npts];
+        double[] ys  = new double[npts];
+        double[] yse = new double[npts];
+        
+        for (int i=0; i<meanGraph.getDataSize(0); i++) {
+      	   xm[i] = 1/Math.sqrt(meanGraph.getDataX(i));
+      	   ym[i] = meanGraph.getDataY(i);
+      	  yme[i] = meanGraph.getDataEY(i);      			  
+        } 
+        
+        GraphErrors resGraph = new GraphErrors();
+        resGraph.setTitleX("1/sqrt(True Electron Energy (GeV)) ");  resGraph.setTitleY("#sigma(E) / E"); 
+        resGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
+        
+        int n=0;
+        for (int i=0; i<sigGraph.getDataSize(0); i++) {
+            double y = sigGraph.getDataY(i); double ye = sigGraph.getDataEY(i);
+            if(ym[i]>0&&y>0) {
+                xs[n] = 1/Math.sqrt(sigGraph.getDataX(i)/ym[i]);  //sig(E)/E vs True Energy
+        	    ys[n] = y/ym[i]; //sigma(E)/E = sigma(E/P)*(P/E)
+        	   yse[n] = ys[n]*Math.sqrt(Math.pow(ye/y,2)+Math.pow(yme[i]/ym[i],2));
+        	   resGraph.addPoint(xs[n], ys[n], 0., yse[n]);
+        	}
+        }
+               
+        canvas.divide(3,3);
 		canvas.setAxisTitleSize(18);
 		canvas.setAxisLabelSize(18);
         canvas.cd(0); canvas.draw(h1);        
         canvas.cd(1); canvas.draw(h2);
         canvas.cd(2); canvas.draw(h3);
         canvas.cd(3); canvas.getPad(3).getAxisY().setRange(0.0,0.028) ; canvas.draw(sigGraph);
-        canvas.cd(4); canvas.getPad(4).getAxisY().setRange(0.18,0.26)  ; canvas.draw(meanGraph);
+        canvas.cd(4); canvas.getPad(4).getAxisX().setRange(0.00,1.5) ; 
+                      canvas.getPad(4).getAxisY().setRange(0.00,0.18) ; canvas.draw(resGraph);
+        canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.18,0.26) ; canvas.draw(meanGraph);
         H1F hrat1 = H1F.divide(part.h6, part.h5); hrat1.setFillColor(2);
         hrat1.setTitleX("True Electron Energy (GeV))"); hrat1.setTitleY("Efficiency");
-        canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.85,1.02);canvas.draw(hrat1);
+        canvas.cd(6); canvas.getPad(6).getAxisY().setRange(0.85,1.02);canvas.draw(hrat1);
         
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
@@ -601,7 +665,7 @@ public class ECPart  {
                 if(pcec1||pcec2) {n2rec1++; h7a.fill(part.refE);}
                 if(pcec1&&pcec2) {n2rec2++; h7b.fill(part.refE);}
           
-                if (pcec1&&pcec2) {
+                if (pcec1||pcec2) {
                     h2a.fill(part.refE, invmass);                                    //Two-photon invariant mass                
                     h2b.fill(part.refE, part.X);                                     //Pizero energy asymmetry
                     h2c.fill(part.refE,(Math.sqrt(part.tpi2)/part.refE));            //Pizero total energy error
@@ -657,8 +721,8 @@ public class ECPart  {
   	 
     public static void main(String[] args){
         ECPart part = new ECPart();  
-     	part.pizeroDemo(args);
-//        part.electronDemo(args);
+//     	part.pizeroDemo(args);
+        part.electronDemo(args);
     }
     
 }

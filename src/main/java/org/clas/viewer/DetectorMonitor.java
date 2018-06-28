@@ -214,6 +214,17 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         return 0;
      } 
     
+    public void dropBanks(DataEvent event) {
+        if(event.hasBank("ECAL::hits")) {
+            event.removeBank("ECAL::hits");        
+            event.removeBank("ECAL::peaks");        
+            event.removeBank("ECAL::clusters");        
+            event.removeBank("ECAL::calib");
+            event.removeBank("ECAL::moments");
+         } 
+         engine.processDataEvent(event);     	
+    }
+    
     public void analyze() {
         // analyze detector data at the end of data processing
     }

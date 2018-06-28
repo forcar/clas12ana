@@ -60,7 +60,12 @@ public class ECmip extends DetectorMonitor {
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.init();
+        this.localinit();
     }
+    
+    public void localinit() {
+        configEngine("muon");   	
+    }  
     
      @Override    
      public void createHistos(int run) {
@@ -262,6 +267,8 @@ public class ECmip extends DetectorMonitor {
        List<Particle> part = new ArrayList<Particle>();
     	   
 	   int run = getRunNumber();
+	   
+	   dropBanks(event);
 
        if (event.hasBank("REC::Particle")) {
             DataBank bank = event.getBank("REC::Particle");
@@ -308,8 +315,8 @@ public class ECmip extends DetectorMonitor {
            for(int loop = 0; loop < bank1.rows(); loop++){
 	           int     ic = bank1.getShort("index",  loop);
 	           int     ip = bank1.getShort("pindex", loop);
-    	           int     is = bank1.getByte("sector", loop);
-    	           int     il = bank1.getByte("layer",  loop);
+               int     is = bank1.getByte("sector", loop);
+               int     il = bank1.getByte("layer",  loop);
                float   en = bank2.getFloat("energy",ic)*1000;
                float   ti = bank2.getFloat("time",ic)*1000;
                float    x = bank2.getFloat("x", ic);
