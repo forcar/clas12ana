@@ -582,7 +582,7 @@ public class ECmip extends DetectorMonitor {
 //                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
                     fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(min,max); fd.fitGraph("Q"); MipFits.add(fd,iis,id,il,0);                    
+                    fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id,il,0);                    
                 }                    
                 for (int il=il1; il<il2; il++) {
 //                    System.out.println("ro:"+ro+" sector "+is+" det "+id+" lay "+il);
@@ -595,7 +595,7 @@ public class ECmip extends DetectorMonitor {
 //                        System.out.println("sector "+is+" det "+id+" lay "+il+" pmt "+i);
                         fd = new FitData(h2.sliceY(i).getGraph(),min,max); fd.setInt((int)h2.sliceY(i).getIntegral()); 
                         fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-                        fd.initFit(min,max); fd.fitGraph("Q"); MipFits.add(fd,iis,id,il,i+1);
+                        fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id,il,i+1);
                         x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0;
                         double mean = fd.mean;                        
                         if(mean>0) yrms[i] = fd.sigma/mean; 

@@ -15,7 +15,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.imageio.ImageIO;
 
 import javax.swing.ImageIcon;
@@ -92,13 +95,23 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public String outPath = "/Users/lcsmith/CLAS12ANA";
     
+    DetectorMonitor[] monitors= {
+//    		new ECa("ECa"),
+    		new ECt("ECt")
+//    		new ECmip("ECmip")
+//    		new ECpi0("ECpi0")
+    };
     
-    DetectorMonitor[] monitors = {
-    		new ECa("ECa"),
-    		new ECt("ECt"),
-    		new ECmip("ECmip"),
-    		new ECpi0("ECpi0")
-    }  ;  
+    Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
+        
+//    DetectorMonitor[] monitors = null;
+    
+//    {
+//    		new ECa("ECa")
+//    		new ECt("ECt")
+//    		new ECmip("ECmip")
+//    		new ECpi0("ECpi0")
+ //   }  ; 
         
     public EventViewer() {    	
         		
@@ -196,6 +209,33 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
         menuBar.add(trigBitsBeam);
         
+        String MonitorList[] = new String[monitors.length];
+        for (int i=0; i<monitors.length; i++) MonitorList[i]=monitors[i].getDetectorName();
+        
+        JMenu monitorMenu = new JMenu("Monitors");
+        monitorMenu.getAccessibleContext().setAccessibleDescription("Select active monitors");
+        
+        for (int i=0; i<MonitorList.length; i++) {
+        	
+            JCheckBoxMenuItem bb = new JCheckBoxMenuItem(MonitorList[i]);  
+            bb.setActionCommand(MonitorList[i]);
+                      
+            bb.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {                	
+                    if(e.getStateChange() == ItemEvent.SELECTED) {
+                    	System.out.println(bb.getActionCommand());
+//                    	String name = monitorlist[i].getDetectorName();
+//                    	if(!monitor.containsKey(name)) monitor.put(monitorlist[i].getDetectorName(), monitorlist[i]);
+                    } else {
+//                        if monitors.containsKey(key)
+                    };
+                }
+            });         
+            bb.doClick();
+            monitorMenu.add(bb);         	        	
+        }
+        
+        menuBar.add(monitorMenu);
 
         // create main panel
         mainPanel = new JPanel();	
@@ -569,7 +609,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         dir.pwd();
         
         for(int k=0; k<this.monitors.length; k++) {        	   
-        	    this.monitors[k].setRunNumber(runNumber);
+        	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(this.monitors[k].getRunNumber());           
             this.monitors[k].initGStyle();
             this.monitors[k].plotHistos(this.monitors[k].getRunNumber());

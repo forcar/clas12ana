@@ -46,7 +46,8 @@ public class ECpi0 extends DetectorMonitor{
                                  "IMvEPI0",
                                  "TIJ", 
                                  "EPI0vTh",
-                                 "XY");
+                                 "XY",
+                                 "FTOF");
         
         this.usePCCheckBox(true);
         this.useSectorButtons(true);
@@ -80,6 +81,7 @@ public class ECpi0 extends DetectorMonitor{
     	create2DHistos(9,60,3.,32.,60,0.,10.,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
     	createXYHistos(10,1,60,410);
     	createXYHistos(10,2,60,410);
+    	create1DHistos(11,100,0.,2500,"ftof","GMEAN (ADC ch.)");
     }
     
     @Override        
@@ -96,6 +98,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(8);
         plotPI0Summary(9);
         plotXYSummary(10);
+        plotPI0Summary(11);
     }
     
     public void createPI0Histos(int k, int n, int nch, double x1, double x2) {
@@ -222,8 +225,8 @@ public class ECpi0 extends DetectorMonitor{
     public void processEvent(DataEvent event) {  
     	
         int run = getRunNumber();
-        
-//        dropBanks(event);
+     
+        dropBanks(event);
 
         if(!event.hasBank("ECAL::clusters")) return;
         
@@ -266,8 +269,10 @@ public class ECpi0 extends DetectorMonitor{
             if (paddleList!=null) {
                 for (TOFPaddle paddle : paddleList){           
                     int toflay = paddle.getDescriptor().getLayer();            
-                    int   isec = paddle.getDescriptor().getSector();
-                    part.mip[isec-1] = (paddle.geometricMean()>thresh[toflay-1]) ? 1:0;
+                    int   isec = paddle.getDescriptor().getSector();   
+                    double gmean = paddle.geometricMean();
+                    if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(gmean); 
+                    part.mip[isec-1] = (gmean>thresh[toflay-1]) ? 1:0;
                 }
             }
             

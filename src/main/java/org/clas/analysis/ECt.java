@@ -331,7 +331,9 @@ public class ECt extends DetectorMonitor {
        }
         
        engine.processDataEvent(event); 
-        
+       
+       if (run>=4013) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
+       
        List<ECStrip>     strips = engine.getStrips();
        List<ECPeak>       peaks = engine.getPeaks();
        List<ECCluster> clusters = engine.getClusters();
@@ -391,11 +393,9 @@ public class ECt extends DetectorMonitor {
                              float tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
                              float tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
                              float leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-//                             float tdif  = tu  - Tvertex + phase;
-                             float tdif  = tu  - Tvertex ;
+                             float tdif  = tu  - Tvertex + phase;
                              float tdifp = tdif - path/c;
-//                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1]; //Tvertex-phase temporary!!
-                             float texp  = path/c + leff/veff + Tvertex - shiftTV[is-1]; //Tvertex-phase temporary!!
+                             float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1];  
                              ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip);
                              ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip);
                              ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
@@ -410,8 +410,7 @@ public class ECt extends DetectorMonitor {
                                 ((H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0)).fill(tdcc-shiftTV[is-1]-leff/veff, adc);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdcc, leff);
-//                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1]-phase,leff); //Tvertex-phase temporary!! 	
-                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1],leff); //Tvertex-phase temporary!! 	
+                                ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(Tvertex-shiftTV[is-1]-phase,leff);  	
                              } 	      
                     	    } 
                     }

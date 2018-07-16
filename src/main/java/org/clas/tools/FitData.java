@@ -58,7 +58,7 @@ public class FitData {
 	 }
 
 	public void fitGraph(String opt) {
-	    if (doFit) DataFitter.fit(graph.getFunction(), graph, opt);
+	    if (doFit) DataFitter.fit(graph.getFunction(), graph, "Q");
 	    amp   = graph.getFunction().getParameter(0);
 	    mean  = graph.getFunction().parameter(1).value();
 	    meane = graph.getFunction().parameter(1).error();

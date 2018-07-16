@@ -222,7 +222,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             event.removeBank("ECAL::calib");
             event.removeBank("ECAL::moments");
          } 
-         engine.processDataEvent(event);     	
+        engine.processDataEvent(event);     	
     }
     
     public void analyze() {
