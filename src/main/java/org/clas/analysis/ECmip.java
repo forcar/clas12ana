@@ -754,9 +754,9 @@ public class ECmip extends DetectorMonitor {
     }
     
     public void createTimeLineGraphs() {
-    	createTimeLineGraph(0,"PCAL Cluster Energy","Sector","Mean/MIP",24);
-    	createTimeLineGraph(1,"ECIN Cluster Energy","Sector","Mean/MIP",24);
-    	createTimeLineGraph(2,"ECOU Cluster Energy","Sector","Mean/MIP",24);
+    	createTimeLineGraph(0,"PCAL MIP Cluster Energy","Sector","Mean/MIP",24);
+    	createTimeLineGraph(1,"ECIN MIP Cluster Energy","Sector","Mean/MIP",24);
+    	createTimeLineGraph(2,"ECOU MIP Cluster Energy","Sector","Mean/MIP",24);
     }
     
     public void createTimeLineGraph(int k, String tit, String xtit, String ytit, int siz) {    	
@@ -793,10 +793,10 @@ public class ECmip extends DetectorMonitor {
     		c.cd(id); c.getPad(id).setAxisRange(0.5, 6.5, 0.7, 1.3);
         	for (int i=0; i<runlist.size(); i++) {
         		c.draw(Timeline.getItem(id,i),i==0?" ":"same");
-        		LatexText text = new LatexText("RUN ="+runlist.get(i),200,100);
+        		LatexText text = new LatexText("RUN ="+runlist.get(i),100,40);
         		text.setFont("HanziPen TC");
-        		text.setFontSize(28);
-        		text.setColor(2);
+        		text.setFontSize(10);
+        		text.setColor(i+1);
         		c.draw(text);
         	}
         	f1.setLineColor(3); f1.setLineWidth(3); c.draw(f1,"same");	
