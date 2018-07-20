@@ -17,6 +17,7 @@ import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
+import org.jlab.groot.ui.LatexText;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
@@ -37,7 +38,9 @@ public class ECmip extends DetectorMonitor {
     double[]     fitLimc = {20,17,35,40,48,75};
     int[]           npmt = {68,62,62,36,36,36,36,36,36};
     
+    List<Integer>                runlist = new ArrayList<Integer>();
     IndexedList<GraphErrors>  MIPSummary = new IndexedList<GraphErrors>(4);
+    IndexedList<GraphErrors>    Timeline = new IndexedList<GraphErrors>(2);
     IndexedList<FitData>         MipFits = new IndexedList<FitData>(4);
     Boolean                isAnalyzeDone = false;
     
@@ -54,7 +57,8 @@ public class ECmip extends DetectorMonitor {
                                  "PID",
                                  "MOM",
                                  "PCAL/ECTOT",
-                                 "PathIJ");
+                                 "PathIJ",
+                                 "Timeline");
         
         this.usePCCheckBox(true);
         this.useSectorButtons(true);
@@ -64,12 +68,13 @@ public class ECmip extends DetectorMonitor {
     }
     
     public void localinit() {
-        configEngine("muon");   	
+        configEngine("muon"); 
     }  
     
      @Override    
      public void createHistos(int run) {
 	     setRunNumber(run);
+	     runlist.add(run);
 	     createMIPHistos(0,1,25, 40," Peak Energy (MeV)");
 	     createMIPHistos(0,2,50,100," Cluster Energy (MeV)");	     
 	     createXYHistos(5,130,420);    
@@ -77,13 +82,14 @@ public class ECmip extends DetectorMonitor {
 	     createMIPHistos(7,1,25,5.0," Momentum (GeV)");
 	     createMIPHistos(7,2,25,5.0," Momentum (GeV)");
 	     createPathHistos(9);
+	     createTimeLineGraphs();
      }
      
      @Override       
      public void plotHistos(int run) {
     	     setRunNumber(run);
     	     plotMIP(0);  
-    	     if(isAnalyzeDone) {updateUVW(1); updateFITS(2); plotMeanSummary(3); plotRmsSummary(4);plotXYSummary(5);}
+    	     if(isAnalyzeDone) {updateUVW(1); updateFITS(2); plotMeanSummary(3); plotRmsSummary(4);plotXYSummary(5);plotTimeline(10);}
     	     plotPIDSummary(6);
     	     plotMIP(7);
     	     plotPathSummary(9);
@@ -264,13 +270,20 @@ public class ECmip extends DetectorMonitor {
     public void processEvent(DataEvent event) {
     	
        IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(2);
-       List<Particle> part = new ArrayList<Particle>();
+       List<Particle>                part = new ArrayList<Particle>();
+       IndexedList<Vector3>            rl = new IndexedList<Vector3>(2);  
+	   Boolean                     isMuon = true;
+       Boolean goodPC,goodECi,goodECo;       
+       DataBank bank1 = null;
+       int nrows = 0;
+       Boolean goodEvt  = false, goodRows = false;
     	   
 	   int run = getRunNumber();
 	   
 	   dropBanks(event);
-
+	   
        if (event.hasBank("REC::Particle")) {
+    	    isMuon = false;
             DataBank bank = event.getBank("REC::Particle");
             for(int loop = 0; loop < bank.rows(); loop++){
             	    if(bank.getInt("pid",loop)!=0) {
@@ -291,13 +304,18 @@ public class ECmip extends DetectorMonitor {
     	       if (p.charge()!=0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
        }
        
-       Boolean goodPC,goodECi,goodECo;
-       IndexedList<Vector3> rl = new IndexedList<Vector3>(2);  
+       Boolean goodREC  = event.hasBank("REC::Calorimeter");
+       Boolean goodECAL = event.hasBank("ECAL::clusters")&&event.hasBank("ECAL::calib");
        
-       if (event.hasBank("REC::Calorimeter")&&event.hasBank("ECAL::clusters")&&event.hasBank("ECAL::calib")) {
-           DataBank bank1 = event.getBank("REC::Calorimeter");
-           DataBank bank2 = event.getBank("ECAL::clusters");
+       if( isMuon)  goodEvt = goodECAL;
+       if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = event.getBank("REC::Calorimeter");}
+       
+       if (goodEvt) {
+           DataBank bank2 = event.getBank("ECAL::clusters"); 
            DataBank bank3 = event.getBank("ECAL::calib");
+           
+           if ( isMuon) {goodRows = true; nrows = bank2.rows();}
+           if (!isMuon) {goodRows = bank1.rows()==bank2.rows()&&bank1.rows()==bank3.rows(); nrows = bank1.rows();}
            
            int[] n1 = new int[6]; int[] n4 = new int[6]; int[] n7 = new int[6];
            float[][]  e1c = new float[6][20]; float[][][]   e1p = new float[6][3][20]; 
@@ -310,14 +328,13 @@ public class ECmip extends DetectorMonitor {
            float[][][] cV = new float[6][3][20];
            float[][][] cW = new float[6][3][20];
            
-           if(bank1.rows()==bank2.rows()&&bank1.rows()==bank3.rows()) {
+           if(goodRows) {
            
-           for(int loop = 0; loop < bank1.rows(); loop++){
-	           int     ic = bank1.getShort("index",  loop);
-	           int     ip = bank1.getShort("pindex", loop);
-               int     is = bank1.getByte("sector", loop);
-               int     il = bank1.getByte("layer",  loop);
-               float   en = bank2.getFloat("energy",ic)*1000;
+           for(int loop = 0; loop < nrows; loop++){
+        	   int ic=0, is=0, il=0;
+	           if (!isMuon) {ic = bank1.getShort("index",  loop); is = bank1.getByte("sector",loop); il = bank1.getByte("layer",loop);}
+	           if ( isMuon) {ic =loop; is = bank2.getByte("sector",loop); il = bank2.getByte("layer",loop);}          
+	           float   en = bank2.getFloat("energy",ic)*1000;
                float   ti = bank2.getFloat("time",ic)*1000;
                float    x = bank2.getFloat("x", ic);
                float    y = bank2.getFloat("y", ic);
@@ -329,7 +346,12 @@ public class ECmip extends DetectorMonitor {
                float  env = bank3.getFloat("recEV", ic)*1000;
                float  enw = bank3.getFloat("recEW", ic)*1000;   
                
-               Particle p = new Particle(); p.copy(part.get(ip));
+               Particle p = new Particle(); 
+               float pm = 0;
+               
+               if(!isMuon) {
+    	       int     ip = bank1.getShort("pindex", loop);
+               p.copy(part.get(ip));
                p.setProperty("beta",part.get(ip).getProperty("beta"));
                p.setProperty("energy",en);
     	       p.setProperty("time",ti);
@@ -343,15 +365,16 @@ public class ECmip extends DetectorMonitor {
                p.setProperty("env",env);
                p.setProperty("enw",enw);
                
-               float pm = (float) p.p();
+               pm = (float) p.p();
                
                if (p.charge()>0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pm,p.getProperty("beta"));
                if (p.charge()<0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));
                
                if (p.pid()==211)  ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pm,p.getProperty("beta"));
                if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
+               }
                
-               Boolean goodPID = Math.abs(p.pid())==211;
+               Boolean goodPID = isMuon ? true:Math.abs(p.pid())==211;
    	           
                if (!ecpart.hasItem(is,il)) ecpart.add(new ArrayList<Particle>(), is,il);    	                
     	            ecpart.getItem(is,il).add(p);    	   
@@ -561,6 +584,7 @@ public class ECmip extends DetectorMonitor {
         System.out.println("I am in analyze()");
         analyzeGraphs(1,7,0,3,0,3,"c");
         analyzeGraphs(1,7,0,3,0,3,"p");
+        fillTimeLine();
         System.out.println("Finished");
         isAnalyzeDone = true;
     }
@@ -582,7 +606,7 @@ public class ECmip extends DetectorMonitor {
 //                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
                     fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id,il,0);                    
+                    fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id,il,0);                 
                 }                    
                 for (int il=il1; il<il2; il++) {
 //                    System.out.println("ro:"+ro+" sector "+is+" det "+id+" lay "+il);
@@ -609,6 +633,7 @@ public class ECmip extends DetectorMonitor {
                 }
             }
         }
+        this.getFitGroup().put(run, MipFits);
         
     }
 
@@ -726,6 +751,57 @@ public class ECmip extends DetectorMonitor {
     
     public void plotPathSummary(int index) {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,getActiveLayer(),index,getRunNumber()));
+    }
+    
+    public void createTimeLineGraphs() {
+    	createTimeLineGraph(0,"PCAL Cluster Energy","Sector","Mean/MIP",24);
+    	createTimeLineGraph(1,"ECIN Cluster Energy","Sector","Mean/MIP",24);
+    	createTimeLineGraph(2,"ECOU Cluster Energy","Sector","Mean/MIP",24);
+    }
+    
+    public void createTimeLineGraph(int k, String tit, String xtit, String ytit, int siz) {    	
+    	for (int i=0; i<runlist.size(); i++) {
+            GraphErrors  g = new GraphErrors("MIP"); 
+            g.setTitle(tit); g.setTitleX(xtit); g.setTitleY(ytit); g.setMarkerColor(i+1); g.setMarkerSize(5);  
+            Timeline.add(g,k,i);
+    	}
+    }
+    
+    public void fillTimeLine() {
+    	
+    	float mip[] = {30,30,48};
+    	
+    	for (int i=0; i<runlist.size(); i++) {
+    		for (int is=1; is<7; is++) {
+    			double off = -runlist.size()*0.05+i*0.1;
+    			for (int id=0; id<3; id++) {
+    				float  y = (float) this.getFitGroup().get(getRunNumber()).getItem(is,id,0,0).mean/mip[id];
+    				float ye = (float) this.getFitGroup().get(getRunNumber()).getItem(is,id,0,0).meane/mip[id];
+    				Timeline.getItem(id,i).addPoint(is+off, y, 0., ye);	
+    			}	
+    		}
+    	}
+    	
+    }
+    
+    public void plotTimeline(int index) {
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
+        c.divide(3, 2);
+        F1D f1 = new F1D("p0","[a]",0.5,6.5); f1.setParameter(0,1);
+        
+        for (int id=0; id<3; id++) {        	
+    		c.cd(id); c.getPad(id).setAxisRange(0.5, 6.5, 0.7, 1.3);
+        	for (int i=0; i<runlist.size(); i++) {
+        		c.draw(Timeline.getItem(id,i),i==0?" ":"same");
+        		LatexText text = new LatexText("RUN ="+runlist.get(i),200,100);
+        		text.setFont("HanziPen TC");
+        		text.setFontSize(28);
+        		text.setColor(2);
+        		c.draw(text);
+        	}
+        	f1.setLineColor(3); f1.setLineWidth(3); c.draw(f1,"same");	
+        }
+        
     }
 /*    
     private void updateSummary() {

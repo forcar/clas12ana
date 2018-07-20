@@ -373,7 +373,7 @@ public class ECt extends DetectorMonitor {
             DataBank  bank2 = event.getBank("ECAL::calib");
             for(int loop = 0; loop < bank1.rows(); loop++){
                 int is = bank1.getByte("sector", loop);
-                if (is==trigger_sect||isMC){
+                if (is!=trigger_sect||isMC){
                     int     il = bank1.getByte("layer", loop);
                     float ener = bank1.getFloat("energy",loop)*1000;
                     float    t = bank1.getFloat("time",loop);
@@ -399,7 +399,7 @@ public class ECt extends DetectorMonitor {
                              ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip);
                              ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip);
                              ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
-                             if (bankp.getInt("pid",pin)==11) {
+                             if (bankp.getInt("pid",pin)!=11) {
                                 ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, tdifp);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, tdifp);

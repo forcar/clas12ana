@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.clas.tools.FitData;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
@@ -43,6 +45,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private final String           detectorName;
     private ArrayList<String>      detectorTabNames  = new ArrayList();
     private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(4);
+    private Map<Integer,IndexedList<FitData>> fitData      = new LinkedHashMap<Integer,IndexedList<FitData>>();
     private DataGroup              detectorSummary   = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                 detectorPanel     = null;
@@ -306,6 +309,18 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public IndexedList<DataGroup>  getDataGroup(){
         return detectorData;
+    }
+    
+    public Map<Integer,IndexedList<FitData>> getFitGroup() {
+    	return fitData;
+    }
+    
+    public void fillTimeLine() {
+    	
+    }
+    
+    public void plotTimeLine(int index) {
+    	
     }
 
     public String getDetectorName() {

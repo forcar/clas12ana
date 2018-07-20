@@ -97,8 +97,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     DetectorMonitor[] monitors= {
 //    		new ECa("ECa"),
-    		new ECt("ECt")
-//    		new ECmip("ECmip")
+//    		new ECt("ECt")
+   		new ECmip("ECmip")
 //    		new ECpi0("ECpi0")
     };
     
@@ -392,7 +392,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
  	    DataBank bank = event.getBank("RUN::config");	        
         return bank.getLong("trigger", 0);
     }
-    
+  
     public int getTriggerPhase(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");	        
         long timestamp = bank.getLong("timestamp",0);    
