@@ -87,13 +87,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int          runNumber = 0;
     private int        eventNumber = 0;
     private int      ccdbRunNumber = 0;
-    String                 workDir = null;
    
     double PERIOD = 0;
     int     PHASE = 0;
     int    CYCLES = 0;
     
-    public String outPath = "/Users/lcsmith/CLAS12ANA";
+    public String outPath = "/Users/lcsmith/CLAS12ANA/";
+    public String workDir = outPath;
     
     DetectorMonitor[] monitors= {
 //    		new ECa("ECa"),
