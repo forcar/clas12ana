@@ -16,6 +16,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -38,6 +39,7 @@ import org.jlab.io.base.DataEventType;
 import org.jlab.io.task.IDataEventListener;
 import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 
 public class DetectorMonitor implements IDataEventListener, ActionListener {    
@@ -45,7 +47,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private final String           detectorName;
     private ArrayList<String>      detectorTabNames  = new ArrayList();
     private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(4);
-    private Map<Integer,IndexedList<FitData>> fitData      = new LinkedHashMap<Integer,IndexedList<FitData>>();
+    public  List<Integer>                    runlist = new ArrayList<Integer>();
     private DataGroup              detectorSummary   = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                 detectorPanel     = null;
@@ -169,9 +171,10 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void configEngine(String config) {
+    	engine.isSingleThreaded=true;
+        engine.setVariation(variation);
         engine.init();
         engine.isMC = false;
-        engine.setVariation(variation);
        
         engine.setStripThresholds(getStripThr(config, 0, 1),
                                   getStripThr(config, 1, 1),
@@ -311,10 +314,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         return detectorData;
     }
     
-    public Map<Integer,IndexedList<FitData>> getFitGroup() {
-    	return fitData;
-    }
-    
     public void fillTimeLine() {
     	
     }
@@ -387,7 +386,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public JPanel packActionPanel() {
         if (sectorButtons) actionPanel.add(getButtonPane()); 
         if    (sliderPane) actionPanel.add(getSliderPane());
-    	    return actionPanel;
+        actionPanel.add(getRunSliderPane());
+    	return actionPanel;
     }
     
     public JPanel getButtonPane() {
@@ -421,8 +421,26 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         return buttonPane;
     } 
     
+    public JPanel getRunSliderPane() {
+        JPanel sliderPane = new JPanel();
+        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 10,0); 
+        JLabel      label = new JLabel("" + String.format("%d", 0));
+        sliderPane.add(new JLabel("Run Index",JLabel.CENTER));
+        sliderPane.add(slider);
+        sliderPane.add(label);
+        slider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                JSlider slider = (JSlider) e.getSource();  
+                int run = runlist.get(slider.getValue()>=runlist.size()?runlist.size()-1:slider.getValue());
+                label.setText(String.valueOf("" + String.format("%d", run)));
+                plotHistos(run);
+            }
+        });               
+        return sliderPane;
+    }
+    
     public JPanel getSliderPane() {
-    	    JPanel sliderPane = new JPanel();
+        JPanel sliderPane = new JPanel();
         JLabel xLabel = new JLabel("Z-Range:");
         RangeSlider slider = new RangeSlider();
         slider.setMinimum((int) slideMin);
@@ -461,7 +479,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }  
     
     public void actionPerformed(ActionEvent e) {
-    	    if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
+        if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
@@ -548,10 +566,11 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public void timerUpdate() {      
     }
  
-    public void readDataGroup(TDirectory dir) {
+    public void readDataGroup(int run, TDirectory dir) {
         String folder = getDetectorName() + "/";
         System.out.println("Reading from: " + folder);
         DataGroup sum = getDetectorSummary();
+        IndexGenerator ig = new IndexGenerator();
         if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();
@@ -571,6 +590,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         Map<Long, DataGroup> map = this.getDataGroup().getMap();
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
             Long key = entry.getKey();
+            if (run==ig.getIndex(key, 3)) {
             DataGroup group = entry.getValue();
             int nrows = group.getRows();
             int ncols = group.getColumns();
@@ -584,6 +604,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
                 }
             }
             map.replace(key, newGroup);
+            }
         }
         this.analyze();
         this.plotHistos(getRunNumber());

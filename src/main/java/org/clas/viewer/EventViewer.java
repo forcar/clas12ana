@@ -92,7 +92,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     int     PHASE = 0;
     int    CYCLES = 0;
     
-    public String outPath = "/Users/lcsmith/CLAS12ANA/";
+    public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
     DetectorMonitor[] monitors= {
@@ -119,9 +119,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         JMenuItem menuItem;
         
         JMenu file = new JMenu("File");
-        file.getAccessibleContext().setAccessibleDescription("File options");
-        menuItem = new JMenuItem("Load files...");
+        menuItem = new JMenuItem("Analyze Data");
         menuItem.getAccessibleContext().setAccessibleDescription("Load files");
+        menuItem.addActionListener(this);
+        file.add(menuItem);        
+        menuItem = new JMenuItem("Analyze Histos");
+        menuItem.getAccessibleContext().setAccessibleDescription("Load histos");
         menuItem.addActionListener(this);
         file.add(menuItem);        
         file.addSeparator();
@@ -269,8 +272,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
       
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
-        if(e.getActionCommand() == "Load files...") {
+        if(e.getActionCommand() == "Analyze Files") {
             this.readFiles();
+        }         
+        if(e.getActionCommand() == "Analyze Histos") {
+            this.readHistos();
         }           
         if(e.getActionCommand()=="Set GUI update interval") {
             this.chooseUpdateInterval();
@@ -287,33 +293,25 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
         if(e.getActionCommand()=="Open histograms file") {
             String fileName = null;
-            JFileChooser fc = new JFileChooser();
+            JFileChooser fc = new JFileChooser(new File(workDir));
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            File workingDirectory = new File(System.getProperty("user.dir"));  
-            fc.setCurrentDirectory(workingDirectory);
-            int option = fc.showOpenDialog(null);
-            if (option == JFileChooser.APPROVE_OPTION) {
-                fileName = fc.getSelectedFile().getAbsolutePath();            
+            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                this.loadHistosFromFile(fc.getSelectedFile().getAbsolutePath());
             }
-            if(fileName != null) this.loadHistosFromFile(fileName);
-        }        
+        }   
+        
         if(e.getActionCommand()=="Print histograms as png") {
             this.printHistosToFile();
         }
         
         if(e.getActionCommand()=="Save histograms to file") {
-            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-            String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + df.format(new Date()) + ".hipo";
-            JFileChooser fc = new JFileChooser();
-            File workingDirectory = new File(System.getProperty("user.dir"));   
-            fc.setCurrentDirectory(workingDirectory);
-            File file = new File(fileName);
-            fc.setSelectedFile(file);
-            int returnValue = fc.showSaveDialog(null);
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-               fileName = fc.getSelectedFile().getAbsolutePath();            
+//            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
+            String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + "ECmip" + ".hipo";
+            JFileChooser fc = new JFileChooser(new File(workDir));
+            fc.setSelectedFile(new File(fileName));
+            if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+               this.saveHistosToFile(fc.getSelectedFile().getAbsolutePath());
             }
-            this.saveHistosToFile(fileName);
         }
             
         if (e.getActionCommand()=="Default for all"){
@@ -500,14 +498,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private void readFiles() {
         EvioSource     evioReader = new EvioSource();
         HipoDataSource hipoReader = new HipoDataSource();
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setDialogTitle("Choose input files directory...");
         fc.setMultiSelectionEnabled(true);
-        fc.setAcceptAllFileFilterUsed(false);
-        File workingDirectory = new File(this.workDir);
-        fc.setCurrentDirectory(workingDirectory);
-        int returnValue = fc.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
+        fc.setAcceptAllFileFilterUsed(true);
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             int nf = 0;
             for (File fd : fc.getSelectedFiles()) {
                 if (fd.isFile()) {
@@ -558,7 +553,26 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             System.out.println("Task completed");
         }
     }    
-       
+    
+    private void readHistos() {
+
+        JFileChooser fc = new JFileChooser(new File(workDir));
+        fc.setDialogTitle("Choose input histos directory...");
+        fc.setMultiSelectionEnabled(true);
+        fc.setAcceptAllFileFilterUsed(false);
+        for(int k=0; k<this.monitors.length; k++) {
+        	this.monitors[k].getDataGroup().clear();
+        	this.monitors[k].runlist.clear();
+        }
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            for (File fd : fc.getSelectedFiles()) {
+                if (fd.isFile()) {
+                	loadHistosFromFile(fd.getAbsolutePath());
+                }                
+            }            
+        }
+    }        
+    
     @Override
     public void resetEventListener() {
         for(int k=0; k<this.monitors.length; k++) {
@@ -608,14 +622,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         dir.cd();
         dir.pwd();
         
-        for(int k=0; k<this.monitors.length; k++) {        	   
+        for(int k=0; k<this.monitors.length; k++) {  
         	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(this.monitors[k].getRunNumber());           
             this.monitors[k].initGStyle();
-            this.monitors[k].plotHistos(this.monitors[k].getRunNumber());
-            this.monitors[k].arBtn.setSelected(true);         
+            this.monitors[k].readDataGroup(this.monitors[k].getRunNumber(),dir);
+//          this.monitors[k].plotHistos(this.monitors[k].getRunNumber());
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
-            this.monitors[k].readDataGroup(dir);
+            this.monitors[k].arBtn.setSelected(true);         
         }
     }
     
