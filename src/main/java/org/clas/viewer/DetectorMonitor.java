@@ -37,6 +37,9 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.task.IDataEventListener;
+import org.jlab.rec.eb.EBCCDBConstants;
+import org.jlab.service.eb.EBEngine;
+import org.jlab.service.eb.EventBuilder;
 import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
@@ -97,10 +100,13 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
     
-    public ECEngine  engine = new ECEngine();    
+    public ECEngine  engine = new ECEngine();  
+	public EBEngine     ebe = new EBEngine("CLAS12ANA");
+
     public String variation = "default";
     public String      geom = "2.5";
     public String    config = "muon";   
+	public EventBuilder eb = null;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
     int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
@@ -115,6 +121,8 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     double[] cerrMuon = {5.5,10.,10.};
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
+    
+    public String outPath = "/Users/cole/CLAS12ANA/";
     
     public DetectorMonitor(String name){
 
@@ -140,10 +148,10 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void initGStyle() {
-        GStyle.getAxisAttributesX().setTitleFontSize(14);
-        GStyle.getAxisAttributesX().setLabelFontSize(14);
-        GStyle.getAxisAttributesY().setTitleFontSize(14);
-        GStyle.getAxisAttributesY().setLabelFontSize(14);
+        GStyle.getAxisAttributesX().setTitleFontSize(18);
+        GStyle.getAxisAttributesX().setLabelFontSize(18);
+        GStyle.getAxisAttributesY().setTitleFontSize(18);
+        GStyle.getAxisAttributesY().setLabelFontSize(18);
         GStyle.getAxisAttributesZ().setLabelFontSize(14); 
         GStyle.getAxisAttributesX().setAxisGrid(false);
         GStyle.getAxisAttributesY().setAxisGrid(false);
@@ -184,7 +192,12 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
                                  getPeakThr(config, 2, 1));  
         engine.setClusterCuts(getClusterErr(config,0),
                               getClusterErr(config,1),
-                              getClusterErr(config,2));    	
+                              getClusterErr(config,2));   
+    }
+    
+    public void configEventBuilder() {
+    	ebe.init();
+        eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	    	
     }
     
     public int getStripThr(String config, int idet, int layer) {

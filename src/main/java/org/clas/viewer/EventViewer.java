@@ -96,9 +96,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String workDir = outPath;
     
     DetectorMonitor[] monitors= {
-//    		new ECa("ECa"),
+    		new ECa("ECa")
 //    		new ECt("ECt")
-   		new ECmip("ECmip")
+//   		new ECmip("ECmip")
 //    		new ECpi0("ECpi0")
     };
     
@@ -306,7 +306,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         if(e.getActionCommand()=="Save histograms to file") {
 //            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-            String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + "ECmip" + ".hipo";
+            String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[0].getDetectorName() + ".hipo";
             JFileChooser fc = new JFileChooser(new File(workDir));
             fc.setSelectedFile(new File(fileName));
             if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {

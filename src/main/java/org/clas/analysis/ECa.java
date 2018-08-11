@@ -1,8 +1,12 @@
 package org.clas.analysis;
 
+import org.clas.analysis.ECPart.SFFunction;
 import org.clas.viewer.DetectorMonitor;
+import org.jlab.clas.detector.CalorimeterResponse;
+import org.jlab.clas.detector.DetectorParticle;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Vector3;
+import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -11,9 +15,12 @@ import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
+import org.jlab.groot.math.Func1D;
 import org.jlab.groot.math.StatNumber;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.rec.eb.EBCCDBConstants;
+import org.jlab.rec.eb.SamplingFractions;
 import org.jlab.utils.groups.IndexedList;
 
 
@@ -78,6 +85,7 @@ public class ECa extends DetectorMonitor {
                                  "E/P v UVW",
                                  "PIM v UVW",
                                  "PIP v UVW",
+                                 "E/P v Em",
                                  "Fits E/P",
                                  "Fits Sig 1",
                                  "Fits Sig 2",
@@ -92,7 +100,8 @@ public class ECa extends DetectorMonitor {
     }
     
     public void localinit() {
-        configEngine("muon");   	
+        configEngine("muon");  
+        configEventBuilder();
     }
     
     @Override
@@ -105,10 +114,12 @@ public class ECa extends DetectorMonitor {
         createEOPHistos(3,48,  3.,27.,"ep_th0"," PC Theta (deg)",      "EPC / P");
         createEOPHistos(4,48,  3.,27.,"ep_th1"," ECIN Theta (deg)",    "EECi / P");
         createEOPHistos(5,48,  3.,27.,"ep_th2"," ECOU Theta (deg)",    "EECo / P");
+        createEOPHistos(0,50,0.5,10.5,"ep_p",  " Momentum (GeV)",      "E / P");
         createXYZHistos(6);
         createADCHistos(7,25,0.5,0.3,0.1,"SF");
         createADCHistos(8,50,100.,100.,100.,"PIM (MeV)");
-        createADCHistos(9,50,100.,100.,100.,"PIP (MeV)");        
+        createADCHistos(9,50,100.,100.,100.,"PIP (MeV)");       
+        createEOPHistos(10,50,0.,2.5,"ep_em", "Measured Energy (GeV)", "E / P");
     }
     
     @Override    
@@ -124,8 +135,9 @@ public class ECa extends DetectorMonitor {
     	    plotADCHistos(7);
     	    plotADCHistos(8);
     	    plotADCHistos(9);
+    	    plotEOPHistos(10);
     	    if (!isAnalyzeDone) analyze();
-    	    if ( isAnalyzeDone) {plotFitSummary1(); plotFitSummary2(); plotFitSummary3(); plotFitSummary4();}
+    	    if ( isAnalyzeDone) {plotFitSummary10(11); plotFitSummary2(12); plotFitSummary3(13); plotFitSummary4(14);}
     }
     
     public void plotADCHistos(int index) {
@@ -158,8 +170,8 @@ public class ECa extends DetectorMonitor {
 	    c.cd(8); c.getPad().getAxisZ().setRange(0.001*zMin, 0.010*zMax); h2 = (H2F) dg.getData(8).get(0); c.draw(h2);    	
     }
     
-    public void plotFitSummary1() {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(10));
+    public void plotFitSummary1(int index) {
+ 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
 	    int run = getRunNumber();
@@ -167,10 +179,25 @@ public class ECa extends DetectorMonitor {
     		String txt = "Sector "+is+" Electron Energy (GeV)";
             if (fitSummary.hasItem(1,is)) GraphPlot(fitSummary.getItem(1,is),c,is-1,1.5f,10.f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
      	}
+    }    
+    
+    public void plotFitSummary10(int index) {
+ 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        c.setGridX(false); c.setGridY(false); c.divide(3, 2);
+        int col[] = {1,2,3,4,5,7};
+	    int run = getRunNumber();    
+	   
+	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); 
+
+    	for (int is=1; is<7; is++) {  
+    		String txt = "Sector "+is+" Measured Energy (GeV)";
+            if (fitSummary.hasItem(1,is)) GraphPlot(fitSummary.getItem(10,is),c,is-1,0.0f,2.5f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
+            c.draw(sf,"same");
+     	}
     }
     
-    public void plotFitSummary2() {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(11));
+    public void plotFitSummary2(int index) {
+ 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         F1D f = new F1D("res","sqrt(0.082*0.082/x+0.0028)",1.6,10.0); f.setLineColor(1); f.setLineWidth(3);
         int col[] = {1,2,3,4,5,7};
@@ -181,8 +208,8 @@ public class ECa extends DetectorMonitor {
     	}    	
     }
     
-    public void plotFitSummary3() {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(12));
+    public void plotFitSummary3(int index) {
+ 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         F1D f = new F1D("res","sqrt(0.082*0.082*x*x+0.0028)",0.3,0.76); f.setLineColor(1); f.setLineWidth(3);
         int col[] = {1,2,3,4,5,7};
@@ -193,8 +220,8 @@ public class ECa extends DetectorMonitor {
     	}    	
     } 
     
-    public void plotFitSummary4() {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(13));
+    public void plotFitSummary4(int index) {
+ 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         F1D f = new F1D("res","0.082*0.082*x+0.0028",0.1,0.51); f.setLineColor(1); f.setLineWidth(3);
         int col[] = {1,2,3,4,5,7};
@@ -218,10 +245,17 @@ public class ECa extends DetectorMonitor {
     
     public void fitGraphs() {
     	
+    	ParallelSliceFitter fitter;
 	    int run = getRunNumber();
 	    fitSummary.clear();
     	for (int is=1; is<7; is++) {
-    	    ParallelSliceFitter fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
+    	    fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,10,run).getData(is-1).get(0));
+    	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
+    	    
+    	    GraphErrors meanGraph10 = fitter.getMeanSlices(); 
+    	    fitSummary.add(meanGraph10,10, is);
+
+    		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    
     	    GraphErrors meanGraph = fitter.getMeanSlices(); 
@@ -404,7 +438,10 @@ public class ECa extends DetectorMonitor {
 		}
 
         dropBanks(event);
+        
+        boolean isMC = event.hasBank("MC::Particle");
 
+        if (!isMC) {
 		// TRIGGER BIT SECTOR
       	int trigger_sect = getElecTriggerSector(); 
       	
@@ -439,12 +476,16 @@ public class ECa extends DetectorMonitor {
 			getPiEBECal(event.getBank("REC::Calorimeter"),event.getBank("ECAL::clusters"));
 		}
 		
+        }
+        
+        if (isMC&&event.hasBank("ECAL::clusters")) {Ebeam=10.6f; trig_track_ind=0; trig_sect=2; e_mom = 7f; getElecEBECalMC(event.getBank("ECAL::clusters"));}
+		
 		// GET SECTOR OF TRACK INDEX
 		if(event.hasBank("TimeBasedTrkg::TBTracks")) getTBTrack(event.getBank("TimeBasedTrkg::TBTracks"));
 		
 //        System.out.println(e_Q2+" "+e_W+" "+e_mom+" "+e_ecal_E+" "+trig_track_ind+" "+e_sect);
 		
-        float  sf = e_ecal_E/e_mom;
+        float    sf = e_ecal_E/e_mom;
         float[] sff = new float[3];
         
         sff[0] = e_ecal_EL[0]/e_mom;
@@ -454,8 +495,9 @@ public class ECa extends DetectorMonitor {
         boolean good_e = e_sect>0&&e_sect<7, good_pim = pim_sect>0&&pim_sect<7, good_pip = pip_sect>0&&pip_sect<7 ; 
         
 		if(e_mom>Ebeam*0.02 && sf > 0.02 && trig_track_ind>-1 && e_sect==trig_sect){
-			if(good_e){
+			if(good_e){				
 				((H2F) this.getDataGroup().getItem(0,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);
+				((H2F) this.getDataGroup().getItem(0,0,10,run).getData(e_sect-1).get(0)).fill(e_ecal_E,sf);
 				((H2F) this.getDataGroup().getItem(0,0,1,run).getData(e_sect-1).get(0)).fill(e_theta,sf);
 				((H2F) this.getDataGroup().getItem(0,0,2,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[0],sf);
 			}
@@ -636,6 +678,30 @@ public class ECa extends DetectorMonitor {
 	    int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
 	    return il[layer-1];
 	}	
+    
+    public void getElecEBECalMC(DataBank clust) {
+    	
+		for(int k = 0; k < clust.rows(); k++){
+			int det = clust.getInt("layer", k);
+            int sec = clust.getByte("sector", k);
+            float x = clust.getFloat("x",k);
+            float y = clust.getFloat("y",k);
+            float z = clust.getFloat("z",k);					         
+            float r = (float) Math.sqrt(x*x+y*y+z*z);
+			if(sec==2){				
+				 int ind = getDet(det);				
+		         x_ecal[ind] = x; y_ecal[ind] = y;
+		         e_ecal_TH[ind] = (float) Math.toDegrees(Math.acos(z/r));
+		         float ee = clust.getFloat("energy", k);
+		         e_ecal_EL[ind] += ee;
+                 e_ecal_E       += ee;
+                 if(ind==0) e_sect = sec;
+                 iU[ind] = (clust.getInt("coordU", k)-4)/8+1;
+                 iV[ind] = (clust.getInt("coordV", k)-4)/8+1;
+                 iW[ind] = (clust.getInt("coordW", k)-4)/8+1;        
+			}
+		}    	
+    }
 	   
 	public void getElecEBECal(DataBank bank, DataBank clust){
 		
@@ -665,6 +731,7 @@ public class ECa extends DetectorMonitor {
 
 		}
 	}
+	
 	public void getPiEBECal(DataBank bank, DataBank clust){
 		
 		for(int k = 0; k < bank.rows(); k++){
@@ -769,6 +836,27 @@ public class ECa extends DetectorMonitor {
 	            float checkPh2 = (float)Math.toDegrees(Math.atan2( e_Ivy-er1Y , -er1X ));
 	            float checkTh2 = (float)Math.toDegrees(Math.acos( (e_Ivz-er1Z) / Math.sqrt( er1X*er1X + (e_Ivy-er1Y)*(e_Ivy-er1Y) + (e_Ivz-er1Z)*(e_Ivz-er1Z) )  ));
 
+        }
+    }
+    
+    public static class SFFunction extends Func1D{
+    	
+        EBCCDBConstants ccdb = new EBCCDBConstants();
+   	    DetectorParticle p = new DetectorParticle(); 
+        int pid;
+  	    
+        public SFFunction(String name, int pid, EBCCDBConstants ccdb, double min, double max) {
+            super(name, min, max);
+            this.ccdb = ccdb;
+            this.pid  = pid;
+            
+            p.addResponse(new CalorimeterResponse(1,1,0));
+            p.getDetectorResponses().get(0).getDescriptor().setType(DetectorType.ECAL);
+        }
+        @Override
+        public double evaluate(double x){        	 
+        	 p.getDetectorResponses().get(0).setEnergy(x);
+       	     return  SamplingFractions.getMean(pid, p, ccdb);
         }
     }
 

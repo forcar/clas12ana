@@ -20,6 +20,7 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.math.Func1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
@@ -32,6 +33,8 @@ import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.rec.eb.EBCCDBEnum;
+import org.jlab.rec.eb.EBUtil;
+import org.jlab.rec.eb.SamplingFractions;
 
 public class ECPart  {
 	
@@ -364,11 +367,13 @@ public class ECPart  {
                 
         e1 = p1.getEnergy(DetectorType.ECAL);
         e2 = p2.getEnergy(DetectorType.ECAL);
-
-        SF1 = getSF(geom,e1); e1c = e1/SF1;
+        
+        double SF1db = SamplingFractions.getMean(22, p1, eb.ccdb);
+        e1c = e1/SF1db;
         Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);
         
-        SF2 = getSF(geom,e2); e2c = e2/SF2;
+        double SF2db = SamplingFractions.getMean(22, p2, eb.ccdb);
+        e2c = e2/SF2db;
         Particle g2 = new Particle(22,n2.x()*e2c,n2.y()*e2c,n2.z()*e2c);
         
         cth1 = Math.cos(g1.theta());
@@ -430,18 +435,55 @@ public class ECPart  {
         return Double.parseDouble(geom);
     } 
     
+    public static class SFFunction extends Func1D{
+    	
+        EBCCDBConstants ccdb = new EBCCDBConstants();
+   	    DetectorParticle p = new DetectorParticle(); 
+        int pid;
+  	    
+        public SFFunction(String name, int pid, EBCCDBConstants ccdb, double min, double max) {
+            super(name, min, max);
+            this.ccdb = ccdb;
+            this.pid  = pid;
+            
+            p.addResponse(new CalorimeterResponse(1,1,0));
+            p.getDetectorResponses().get(0).getDescriptor().setType(DetectorType.ECAL);
+        }
+        @Override
+        public double evaluate(double x){        	 
+        	 p.getDetectorResponses().get(0).setEnergy(x);
+       	     return  SamplingFractions.getMean(pid, p, ccdb);
+        }
+    }
+    
     public void setThresholds(String part, ECEngine engine) {
     	switch (part) {
     	case "Electron_lo":engine.setStripThresholds(10,10,10);
-                       engine.setPeakThresholds(30,30,30);
-                       engine.setClusterCuts(7,15,20); break;    		
+                           engine.setPeakThresholds(30,30,30);
+                           engine.setClusterCuts(7,15,20); break;    		
     	case "Electron_hi":engine.setStripThresholds(20,50,50);
-                       engine.setPeakThresholds(40,80,80);
-                       engine.setClusterCuts(7,15,20); break;    		
-    	case   "Pizero":engine.setStripThresholds(10,9,8);
-                    engine.setPeakThresholds(18,20,15);
-                    engine.setClusterCuts(7,15,20); 
+                           engine.setPeakThresholds(40,80,80);
+                           engine.setClusterCuts(7,15,20); break;    		
+    	case      "Pizero":engine.setStripThresholds(10,9,8);
+                           engine.setPeakThresholds(18,20,15);
+                           engine.setClusterCuts(7,15,20); 
     	}
+    }
+    
+    public void initGraphics() {
+        GStyle.getAxisAttributesX().setTitleFontSize(14);
+        GStyle.getAxisAttributesX().setLabelFontSize(14);
+        GStyle.getAxisAttributesY().setTitleFontSize(14);
+        GStyle.getAxisAttributesY().setLabelFontSize(14);
+        GStyle.getAxisAttributesZ().setLabelFontSize(14); 
+        GStyle.getAxisAttributesX().setAxisGrid(false);
+        GStyle.getAxisAttributesY().setAxisGrid(false);
+        GStyle.getAxisAttributesX().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesY().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesZ().setLabelFontName("Avenir");
+        GStyle.getAxisAttributesX().setTitleFontName("Avenir");
+        GStyle.getAxisAttributesY().setTitleFontName("Avenir");
+        GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
     }
     
     public void electronDemo(String[] args) {
@@ -571,6 +613,8 @@ public class ECPart  {
         canvas.cd(4); canvas.getPad(4).getAxisX().setRange(0.00,1.5) ; 
                       canvas.getPad(4).getAxisY().setRange(0.00,0.18) ; canvas.draw(resGraph);
         canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.18,0.26) ; canvas.draw(meanGraph);
+        SFFunction sf = new SFFunction("esf",-11,part.eb.ccdb,0.1,2.5); 
+        canvas.draw(sf,"same");
         H1F hrat1 = H1F.divide(part.h6, part.h5); hrat1.setFillColor(2);
         hrat1.setTitleX("True Electron Energy (GeV))"); hrat1.setTitleY("Efficiency");
         canvas.cd(6); canvas.getPad(6).getAxisY().setRange(0.85,1.02);canvas.draw(hrat1);
@@ -721,6 +765,7 @@ public class ECPart  {
   	 
     public static void main(String[] args){
         ECPart part = new ECPart();  
+        part.initGraphics();
 //     	part.pizeroDemo(args);
         part.electronDemo(args);
     }

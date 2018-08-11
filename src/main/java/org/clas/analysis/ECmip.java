@@ -1,6 +1,10 @@
 package org.clas.analysis;
 
 import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +14,7 @@ import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorDescriptor;
+import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -41,6 +46,7 @@ public class ECmip extends DetectorMonitor {
     IndexedList<GraphErrors>  MIPSummary = new IndexedList<GraphErrors>(4);
     IndexedList<FitData>         MipFits = new IndexedList<FitData>(4);
     IndexedList<GraphErrors>    Timeline = new IndexedList<GraphErrors>(2);
+    IndexedList<Float>         PixLength = new IndexedList<Float>(3);
     Boolean                isAnalyzeDone = false;
     
     List<Float>   pmap = new ArrayList<Float>();	
@@ -69,6 +75,7 @@ public class ECmip extends DetectorMonitor {
     
     public void localinit() {
         configEngine("muon"); 
+        getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
     
      @Override    
@@ -502,7 +509,8 @@ public class ECmip extends DetectorMonitor {
                 }
                 }
 */ 
-
+               
+                
                ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(iis-1).get(0)).fill(e1c[is][0],v12mag);
                ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(iis+5).get(0)).fill(e1c[is][0],v13mag);
                ((H2F) this.getDataGroup().getItem(0,1,9,run).getData(iis-1).get(0)).fill(e4c[is][0],v13mag);
@@ -520,82 +528,90 @@ public class ECmip extends DetectorMonitor {
                
                 if(v12mag<35&&w1[is][0]==3) {
                 for(int n=0; n<n1[is]; n++) {
-                    ((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(0).get(0)).fill(e1c[is][n],   cU[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(1).get(0)).fill(e1c[is][n],   cV[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(2).get(0)).fill(e1c[is][n],   cW[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(0).get(0)).fill(e1p[is][0][n],cU[is][0][n]);
-                    ((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(1).get(0)).fill(e1p[is][1][n],cV[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(2).get(0)).fill(e1p[is][2][n],cW[is][0][n]);                		
+                	int u = (int) cU[is][0][n]; int v = (int) cV[is][0][n]; int w = (int) cW[is][0][n]; 
+                	float ec = e1c[is][n] ; float epu = e1p[is][0][n] ; float epv = e1p[is][1][n] ; float epw = e1p[is][2][n] ;
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(0).get(0)).fill(ec,u);
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(1).get(0)).fill(ec,v);
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(2).get(0)).fill(ec,w);
+                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(0).get(0)).fill(epu,u);
+                    ((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(1).get(0)).fill(epv,v);
+                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(2).get(0)).fill(epw,w);                		
                		
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(0).get(0)).fill(p1c[is][n],   cU[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(1).get(0)).fill(p1c[is][n],   cV[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(2).get(0)).fill(p1c[is][n],   cW[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(0).get(0)).fill(p1p[is][0][n],cU[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(1).get(0)).fill(p1p[is][1][n],cV[is][0][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(2).get(0)).fill(p1p[is][2][n],cW[is][0][n]); 
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(0).get(0)).fill(p1c[is][n],   u);
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(1).get(0)).fill(p1c[is][n],   v);
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(2).get(0)).fill(p1c[is][n],   w);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(0).get(0)).fill(p1p[is][0][n],u);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(1).get(0)).fill(p1p[is][1][n],v);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(2).get(0)).fill(p1p[is][2][n],w); 
                 		
-                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1c[is][n]<mxc[0]?mipc[0]:0);
-                    ((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1c[is][n]<mxc[0]?e1c[is][n]:0); 
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][0][n]<mxp[0]?mipp[0]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][0][n]<mxp[0]?e1p[is][0][n]:0);
-                    ((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(1).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][1][n]<mxp[0]?mipp[0]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(1).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][1][n]<mxp[0]?e1p[is][1][n]:0);
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(2).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][2][n]<mxp[0]?mipp[0]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(2).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),e1p[is][2][n]<mxp[0]?e1p[is][2][n]:0);
+                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),ec<mxc[0]?mipc[0]:0);
+                    ((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),ec<mxc[0]?ec:0); 
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epu<mxp[0]?mipp[0]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epu<mxp[0]?epu:0);
+                    ((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(1).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epv<mxp[0]?mipp[0]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(1).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epv<mxp[0]?epv:0);
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(2).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epw<mxp[0]?mipp[0]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(2).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epw<mxp[0]?epw:0);
                 }
                 }
                 
                 if(v23mag<21&&w4[is][0]==3) {
                 for(int n=0; n<n4[is]; n++) {
-                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(3).get(0)).fill(e4c[is][n],   cU[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(4).get(0)).fill(e4c[is][n],   cV[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(5).get(0)).fill(e4c[is][n],   cW[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(3).get(0)).fill(e4p[is][0][n],cU[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(4).get(0)).fill(e4p[is][1][n],cV[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(5).get(0)).fill(e4p[is][2][n],cW[is][1][n]);
+                	int u = (int) cU[is][1][n]; int v = (int) cV[is][1][n]; int w = (int) cW[is][1][n]; 
+                	float d = (PixLength.hasItem(u,v,w))? PixLength.getItem(u,v,w):1f;
+                	float ec = e4c[is][n]/d ; float epu = e4p[is][0][n]/d ; float epv = e4p[is][1][n]/d ; float epw = e4p[is][2][n]/d ;
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(3).get(0)).fill(ec,u);
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(4).get(0)).fill(ec,v);
+                	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(5).get(0)).fill(ec,w);
+                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(3).get(0)).fill(epu,u);
+                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(4).get(0)).fill(epv,v);
+                	((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(5).get(0)).fill(epw,w);
                 	
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(3).get(0)).fill(p4c[is][n],   cU[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(4).get(0)).fill(p4c[is][n],   cV[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(5).get(0)).fill(p4c[is][n],   cW[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(3).get(0)).fill(p4p[is][0][n],cU[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(4).get(0)).fill(p4p[is][1][n],cV[is][1][n]);
-                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(5).get(0)).fill(p4p[is][2][n],cW[is][1][n]);
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(3).get(0)).fill(p4c[is][n],   u);
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(4).get(0)).fill(p4c[is][n],   v);
+                	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(5).get(0)).fill(p4c[is][n],   w);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(3).get(0)).fill(p4p[is][0][n],u);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(4).get(0)).fill(p4p[is][1][n],v);
+                	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(5).get(0)).fill(p4p[is][2][n],w);
                     
-                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4c[is][n]<mxc[1]?mipc[1]:0);
-                	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4c[is][n]<mxc[1]?e4c[is][n]:0); 
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(3).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][0][n]<mxp[1]?mipp[1]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(3).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][0][n]<mxp[1]?e4p[is][0][n]:0);
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(4).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][1][n]<mxp[1]?mipp[1]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(4).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][1][n]<mxp[1]?e4p[is][1][n]:0);
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(5).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][2][n]<mxp[1]?mipp[1]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(5).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),e4p[is][2][n]<mxp[1]?e4p[is][2][n]:0);
+                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),ec<mxc[1]?mipc[1]:0);
+                	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),ec<mxc[1]?ec:0); 
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(3).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epu<mxp[1]?mipp[1]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(3).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epu<mxp[1]?epu:0);
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(4).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epv<mxp[1]?mipp[1]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(4).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epv<mxp[1]?epv:0);
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(5).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epw<mxp[1]?mipp[1]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(5).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epw<mxp[1]?epw:0);
                 }
                 }
                 
                 if(v23mag<21&&w7[is][0]==3) {                
                 for(int n=0; n<n7[is]; n++) {
-            		((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(6).get(0)).fill(e7c[is][n],   cU[is][2][n]);
-            	    ((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(7).get(0)).fill(e7c[is][n],   cV[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(8).get(0)).fill(e7c[is][n],   cW[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(6).get(0)).fill(e7p[is][0][n],cU[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(7).get(0)).fill(e7p[is][1][n],cV[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(8).get(0)).fill(e7p[is][2][n],cW[is][2][n]);
+                	int u = (int) cU[is][2][n]; int v = (int) cV[is][2][n]; int w = (int) cW[is][2][n]; 
+                	float d = (PixLength.hasItem(u,v,w))? PixLength.getItem(u,v,w):1f;
+                	float ec = e7c[is][n]/d ; float epu = e7p[is][0][n]/d ; float epv = e7p[is][1][n]/d ; float epw = e7p[is][2][n]/d ;
+            		((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(6).get(0)).fill(ec,u);
+            	    ((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(7).get(0)).fill(ec,v);
+            		((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(8).get(0)).fill(ec,w);
+            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(6).get(0)).fill(epu,u);
+            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(7).get(0)).fill(epv,v);
+            		((H2F) this.getDataGroup().getItem(iis,1,0,run).getData(8).get(0)).fill(epw,w);
             		    
-            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(6).get(0)).fill(p7c[is][n],   cU[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(7).get(0)).fill(p7c[is][n],   cV[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(8).get(0)).fill(p7c[is][n],   cW[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(6).get(0)).fill(p7p[is][0][n],cU[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(7).get(0)).fill(p7p[is][1][n],cV[is][2][n]);
-            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(8).get(0)).fill(p7p[is][2][n],cW[is][2][n]);
+            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(6).get(0)).fill(p7c[is][n],   u);
+            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(7).get(0)).fill(p7c[is][n],   v);
+            		((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(8).get(0)).fill(p7c[is][n],   w);
+            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(6).get(0)).fill(p7p[is][0][n],u);
+            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(7).get(0)).fill(p7p[is][1][n],v);
+            		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(8).get(0)).fill(p7p[is][2][n],w);
                     
-                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7c[is][n]<mxc[2]?mipc[2]:0);
-                	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7c[is][n]<mxc[2]?e7c[is][n]:0); 
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(6).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][0][n]<mxp[2]?mipp[2]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(6).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][0][n]<mxp[2]?e7p[is][0][n]:0);
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(7).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][1][n]<mxp[2]?mipp[2]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(7).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][1][n]<mxp[2]?e7p[is][1][n]:0);
-                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(8).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][2][n]<mxp[2]?mipp[2]:0);
-                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(8).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),e7p[is][2][n]<mxp[2]?e7p[is][2][n]:0);
+                	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?mipc[2]:0);
+                	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?ec:0); 
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(6).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epu<mxp[2]?mipp[2]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(6).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epu<mxp[2]?epu:0);
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(7).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epv<mxp[2]?mipp[2]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(7).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epv<mxp[2]?epv:0);
+                	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(8).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epw<mxp[2]?mipp[2]:0);
+                	((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(8).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epw<mxp[2]?epw:0);
                 }
                 }
                 }
@@ -863,12 +879,14 @@ public class ECmip extends DetectorMonitor {
     public void plotTimeline(int index) {
     	int[] xlab = {80, 140, 200, 260, 320, 380, 80, 140, 200, 260, 320, 380, 80, 140, 200, 260, 320, 380};
     	int[] ylab = {30, 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70, 70};
+
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
         c.divide(3, 2);
+
         F1D f1 = new F1D("p0","[a]",0.5,6.5); f1.setParameter(0,1);
         
         for (int id=0; id<3; id++) {        	
-    		c.cd(id); c.getPad(id).setAxisRange(0.5, 6.5, 0.8, 1.2);
+    		c.cd(id); c.getPad(id).setAxisRange(0.5, 6.5, 0.85, 1.15);c.getPad(id).setTitleFontSize(18);
             int ic=0;
           	for (int i=0; i<runlist.size(); i++) {
         		if (runlist.get(i)==getRunNumber()) {
@@ -885,7 +903,36 @@ public class ECmip extends DetectorMonitor {
         }
         
     }
+    public void getPixLengthMap(String filename) {   
+        
+    	System.out.println("ECmip.getPixLengthMap("+filename+")");
+    	
+        try{
+            FileReader       file = new FileReader(filename);
+            BufferedReader reader = new BufferedReader(file);
+            int n = 0 ;
+            while (n<1296) {
+              String line = reader.readLine();
+              String[] col = line.trim().split("\\s+"); 
+              int i = Integer.parseInt(col[0]); 
+              int j = Integer.parseInt(col[1]);
+              int k = Integer.parseInt(col[2]);
+              float d = Float.parseFloat(col[3]);
+              PixLength.add(d,i,j,k);
+              n++;
+            }    
+            reader.close();
+            file.close();
+         }  
+         
+         catch(FileNotFoundException ex) {
+            ex.printStackTrace();            
+         }     
+         catch(IOException ex) {
+             ex.printStackTrace();
+         }
 
+    }
 /*    
     private void updateSummary() {
         
