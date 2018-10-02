@@ -47,7 +47,8 @@ public class ECpi0 extends DetectorMonitor{
                                  "TIJ", 
                                  "EPI0vTh",
                                  "XY",
-                                 "FTOF");
+                                 "FTOF",
+                                 "PHOT");
         
         this.usePCCheckBox(true);
         this.useSectorButtons(true);
@@ -65,8 +66,8 @@ public class ECpi0 extends DetectorMonitor{
     
     @Override
     public void createHistos(int run) { 
-    	createPI0Histos(0, 1, 30,50.,250.); // invm vs. photon 1 strips
-    	createPI0Histos(0, 2, 30,50.,250.); // invm vs. photon 2 strips
+    	createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
+    	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
     	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
     	createSIJHistos(2,130,5.,700.,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
     	create2DHistos(3,50,0.,20.,50,0.,5.0,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
@@ -87,7 +88,7 @@ public class ECpi0 extends DetectorMonitor{
     @Override        
     public void plotHistos(int run) {
         setRunNumber(run);
-        plotPI0(0);
+        plotUVW(0);
         plotPI0Summary(1);
         plotPI0Summary(2);    	
         plotPI0Summary(3);    	
@@ -101,7 +102,19 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(11);
     }
     
-    public void createPI0Histos(int k, int n, int nch, double x1, double x2) {
+    public void createPHOTHistos(int k) {
+    	
+ 	   int run = getRunNumber();
+       H1F h; 
+       int is=0, n=0;
+       String tag = is+"_"+n+"_"+k+"_"+run;
+       h = new H1F("pi0_pcal_u_"+tag,"pi0_pcal_u_"+tag, 100, 0., 2.);
+       DataGroup dg = new DataGroup(1,1);
+       dg.addDataSet(h, 0);
+       this.getDataGroup().add(dg,is,n,k,run);        	
+    }
+    
+    public void createUVWHistos(int k, int n, int nch, double x1, double x2, String txt) {
     	
 	   int run = getRunNumber();
        H2F h; 
@@ -110,33 +123,33 @@ public class ECpi0 extends DetectorMonitor{
            String tag = is+"_"+n+"_"+k+"_"+run;
            DataGroup dg = new DataGroup(3,3);
            h = new H2F("pi0_pcal_u_"+tag,"pi0_pcal_u_"+tag, nch, x1, x2, 68, 1., 69.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("PCAL U Strips"); 
+           h.setTitleX("Sector "+is+txt); h.setTitleY("PCAL U Strips"); 
            dg.addDataSet(h,0);  
            h = new H2F("pi0_pcal_v_"+tag,"pi0_pcal_v_"+tag, nch, x1, x2, 62, 1., 63.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("PCAL V Strips");        
+           h.setTitleX("Sector "+is+txt); h.setTitleY("PCAL V Strips");        
            dg.addDataSet(h,1);            
            h = new H2F("pi0_pcal_w_"+tag,"pi0_pcal_w_"+tag, nch, x1, x2, 62, 1., 63.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("PCAL W Strips");  
+           h.setTitleX("Sector "+is+txt); h.setTitleY("PCAL W Strips");  
            dg.addDataSet(h,2); 
        
            h = new H2F("pi0_ecin_u_"+tag,"pi0_ecin_u_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECIN U Strips");    
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECIN U Strips");    
            dg.addDataSet(h,3);  
            h = new H2F("pi0_ecin_v_"+tag,"pi0_ecin_v_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECIN V Strips");        
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECIN V Strips");        
            dg.addDataSet(h,4);            
            h = new H2F("pi0_ecin_w_"+tag,"pi0_ecin_w_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECIN W Strips");  
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECIN W Strips");  
            dg.addDataSet(h,5); 
        
            h = new H2F("pi0_ecou_u_"+tag,"pi0_ecou_u_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECOU U Strips");    
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECOU U Strips");    
            dg.addDataSet(h,6);  
            h = new H2F("pi0_ecou_v_"+tag,"pi0_ecou_v_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECOU V Strips");        
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECOU V Strips");        
            dg.addDataSet(h,7);            
            h = new H2F("pi0_ecou_w_"+tag,"pi0_ecou_w_"+tag, nch, x1, x2, 36, 1., 37.);
-           h.setTitleX("Sector "+is+" Inv. Mass (MeV)"); h.setTitleY("ECOU W Strips");  
+           h.setTitleX("Sector "+is+txt); h.setTitleY("ECOU W Strips");  
            dg.addDataSet(h,8);   
            this.getDataGroup().add(dg,is,n,k,run);
        }            
@@ -228,9 +241,7 @@ public class ECpi0 extends DetectorMonitor{
      
         dropBanks(event);
 
-        if(!event.hasBank("ECAL::clusters")) return;
-        
-        DataBank ecBank = event.getBank("ECAL::clusters");
+        DataBank ecBank = event.hasBank("ECAL::clusters") ? event.getBank("ECAL::clusters"):null;
         
         ecClusters = part.readEC(event);  
         
@@ -294,7 +305,8 @@ public class ECpi0 extends DetectorMonitor{
         for (int is=1; is<7; is++) {
            
             if (part.mip[is-1]!=1) {  // No FTOF MIP in sector
-          	  
+//            	((H1F) this.getDataGroup().getItem(0,0,12,run).getData(0).get(0)).fill(part.e1);
+//          	    System.out.println(part.e1+" "+Math.acos(part.cth1)*180/3.14159);
                 double invmass = Math.sqrt(part.getTwoPhotonInvMass(is));
                 double     opa = Math.acos(part.cth)*180/3.14159;
                 
@@ -333,12 +345,14 @@ public class ECpi0 extends DetectorMonitor{
                             */   
                             for (int il=0; il<3; il++) {
                             	for (int im=0; im<2; im++) {
-                                    ipU = (ecBank.getInt("coordU", part.iip[im][il])-4)/8+1;
-                                    ipV = (ecBank.getInt("coordV", part.iip[im][il])-4)/8+1;
-                                    ipW = (ecBank.getInt("coordW", part.iip[im][il])-4)/8+1;
-                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(0+il*3).get(0)).fill(invmass*1e3,ipU);
-                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(1+il*3).get(0)).fill(invmass*1e3,ipV);
-                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(2+il*3).get(0)).fill(invmass*1e3,ipW);
+                            		if(ecBank!=null) {
+                                      ipU = (ecBank.getInt("coordU", part.iip[im][il])-4)/8+1;
+                                      ipV = (ecBank.getInt("coordV", part.iip[im][il])-4)/8+1;
+                                      ipW = (ecBank.getInt("coordW", part.iip[im][il])-4)/8+1;
+                                      ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(0+il*3).get(0)).fill(invmass*1e3,ipU);
+                                      ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(1+il*3).get(0)).fill(invmass*1e3,ipV);
+                                      ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(2+il*3).get(0)).fill(invmass*1e3,ipW);
+                            		}
                                     ((H2F) this.getDataGroup().getItem(il,im+1,10,run).getData(0).get(0)).fill(-part.x[im][il], part.y[im][il],1.);
                                     ((H2F) this.getDataGroup().getItem(il,im+1,10,run).getData(1).get(0)).fill(-part.x[im][il], part.y[im][il],invmass/part.mpi0);
                             	}
@@ -372,7 +386,7 @@ public class ECpi0 extends DetectorMonitor{
    
     }    
     
-    public void plotPI0(int index) {
+    public void plotUVW(int index) {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),getActivePC(),index,getRunNumber()));
     }   
     

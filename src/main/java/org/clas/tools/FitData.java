@@ -1,6 +1,7 @@
 package org.clas.tools;
 
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
@@ -9,6 +10,7 @@ import org.jlab.groot.math.F1D;
 public class FitData {
 	
 	public GraphErrors graph = null;
+	public H1F          hist = null;
 
 	public double xmin;
 	public double xmax;
@@ -30,6 +32,20 @@ public class FitData {
 
 	public void setGraph(GraphErrors graph) {
 	    this.graph = graph;
+	}
+	
+	public void setHist(H1F hist) {
+		this.hist = hist;
+		this.hist.setLineWidth(1);
+		this.hist.setOptStat("100");
+	}
+	
+	public H1F getHist() {
+		return this.hist;
+	}
+	
+	public double getMean() {
+		return this.hist.getMean();
 	}
 
 	public void setInt(int integral) {

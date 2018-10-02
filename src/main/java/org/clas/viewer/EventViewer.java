@@ -42,6 +42,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECa;
+import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECt;
@@ -96,10 +97,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String workDir = outPath;
     
     DetectorMonitor[] monitors= {
-    		new ECa("ECa")
+//    		new ECa("ECa")
 //    		new ECt("ECt")
-//   		new ECmip("ECmip")
+   		new ECmip("ECmip")
 //    		new ECpi0("ECpi0")
+//    		new ECelas("ECelas")
     };
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
@@ -442,7 +444,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	
        // EvioDataEvent decodedEvent = deco.DecodeEvent(event, decoder, table);
         //decodedEvent.show();
-        		
+		
         HipoDataEvent hipo = null;
         
         if(event!=null ){
@@ -471,6 +473,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     this.monitors[k].setRunNumber(this.runNumber);
                 }
                 for(int k=0; k<this.monitors.length; k++) {
+
                     this.monitors[k].createHistos(this.runNumber);
                     this.monitors[k].initGStyle();
                     this.monitors[k].plotHistos(this.runNumber);

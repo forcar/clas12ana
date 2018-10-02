@@ -331,6 +331,7 @@ public class ECmip extends DetectorMonitor {
        List<Particle>                part = new ArrayList<Particle>();
        IndexedList<Vector3>            rl = new IndexedList<Vector3>(2);  
 	   Boolean                     isMuon = true;
+
        Boolean goodPC,goodECi,goodECo;       
        DataBank bank1 = null;
        int nrows = 0;
@@ -635,7 +636,8 @@ public class ECmip extends DetectorMonitor {
         for (int i=0; i<3; i++) {
         for (int j=0; j<3; j++) {
             c.cd(3*i+j); c.getPad(3*i+j).getAxisY().setLog(false); 
-            c.draw(MipFits.getItem(iis,i*3+j,0,getRunNumber()).getGraph());
+            c.draw(MipFits.getItem(iis,i*3+j,0,getRunNumber()).getHist());
+            c.draw(MipFits.getItem(iis,i*3+j,0,getRunNumber()).getGraph(),"same");
         }
         }
         
@@ -655,8 +657,10 @@ public class ECmip extends DetectorMonitor {
         
         for (int i=0; i<np ; i++) {
             c.cd(i); c.getPad(i).getAxisY().setLog(false);  
-            c.draw(MipFits.getItem(iis,getActiveLayer()*3+getActiveView(),i+1,getRunNumber()).getGraph());
-        }
+//            c.draw(MipFits.getItem(iis,getActiveLayer()*3+getActiveView(),i+1,getRunNumber()).getGraph());
+            c.draw(MipFits.getItem(iis,getActiveLayer()*3+getActiveView(),i+1,getRunNumber()).getHist());
+            c.draw(MipFits.getItem(iis,getActiveLayer()*3+getActiveView(),i+1,getRunNumber()).getGraph(),"same");
+       }
        
 //        if(isAnalyzeDone) plotMIPSummary(c);       	
     }
@@ -691,6 +695,7 @@ public class ECmip extends DetectorMonitor {
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(3*id+il).get(0);
 //                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
                     fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
+                    fd.setHist(h2.projectionX());
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
                     fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,0,run);                 
                 }                    
@@ -699,23 +704,28 @@ public class ECmip extends DetectorMonitor {
                     int np = npmt[id*3+il];
                     double[]  x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
                     double[] xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
+                    double[]  yMean = new double[np];
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
 //                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
                     for (int i=0; i<np; i++) {                     
 //                        System.out.println("sector "+is+" det "+id+" lay "+il+" pmt "+i);
                         fd = new FitData(h2.sliceY(i).getGraph(),min,max); fd.setInt((int)h2.sliceY(i).getIntegral()); 
+                        fd.setHist(h2.sliceY(i));
                         fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
                         fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,i+1,run);
                         x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0;
                         double mean = fd.mean;                        
                         if(mean>0) yrms[i] = fd.sigma/mean; 
+                         yMean[i] = fd.getMean()/mip;
                          ymean[i] = mean/mip;
                         ymeane[i] = fd.meane/mip;
                     }
                     GraphErrors mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymean,xe,ymeane);                   
+                    GraphErrors Mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMean,xe,ymeane);                   
                     GraphErrors  rms = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yrms,xe,ye);                  
                     MIPSummary.add(mean, 1+off,is,id*3+il,run);
                     MIPSummary.add(rms,  2+off,is,id*3+il,run);                    
+                    MIPSummary.add(Mean, 5+off,is,id*3+il,run);
                 }
             }
         }
@@ -759,12 +769,14 @@ public class ECmip extends DetectorMonitor {
         for (int il=0; il<3; il++) {           	
             F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,1);
             GraphErrors plot = MIPSummary.getItem(1+off,is,id*3+il,getRunNumber());
+            GraphErrors plot1 = MIPSummary.getItem(5+off,is,id*3+il,getRunNumber());
+            plot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(0.5, 1.5); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot.getAttributes().setTitleY("MEAN / MIP");
             plot.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
-            n++; c.draw(plot);
-            f1.setLineColor(3); f1.setLineWidth(3); c.draw(f1,"same");
+            n++; c.draw(plot); c.draw(plot1,"same");
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         }
         }
         }

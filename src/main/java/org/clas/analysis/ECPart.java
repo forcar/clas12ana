@@ -1,5 +1,7 @@
 package org.clas.analysis;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -394,11 +396,11 @@ public class ECPart  {
         boolean pc12 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0  &&
                        DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0;
         
-       // Require photon 1 be in PCAL and ECin
+       // Require photon 1 cluster in PCAL and ECin
        boolean pcec1 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&           
                        DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0; 
 
-       // Require photon 2 be in PCAL and ECin
+       // Require photon 2 cluster in PCAL and ECin
        boolean pcec2 = DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&
                        DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0;  
        
@@ -468,6 +470,20 @@ public class ECPart  {
                            engine.setPeakThresholds(18,20,15);
                            engine.setClusterCuts(7,15,20); 
     	}
+    }
+    
+    public void dumpGraph(String filename, GraphErrors graph) {
+    	PrintWriter writer = null;
+		try 
+		{
+			writer = new PrintWriter(filename);
+		} 
+		catch (FileNotFoundException e) 
+		{			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}				
+    	for (int i=0; i<graph.getDataSize(0); i++) writer.println(String.format("%1$.3f %2$.3f %3$.3f",graph.getDataX(i),graph.getDataY(i),graph.getDataEY(i))); 
+    	writer.close();    	
     }
     
     public void initGraphics() {
@@ -648,7 +664,7 @@ public class ECPart  {
         
         String evioPath = "/Users/colesmith/clas12/sim/pizero/hipo/";
 //        String evioFile = "fc-pizero-100k-s2-newgeom-0.35-2.35.hipo"; int sec=2;
-        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
+        String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
         
         // GEMC file: 10k 2.0 GeV pizeros thrown at 25 deg into Sector 2 using GEMC 2.4 geometry
@@ -709,7 +725,7 @@ public class ECPart  {
                 if(pcec1||pcec2) {n2rec1++; h7a.fill(part.refE);}
                 if(pcec1&&pcec2) {n2rec2++; h7b.fill(part.refE);}
           
-                if (pcec1||pcec2) {
+                if (pcec1&&pcec2) {
                     h2a.fill(part.refE, invmass);                                    //Two-photon invariant mass                
                     h2b.fill(part.refE, part.X);                                     //Pizero energy asymmetry
                     h2c.fill(part.refE,(Math.sqrt(part.tpi2)/part.refE));            //Pizero total energy error
@@ -758,6 +774,10 @@ public class ECPart  {
         canvas.cd(10); canvas.draw(hrat3);
         canvas.cd(11); canvas.draw(hrat4);
         
+	    ParallelSliceFitter fitter = new ParallelSliceFitter(h2a);
+        fitter.fitSlicesX();  
+        dumpGraph("/Users/colesmith/pi0fit.vec",fitter.getSigmaSlices());
+        
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);     
@@ -766,8 +786,8 @@ public class ECPart  {
     public static void main(String[] args){
         ECPart part = new ECPart();  
         part.initGraphics();
-//     	part.pizeroDemo(args);
-        part.electronDemo(args);
+     	part.pizeroDemo(args);
+//        part.electronDemo(args);
     }
     
 }

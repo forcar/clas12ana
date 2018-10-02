@@ -322,18 +322,10 @@ public class ECt extends DetectorMonitor {
     public void processRec(DataEvent event) {
   	   
        int run = getRunNumber();
-    	   
-       if(event.hasBank("ECAL::hits")) {
-          event.removeBank("ECAL::hits");        
-          event.removeBank("ECAL::peaks");        
-          event.removeBank("ECAL::clusters");        
-          event.removeBank("ECAL::calib");
-          event.removeBank("ECAL::moments");
-       }
         
        dropBanks(event);
        
-       if (run>=4013) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
+       if (run>=3818) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
        
        List<ECStrip>     strips = engine.getStrips();
        List<ECPeak>       peaks = engine.getPeaks();

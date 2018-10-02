@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.RangeSlider;
+import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.task.IDataEventListener;
@@ -45,7 +47,7 @@ import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 
-public class DetectorMonitor implements IDataEventListener, ActionListener {    
+public class DetectorMonitor implements ActionListener {    
     
     private final String           detectorName;
     private ArrayList<String>      detectorTabNames  = new ArrayList();
@@ -57,6 +59,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private JPanel                   actionPanel     = null;
     private EmbeddedCanvasTabbed   detectorCanvas    = null;
     private DetectorPane2D         detectorView      = null;
+    private ButtonGroup                          bT0 = null;
     private ButtonGroup                          bG0 = null;
     private ButtonGroup                          bG1 = null;
     private ButtonGroup                          bG2 = null;
@@ -68,11 +71,13 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
+    private int                    detectorActivePID = 0;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
+    private Boolean                           usePID = false;
     
-    public JRadioButton bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bEL,bPI,bPH,bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
     public JCheckBox arBtn;
     
@@ -164,7 +169,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         GStyle.getAxisAttributesZ().setAxisAutoScale(true);    	
         GStyle.getGraphErrorsAttributes().setMarkerStyle(1);
         GStyle.getGraphErrorsAttributes().setMarkerColor(2);
-        GStyle.getGraphErrorsAttributes().setMarkerSize(3);
+        GStyle.getGraphErrorsAttributes().setMarkerSize(2);
         GStyle.getGraphErrorsAttributes().setLineColor(2);
         GStyle.getGraphErrorsAttributes().setLineWidth(1);
         GStyle.getGraphErrorsAttributes().setFillStyle(1);   
@@ -241,7 +246,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
             event.removeBank("ECAL::calib");
             event.removeBank("ECAL::moments");
          } 
-        engine.processDataEvent(event);     	
+        if(event.hasBank("ECAL::adc")) engine.processDataEvent(event);     	
     }
     
     public void analyze() {
@@ -260,7 +265,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         // initialize canvas and create histograms
     }   
     
-    @Override
     public void dataEventAction(DataEvent event) {
         if (!testTriggerMask()) return;
         setNumberOfEvents(getNumberOfEvents()+1);
@@ -356,7 +360,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     }
     
     public void useSectorButtons(boolean flag) {
-    	    sectorButtons = flag;
+    	sectorButtons = flag;
     }
     
     public void useSliderPane(boolean flag) {
@@ -365,6 +369,10 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public void usePCCheckBox(boolean flag) {
         usePC = flag;
+    }
+    
+    public void usePIDCheckBox(boolean flag) {
+        usePID = flag;
     }
     
     public int getActivePC() {
@@ -412,6 +420,14 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC);
         bP.setSelected(true);
         }
+        
+        if(usePID) {
+        bEL = new JRadioButton("e-"); buttonPane.add(bEL); bEL.setActionCommand("1"); bP.addActionListener(this);
+        bPI = new JRadioButton("pi"); buttonPane.add(bPI); bPI.setActionCommand("2"); bPI.addActionListener(this); 
+        bPH = new JRadioButton("ph"); buttonPane.add(bPH); bPH.setActionCommand("2"); bPH.addActionListener(this); 
+        bT0 = new ButtonGroup(); bT0.add(bEL); bT0.add(bPI); bT0.add(bPH);
+        bEL.setSelected(true);
+        }   
         
         bS1 = new JRadioButton("Sector 1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
         bS2 = new JRadioButton("Sector 2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
@@ -493,6 +509,7 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     
     public void actionPerformed(ActionEvent e) {
         if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
+        if(bT0!=null) detectorActivePID    = Integer.parseInt(bT0.getSelection().getActionCommand()); 
         detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
@@ -522,7 +539,6 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
         }
     }   
     
-    @Override
     public void resetEventListener() {
         System.out.println("Resetting " +  getDetectorName() + " histogram for run "+ getRunNumber());
         createHistos(getRunNumber());
@@ -574,9 +590,18 @@ public class DetectorMonitor implements IDataEventListener, ActionListener {
     public int getViewRun() {
         return viewRun;
     }   
-    
-    @Override
+     
     public void timerUpdate() {      
+    }
+    
+    public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank) {
+        HashMap<Integer,ArrayList<Integer>> map=new HashMap<Integer,ArrayList<Integer>>();
+        for (int ii=0; ii<bank.rows(); ii++) {
+            final int index = bank.getInt("pindex", ii);
+            if (!map.containsKey(index)) map.put(index,new ArrayList<Integer>());
+            map.get(index).add(ii);
+        }
+        return map;
     }
  
     public void readDataGroup(int run, TDirectory dir) {
