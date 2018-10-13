@@ -83,6 +83,7 @@ public class ECmip extends DetectorMonitor {
     
      @Override    
      public void createHistos(int run) {
+    	 System.out.println("ECMip:createHistos("+run+")");
 	     setRunNumber(run);
 	     runlist.add(run);
 	     createMIPHistos(0,1,25,0,40," Peak Energy (MeV)");

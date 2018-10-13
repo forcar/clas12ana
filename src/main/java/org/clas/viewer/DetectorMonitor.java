@@ -127,7 +127,7 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
-    public String outPath = "/Users/cole/CLAS12ANA/";
+    public String outPath = "~/CLAS12ANA/";
     
     public DetectorMonitor(String name){
 
@@ -145,7 +145,22 @@ public class DetectorMonitor implements ActionListener {
         for (int i=0; i<2; i++){
             eventResetTime_current[i]=eventResetTime_default[i];
         }
+        getEnv();
         
+    }
+    
+    public void getEnv() {        
+        String ostype = System.getenv("OSTYPE"); 
+        System.out.println("DetectorMonitor.getEnv(): OSTYPE = "+ostype);
+        
+        if (ostype!=null&&(ostype.equals("linux")||ostype.equals("Linux"))) {
+            outPath = "/home/lcsmith/CLAS12ANA/";    
+        }
+        
+        if (ostype!=null&&ostype.equals("darwin")) {
+            outPath = "/Users/cole/CLAS12ANA/";
+        }
+
     }
     
     public void init() {

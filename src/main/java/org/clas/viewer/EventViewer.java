@@ -408,7 +408,16 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }
         return rNum;
     }
-/*    
+    private int getEventNumber(DataEvent event) {
+        int eNum = this.eventNumber;
+        DataBank bank = event.getBank("RUN::config");
+        if(bank!=null) {
+            eNum      = bank.getInt("event", 0);
+        }
+        return eNum;
+    }
+    
+    /*    
     @Override
     public void dataEventAction(DataEvent event) {
     	
@@ -452,21 +461,18 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
             if(event instanceof EvioDataEvent){
              	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
-                DataBank   header = clasDecoder.createHeaderBank(hipo, 0, 0, (float) 0, (float) 0);
+                DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
+                DataBank  trigger = clasDecoder.createTriggerBank(hipo);
                 hipo.appendBanks(header);
+                hipo.appendBank(trigger);
             } 
             else {
                 hipo = (HipoDataEvent) event;    
             }
             
-            int rNum = this.runNumber;
-            int eNum = this.eventNumber;
-            if(event.hasBank("RUN::config")) {
-                DataBank bank = event.getBank("RUN::config");
-                 rNum      = bank.getInt("run", 0);
-                 eNum      = bank.getInt("event", 0);
-            }
-            
+            int rNum = getRunNumber(hipo);
+            int eNum = getEventNumber(hipo);
+           
             if(rNum!=0 && this.runNumber != rNum) {
                 this.runNumber = rNum;
                 for(int k=0; k<this.monitors.length; k++) {
