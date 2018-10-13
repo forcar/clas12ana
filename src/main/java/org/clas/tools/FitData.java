@@ -1,5 +1,6 @@
 package org.clas.tools;
 
+import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.IDataSet;
@@ -38,6 +39,7 @@ public class FitData {
 		this.hist = hist;
 		this.hist.setLineWidth(1);
 		this.hist.setOptStat("100");
+		this.hist.setTitle("");
 	}
 	
 	public H1F getHist() {
