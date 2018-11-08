@@ -127,7 +127,7 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
-    public String outPath = "~/CLAS12ANA/";
+    public String outPath = "/Users/cole/CLAS12ANA/";
     
     public DetectorMonitor(String name){
 

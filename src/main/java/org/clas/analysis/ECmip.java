@@ -83,7 +83,6 @@ public class ECmip extends DetectorMonitor {
     
      @Override    
      public void createHistos(int run) {
-    	 System.out.println("ECMip:createHistos("+run+")");
 	     setRunNumber(run);
 	     runlist.add(run);
 	     createMIPHistos(0,1,25,0,40," Peak Energy (MeV)");
@@ -498,7 +497,7 @@ public class ECmip extends DetectorMonitor {
                if (p.charge()>0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pm,p.getProperty("beta"));
                if (p.charge()<0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));
                
-               if (p.pid()==211)  ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pm,p.getProperty("beta"));
+               if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pm,p.getProperty("beta"));
                if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
                }
                
@@ -514,9 +513,9 @@ public class ECmip extends DetectorMonitor {
                if (goodPC)  {e1c[is-1][n1[is-1]]=en; rl.add(r,is,0); cU[is-1][0][n1[is-1]]=iU; cV[is-1][0][n1[is-1]]=iV; cW[is-1][0][n1[is-1]]=iW; p1c[is-1][n1[is-1]]=pm;}
                if (goodECi) {e4c[is-1][n4[is-1]]=en; rl.add(r,is,1); cU[is-1][1][n4[is-1]]=iU; cV[is-1][1][n4[is-1]]=iV; cW[is-1][1][n4[is-1]]=iW; p4c[is-1][n4[is-1]]=pm;}
                if (goodECo) {e7c[is-1][n7[is-1]]=en; rl.add(r,is,2); cU[is-1][2][n7[is-1]]=iU; cV[is-1][2][n7[is-1]]=iV; cW[is-1][2][n7[is-1]]=iW; p7c[is-1][n7[is-1]]=pm;}
-               if (goodPC)  {p1p[is-1][0][n1[is-1]]=pm; p1p[is-1][1][n1[is-1]]=pm; p1p[is-1][2][n1[is-1]]=pm; w1[is-1][n1[is-1]]=wsum;}
-               if (goodECi) {p4p[is-1][0][n4[is-1]]=pm; p4p[is-1][1][n4[is-1]]=pm; p4p[is-1][2][n4[is-1]]=pm; w4[is-1][n4[is-1]]=wsum;}
-               if (goodECo) {p7p[is-1][0][n7[is-1]]=pm; p7p[is-1][1][n7[is-1]]=pm; p7p[is-1][2][n7[is-1]]=pm; w7[is-1][n7[is-1]]=wsum;}
+               if (goodPC)  {p1p[is-1][0][n1[is-1]]=pm;  p1p[is-1][1][n1[is-1]]=pm;  p1p[is-1][2][n1[is-1]]=pm;  w1[is-1][n1[is-1]]=wsum;}
+               if (goodECi) {p4p[is-1][0][n4[is-1]]=pm;  p4p[is-1][1][n4[is-1]]=pm;  p4p[is-1][2][n4[is-1]]=pm;  w4[is-1][n4[is-1]]=wsum;}
+               if (goodECo) {p7p[is-1][0][n7[is-1]]=pm;  p7p[is-1][1][n7[is-1]]=pm;  p7p[is-1][2][n7[is-1]]=pm;  w7[is-1][n7[is-1]]=wsum;}
                if (goodPC)  {e1p[is-1][0][n1[is-1]]=enu; e1p[is-1][1][n1[is-1]]=env; e1p[is-1][2][n1[is-1]]=enw; n1[is-1]++;}
                if (goodECi) {e4p[is-1][0][n4[is-1]]=enu; e4p[is-1][1][n4[is-1]]=env; e4p[is-1][2][n4[is-1]]=enw; n4[is-1]++;}
                if (goodECo) {e7p[is-1][0][n7[is-1]]=enu; e7p[is-1][1][n7[is-1]]=env; e7p[is-1][2][n7[is-1]]=enw; n7[is-1]++;}
@@ -528,7 +527,7 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+1;
                 if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
-                if(n1[is]==1&n4[is]==1&&n7[is]==1) { //Cut out vertical cosmic rays
+                if(n1[is]==1&n4[is]==1&&n7[is]==1) { //Only one cluster in each layer to reject vertical cosmics
 //                    Boolean goodU = Math.abs(cU[is][1][n4[is]]-cU[is][2][n7[is]])<=1;
 //                    Boolean goodV = Math.abs(cV[is][1][n4[is]]-cV[is][2][n7[is]])<=1;
 //                    Boolean goodW = Math.abs(cW[is][1][n4[is]]-cW[is][2][n7[is]])<=1;
@@ -970,8 +969,8 @@ public class ECmip extends DetectorMonitor {
     	int[] ylab = {30, 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70, 70};
 
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
-        c.divide(3, 2);
-
+        c.divide(3, 2); 
+        
         F1D f1 = new F1D("p0","[a]",0.5,6.5); f1.setParameter(0,1);
         
         for (int id=0; id<3; id++) {        	
