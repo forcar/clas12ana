@@ -96,26 +96,39 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
-    DetectorMonitor[] monitors= {
-//    		new ECa("ECa")
-//    		new ECt("ECt")
-   		new ECmip("ECmip")
-//    		new ECpi0("ECpi0")
-//    		new ECelas("ECelas")
-    };
+    
+    DetectorMonitor[] monitors = null;
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
         
-//    DetectorMonitor[] monitors = null;
+    public static void main(String[] args){
+
+        JFrame frame = new JFrame("CLAS12Ana");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        EventViewer viewer = new EventViewer(args);
+        frame.add(viewer.mainPanel);
+        frame.setJMenuBar(viewer.menuBar);
+        frame.setSize(1400, 800);
+        frame.setVisible(true);
+    }
     
-//    {
-//    		new ECa("ECa")
-//    		new ECt("ECt")
-//    		new ECmip("ECmip")
-//    		new ECpi0("ECpi0")
- //   }  ; 
-        
-    public EventViewer() {    	
+    public EventViewer(String[] args) {  
+    	
+     	monitors = new DetectorMonitor[args.length==0 ? 1:args.length];
+        int n = 0;
+    	if (args.length != 0) {
+        	for(String s : args) { 
+        	   switch (s) {
+        	     case    "ECa": monitors[n++]=new ECa(s);   break; 
+        	     case    "ECt": monitors[n++]=new ECt(s);   break;
+        	     case  "ECmip": monitors[n++]=new ECmip(s); break;
+        	     case  "ECpi0": monitors[n++]=new ECpi0(s); break;
+        	     case "ECelas": monitors[n++]=new ECelas(s); 
+        	   }
+        	}
+    	} else {
+    		monitors[n] = new ECmip("ECmip"); 
+        }
         		
         menuBar = new JMenuBar();
         JMenuItem menuItem;
@@ -670,16 +683,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].timerUpdate();
         }
    }
-
-    public static void main(String[] args){
-        JFrame frame = new JFrame("CLAS12Ana");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        EventViewer viewer = new EventViewer();
-        frame.add(viewer.mainPanel);
-        frame.setJMenuBar(viewer.menuBar);
-        frame.setSize(1400, 800);
-        frame.setVisible(true);
-    }
     
     private void setRunNumber(String actionCommand) {
     

@@ -86,6 +86,7 @@ public class ECt extends DetectorMonitor {
     @Override
     public void createHistos(int run) {  
         setRunNumber(run);
+        runlist.add(run);        
         createTDCHistos(0,150,350,"TIME (ns)");
         createTDCHistos(1,150,350,"TIME (ns)");
         createTDCHistos(2,150,350,"TIME (ns)");

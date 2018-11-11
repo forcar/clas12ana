@@ -1,6 +1,7 @@
 package org.clas.analysis;
 
 import org.clas.analysis.ECPart.SFFunction;
+import org.clas.tools.FitData;
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.detector.CalorimeterResponse;
 import org.jlab.clas.detector.DetectorParticle;
@@ -69,9 +70,14 @@ public class ECa extends DetectorMonitor {
 	public float pim_mom, pim_theta, pim_phi, pim_vx, pim_vy, pim_vz, pim_vert_time, pim_beta, pim_track_chi2;
 	public float CVT_mom, CVT_theta, CVT_phi, CVT_vz, CVT_chi2, CVT_pathlength;
 	public int CVT_ndf;
-	public LorentzVector VB, VT, Ve, VG1, VG2, VPI0, VPIP, VPIM;          
+	public LorentzVector VB, VT, Ve, VG1, VG2, VPI0, VPIP, VPIM;  
+	
     Boolean isAnalyzeDone = false;
-    IndexedList<GraphErrors>  fitSummary = new IndexedList<GraphErrors>(2);  
+    IndexedList<GraphErrors>  fitSummary = new IndexedList<GraphErrors>(3);  
+    IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
+    IndexedList<GraphErrors>    Timeline = new IndexedList<GraphErrors>(2);
+    
+    public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
     
     public ECa(String name) {
         super(name);
@@ -107,6 +113,7 @@ public class ECa extends DetectorMonitor {
     @Override
     public void createHistos(int run) {        
         setRunNumber(run);
+        runlist.add(run);
         this.setNumberOfEvents(0);        
         createEOPHistos(0,50,0.5,10.5,"ep_p",  " Momentum (GeV)",      "E / P");
         createEOPHistos(1,30,  6.,36.,"ep_thv"," VertexTheta (deg)",   "E / P");
@@ -177,7 +184,7 @@ public class ECa extends DetectorMonitor {
 	    int run = getRunNumber();
     	for (int is=1; is<7; is++) {  
     		String txt = "Sector "+is+" Electron Energy (GeV)";
-            if (fitSummary.hasItem(1,is)) GraphPlot(fitSummary.getItem(1,is),c,is-1,1.5f,10.f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
+            if (fitSummary.hasItem(1,is,run)) GraphPlot(fitSummary.getItem(1,is,run),c,is-1,1.5f,10.f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
      	}
     }    
     
@@ -191,7 +198,7 @@ public class ECa extends DetectorMonitor {
 
     	for (int is=1; is<7; is++) {  
     		String txt = "Sector "+is+" Measured Energy (GeV)";
-            if (fitSummary.hasItem(1,is)) GraphPlot(fitSummary.getItem(10,is),c,is-1,0.0f,2.5f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
+            if (fitSummary.hasItem(1,is,run)) GraphPlot(fitSummary.getItem(10,is,run),c,is-1,0.0f,2.5f,0.18f,0.300f,col[is-1],4,1,txt,"E/P","");
             c.draw(sf,"same");
      	}
     }
@@ -199,36 +206,40 @@ public class ECa extends DetectorMonitor {
     public void plotFitSummary2(int index) {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
-        F1D f = new F1D("res","sqrt(0.082*0.082/x+0.0028)",1.6,10.0); f.setLineColor(1); f.setLineWidth(3);
-        int col[] = {1,2,3,4,5,7};
+        
+       int col[] = {1,2,3,4,5,7};
 	    int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
-            if (fitSummary.hasItem(2,is)) GraphPlot(fitSummary.getItem(2,is),c,is-1,1.5f,10.f,0.054f,0.088f,col[is-1],4,1,"","","");
-            if (fitSummary.hasItem(2,is)) c.draw(f,"same");            
+            F1D f = new F1D("res","sqrt([a]*[a]/x+[b]*[b])",1.6,10.0); f.setLineColor(1); f.setLineWidth(3);
+            f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
+            if (fitSummary.hasItem(2,is,run)) GraphPlot(fitSummary.getItem(2,is,run),c,is-1,1.5f,10.f,0.034f,0.088f,col[is-1],4,1,"","","");
+            if (fitSummary.hasItem(2,is,run)) c.draw(f,"same");            
     	}    	
     }
     
     public void plotFitSummary3(int index) {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
-        F1D f = new F1D("res","sqrt(0.082*0.082*x*x+0.0028)",0.3,0.76); f.setLineColor(1); f.setLineWidth(3);
         int col[] = {1,2,3,4,5,7};
 	    int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
-            if (fitSummary.hasItem(3,is)) GraphPlot(fitSummary.getItem(3,is),c,is-1,0.3f,0.76f,0.05f,0.09f,col[is-1],4,1,"","","");
-            if (fitSummary.hasItem(3,is)) c.draw(f,"same");            
+            F1D f = new F1D("res","sqrt([a]*[a]*x*x+[b]*[b])",0.3,0.76); f.setLineColor(1); f.setLineWidth(3);
+            f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
+            if (fitSummary.hasItem(3,is,run)) GraphPlot(fitSummary.getItem(3,is,run),c,is-1,0.3f,0.76f,0.04f,0.09f,col[is-1],4,1,"","","");
+            if (fitSummary.hasItem(3,is,run)) c.draw(f,"same");            
     	}    	
     } 
     
     public void plotFitSummary4(int index) {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
-        F1D f = new F1D("res","0.082*0.082*x+0.0028",0.1,0.51); f.setLineColor(1); f.setLineWidth(3);
         int col[] = {1,2,3,4,5,7};
 	    int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
-            if (fitSummary.hasItem(4,is)) GraphPlot(fitSummary.getItem(4,is),c,is-1,0.1f,0.51f,0.003f,0.0075f,col[is-1],4,1,"","","");
-            if (fitSummary.hasItem(4,is)) c.draw(f,"same");            
+            F1D f = new F1D("res","[a]*[a]*x+[b]*[b]",0.,0.6); f.setLineColor(1); f.setLineWidth(3);
+            f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
+            if (fitSummary.hasItem(4,is,run)) GraphPlot(fitSummary.getItem(4,is,run),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","","");
+            if (fitSummary.hasItem(4,is,run)) c.draw(f,"same");            
     	}    	
     }  
     
@@ -247,19 +258,19 @@ public class ECa extends DetectorMonitor {
     	
     	ParallelSliceFitter fitter;
 	    int run = getRunNumber();
-	    fitSummary.clear();
+	    
     	for (int is=1; is<7; is++) {
     	    fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,10,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    
-    	    GraphErrors meanGraph10 = fitter.getMeanSlices(); 
-    	    fitSummary.add(meanGraph10,10, is);
+    	    GraphErrors meanGraph10 = fitter.getMeanSlices(); // E/P vs. measured energy
+    	    fitSummary.add(meanGraph10,10, is, run); dumpGraph(vecPath+"meanGraph10_"+is+"_"+run,meanGraph10);
 
     		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    
-    	    GraphErrors meanGraph = fitter.getMeanSlices(); 
-    	    fitSummary.add(meanGraph,1, is);
+    	    GraphErrors meanGraph = fitter.getMeanSlices(); // E/P vs. tracking momentum
+    	    fitSummary.add(meanGraph,1, is, run); dumpGraph(vecPath+"meanGraph_"+is+"_"+run,meanGraph);
     	    
             int npts = meanGraph.getDataSize(0)  ;
             double[] xm  = new double[npts];
@@ -292,7 +303,7 @@ public class ECa extends DetectorMonitor {
             	}
             }  
     	    
-    	    fitSummary.add(res0Graph, 2, is);  
+    	    fitSummary.add(res0Graph, 2, is, run);  dumpGraph(vecPath+"res0Graph10_"+is+"_"+run,res0Graph);
     	    
             GraphErrors resGraph = new GraphErrors();
             resGraph.setTitleX("Sector "+is+" 1/sqrt(Electron Energy (GeV)) ");  resGraph.setTitleY("#sigma(E) / E"); 
@@ -308,23 +319,23 @@ public class ECa extends DetectorMonitor {
             	   resGraph.addPoint(xs[n], ys[n], 0., yse[n]);
             	}
             }  
-            fitSummary.add(resGraph, 3, is);
+            fitSummary.add(resGraph, 3, is, run); dumpGraph(vecPath+"resGraph_"+is+"_"+run,resGraph);
             
             GraphErrors res2Graph = new GraphErrors();
-            res2Graph.setTitleX("Sector "+is+" 1/Electron Energy (GeV) ");  res2Graph.setTitleY("#sigma(E)^2 / E^2"); 
+            res2Graph.setTitleX("Sector "+is+"  (1/GeV) ");  res2Graph.setTitleY("[#sigma(E) / E]^2"); 
             res2Graph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
             
             n=0;
             for (int i=0; i<sigGraph.getDataSize(0); i++) {
                 double y = sigGraph.getDataY(i); double ye = sigGraph.getDataEY(i);
-                if(ym[i]>0&&y>0) {
+                if(ym[i]>0&&y>0&&ye<0.001) {
                     xs[n] = 1/sigGraph.getDataX(i);  //sig(E)/E vs True Energy
             	    ys[n] = Math.pow(y/ym[i],2); //sigma(E)/E = sigma(E/P)*(P/E)
             	   yse[n] = 2*ys[n]*Math.sqrt(Math.pow(ye/y,2)+Math.pow(yme[i]/ym[i],2));
             	   res2Graph.addPoint(xs[n], ys[n], 0., yse[n]);
             	}
             }  
-            fitSummary.add(res2Graph, 4, is);
+            fitSummary.add(res2Graph, 4, is, run); dumpGraph(vecPath+"res2Graph_"+is+"_"+run,res2Graph);
     	}    	
     }
     

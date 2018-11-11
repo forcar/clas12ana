@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -127,12 +129,15 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
-    public String outPath = "/Users/cole/CLAS12ANA/";
+    public  String outPath = "/Users/cole/CLAS12ANA/";
+    private String pawPath = outPath+"paw/";
+    public  String vecPath = null;
     
     public DetectorMonitor(String name){
 
         initGStyle();
         detectorName   = name;
+        vecPath        = pawPath+detectorName+"/";
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
@@ -609,6 +614,20 @@ public class DetectorMonitor implements ActionListener {
     public void timerUpdate() {      
     }
     
+    public void dumpGraph(String filename, GraphErrors graph) {
+    	PrintWriter writer = null;
+		try 
+		{
+			writer = new PrintWriter(filename);
+		} 
+		catch (FileNotFoundException e) 
+		{			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}				
+    	for (int i=0; i<graph.getDataSize(0); i++) writer.println(String.format("%1$.3f %2$.6f %3$.8f",graph.getDataX(i),graph.getDataY(i),graph.getDataEY(i))); 
+    	writer.close();    	
+    }
+        
     public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank) {
         HashMap<Integer,ArrayList<Integer>> map=new HashMap<Integer,ArrayList<Integer>>();
         for (int ii=0; ii<bank.rows(); ii++) {

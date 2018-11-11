@@ -66,7 +66,9 @@ public class ECpi0 extends DetectorMonitor{
     
     @Override
     public void createHistos(int run) { 
-    	createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
+        setRunNumber(run);
+        runlist.add(run);
+        createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
     	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
     	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
     	createSIJHistos(2,130,5.,700.,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
