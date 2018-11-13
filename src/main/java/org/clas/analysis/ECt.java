@@ -451,9 +451,9 @@ public class ECt extends DetectorMonitor {
             for (int id=id1; id<id2; id++) {
                 for (int il=0; il<3; il++) {
                     h2 = (H2F) this.getDataGroup().getItem(is,0,8,run).getData(3*id+il).get(0);
-                    fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
+                    fd = new FitData(h2.projectionX().getGraph()); fd.setInt((int)h2.projectionX().getIntegral()); 
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(min,max); fd.fitGraph("0"); TDCFits.add(fd,is,id,il,0);                    
+                    fd.initFit(0,min,max); fd.fitGraph("0"); TDCFits.add(fd,is,id,il,0);                    
                 }  
             }            
         }
