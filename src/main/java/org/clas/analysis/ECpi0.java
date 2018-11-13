@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.clas.tools.DataProvider;
+import org.clas.tools.FitData;
 import org.clas.tools.TOFPaddle;
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.detector.DetectorResponse;
@@ -18,6 +19,7 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.utils.groups.IndexedList;
 
 import Jampack.Inv;
 
@@ -30,6 +32,9 @@ public class ECpi0 extends DetectorMonitor{
     Map<String,Integer> smap = new HashMap<String,Integer>();
     String[]         det = new String[]{"pcal","ecin","ecou"};
     String[]           v = new String[]{"u","v","w"};
+    
+    IndexedList<FitData>  Fits = new IndexedList<FitData>(4);    
+    Boolean                isAnalyzeDone = false;
     
     int[]   iidet = {1,4,7};
     float ipU,ipV,ipW;   
@@ -368,6 +373,33 @@ public class ECpi0 extends DetectorMonitor{
         }
                 
     }
+    
+    @Override
+    public void plotEvent(DataEvent de) {
+    	    analyze();
+    }
+
+    public void analyze() {    
+        System.out.println("I am in analyze()");
+        analyzeGraphs(1,7,0,0,0,0,"c");
+        fillTimeLine();
+        System.out.println("Finished");
+        isAnalyzeDone = true;
+    }
+    
+    public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2, String ro) {
+    	FitData fd = null ; H2F h2 = null;
+        int run=getRunNumber();
+        for (int is=is1; is<is2; is++) {
+        	H1F h1 = (H1F) this.getDataGroup().getItem(0,0,1,run).getData(is-1).get(0);
+        	fd = new FitData(h1.getGraph()); fd.setInt((int)h1.getIntegral());
+        	fd.setHist(h1);
+            fd.graph.getAttributes().setTitleX(h1.getTitleX()); 
+            fd.hist.getAttributes().setTitleX(h1.getTitleX()); 
+            fd.initFit(0,40.,200.); fd.fitGraph(""); Fits.add(fd,is,0,0,run); 
+        }
+    }
+    
     public void plotXYSummary(int index) {        
     	
       	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));

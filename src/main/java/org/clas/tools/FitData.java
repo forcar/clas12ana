@@ -24,11 +24,15 @@ public class FitData {
 	public int fitcol=4;
 	public String optstat="1100";
 	public Boolean doFit = false;
-
-	public FitData(GraphErrors graph, double xmin, double xmax) {
+	
+	String predefFunctionsF1D[] = {"[amp]*gaus(x,[mean],[sigma])", "[amp]*gaus(x,[mean],[sigma])+[p0]",
+			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]", "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
+			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x",
+			"[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x", "[a]*exp(x,[b])", "[a]+[b]*cos(x*[c])",
+			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)"};
+	
+	public FitData(GraphErrors graph) {
 	    setGraph(graph);
-	    this.graph.setFunction(new F1D("f","[amp]*gaus(x,[mean],[sigma])", xmin, xmax));            
-	    this.graph.getFunction().setLineWidth(1);
 	};
 
 	public void setGraph(GraphErrors graph) {
@@ -63,9 +67,11 @@ public class FitData {
 	    this.intmin = intmin;
 	}
 
-	public void initFit(double xmin, double xmax) {
+	public void initFit(int func, double xmin, double xmax) {
 	    this.xmin = xmin;
 	    this.xmax = xmax;
+	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], xmin, xmax));            
+	    graph.getFunction().setLineWidth(1);
 	    amp   = getMaxYIDataSet(graph,xmin,xmax);
 	    mean  = getMeanIDataSet(graph,xmin,xmax); 
 	    sigma = getRMSIDataSet(graph,xmin,xmax);
@@ -73,7 +79,13 @@ public class FitData {
 	    graph.getFunction().setParameter(1, mean);
 	    graph.getFunction().setParameter(2, sigma);
 	    graph.getFunction().setRange(mean-2.5*sigma, mean+1.7*sigma);
-	 }
+	}
+	
+	public void initFunc(int func) {
+		switch (func) {
+		case 0: 
+		}
+	}
 
 	public void fitGraph(String opt) {
 	    if (doFit) DataFitter.fit(graph.getFunction(), graph, "Q");
@@ -137,7 +149,7 @@ public class FitData {
 	        double y = data.getDataY(i);
 	        if (x > min && x < max && y != 0) {
 	            nsamples++;
-	            sum += Math.pow(x - mean, 2) * y;
+	            sum += (x-mean)*(x-mean)* y;
 	            nEntries += y;
 	        }
 	    }

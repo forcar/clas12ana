@@ -95,8 +95,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
-    
-    
+        
     DetectorMonitor[] monitors = null;
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();

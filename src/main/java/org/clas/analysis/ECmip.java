@@ -762,28 +762,24 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+10*off;
                 for (int il=0; il<3; il++) {
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(3*id+il).get(0);
-//                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
-                    fd = new FitData(h2.projectionX().getGraph(),min,max); fd.setInt((int)h2.projectionX().getIntegral()); 
+                    fd = new FitData(h2.projectionX().getGraph()); fd.setInt((int)h2.projectionX().getIntegral()); 
                     fd.setHist(h2.projectionX());
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
                     fd.hist.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,0,run);                 
+                    fd.initFit(0,min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,0,run);                 
                 }                    
                 for (int il=il1; il<il2; il++) {
-//                    System.out.println("ro:"+ro+" sector "+is+" det "+id+" lay "+il);
                     int np = npmt[id*3+il];
                     double[]  x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
                     double[] xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
                     double[]  yMean = new double[np];
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
-//                    h2 = dg4.getH2F("hi_"+det[id]+"_"+lay[il]+ro+"_"+is);
                     for (int i=0; i<np; i++) {                     
-//                        System.out.println("sector "+is+" det "+id+" lay "+il+" pmt "+i);
-                        fd = new FitData(h2.sliceY(i).getGraph(),min,max); fd.setInt((int)h2.sliceY(i).getIntegral()); 
+                        fd = new FitData(h2.sliceY(i).getGraph()); fd.setInt((int)h2.sliceY(i).getIntegral()); 
                         fd.setHist(h2.sliceY(i));
                         fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
                         fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-                        fd.initFit(min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,i+1,run);
+                        fd.initFit(0,min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,i+1,run);
                         x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0;
                         double mean = fd.mean;                        
                         if(mean>0) yrms[i] = fd.sigma/mean; 
