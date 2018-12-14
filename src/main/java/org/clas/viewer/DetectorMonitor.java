@@ -1,7 +1,10 @@
 package org.clas.viewer;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -14,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -23,6 +27,7 @@ import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileSystemView;
 
 import org.clas.tools.FitData;
 import org.jlab.detector.base.DetectorOccupancy;
@@ -55,10 +60,15 @@ public class DetectorMonitor implements ActionListener {
     private ArrayList<String>      detectorTabNames  = new ArrayList();
     private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(4);
     public  List<Integer>                    runlist = new ArrayList<Integer>();
+    public  int                       runIndexSlider = 0;
     private DataGroup              detectorSummary   = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                 detectorPanel     = null;
-    private JPanel                   actionPanel     = null;
+    private JPanel                 actionPanel       = null;
+    private JPanel                controlsPanel0     = null;
+    private JPanel                controlsPanel1     = null;
+    private JPanel                controlsPanel2     = null;
+    private JPanel                 runIndexPanel     = null;
     private EmbeddedCanvasTabbed   detectorCanvas    = null;
     private DetectorPane2D         detectorView      = null;
     private ButtonGroup                          bT0 = null;
@@ -81,7 +91,7 @@ public class DetectorMonitor implements ActionListener {
     
     public JRadioButton bEL,bPI,bPH,bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
-    public JCheckBox arBtn;
+    public  JCheckBox arBtn;
     
     public int        bitsec = 0;
     public long      trigger = 0;
@@ -129,9 +139,14 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
-    public  String outPath = "/Users/cole/CLAS12ANA/";
-    private String pawPath = outPath+"paw/";
-    public  String vecPath = null;
+    public  String  outPath = "/home/lcsmith/CLAS12ANA/";
+    private String  pawPath = outPath+"paw/";
+    public  String  jawPath = outPath+"jaw/";
+    public  String  vecPath = null;
+    
+    public Boolean isAnalyzeDone = false;
+    public Boolean     dropBanks = false;
+    public Boolean   dropSummary = false;
     
     public DetectorMonitor(String name){
 
@@ -150,20 +165,20 @@ public class DetectorMonitor implements ActionListener {
         for (int i=0; i<2; i++){
             eventResetTime_current[i]=eventResetTime_default[i];
         }
+        outPath = FileSystemView.getFileSystemView().getHomeDirectory().toString()+"/CLAS12ANA/";
+        System.out.println(detectorName+" outPath = "+outPath);
         getEnv();
         
     }
     
     public void getEnv() {        
-        String ostype = System.getenv("OSTYPE"); 
-        System.out.println("DetectorMonitor.getEnv(): OSTYPE = "+ostype);
+        String ostype = System.getProperty("os.name"); 
+        System.out.println("DetectorMonitor.getEnv(): os.name = "+ostype);
         
-        if (ostype!=null&&(ostype.equals("linux")||ostype.equals("Linux"))) {
-            outPath = "/home/lcsmith/CLAS12ANA/";    
-        }
-        
-        if (ostype!=null&&ostype.equals("darwin")) {
+        if (ostype!=null&&ostype.startsWith("Mac")) {
             outPath = "/Users/cole/CLAS12ANA/";
+        }else{
+            outPath = "/home/lcsmith/CLAS12ANA/";            	
         }
 
     }
@@ -197,10 +212,22 @@ public class DetectorMonitor implements ActionListener {
     
     public void initPanel() {
         getDetectorPanel().setLayout(new BorderLayout());
-        actionPanel = new JPanel();
-        actionPanel.setLayout(new FlowLayout());
+        actionPanel = new JPanel(new FlowLayout());
+        runIndexPanel = new JPanel(new FlowLayout());
+        controlsPanel0 = new JPanel(new GridBagLayout());
+        this.controlsPanel1 = new JPanel();
+        this.controlsPanel1.setBorder(BorderFactory.createTitledBorder("Display"));		
+        this.controlsPanel2 = new JPanel();
+        this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Timeline"));        
+        controlsPanel1.add(packActionPanel());
+        controlsPanel2.add(packRunIndexPanel());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;		
+        c.gridx=0 ; c.gridy=0 ; controlsPanel0.add(controlsPanel1,c);
+        c.gridx=0 ; c.gridy=1 ; controlsPanel0.add(controlsPanel2,c);
         getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
-        getDetectorPanel().add(packActionPanel(),BorderLayout.PAGE_END); 
+        getDetectorPanel().add(controlsPanel0,BorderLayout.SOUTH); 
+//        getDetectorPanel().add(packRunIndexPanel(),BorderLayout.SOUTH); 
     }
     
     public void configEngine(String config) {
@@ -283,22 +310,17 @@ public class DetectorMonitor implements ActionListener {
     
     public void createSummary() {
         // initialize canvas and create histograms
-    }   
+    } 
     
     public void dataEventAction(DataEvent event) {
         if (!testTriggerMask()) return;
         setNumberOfEvents(getNumberOfEvents()+1);
-        if (event.getType() == DataEventType.EVENT_START) {
-//            resetEventListener();
-            processEvent(event);
-	} else if (event.getType() == DataEventType.EVENT_SINGLE) {
-            processEvent(event);
-            plotEvent(event);
-	} else if (event.getType() == DataEventType.EVENT_ACCUMULATE) {
-            processEvent(event);
-	} else if (event.getType() == DataEventType.EVENT_STOP) {
-            analyze();
-	}
+        switch (event.getType())  {
+        case EVENT_START:      processEvent(event); break;
+        case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
+        case EVENT_ACCUMULATE: processEvent(event); break;
+        case EVENT_STOP:       analyze();
+	    }
     }
 
     public void drawDetector() {
@@ -351,7 +373,7 @@ public class DetectorMonitor implements ActionListener {
         return detectorData;
     }
     
-    public void fillTimeLine() {
+    public void fillTimeLineGraph() {
     	
     }
     
@@ -427,8 +449,13 @@ public class DetectorMonitor implements ActionListener {
     public JPanel packActionPanel() {
         if (sectorButtons) actionPanel.add(getButtonPane()); 
         if    (sliderPane) actionPanel.add(getSliderPane());
-        actionPanel.add(getRunSliderPane());
+//                           actionPanel.add(getRunSliderPane());
     	return actionPanel;
+    }
+    
+    public JPanel packRunIndexPanel() {
+        runIndexPanel.add(getRunSliderPane());	
+        return runIndexPanel;
     }
     
     public JPanel getButtonPane() {
@@ -449,17 +476,17 @@ public class DetectorMonitor implements ActionListener {
         bEL.setSelected(true);
         }   
         
-        bS1 = new JRadioButton("Sector 1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
-        bS2 = new JRadioButton("Sector 2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
-        bS3 = new JRadioButton("Sector 3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
-        bS4 = new JRadioButton("Sector 4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this); 
-        bS5 = new JRadioButton("Sector 5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this);  
-        bS6 = new JRadioButton("Sector 6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
+        bS1 = new JRadioButton("S1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
+        bS2 = new JRadioButton("S2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
+        bS3 = new JRadioButton("S3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
+        bS4 = new JRadioButton("S4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this); 
+        bS5 = new JRadioButton("S5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this);  
+        bS6 = new JRadioButton("S6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
 	    bG1 = new ButtonGroup(); bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);
         bS2.setSelected(true);        
-        bpcal = new JRadioButton("PCAL"); buttonPane.add(bpcal); bpcal.setActionCommand("0"); bpcal.addActionListener(this);
-        becin = new JRadioButton("ECin"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
-        becou = new JRadioButton("ECou"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
+        bpcal = new JRadioButton("PC"); buttonPane.add(bpcal);  bpcal.setActionCommand("0"); bpcal.addActionListener(this);
+        becin = new JRadioButton("ECi"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
+        becou = new JRadioButton("ECo"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
         bG2 = new ButtonGroup(); bG2.add(bpcal); bG2.add(becin); bG2.add(becou);
         bpcal.setSelected(true);
         bu = new JRadioButton("U"); buttonPane.add(bu); bu.setActionCommand("0"); bu.addActionListener(this);
@@ -472,16 +499,18 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 10,0); 
+        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 350,0); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
-        sliderPane.add(new JLabel("Run Index",JLabel.CENTER));
+        sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(slider);
         sliderPane.add(label);
+        slider.setPreferredSize(new Dimension(1200,10));
         slider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 JSlider slider = (JSlider) e.getSource();  
-                int run = runlist.get(slider.getValue()>=runlist.size()?runlist.size()-1:slider.getValue());
-                label.setText(String.valueOf("" + String.format("%d", run)));
+                runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size()-1:slider.getValue();
+                int run = runlist.get(runIndexSlider);
+                label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
                 plotHistos(run);
             }
         });               
@@ -672,7 +701,7 @@ public class DetectorMonitor implements ActionListener {
                 List<IDataSet> dsList = group.getData(i);
                 for(IDataSet ds : dsList){
                     System.out.println("\t --> " + ds.getName());
-                    newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);
+                    newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);    
                 }
             }
             map.replace(key, newGroup);

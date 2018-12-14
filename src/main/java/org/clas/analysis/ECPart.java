@@ -281,7 +281,7 @@ public class ECPart  {
         switch (rEC.size()) {
         case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector);
                 if (rEC2.size()>0) {
-                   particles.add(DetectorParticle.createNeutral(rEC.get(0))); // make neutral particle 1 from PCAL sector 
+                   particles.add(DetectorParticle.createNeutral(rEC.get(0))); // make neutral particle 1 from PCAL sector                   
                    particles.add(DetectorParticle.createNeutral(rEC2.get(0))); return particles; // make neutral particle 2 from other PCAL sector
                 }
                 break;
@@ -363,7 +363,7 @@ public class ECPart  {
         
         p1 = particles.get(0);  //Photon 1
         p2 = particles.get(1);  //Photon 2
-        
+       
         Vector3 n1 = p1.vector(); n1.unit();
         Vector3 n2 = p2.vector(); n2.unit();
                 
@@ -681,6 +681,7 @@ public class ECPart  {
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
+        engine.setVeff(16); //GEMC default
         
         part.setThresholds("Pizero",engine);
         part.setGeom("2.5");
@@ -705,6 +706,7 @@ public class ECPart  {
         h7a = new H1F("PC/EC", 50,0.,emax); h7a.setTitleX("MC Pizero E (MeV)");
         h7b = new H1F("PC/EC", 50,0.,emax); h7b.setTitleX("MC Pizero E (MeV)");
         h8 = new H1F("Mcut",  50,0.,emax);  h8.setTitleY("ECIN 2 Photon Eff"); h8.setTitle("80<InvMass<200");
+        H2F h9 = new H2F("Beta1", 50,0.75, 1.1,50,650.,750.); H2F h10 = new H2F("Beta2",50,0.75,1.1,50,650.,750.);
         
         int nimcut = 0;
         
@@ -719,6 +721,10 @@ public class ECPart  {
             
             boolean pcec1 = goodPhotons(121,part.p1,part.p2);
             boolean pcec2 = goodPhotons(122,part.p1,part.p2);
+           
+            
+            h9.fill(part.p1.getBeta(DetectorType.ECAL,1,0.),part.p1.getHit(DetectorType.ECAL).getPosition().z());  
+            h10.fill(part.p2.getBeta(DetectorType.ECAL,1,0.),part.p2.getHit(DetectorType.ECAL).getPosition().z());
            
             if (goodmass) {
                 n2hit++;  h6.fill(part.refE);    	            
@@ -755,7 +761,7 @@ public class ECPart  {
         JFrame frame = new JFrame("Pizero Reconstruction");
         frame.setSize(800,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-        canvas.divide(4,3);
+        canvas.divide(4,4);
 		canvas.setAxisTitleSize(18);
 		canvas.setAxisLabelSize(18);
 		
@@ -773,6 +779,9 @@ public class ECPart  {
         canvas.cd(9);  canvas.draw(hrat2);
         canvas.cd(10); canvas.draw(hrat3);
         canvas.cd(11); canvas.draw(hrat4);
+        
+        canvas.cd(12); canvas.draw(h9);
+        canvas.cd(13); canvas.draw(h10);
         
 	    ParallelSliceFitter fitter = new ParallelSliceFitter(h2a);
         fitter.fitSlicesX();  

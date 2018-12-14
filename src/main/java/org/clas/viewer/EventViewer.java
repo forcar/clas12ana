@@ -37,6 +37,7 @@ import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -72,12 +73,13 @@ import org.jlab.elog.LogEntry;
  * @author lcsmith
  */
 
-public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ChangeListener {
+public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ItemListener, ChangeListener {
     
     JTabbedPane                  tabbedpane = null;
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;
     DataSourceProcessorPane   processorPane = null;
+    JCheckBoxMenuItem cb1,cb2a,cb2b,cb3,cb4;   
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder                clasDecoder = new CLASDecoder();
@@ -95,6 +97,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
+    
+    public Boolean    autoSave = false;
+    public Boolean   dropBanks = false;
+    public Boolean dropSummary = false;
         
     DetectorMonitor[] monitors = null;
     
@@ -112,7 +118,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public EventViewer(String[] args) {  
+    	createMonitors(args);
+    	createMenuBar();
+    	createPanels();
+    }
+    
+    public void createMonitors(String[] args) {
     	
+        workDir = FileSystemView.getFileSystemView().getHomeDirectory().toString()+"/CLAS12ANA/";
      	monitors = new DetectorMonitor[args.length==0 ? 1:args.length];
         int n = 0;
     	if (args.length != 0) {
@@ -128,68 +141,41 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	} else {
     		monitors[n] = new ECmip("ECmip"); 
         }
+    }
+    
+    public void createMenuBar() {
         		
         menuBar = new JMenuBar();
+        
+        JMenu menu;
         JMenuItem menuItem;
+               
+        menu     = new JMenu("File");
+        menuItem = new JMenuItem("Timeline Data");           menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Analyze Data");            menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Analyze Histos");          menuItem.addActionListener(this); menu.add(menuItem); menu.addSeparator();
+        menuItem = new JMenuItem("Open histograms file");    menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Save histograms to file"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Print histograms as png"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuBar.add(menu);
+
+        menu     = new JMenu("Options");
+        cb1      = new JCheckBoxMenuItem("AutoSave");         cb1.addItemListener(this);           menu.add(cb1);
+        cb2a     = new JCheckBoxMenuItem("DropBanks");       cb2a.addItemListener(this);          menu.add(cb2a);
+        cb2b     = new JCheckBoxMenuItem("DropSummary");     cb2b.addItemListener(this);          menu.add(cb2b);
+        menuBar.add(menu);
         
-        JMenu file = new JMenu("File");
-        menuItem = new JMenuItem("Analyze Data");
-        menuItem.getAccessibleContext().setAccessibleDescription("Load files");
-        menuItem.addActionListener(this);
-        file.add(menuItem);        
-        menuItem = new JMenuItem("Analyze Histos");
-        menuItem.getAccessibleContext().setAccessibleDescription("Load histos");
-        menuItem.addActionListener(this);
-        file.add(menuItem);        
-        file.addSeparator();
-        menuItem = new JMenuItem("Open histograms file");
-        menuItem.getAccessibleContext().setAccessibleDescription("Open histograms file");
-        menuItem.addActionListener(this);
-        file.add(menuItem);
-        menuItem = new JMenuItem("Save histograms to file");
-        menuItem.getAccessibleContext().setAccessibleDescription("Save histograms to file");
-        menuItem.addActionListener(this);
-        file.add(menuItem);
-        menuItem = new JMenuItem("Print histograms as png");
-        menuItem.getAccessibleContext().setAccessibleDescription("Print histograms as png");
-        menuItem.addActionListener(this);
-        file.add(menuItem);       
-        menuBar.add(file);
+        menu     = new JMenu("Settings");              
+        menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Set global z-axis log scale"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Set global z-axis lin scale"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
+        menuBar.add(menu);
         
-        JMenu settings = new JMenu("Settings");
-        settings.getAccessibleContext().setAccessibleDescription("Choose monitoring parameters");
-        menuItem = new JMenuItem("Set GUI update interval");
-        menuItem.getAccessibleContext().setAccessibleDescription("Set GUI update interval");
-        menuItem.addActionListener(this);
-        settings.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis log scale");
-        menuItem.getAccessibleContext().setAccessibleDescription("Set global z-axis log scale");
-        menuItem.addActionListener(this);
-        settings.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis lin scale");
-        menuItem.getAccessibleContext().setAccessibleDescription("Set global z-axis lin scale");
-        menuItem.addActionListener(this);
-        settings.add(menuItem);
-        menuItem = new JMenuItem("Set run number");
-        menuItem.getAccessibleContext().setAccessibleDescription("Set run number");
-        menuItem.addActionListener(this);
-        settings.add(menuItem);
-        menuBar.add(settings);
-        
-        JMenu reset = new JMenu("Reset");
-        reset.getAccessibleContext().setAccessibleDescription("Reset histograms");
-        
-        JMenuItem menuItemdefault = new JMenuItem("Default for all");
-        menuItemdefault.getAccessibleContext().setAccessibleDescription("Default for all");
-        menuItemdefault.addActionListener(this);
-        reset.add(menuItemdefault);
-        
-        JMenuItem menuItemdisable = new JMenuItem("Disable histogram reset");
-        menuItemdisable.getAccessibleContext().setAccessibleDescription("Disable histogram reset");
-        menuItemdisable.addActionListener(this);
-        reset.add(menuItemdisable);
-        
-        menuBar.add(reset);
+        menu     = new JMenu("Reset");
+        menuItem = new JMenuItem("Default for all");         menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Disable histogram reset"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuBar.add(menu);
         
         String TriggerDef[] = { "Electron",
         		        "Electron S1","Electron S2","Electron S3","Electron S4","Electron S5","Electron S6",
@@ -199,62 +185,30 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         		        "HT.PC","HT.EC","PC.EC","FTOF.PC","Unused","Unused",
         		        "1K Pulser"};
         		             
-        JMenu trigBitsBeam = new JMenu("TriggerBits");
-        trigBitsBeam.getAccessibleContext().setAccessibleDescription("Test Trigger Bits");
+        menu = new JMenu("TriggerBits");
         
         for (int i=0; i<32; i++) {
         	
-            JCheckBoxMenuItem bb = new JCheckBoxMenuItem(TriggerDef[i]);  
+            cb3 = new JCheckBoxMenuItem(TriggerDef[i]);  
             final Integer bit = new Integer(i);
-            bb.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                	
+            
+            cb3.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {               	
                     if(e.getStateChange() == ItemEvent.SELECTED) {
-                        for(int k=0; k<monitors.length; k++) {
-                      	monitors[k].setTriggerMask(bit);
-                        }
+                        for(int k=0; k<monitors.length; k++) monitors[k].setTriggerMask(bit);
                     } else {
-                        for(int k=0; k<monitors.length; k++) {
-                     	monitors[k].clearTriggerMask(bit);
-                        }
+                        for(int k=0; k<monitors.length; k++) monitors[k].clearTriggerMask(bit);
                     };
                 }
             });         
-            trigBitsBeam.add(bb); 
-        	        	
+            menu.add(cb3);         	        	
         }
 
-        menuBar.add(trigBitsBeam);
-        
-        String MonitorList[] = new String[monitors.length];
-        for (int i=0; i<monitors.length; i++) MonitorList[i]=monitors[i].getDetectorName();
-        
-        JMenu monitorMenu = new JMenu("Monitors");
-        monitorMenu.getAccessibleContext().setAccessibleDescription("Select active monitors");
-        
-        for (int i=0; i<MonitorList.length; i++) {
-        	
-            JCheckBoxMenuItem bb = new JCheckBoxMenuItem(MonitorList[i]);  
-            bb.setActionCommand(MonitorList[i]);
-                      
-            bb.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {                	
-                    if(e.getStateChange() == ItemEvent.SELECTED) {
-                    	System.out.println(bb.getActionCommand());
-//                    	String name = monitorlist[i].getDetectorName();
-//                    	if(!monitor.containsKey(name)) monitor.put(monitorlist[i].getDetectorName(), monitorlist[i]);
-                    } else {
-//                        if monitors.containsKey(key)
-                    };
-                }
-            });         
-            bb.doClick();
-            monitorMenu.add(bb);         	        	
-        }
-        
-        menuBar.add(monitorMenu);
+        menuBar.add(menu);    
+    }
+    
+    public void createPanels() {
 
-        // create main panel
         mainPanel = new JPanel();	
         mainPanel.setLayout(new BorderLayout());
         
@@ -273,77 +227,57 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
         for(int k=0; k<this.monitors.length; k++) {
                 this.tabbedpane.add(this.monitors[k].getDetectorPanel(), this.monitors[k].getDetectorName());
-        	        this.monitors[k].getDetectorView().getView().addDetectorListener(this);                        
+        	    this.monitors[k].getDetectorView().getView().addDetectorListener(this);                        
         }
         
-        this.tabbedpane.addChangeListener(this);
-               
-        this.processorPane.addEventListener(this);
-        
+        this.tabbedpane.addChangeListener(this);               
+        this.processorPane.addEventListener(this);        
         this.setCanvasUpdate(canvasUpdateTime);
         
     }
-      
+    
+	@Override
+	public void itemStateChanged(ItemEvent e) {
+		Object source = e.getItemSelectable();	
+		if (source==cb1)     autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cb2a)   dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==cb2b) dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; this.monitors[k].dropSummary=dropSummary;}
+	}  
+	
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
-        if(e.getActionCommand() == "Analyze Files") {
-            this.readFiles();
-        }         
-        if(e.getActionCommand() == "Analyze Histos") {
-            this.readHistos();
-        }           
-        if(e.getActionCommand()=="Set GUI update interval") {
-            this.chooseUpdateInterval();
+        switch (e.getActionCommand()) {
+          case("Timeline Data"):               this.readFiles(); break;
+          case("Analyze Data"):                this.readFiles(); break;
+          case("Analyze Histos"):              this.readHistos(); break;
+          case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
+          case("Set global z-axis log scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true); break;
+          case("Set global z-axis lin scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false); break;
+          case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
+          case("Open histograms file"):        this.histoChooser(); break;
+          case("Save histograms to file"):     this.histoSaver(); break;
+          case("Print histograms as png"):     this.printHistosToFile(); break;
+          case("Default for all"):             for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = this.monitors[k].eventResetTime_default[k]; break;       
+          case("Disable histogram reset"):     for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = 0; break;
+          case("Reset"):                       for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = 0;
         }
-        if(e.getActionCommand()=="Set global z-axis log scale") {
-        	   for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true);
-        }
-        if(e.getActionCommand()=="Set global z-axis lin scale") {
-           for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false);
-        }
-        if(e.getActionCommand()=="Set run number") {
-           setRunNumber(e.getActionCommand());
-        }
-
-        if(e.getActionCommand()=="Open histograms file") {
-            String fileName = null;
-            JFileChooser fc = new JFileChooser(new File(workDir));
-            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                this.loadHistosFromFile(fc.getSelectedFile().getAbsolutePath());
-            }
-        }   
-        
-        if(e.getActionCommand()=="Print histograms as png") {
-            this.printHistosToFile();
-        }
-        
-        if(e.getActionCommand()=="Save histograms to file") {
-//            DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
-            String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[0].getDetectorName() + ".hipo";
-            JFileChooser fc = new JFileChooser(new File(workDir));
-            fc.setSelectedFile(new File(fileName));
-            if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-               this.saveHistosToFile(fc.getSelectedFile().getAbsolutePath());
-            }
-        }
-            
-        if (e.getActionCommand()=="Default for all"){
-            for (int k=0;k<monitors.length;k++){
-                this.monitors[k].eventResetTime_current[k] = this.monitors[k].eventResetTime_default[k];
-            }
-        }
-         
-         if (e.getActionCommand()=="Disable histogram reset"){
-            for (int k=0;k<monitors.length;k++){
-                this.monitors[k].eventResetTime_current[k] = 0;
-            }
-        }
-        
-        if ( e.getActionCommand().substring(0, 5).equals("Reset")){
-            resetHistograms(e.getActionCommand());
-        }
-      
+        if (e.getActionCommand().substring(0, 5).equals("Reset")) resetHistograms(e.getActionCommand());
+    }
+    
+    public void histoChooser() {
+        JFileChooser fc = new JFileChooser(new File(workDir));
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) this.loadHistosFromFile(fc.getSelectedFile().getAbsolutePath());   	
+    }
+    
+    public void histoSaver() {
+//      DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
+        String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[0].getDetectorName() + ".hipo";
+        if(autoSave) {this.saveHistosToFile(workDir+fileName);return;}
+        JFileChooser fc = new JFileChooser(new File(workDir));
+        fc.setSelectedFile(new File(fileName));
+        if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) this.saveHistosToFile(fc.getSelectedFile().getAbsolutePath());   	
     }
 
     public void chooseUpdateInterval() {
@@ -413,64 +347,21 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private int getRunNumber(DataEvent event) {
-        int rNum = this.runNumber;
-        DataBank bank = event.getBank("RUN::config");
-        if(bank!=null) {
-            rNum      = bank.getInt("run", 0);
-        }
-        return rNum;
-    }
-    private int getEventNumber(DataEvent event) {
-        int eNum = this.eventNumber;
-        DataBank bank = event.getBank("RUN::config");
-        if(bank!=null) {
-            eNum      = bank.getInt("event", 0);
-        }
-        return eNum;
+        DataBank bank = event.getBank("RUN::config");       
+        return (bank!=null) ? bank.getInt("run",0):this.runNumber;
     }
     
-    /*    
-    @Override
-    public void dataEventAction(DataEvent event) {
-    	
-        HipoDataEvent hipo = null;
-        
-	    if(event!=null ){
-
-            if(event instanceof EvioDataEvent){
-             	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
-                DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
-                hipo.appendBanks(header);
-            } 
-            else {
-                hipo = (HipoDataEvent) event;    
-            }
-            
-            if(this.runNumber != this.getRunNumber(hipo)) {
-                this.runNumber = this.getRunNumber(hipo);
-                System.out.println("Setting run number to: " +this.runNumber);
-                resetEventListener();
-            }
-            
-            for(int k=0; k<this.monitors.length; k++) {
-                this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
-                this.monitors[k].setTriggerWord(getTriggerWord(hipo));   
-                this.monitors[k].dataEventAction(hipo);
-            }      
-	    }
+    private int getEventNumber(DataEvent event) {
+        DataBank bank = event.getBank("RUN::config");
+        return (bank!=null) ? bank.getInt("event", 0): this.eventNumber;
     }
-*/    
+
     @Override
     public void dataEventAction(DataEvent event) {
-    	
-       // EvioDataEvent decodedEvent = deco.DecodeEvent(event, decoder, table);
-        //decodedEvent.show();
 		
         HipoDataEvent hipo = null;
         
         if(event!=null ){
-            //event.show();
-
             if(event instanceof EvioDataEvent){
              	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
                 DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
@@ -485,35 +376,32 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             int rNum = getRunNumber(hipo);
             int eNum = getEventNumber(hipo);
            
-            if(rNum!=0 && this.runNumber != rNum) {
+            if(rNum!=0 && this.runNumber!=rNum) {  
+            	System.out.println("Processing Run "+rNum);
+            	if(autoSave&&this.runNumber!=0) saveHistosToFile();
                 this.runNumber = rNum;
                 for(int k=0; k<this.monitors.length; k++) {
-                    this.monitors[k].setRunNumber(this.runNumber);
-                }
-                for(int k=0; k<this.monitors.length; k++) {
-
-                    this.monitors[k].createHistos(this.runNumber);
+                	this.monitors[k].setRunNumber(this.runNumber); 
+                	this.monitors[k].getDataGroup().clear();
+                	this.monitors[k].createHistos(this.runNumber);
                     this.monitors[k].initGStyle();
                     this.monitors[k].plotHistos(this.runNumber);
                     this.monitors[k].arBtn.setSelected(true);         
-                    if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
+                    if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
                 }
             } 
            
             this.eventNumber = eNum;
             
-            for(int k=0; k<this.monitors.length; k++) {
-                this.monitors[k].setEventNumber(this.eventNumber);
-            }
-            
             setTriggerPhaseConstants(this.runNumber);
             
             for(int k=0; k<this.monitors.length; k++) {
-                this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
+            	this.monitors[k].setEventNumber(this.eventNumber);
+            	this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
                 this.monitors[k].setTriggerWord(getTriggerWord(hipo));        	    
                 this.monitors[k].dataEventAction(hipo);
             }      
-	}
+	    }
     }
     
     private void readFiles() {
@@ -574,33 +462,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             System.out.println("Task completed");
         }
     }    
-    
-    private void readHistos() {
-
-        JFileChooser fc = new JFileChooser(new File(workDir));
-        fc.setDialogTitle("Choose input histos directory...");
-        fc.setMultiSelectionEnabled(true);
-        fc.setAcceptAllFileFilterUsed(false);
-        for(int k=0; k<this.monitors.length; k++) {
-        	this.monitors[k].getDataGroup().clear();
-        	this.monitors[k].runlist.clear();
-        }
-        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            for (File fd : fc.getSelectedFiles()) {
-                if (fd.isFile()) {
-                	loadHistosFromFile(fd.getAbsolutePath());
-                }                
-            }            
-        }
-    }        
-    
-    @Override
-    public void resetEventListener() {
-        for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].resetEventListener();
-            this.monitors[k].timerUpdate();
-        }      
-    }
    
     public void printHistosToFile() {
         DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
@@ -629,40 +490,72 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public int getFileRunNumber(String file) {
-    	   String[] tokens = file.split("_");
-    	   return Integer.parseInt(tokens[2]);
+    	String[] tokens = file.split("_");
+    	return Integer.parseInt(tokens[2]);
     }
     
+    @Override
+    public void resetEventListener() {
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].resetEventListener();
+            this.monitors[k].timerUpdate();
+        }      
+    }    
+    
+    private void readHistos() {
+        JFileChooser fc = new JFileChooser(new File(workDir));
+        fc.setDialogTitle("Choose input histos directory...");
+        fc.setMultiSelectionEnabled(true);
+        fc.setAcceptAllFileFilterUsed(false);
+        for(int k=0; k<this.monitors.length; k++) {
+        	this.monitors[k].getDataGroup().clear();
+        	this.monitors[k].runlist.clear();
+        }
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            for (File fd : fc.getSelectedFiles()) {
+                if (fd.isFile()) {
+                	loadHistosFromFile(fd.getAbsolutePath());
+                }                
+            }            
+        }
+    }        
+    
     public void loadHistosFromFile(String fileName) {
-
         System.out.println("Opening file: " + fileName);
+        
         runNumber = getFileRunNumber(fileName);    
         TDirectory dir = new TDirectory();
-        dir.readFile(fileName);
-        System.out.println(dir.getDirectoryList());
-        dir.cd();
-        dir.pwd();
+        dir.readFile(fileName); dir.cd(); dir.pwd();
         
         for(int k=0; k<this.monitors.length; k++) {  
-        	this.monitors[k].setRunNumber(runNumber);
-            this.monitors[k].createHistos(this.monitors[k].getRunNumber());           
+         	this.monitors[k].setRunNumber(runNumber);
+            this.monitors[k].createHistos(runNumber);           
             this.monitors[k].initGStyle();
-            this.monitors[k].readDataGroup(this.monitors[k].getRunNumber(),dir);
-//          this.monitors[k].plotHistos(this.monitors[k].getRunNumber());
+            this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
             this.monitors[k].arBtn.setSelected(true);         
         }
     }
     
-    public void saveHistosToFile(String fileName) {
-        TDirectory dir = new TDirectory();
+    public void saveHistosToFile() {
         for(int k=0; k<this.monitors.length; k++) {
+        	String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[k].getDetectorName() + ".hipo";
+        	TDirectory dir = new TDirectory();
             this.monitors[k].writeDataGroup(dir);
+            dir.writeFile(monitors[k].outPath+fileName);
+            System.out.println("Saving histograms to file " + monitors[k].outPath+fileName);
         }
-        System.out.println("Saving histograms to file " + fileName);
-        dir.writeFile(fileName);
     }
-        
+    
+    public void saveHistosToFile(String fileName) {
+        for(int k=0; k<this.monitors.length; k++) {
+        	TDirectory dir = new TDirectory();
+            this.monitors[k].writeDataGroup(dir);
+            dir.writeFile(fileName);
+            System.out.println("Saving histograms to file " + fileName);
+        }
+    } 
+    
     public void setCanvasUpdate(int time) {
         System.out.println("Setting " + time + " ms update interval");
         this.canvasUpdateTime = time;
@@ -731,4 +624,5 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		// TODO Auto-generated method stub
 		
 	}
+
 }

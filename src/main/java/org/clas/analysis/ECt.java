@@ -390,10 +390,11 @@ public class ECt extends DetectorMonitor {
                              float tdif  = tu  - Tvertex + phase;
                              float tdifp = tdif - path/c;
                              float texp  = path/c + leff/veff + Tvertex - phase - shiftTV[is-1];  
-                             ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip);
-                             ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip);
+                             ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip); //peak times
+                             ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip); //cluster times
                              ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
-                             if (bankp.getInt("pid",pin)==11) {
+                             ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
+                             if (!(bankp.getInt("pid",pin)==11)) {
                                 ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, tdifp);
                                 ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, tdifp);
