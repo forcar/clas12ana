@@ -146,7 +146,7 @@ public class DetectorMonitor implements ActionListener {
     
     public Boolean isAnalyzeDone = false;
     public Boolean     dropBanks = false;
-    public Boolean   dropSummary = false;
+    public Boolean   dropSummary = false; 
     
     public DetectorMonitor(String name){
 

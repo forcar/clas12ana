@@ -17,6 +17,7 @@ import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.fitter.DataFitter;
@@ -30,6 +31,9 @@ import org.jlab.utils.groups.IndexedList;
 
 public class ECmip extends DetectorMonitor {
 	
+	H2F h = null;
+	DataGroup dg = null;
+	
     int is,la,ic,idet,nstr;
     
     float[][][][] ecmean = new float[6][3][3][68];
@@ -42,10 +46,9 @@ public class ECmip extends DetectorMonitor {
     double[]         mxp = {20,20,32};  
     double[]     fitLimp = { 5, 3, 6,17,17,27};
     double[]     fitLimc = {20,17,35,40,48,75};
-    int[]           npmt = {68,62,62,36,36,36,36,36,36};
-    
-    int[]     npmts = new int[]{68,36,36};
-    int runIndex = 0;
+    int[]           npmt = {68,62,62,36,36,36,36,36,36};    
+    int[]          npmts = new int[]{68,36,36};
+    int         runIndex = 0;
     
     IndexedList<GraphErrors>  MIPSummary = new IndexedList<GraphErrors>(4);
     IndexedList<FitData>         MipFits = new IndexedList<FitData>(4);
@@ -76,7 +79,6 @@ public class ECmip extends DetectorMonitor {
         this.init();
         this.localinit();
         this.createTimeLineHistos();
-	    this.createTimeLineGraphs();
     }
     
     public void localinit() {
@@ -122,18 +124,17 @@ public class ECmip extends DetectorMonitor {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
     	 if(!dropSummary) {updateFITS(2); plotMeanSummary(3); plotRmsSummary(4);}
-    	 updateUVW(1); plotTimeLineHisto(11);    	    
+    	 updateUVW(1); plotTimeLines(11);    	    
      }
      
      public void createXYHistos(int k, int nb, int bmx) {
     	 
  	     int run = getRunNumber();
-         H2F h;  
-         
+ 	     
          String[] t = {"e","w","r"};
          
          for (int i=0; i<3; i++) {
-        	     DataGroup dg = new DataGroup(3,2);
+        	     dg = new DataGroup(3,2);
 	    	     for (int d=0; d<3; d++) {
                  h = new H2F("hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
                  dg.addDataSet(h,d);  
@@ -142,7 +143,7 @@ public class ECmip extends DetectorMonitor {
          }
 
          for (int i=0; i<3; i++) {
-             DataGroup dg = new DataGroup(3,3);
+                 dg = new DataGroup(3,3);
         	     for (int j=0; j<3; j++) {
         	    	     for (int d=0; d<3; d++) {
                       h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
@@ -156,7 +157,7 @@ public class ECmip extends DetectorMonitor {
      
      public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt) {
      	
-         H2F h;  F1D f1; 
+         F1D f1; 
          
          int run = getRunNumber();
          
@@ -213,11 +214,10 @@ public class ECmip extends DetectorMonitor {
      public void createMIPHistos(int k, int n, int nch, double x1, double x2, String txt) {
     	
 	    int run = getRunNumber();
-        H2F h; 
     
         for (int is=1; is<7; is++) {
             String tag = is+"_"+n+"_"+k+"_"+run;
-            DataGroup dg = new DataGroup(3,3);
+            dg = new DataGroup(3,3);
             h = new H2F("mip_pcal_u_"+tag,"mip_pcal_u_"+tag, nch, x1, x2, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL U"+txt); h.setTitleY("U"); 
             dg.addDataSet(h,0);  
@@ -253,9 +253,7 @@ public class ECmip extends DetectorMonitor {
      
     public void createPathHistos(int k) {
     	
-       DataGroup dg;
 	   int run = getRunNumber();
-       H2F h; 
        
        dg = new DataGroup(3,4); 
        for (int is=1; is<7; is++) {
@@ -303,9 +301,7 @@ public class ECmip extends DetectorMonitor {
     
     public void createPixHistos(int k) {
     	
-        DataGroup dg;
  	    int run = getRunNumber();
-        H2F h; 
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
@@ -351,12 +347,13 @@ public class ECmip extends DetectorMonitor {
     	
     }
     
-    public void createPIDHistos(int k) {
-        DataGroup dg = new DataGroup(2,3);
-	    int run = getRunNumber();
+    public void createPIDHistos(int k)  {
+    
+ 	    int run = getRunNumber();
 	    int is  = 0;
-        H2F h; 
         String tag = is+"_"+run;
+        
+        dg = new DataGroup(2,3);
         
         F1D f1 = new F1D("f_1"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f1.setParameter(0,0.13957); f1.setLineColor(1); f1.setLineStyle(1);   
         F1D f2 = new F1D("f_2"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f2.setParameter(0,0.93827); f2.setLineColor(1); f2.setLineStyle(1);   
@@ -682,7 +679,7 @@ public class ECmip extends DetectorMonitor {
         }
    
     }
-
+    
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -702,8 +699,8 @@ public class ECmip extends DetectorMonitor {
         }
         }
         
-    }
-            
+    }   
+    
     public void updateFITS(int index) {
        
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -741,7 +738,7 @@ public class ECmip extends DetectorMonitor {
     
     public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2, String ro) {
         
-        H2F h2=null;
+    	H2F h2 = null;
         FitData fd = null;
         int off=0,ipc=0,run=getRunNumber();
         double min=1,max=20,mip=10;
@@ -884,7 +881,7 @@ public class ECmip extends DetectorMonitor {
         	c.clear(); c.divide(3,3);
     	    for (int i=0; i<3; i++) {
         	    for (int j=0; j<3; j++) {
-                H2F h1 = (H2F) this.getDataGroup().getItem(0,1,5,run).getData(3*j+i).get(0);  
+                H2F h1 = (H2F) this.getDataGroup().getItem(0,1,5,run).getData(3*j+i).get(0);   
                 H2F h2 = (H2F) this.getDataGroup().getItem(1,1,5,run).getData(3*j+i).get(0); 
                 H2F h3 = (H2F) this.getDataGroup().getItem(2,1,5,run).getData(3*j+i).get(0); 
                 h3 = h2.divide(h2, h1); 
@@ -912,6 +909,145 @@ public class ECmip extends DetectorMonitor {
         int run = getRunNumber();
         drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
     } 
+
+/*   TIMELINES */
+    
+    public void createTimeLineHistos() {    	
+    	createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",6,1,7);
+    	createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",6,1,7);
+    	createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",6,1,7);
+    	for (int is=1; is<7; is++) createTimeLineHisto(10+is,"Sector "+is+" PCAL Peak Mean/MIP","UVW",3,1,4);
+    	for (int is=1; is<7; is++) createTimeLineHisto(20+is,"Sector "+is+" ECIN Peak Mean/MIP","UVW",3,1,4);
+    	for (int is=1; is<7; is++) createTimeLineHisto(30+is,"Sector "+is+" ECOU Peak Mean/MIP","UVW",3,1,4);
+    }
+   
+    public void createTimeLineHisto(int k, String tit, String ytit, int ny, int ymin, int ymax) {
+    	H2F h1 =  new H2F(tit,tit,351, 0., 351., ny, ymin, ymax);
+    	h1.setTitleX("Run Index") ; h1.setTitleY(ytit); Timeline.add(h1,k,0); //mean
+    	H2F h2 =  new H2F(tit,tit,351, 0., 351., ny, ymin, ymax);
+    	h2.setTitleX("Run Index") ; h2.setTitleY(ytit); Timeline.add(h2,k,1); //error
+    }
+    
+    public void fillTimeLineHisto() {    	
+    	float mip[] = {30,30,48};
+    	//clusters
+		for (int is=1; is<7; is++) {
+		  for (int i=0; i<3; i++) {
+			  float  y = (float) MipFits.getItem(is,i*3,0,getRunNumber()).mean/mip[i];
+			  float ye = (float) MipFits.getItem(is,i*3,0,getRunNumber()).meane/mip[i];			 
+			  ((H2F)Timeline.getItem((i+1)*10,0)).fill(runIndex,is,y);	
+			  ((H2F)Timeline.getItem((i+1)*10,1)).fill(runIndex,is,ye);	
+		  }
+		}
+		//peaks
+		for (int is=1; is<7; is++) {
+		  for (int i=0; i<3; i++) {
+	        for (int j=0; j<3; j++) {
+			  float  y = (float) MipFits.getItem(is+20,i*3+j,0,getRunNumber()).mean*3/mip[i];
+			  float ye = (float) MipFits.getItem(is+20,i*3+j,0,getRunNumber()).meane*3/mip[i];
+			  ((H2F)Timeline.getItem((i+1)*10+is,0)).fill(runIndex,j+1,y);	
+			  ((H2F)Timeline.getItem((i+1)*10+is,1)).fill(runIndex,j+1,ye);	
+	        }
+		  }
+		}
+			
+		runIndex++;
+    }
+    
+    public void plotTimeLines(int index) {
+    	if (getActivePC()==2) {plotClusterTimeLines(index);} else {plotPeakTimeLines(index);}
+    }
+    
+    public void plotClusterTimeLines(int index) {
+    	float mip[] = {30,30,48};
+    	float min=0.85f,max=1.15f;
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
+        GraphErrors g1,g2 = null;
+        int    is = getActiveSector(); 
+       
+        c.clear(); c.divide(3, 3); 
+    	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                   line1.setLineColor(5);
+    	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
+    	DataLine line3 = new DataLine(runIndexSlider,1,  runIndexSlider,7);    line3.setLineColor(5);
+    	DataLine line4 = new DataLine(runIndexSlider+1,1,runIndexSlider+1,7);  line4.setLineColor(5);
+    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                      line5.setLineColor(3); line3.setLineWidth(2);
+
+        for (int i=0; i<3; i++) { int i3=i*3;
+    		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
+    		c.draw((H2F)Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+             
+    		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
+    		g1 = getGraph(((H2F)Timeline.getItem((i+1)*10,0)),((H2F)Timeline.getItem((i+1)*10,1)),is-1);
+    		g1.setTitleX("Run Index"); g1.setTitleY("Sector "+is+" Mean/MIP");
+    		c.draw(g1); c.draw(line5);
+    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(2); g2.setLineColor(2);
+    		g2.addPoint(runIndexSlider,g1.getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		
+    		c.cd(i3+2); 
+            MipFits.getItem(is,i3+2,0,getRunNumber()).getHist().getAttributes().setOptStat("1000100");
+            c.draw(MipFits.getItem(is,i3+2,0,getRunNumber()).getHist());
+            c.draw(MipFits.getItem(is,i3+2,0,getRunNumber()).getGraph(),"same");
+            DataLine line6 = new DataLine(mip[i],-50,mip[i],MipFits.getItem(is,i3+2,0,getRunNumber()).getGraph().getMax()*1.5);             
+            line6.setLineColor(3); line6.setLineWidth(2); c.draw(line6);
+        }
+    }
+    
+    public GraphErrors getGraph(H2F h2a, H2F h2b, int ybin) {
+    	 
+    	H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin);   	 
+     	GraphErrors g = new GraphErrors("dummy"); g.setLineColor(1); g.setMarkerColor(1); g.setMarkerSize(3);    	 
+    	for (int i=0; i<runlist.size(); i++) g.addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
+    	return g;
+    }
+    
+    
+    public void plotPeakTimeLines(int index) {
+    	float mip[] = {10,10,16}; String v[] = {" U "," V "," W "};
+    	float min=0.7f,max=1.3f;
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
+        GraphErrors g1,g2 = null;
+        int    is = getActiveSector(); 
+ 
+        c.clear(); c.divide(3, 3); 
+    	DataLine line1 = new DataLine(0,getActiveView()+1,  runIndex+1,getActiveView()+1); line1.setLineColor(5);
+    	DataLine line2 = new DataLine(0,getActiveView()+2,runIndex+1,getActiveView()+2);   line2.setLineColor(5);
+    	DataLine line3 = new DataLine(runIndexSlider,  1,  runIndexSlider,  4);            line3.setLineColor(5);
+    	DataLine line4 = new DataLine(runIndexSlider+1,1,  runIndexSlider+1,4);            line4.setLineColor(5);
+    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                                  line5.setLineColor(3); line3.setLineWidth(2);
+
+        for (int i=0; i<3; i++) {int i3=i*3;
+    		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,4); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
+    		c.draw((H2F)Timeline.getItem((i+1)*10+getActiveSector(),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+             
+    		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
+    		g1 = getGraph(((H2F)Timeline.getItem((i+1)*10+getActiveSector(),0)),((H2F)Timeline.getItem((i+1)*10+getActiveSector(),1)),getActiveView());
+    		g1.setTitleX("Run Index"); g1.setTitleY("Sector "+is+v[getActiveView()]+" Mean/MIP");
+    		c.draw(g1); c.draw(line5);
+    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(2); g2.setLineColor(2);
+    		g2.addPoint(runIndexSlider,g1.getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		
+    		c.cd(i3+2); 
+            MipFits.getItem(is+20,i3+getActiveView(),0,getRunNumber()).getHist().getAttributes().setOptStat("1000100");
+            c.draw(MipFits.getItem(is+20,i3+getActiveView(),0,getRunNumber()).getHist());
+            c.draw(MipFits.getItem(is+20,i3+getActiveView(),0,getRunNumber()).getGraph(),"same");
+            DataLine line6 = new DataLine(mip[i],-50,mip[i],MipFits.getItem(is+20,i3+getActiveView(),0,getRunNumber()).getGraph().getMax()*1.5); 
+            line6.setLineColor(3); line6.setLineWidth(2); c.draw(line6);
+        }    	
+    }
+    
+/*  
+ * 
+ *       
+    public void createTimeLineGraph(int k, String tit, String xtit, String ytit) {    	
+    	 String[] v = new String[]{"U","V","W"};
+    	 for (int is=1; is<7; is++) {
+    		for (int il=1; il<4; il++) {
+    	       GraphErrors g = new GraphErrors(tit);
+    	       g.setTitleX("Run Index"); g.setTitleY("Sector "+is+" "+v[il-1]+" "+ytit); g.setLineColor(1); g.setMarkerColor(1); g.setMarkerSize(3);
+    	       Timeline.add(g,k,is);
+    		}
+    	}
+    }
     
     public void createSectorGraphs() {
     	createSectorGraph(0,"PCAL MIP Cluster Energy","Sector","Mean/MIP");
@@ -919,18 +1055,7 @@ public class ECmip extends DetectorMonitor {
     	createSectorGraph(2,"ECOU MIP Cluster Energy","Sector","Mean/MIP");
     }
     
-    public void createTimeLineGraphs() {
-    	createTimeLineGraph(3,"PCAL Cluster Energy","Run Index","Mean/MIP");
-    	createTimeLineGraph(4,"ECIN Cluster Energy","Run Index","Mean/MIP");
-    	createTimeLineGraph(5,"ECOU Cluster Energy","Run Index","Mean/MIP");
-    } 
-    
-    public void createTimeLineHistos() {    	
-    	createTimeLineHisto(3,"PCAL Cluster Mean/MIP","Run Index","Sector");
-    	createTimeLineHisto(4,"ECIN Cluster Mean/MIP","Run Index","Sector");
-    	createTimeLineHisto(5,"ECOU Cluster Mean/MIP","Run Index","Sector");
-    }
-    
+        
     public void createSectorGraph(int k, String tit, String xtit, String ytit) {  
     	
     	int ic=0;
@@ -944,32 +1069,6 @@ public class ECmip extends DetectorMonitor {
     	}
     }
     
-    public void createTimeLineHisto(int k, String tit, String xtit, String ytit) {
-    	H2F h =  new H2F(tit,tit,351, 0., 351., 6, 1., 7.);
-    	h.setTitleX(xtit) ; h.setTitleY(ytit); Timeline.add(h,k,0);
-    }
-    
-    public void createTimeLineGraph(int k, String tit, String xtit, String ytit) {    	
-    	for (int is=1; is<7; is++) {
-    	   GraphErrors g = new GraphErrors(tit);
-    	   g.setTitleX(xtit); g.setTitleY("Sector "+is+" "+ytit); g.setLineColor(1); g.setMarkerColor(1); g.setMarkerSize(3);
-    	   Timeline.add(g,k,is);
-    	}
-    }
-    
-    public void fillTimeLineHisto() {    	
-    	float mip[] = {30,30,48};
-		for (int is=1; is<7; is++) {
-		for (int id=0; id<3; id++) {
-			float  y = (float) MipFits.getItem(is,3*id,0,getRunNumber()).mean/mip[id];
-			float ye = (float) MipFits.getItem(is,3*id,0,getRunNumber()).meane/mip[id];
-			((GraphErrors)Timeline.getItem(id+3,is)).addPoint(runIndex,y,0,ye);
-			        ((H2F)Timeline.getItem(id+3,0)).fill(runIndex,is,y);	
-		}
-		}
-		runIndex++;
-    }
-
     public void fillTimeLineGraph() {
     	
     	float mip[] = {30,30,48};
@@ -986,39 +1085,7 @@ public class ECmip extends DetectorMonitor {
     		}
     		}
     	}    	
-    }
-    
-    public void plotTimeLineHisto(int index) {
-    	float mip[] = {30,30,48};
-    	float min=0.85f,max=1.15f;
-        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
-        int   off = 0;
-        int    is = getActiveSector(); 
-        int   iis = is+10*off; 
-        c.clear(); c.divide(3, 3); 
-    	DataLine line1 = new DataLine(0,getActiveSector(),  runIndex+1,is);    line1.setLineColor(5);
-    	DataLine line2 = new DataLine(0,getActiveSector()+1,runIndex+1,is+1);  line2.setLineColor(5);
-    	DataLine line3 = new DataLine(runIndexSlider,1,  runIndexSlider,7);    line3.setLineColor(5);
-    	DataLine line4 = new DataLine(runIndexSlider+1,1,runIndexSlider+1,7);  line4.setLineColor(5);
-    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                      line5.setLineColor(3); line3.setLineWidth(2);
-
-        for (int i=0; i<3; i++) {
-    		c.cd(3*i); c.getPad(3*i).setAxisRange(0,runIndex,1,7); c.getPad(3*i).setTitleFontSize(18); c.getPad(3*i).getAxisZ().setRange(min,max);
-    		c.draw((H2F)Timeline.getItem(i+3,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
-             
-    		c.cd(3*i+1); c.getPad(3*i+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(3*i+1).setTitleFontSize(18);
-    		c.draw((GraphErrors)Timeline.getItem(i+3,getActiveSector())); c.draw(line5);
-    		GraphErrors g = new GraphErrors(); g.setMarkerSize(5); g.setMarkerColor(2); g.setLineColor(2);
-    		g.addPoint(runIndexSlider,((GraphErrors)Timeline.getItem(i+3,getActiveSector())).getDataY(runIndexSlider),0,0); c.draw(g,"same");
-    		
-    		c.cd(3*i+2); 
-            c.draw(MipFits.getItem(iis,i*3+2,0,getRunNumber()).getHist());
-            c.draw(MipFits.getItem(iis,i*3+2,0,getRunNumber()).getGraph(),"same");
-            DataLine line6 = new DataLine(mip[i],-50,mip[i],MipFits.getItem(iis,i*3+2,0,getRunNumber()).getGraph().getMax()*1.5); 
-            line6.setLineColor(3); line6.setLineWidth(2); c.draw(line6);
-        }
-    }
-    
+    }    
     public void plotTimeLineGraph(int index) {
     	int[] xlab = {80, 140, 200, 260, 320, 380, 80, 140, 200, 260, 320, 380, 80, 140, 200, 260, 320, 380};
     	int[] ylab = {30, 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70, 70};
@@ -1046,36 +1113,9 @@ public class ECmip extends DetectorMonitor {
         }
         
     }
-    public void getPixLengthMap(String filename) {   
-        
-    	System.out.println("ECmip.getPixLengthMap("+filename+")");
-    	
-        try{
-            FileReader       file = new FileReader(filename);
-            BufferedReader reader = new BufferedReader(file);
-            int n = 0 ;
-            while (n<1296) {
-              String line = reader.readLine();
-              String[] col = line.trim().split("\\s+"); 
-              int i = Integer.parseInt(col[0]); 
-              int j = Integer.parseInt(col[1]);
-              int k = Integer.parseInt(col[2]);
-              float d = Float.parseFloat(col[3]);
-              PixLength.add(d,i,j,k);
-              n++;
-            }    
-            reader.close();
-            file.close();
-         }  
-         
-         catch(FileNotFoundException ex) {
-            ex.printStackTrace();            
-         }     
-         catch(IOException ex) {
-             ex.printStackTrace();
-         }
+    
+    */
 
-    }
 /*    
     private void updateSummary() {
         
@@ -1119,7 +1159,37 @@ public class ECmip extends DetectorMonitor {
         
     }
 */  
+    public void getPixLengthMap(String filename) {   
+        
+    	System.out.println("ECmip.getPixLengthMap("+filename+")");
+    	
+        try{
+            FileReader       file = new FileReader(filename);
+            BufferedReader reader = new BufferedReader(file);
+            int n = 0 ;
+            while (n<1296) {
+              String line = reader.readLine();
+              String[] col = line.trim().split("\\s+"); 
+              int i = Integer.parseInt(col[0]); 
+              int j = Integer.parseInt(col[1]);
+              int k = Integer.parseInt(col[2]);
+              float d = Float.parseFloat(col[3]);
+              PixLength.add(d,i,j,k);
+              n++;
+            }    
+            reader.close();
+            file.close();
+         }  
+         
+         catch(FileNotFoundException ex) {
+            ex.printStackTrace();            
+         }     
+         catch(IOException ex) {
+             ex.printStackTrace();
+         }
 
+    }
+    
     @Override
     public void timerUpdate() {
 

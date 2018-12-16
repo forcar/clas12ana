@@ -201,7 +201,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     };
                 }
             });         
-            menu.add(cb3);         	        	
+            menu.add(cb3);         	        	 
         }
 
         menuBar.add(menu);    
