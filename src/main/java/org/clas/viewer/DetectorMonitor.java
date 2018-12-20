@@ -187,6 +187,14 @@ public class DetectorMonitor implements ActionListener {
         initPanel();    	
     }
     
+    public void localinit() {
+    	
+    }
+    
+    public void localclear() {
+    	
+    }
+    
     public void initGStyle() {
         GStyle.getAxisAttributesX().setTitleFontSize(18);
         GStyle.getAxisAttributesX().setLabelFontSize(14);

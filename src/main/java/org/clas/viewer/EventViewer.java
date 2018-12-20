@@ -508,8 +508,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         fc.setMultiSelectionEnabled(true);
         fc.setAcceptAllFileFilterUsed(false);
         for(int k=0; k<this.monitors.length; k++) {
-        	this.monitors[k].getDataGroup().clear();
-        	this.monitors[k].runlist.clear();
+        	this.monitors[k].localclear();
         }
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             for (File fd : fc.getSelectedFiles()) {

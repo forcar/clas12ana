@@ -78,13 +78,22 @@ public class ECmip extends DetectorMonitor {
         this.useSliderPane(true);
         this.init();
         this.localinit();
-        this.createTimeLineHistos();
+        this.localclear();
     }
     
     public void localinit() {
         configEngine("muon"); 
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
+    
+    public void localclear() {
+    	getDataGroup().clear();
+    	runlist.clear();
+    	MIPSummary.clear();
+    	MipFits.clear();
+    	Timeline.clear();
+        this.createTimeLineHistos();
+    }
     
      @Override    
      public void createHistos(int run) {
@@ -750,11 +759,13 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+10*off;
                 for (int il=0; il<3; il++) {
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(3*id+il).get(0);
-                    fd = new FitData(h2.projectionX().getGraph()); fd.setInt((int)h2.projectionX().getIntegral()); 
+                    fd = new FitData(h2.projectionX().getGraph()); 
+                    fd.setInt((int)h2.projectionX().getIntegral()); 
                     fd.setHist(h2.projectionX());
                     fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
                     fd.hist.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(0,min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,0,run);                 
+                    fd.initFit(0,min,max); fd.fitGraph(""); 
+                    MipFits.add(fd,iis,id*3+il,0,run);                 
                 }                    
                 for (int il=il1; il<il2; il++) {
                     int np = npmt[id*3+il];
@@ -763,11 +774,13 @@ public class ECmip extends DetectorMonitor {
                     double[]  yMean = new double[np];
                     h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
                     for (int i=0; i<np; i++) {                     
-                        fd = new FitData(h2.sliceY(i).getGraph()); fd.setInt((int)h2.sliceY(i).getIntegral()); 
+                        fd = new FitData(h2.sliceY(i).getGraph()); 
+                        fd.setInt((int)h2.sliceY(i).getIntegral()); 
                         fd.setHist(h2.sliceY(i));
                         fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
                         fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-                        fd.initFit(0,min,max); fd.fitGraph(""); MipFits.add(fd,iis,id*3+il,i+1,run);
+                        fd.initFit(0,min,max); fd.fitGraph(""); 
+                        MipFits.add(fd,iis,id*3+il,i+1,run);
                         x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0;
                         double mean = fd.mean;                        
                         if(mean>0) yrms[i] = fd.sigma/mean; 
@@ -912,7 +925,8 @@ public class ECmip extends DetectorMonitor {
 
 /*   TIMELINES */
     
-    public void createTimeLineHistos() {    	
+    public void createTimeLineHistos() {   
+    	runIndex = 0;
     	createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",6,1,7);
     	createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",6,1,7);
     	createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",6,1,7);
