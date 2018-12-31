@@ -139,20 +139,23 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
-    public  String  outPath = "/home/lcsmith/CLAS12ANA/";
-    private String  pawPath = outPath+"paw/";
-    public  String  jawPath = outPath+"jaw/";
-    public  String  vecPath = null;
+    public String  outPath = "/home/lcsmith/CLAS12ANA/";
+    public String  pawPath = outPath+"paw/";
+    public String  jawPath = outPath+"jaw/";
+    public String  vecPath = null;
     
     public Boolean isAnalyzeDone = false;
+    public Boolean      autoSave = false;
     public Boolean     dropBanks = false;
     public Boolean   dropSummary = false; 
+    public Boolean    dumpGraphs = false; 
+    public Boolean     fitEnable = false; 
+    public Boolean    fitVerbose = false; 
     
     public DetectorMonitor(String name){
 
         initGStyle();
         detectorName   = name;
-        vecPath        = pawPath+detectorName+"/";
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
@@ -168,7 +171,9 @@ public class DetectorMonitor implements ActionListener {
         outPath = FileSystemView.getFileSystemView().getHomeDirectory().toString()+"/CLAS12ANA/";
         System.out.println(detectorName+" outPath = "+outPath);
         getEnv();
-        
+        pawPath = outPath+"paw/";
+        vecPath = pawPath+detectorName+"/";  
+        jawPath = outPath+"jaw/";
     }
     
     public void getEnv() {        
@@ -177,7 +182,7 @@ public class DetectorMonitor implements ActionListener {
         
         if (ostype!=null&&ostype.startsWith("Mac")) {
             outPath = "/Users/cole/CLAS12ANA/";
-        }else{
+        } else {
             outPath = "/home/lcsmith/CLAS12ANA/";            	
         }
 
@@ -327,7 +332,7 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       analyze();
+        case EVENT_STOP:       analyze(); if(autoSave) saveHistosToFile();
 	    }
     }
 
@@ -507,7 +512,7 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 350,0); 
+        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 450,0); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(slider);
@@ -584,6 +589,14 @@ public class DetectorMonitor implements ActionListener {
     public void plotHistos(int run) {
 
     }
+        
+    public void saveHistosToFile() {
+    	String fileName = "CLAS12Ana_run_" + getRunNumber() + "_" + getDetectorName() + ".hipo";
+        TDirectory dir = new TDirectory();
+        writeDataGroup(dir);
+        dir.writeFile(outPath+fileName);
+        System.out.println("Saving histograms to file " + outPath+fileName); 
+    }
     
     public void printCanvas(String dir) {
         // print canvas to files
@@ -643,6 +656,18 @@ public class DetectorMonitor implements ActionListener {
     public int getRunNumber() {
         return runNumber;
     }
+    
+    public float getTorusPolarity(int run) {
+    	if (run>=3029&&run<=3065) return -1.00f;
+    	if (run>=3072&&run<=3087) return -0.75f;
+    	if (run>=3097&&run<=3105) return  0.75f;
+    	if (run>=3131&&run<=3293) return  1.00f;
+    	if (run>=3304&&run<=3817) return -1.00f;
+    	if (run>=3819&&run<=3834) return  0.75f;
+    	if (run>=3839&&run<=3987) return  1.00f;
+    	if (run>=3995&&run<=4326) return -1.00f;  
+    	return 0f;
+    }
 
     public int getViewRun() {
         return viewRun;
@@ -650,7 +675,7 @@ public class DetectorMonitor implements ActionListener {
      
     public void timerUpdate() {      
     }
-    
+        
     public void dumpGraph(String filename, GraphErrors graph) {
     	PrintWriter writer = null;
 		try 

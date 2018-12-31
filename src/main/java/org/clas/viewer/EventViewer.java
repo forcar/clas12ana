@@ -79,7 +79,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;
     DataSourceProcessorPane   processorPane = null;
-    JCheckBoxMenuItem cb1,cb2a,cb2b,cb3,cb4;   
+    JCheckBoxMenuItem   co0,co1,co2,co3,co4 = null;   
+    JCheckBoxMenuItem               cf0,cf1 = null;   
+    JCheckBoxMenuItem                    ct = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder                clasDecoder = new CLASDecoder();
@@ -98,10 +100,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
+    public Boolean   clearHist = true;
     public Boolean    autoSave = false;
     public Boolean   dropBanks = false;
     public Boolean dropSummary = false;
-        
+    public Boolean  dumpGraphs = false;
+    public Boolean   fitEnable = false;
+    public Boolean  fitVerbose = false;
+    
+    public Boolean       clear = true;    
     DetectorMonitor[] monitors = null;
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
@@ -159,12 +166,19 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuItem = new JMenuItem("Print histograms as png"); menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
 
-        menu     = new JMenu("Options");
-        cb1      = new JCheckBoxMenuItem("AutoSave");         cb1.addItemListener(this);           menu.add(cb1);
-        cb2a     = new JCheckBoxMenuItem("DropBanks");       cb2a.addItemListener(this);          menu.add(cb2a);
-        cb2b     = new JCheckBoxMenuItem("DropSummary");     cb2b.addItemListener(this);          menu.add(cb2b);
+        menu     = new JMenu("Options");  
+        co0 = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0); co0.doClick();
+        co1 = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
+        co2 = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
+        co3 = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co2);
+        co4 = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co3);
         menuBar.add(menu);
         
+        menu     = new JMenu("Fitting");
+        cf0 = new JCheckBoxMenuItem("Enable");        cf0.addItemListener(this);       menu.add(cf0); cf0.doClick();
+        cf1 = new JCheckBoxMenuItem("Verbose");       cf1.addItemListener(this);       menu.add(cf1);
+        menuBar.add(menu);
+              
         menu     = new JMenu("Settings");              
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Set global z-axis log scale"); menuItem.addActionListener(this); menu.add(menuItem);
@@ -189,10 +203,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         for (int i=0; i<32; i++) {
         	
-            cb3 = new JCheckBoxMenuItem(TriggerDef[i]);  
+            ct = new JCheckBoxMenuItem(TriggerDef[i]);  
             final Integer bit = new Integer(i);
             
-            cb3.addItemListener(new ItemListener() {
+            ct.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {               	
                     if(e.getStateChange() == ItemEvent.SELECTED) {
                         for(int k=0; k<monitors.length; k++) monitors[k].setTriggerMask(bit);
@@ -201,7 +215,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     };
                 }
             });         
-            menu.add(cb3);         	        	 
+            menu.add(ct);         	        	 
         }
 
         menuBar.add(menu);    
@@ -239,10 +253,19 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		Object source = e.getItemSelectable();	
-		if (source==cb1)     autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cb2a)   dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==cb2b) dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; this.monitors[k].dropSummary=dropSummary;}
+		if (source==co0)    clearHist = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==co1)     autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co3)  dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==cf0)    fitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf1)   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; 
+		                                           this.monitors[k].dropSummary=dropSummary; 
+		                                           this.monitors[k].dumpGraphs=dumpGraphs;
+		                                           this.monitors[k].autoSave=autoSave;
+                                                   this.monitors[k].fitEnable=fitEnable;
+                                                   this.monitors[k].fitVerbose=fitVerbose;}
 	}  
 	
     public void actionPerformed(ActionEvent e) {
@@ -376,11 +399,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             int rNum = getRunNumber(hipo);
             int eNum = getEventNumber(hipo);
            
-            if(rNum!=0 && this.runNumber!=rNum) {  
+            if(rNum!=0 && this.runNumber!=rNum && clear) {  
             	System.out.println("Processing Run "+rNum);
-            	if(autoSave&&this.runNumber!=0) saveHistosToFile();
-                this.runNumber = rNum;
                 for(int k=0; k<this.monitors.length; k++) {
+                	if(autoSave&&this.runNumber!=0) this.monitors[k].saveHistosToFile();
+                    this.runNumber = rNum;
                 	this.monitors[k].setRunNumber(this.runNumber); 
                 	this.monitors[k].getDataGroup().clear();
                 	this.monitors[k].createHistos(this.runNumber);
@@ -389,6 +412,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     this.monitors[k].arBtn.setSelected(true);         
                     if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
                 }
+                if(!clearHist) clear=false;
             } 
            
             this.eventNumber = eNum;
@@ -533,16 +557,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
             this.monitors[k].arBtn.setSelected(true);         
-        }
-    }
-    
-    public void saveHistosToFile() {
-        for(int k=0; k<this.monitors.length; k++) {
-        	String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[k].getDetectorName() + ".hipo";
-        	TDirectory dir = new TDirectory();
-            this.monitors[k].writeDataGroup(dir);
-            dir.writeFile(monitors[k].outPath+fileName);
-            System.out.println("Saving histograms to file " + monitors[k].outPath+fileName);
         }
     }
     

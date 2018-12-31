@@ -19,6 +19,9 @@ public class FitData {
 	public double mean;
 	public double meane;
 	public double sigma;
+	public double sigmae;
+	public double sig1=2.5;
+	public double sig2=1.7;
 	public int integral;
 	public int intmin=30;
 	public int fitcol=4;
@@ -66,6 +69,11 @@ public class FitData {
 	public void setIntMin(int intmin) {
 	    this.intmin = intmin;
 	}
+	
+	public void setSigmas(double sig1, double sig2) {
+		this.sig1 = sig1;
+		this.sig2 = sig2;
+	}
 
 	public void initFit(int func, double xmin, double xmax) {
 	    this.xmin = xmin;
@@ -78,7 +86,7 @@ public class FitData {
 	    graph.getFunction().setParameter(0, amp);
 	    graph.getFunction().setParameter(1, mean);
 	    graph.getFunction().setParameter(2, sigma);
-	    graph.getFunction().setRange(mean-2.5*sigma, mean+1.7*sigma);
+	    graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
 	}
 	
 	public void initFunc(int func) {
@@ -87,12 +95,13 @@ public class FitData {
 		}
 	}
 
-	public void fitGraph(String opt) {
-	    if (doFit) DataFitter.fit(graph.getFunction(), graph, "Q");
+	public void fitGraph(String opt, Boolean fitEnable, Boolean fitVerbose) {
+	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, (fitVerbose)?"VE":"Q");
 	    amp   = graph.getFunction().getParameter(0);
 	    mean  = graph.getFunction().parameter(1).value();
 	    meane = graph.getFunction().parameter(1).error();
-	    sigma = graph.getFunction().getParameter(2);   
+	    sigma = graph.getFunction().parameter(2).value();   
+	    sigmae = graph.getFunction().parameter(2).error();   
 	    graph.getFunction().setLineColor(fitcol);
 	    graph.getFunction().setOptStat(opt=="Q"?"0":optstat);
 	}

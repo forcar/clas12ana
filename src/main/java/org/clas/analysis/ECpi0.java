@@ -574,7 +574,7 @@ public class ECpi0 extends DetectorMonitor{
         	fd.setHist(h1);
             fd.graph.getAttributes().setTitleX(h1.getTitleX()); 
             fd.hist.getAttributes().setTitleX(h1.getTitleX()); 
-            fd.initFit(0,40.,200.); fd.fitGraph(""); Fits.add(fd,is,0,0,run); 
+            fd.initFit(0,40.,200.); fd.fitGraph("",fitEnable,fitVerbose); Fits.add(fd,is,0,0,run); 
         }
     }
     

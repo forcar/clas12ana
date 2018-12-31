@@ -7,8 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.clas.tools.FitData;
+import org.clas.tools.TimeLine;
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
@@ -28,6 +31,7 @@ import org.jlab.groot.ui.LatexText;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 public class ECmip extends DetectorMonitor {
 	
@@ -54,6 +58,9 @@ public class ECmip extends DetectorMonitor {
     IndexedList<FitData>         MipFits = new IndexedList<FitData>(4);
     IndexedList<IDataSet>       Timeline = new IndexedList<IDataSet>(2);
     IndexedList<Float>         PixLength = new IndexedList<Float>(3);
+    IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
+    
+    TimeLine tl = new TimeLine();
     
     List<Float>   pmap = new ArrayList<Float>();	
     
@@ -99,13 +106,13 @@ public class ECmip extends DetectorMonitor {
      public void createHistos(int run) {
 	     setRunNumber(run);
 	     runlist.add(run);
-	     if(dropSummary) this.getDataGroup().clear();
 	     createMIPHistos(0,1,25,0,40," Peak Energy (MeV)");
 	     createMIPHistos(0,2,50,0,100," Cluster Energy (MeV)");	     
+	     if(dropSummary) return;
 	     createXYHistos(5,130,420);    
 	     createPIDHistos(6);
-	     createMIPHistos(7,1,25,0,5.0," Momentum (GeV)");
-	     createMIPHistos(7,2,25,0,5.0," Momentum (GeV)");
+	     createMIPHistos(7,1,25,0,5.0," + Momentum (GeV)");
+	     createMIPHistos(7,2,25,0,5.0," - Momentum (GeV)");
 	     createPathHistos(9);
 	     createPixHistos(10);	
 	     createUVWHistos(12,25,0.,2.," MIP ");
@@ -124,8 +131,8 @@ public class ECmip extends DetectorMonitor {
     	 plotXYSummary(5); 
     	 plotPIDSummary(6);
     	 plotMIP(7);
-    	 plotPathSummary(9);
-    	 plotPathSummary(10);
+    	 plotPathSummary(9,getActivePC()==1?getActiveView()+1:0);
+    	 plotPathSummary(10,0);
     	 plotUVW(12);    	 
      }
      
@@ -264,47 +271,53 @@ public class ECmip extends DetectorMonitor {
     	
 	   int run = getRunNumber();
        
-       dg = new DataGroup(3,4); 
+       for (int il=0; il<4; il++) {
+           dg = new DataGroup(3,4); 
        for (int is=1; is<7; is++) {
-           String tag = is+"_"+k+"_"+run;
-           h = new H2F("hi_pcal_path1_"+tag,"hi_pcal_path1_"+tag,50,0.,100.,118,31.,50.);
-           h.setTitleX("Sector "+is+" PCAL (MeV)");
+           String tag = is+"_"+il+"_"+k+"_"+run;
+           h = new H2F("hi_pcal_path1_"+tag,"hi_pcal_path1_"+tag,20,0.,2.,118,31.,50.);
+           h.setTitleX("Sector "+is+" PCAL/MIP");
            h.setTitleY("Path12 (cm)");
            dg.addDataSet(h, is-1);  
-           h = new H2F("hi_pcal_path2_"+tag,"hi_pcal_path2_"+tag,50,0.,100.,70,50.,70.);
-           h.setTitleX("Sector "+is+" PCAL (MeV)");
+           h = new H2F("hi_pcal_path2_"+tag,"hi_pcal_path2_"+tag,20,0.,2.,70,50.,70.);
+           h.setTitleX("Sector "+is+" PCAL/MIP");
            h.setTitleY("Path13 (cm)");
            dg.addDataSet(h, is+5);  
         }
-       this.getDataGroup().add(dg,0,0,k,run);
-        
-        dg = new DataGroup(3,4); 
+        this.getDataGroup().add(dg,il,0,k,run);
+        }
+       
+        for (int il=0; il<4; il++) {
+            dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_ecin_path1_"+tag,"hi_ecin_path1_"+tag,50,0.,100.,70,50.,70.);
-            h.setTitleX("Sector "+is+" ECin (MeV)");
+            String tag = is+"_"+il+"_"+k+"_"+run;
+            h = new H2F("hi_ecin_path1_"+tag,"hi_ecin_path1_"+tag,20,0.,2.,70,50.,70.);
+            h.setTitleX("Sector "+is+" ECIN/MIP");
             h.setTitleY("Path13 (cm)");
             dg.addDataSet(h, is-1);  
-            h = new H2F("hi_ecin_path2_"+tag,"hi_ecin_path2_"+tag,50,0.,100.,66,17.,30.);
-            h.setTitleX("Sector "+is+" ECin (MeV)");
+            h = new H2F("hi_ecin_path2_"+tag,"hi_ecin_path2_"+tag,20,0.,2.,66,17.,30.);
+            h.setTitleX("Sector "+is+" ECIN/MIP");
             h.setTitleY("Path23 (cm)");
             dg.addDataSet(h, is+5);    
         }
-        this.getDataGroup().add(dg,0,1,k,run);
+        this.getDataGroup().add(dg,il,1,k,run);
+        }
         
-        dg = new DataGroup(3,4);         
+        for (int il=0; il<4; il++) {
+            dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {        
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_ecou_path1_"+tag,"hi_ecou_path1_"+tag,50,0.,100.,70,50.,70.);
-            h.setTitleX("Sector "+is+" ECou (MeV)");
+            String tag = is+"_"+il+"_"+k+"_"+run;
+            h = new H2F("hi_ecou_path1_"+tag,"hi_ecou_path1_"+tag,20,0.,2.,70,50.,70.);
+            h.setTitleX("Sector "+is+" ECOU/MIP");
             h.setTitleY("Path13 (cm)");
             dg.addDataSet(h, is-1);  
-            h = new H2F("hi_ecou_path2_"+tag,"hi_ecou_path2_"+tag,50,0.,100.,66,17.,30.);
-            h.setTitleX("Sector "+is+" ECou (MeV)");
+            h = new H2F("hi_ecou_path2_"+tag,"hi_ecou_path2_"+tag,20,0.,2.,66,17.,30.);
+            h.setTitleX("Sector "+is+" ECOU/MIP");
             h.setTitleY("Path23 (cm)");
             dg.addDataSet(h, is+5);      
         }
-        this.getDataGroup().add(dg,0,2,k,run);
+        this.getDataGroup().add(dg,il,2,k,run);
+        }
                 
     }
     
@@ -319,9 +332,9 @@ public class ECmip extends DetectorMonitor {
             h.setTitleX("Sector "+is+" PCAL (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_pcal_pix2_"+tag,"hi_pcal_pix2_"+tag,50,31.,50.,20,-25.,25.);
+            h = new H2F("hi_pcal_pix2_"+tag,"hi_pcal_pix2_"+tag,100,31.,40.,12,3.,15.);
             h.setTitleX("Sector "+is+" Path12 (cm)");
-            h.setTitleY("PCAL-ECin (MeV)");
+            h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
          }
         this.getDataGroup().add(dg,0,0,k,run);
@@ -333,9 +346,9 @@ public class ECmip extends DetectorMonitor {
             h.setTitleX("Sector "+is+" ECin (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_ecin_pix2_"+tag,"hi_ecin_pix2_"+tag,20,50.,60.,20,-25.,25.);
-            h.setTitleX("Sector "+is+" Path13 (cm)");
-            h.setTitleY("PCAL-ECou (MeV)");
+            h = new H2F("hi_ecin_pix2_"+tag,"hi_ecin_pix2_"+tag,100,31.,40.,12,3.,15.);
+            h.setTitleX("Sector "+is+" Path12 (cm)");
+            h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
          }
         this.getDataGroup().add(dg,0,1,k,run);
@@ -347,9 +360,9 @@ public class ECmip extends DetectorMonitor {
             h.setTitleX("Sector "+is+" ECou (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_ecou_pix2_"+tag,"hi_ecou_pix2_"+tag,30,17.,30.,20,-25,25.);
-            h.setTitleX("Sector "+is+" Path23 (cm)");
-            h.setTitleY("ECin-ECou (MeV)");
+            h = new H2F("hi_ecou_pix2_"+tag,"hi_ecou_pix2_"+tag,100,31.,40.,12,3.,15.);
+            h.setTitleX("Sector "+is+" Path12 (cm)");
+            h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
          }
         this.getDataGroup().add(dg,0,2,k,run);
@@ -471,7 +484,7 @@ public class ECmip extends DetectorMonitor {
                
                float wsum = wu+wv+ww;
                Particle p = new Particle(); 
-               float pm = 0;
+               float pm = -100, pp = -100;
                
                if(!isMuon) {
     	       int     ip = bank1.getShort("pindex", loop);
@@ -489,12 +502,10 @@ public class ECmip extends DetectorMonitor {
                p.setProperty("env",env);
                p.setProperty("enw",enw);
                
-               pm = (float) p.p();
+               if (p.charge()>0) {pp = (float) p.p();((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pp,p.getProperty("beta"));} 
+               if (p.charge()<0) {pm = (float) p.p();((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));} 
                
-               if (p.charge()>0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pm,p.getProperty("beta"));
-               if (p.charge()<0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));
-               
-               if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pm,p.getProperty("beta"));
+               if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pp,p.getProperty("beta"));
                if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
                }
                
@@ -510,9 +521,9 @@ public class ECmip extends DetectorMonitor {
                if (goodPC)  {e1c[is-1][n1[is-1]]=en; rl.add(r,is,0); cU[is-1][0][n1[is-1]]=iU; cV[is-1][0][n1[is-1]]=iV; cW[is-1][0][n1[is-1]]=iW; p1c[is-1][n1[is-1]]=pm;}
                if (goodECi) {e4c[is-1][n4[is-1]]=en; rl.add(r,is,1); cU[is-1][1][n4[is-1]]=iU; cV[is-1][1][n4[is-1]]=iV; cW[is-1][1][n4[is-1]]=iW; p4c[is-1][n4[is-1]]=pm;}
                if (goodECo) {e7c[is-1][n7[is-1]]=en; rl.add(r,is,2); cU[is-1][2][n7[is-1]]=iU; cV[is-1][2][n7[is-1]]=iV; cW[is-1][2][n7[is-1]]=iW; p7c[is-1][n7[is-1]]=pm;}
-               if (goodPC)  {p1p[is-1][0][n1[is-1]]=pm;  p1p[is-1][1][n1[is-1]]=pm;  p1p[is-1][2][n1[is-1]]=pm;  w1[is-1][n1[is-1]]=wsum;}
-               if (goodECi) {p4p[is-1][0][n4[is-1]]=pm;  p4p[is-1][1][n4[is-1]]=pm;  p4p[is-1][2][n4[is-1]]=pm;  w4[is-1][n4[is-1]]=wsum;}
-               if (goodECo) {p7p[is-1][0][n7[is-1]]=pm;  p7p[is-1][1][n7[is-1]]=pm;  p7p[is-1][2][n7[is-1]]=pm;  w7[is-1][n7[is-1]]=wsum;}
+               if (goodPC)  {p1p[is-1][0][n1[is-1]]=pp;  p1p[is-1][1][n1[is-1]]=pp;  p1p[is-1][2][n1[is-1]]=pp;  w1[is-1][n1[is-1]]=wsum;}
+               if (goodECi) {p4p[is-1][0][n4[is-1]]=pp;  p4p[is-1][1][n4[is-1]]=pp;  p4p[is-1][2][n4[is-1]]=pp;  w4[is-1][n4[is-1]]=wsum;}
+               if (goodECo) {p7p[is-1][0][n7[is-1]]=pp;  p7p[is-1][1][n7[is-1]]=pp;  p7p[is-1][2][n7[is-1]]=pp;  w7[is-1][n7[is-1]]=wsum;}
                if (goodPC)  {e1p[is-1][0][n1[is-1]]=enu; e1p[is-1][1][n1[is-1]]=env; e1p[is-1][2][n1[is-1]]=enw; n1[is-1]++;}
                if (goodECi) {e4p[is-1][0][n4[is-1]]=enu; e4p[is-1][1][n4[is-1]]=env; e4p[is-1][2][n4[is-1]]=enw; n4[is-1]++;}
                if (goodECo) {e7p[is-1][0][n7[is-1]]=enu; e7p[is-1][1][n7[is-1]]=env; e7p[is-1][2][n7[is-1]]=enw; n7[is-1]++;}
@@ -522,7 +533,7 @@ public class ECmip extends DetectorMonitor {
              
             for (int is=0; is<6; is++) {
                 int iis = is+1;
-                if (isGoodTrigger(iis)) {
+//                if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
                 if(n1[is]==1&n4[is]==1&&n7[is]==1) { //Only one cluster in each layer to reject vertical cosmics
 //                    Boolean goodU = Math.abs(cU[is][1][n4[is]]-cU[is][2][n7[is]])<=1;
@@ -569,23 +580,28 @@ public class ECmip extends DetectorMonitor {
                 }
 */ 
                
-                
-               ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(iis-1).get(0)).fill(e1c[is][0],v12mag);
-               ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(iis+5).get(0)).fill(e1c[is][0],v13mag);
-               ((H2F) this.getDataGroup().getItem(0,1,9,run).getData(iis-1).get(0)).fill(e4c[is][0],v13mag);
-               ((H2F) this.getDataGroup().getItem(0,1,9,run).getData(iis+5).get(0)).fill(e4c[is][0],v23mag);
-               ((H2F) this.getDataGroup().getItem(0,2,9,run).getData(iis-1).get(0)).fill(e7c[is][0],v13mag);
-               ((H2F) this.getDataGroup().getItem(0,2,9,run).getData(iis+5).get(0)).fill(e7c[is][0],v23mag);
+               for (int il=0; il<4; il++) {
+               ((H2F) this.getDataGroup().getItem(il,0,9,run).getData(iis-1).get(0)).fill((il==0)?e1c[is][0]/mipc[0]:e1p[is][il-1][0]/mipp[0],v12mag);
+               ((H2F) this.getDataGroup().getItem(il,0,9,run).getData(iis+5).get(0)).fill((il==0)?e1c[is][0]/mipc[0]:e1p[is][il-1][0]/mipp[0],v13mag);
+               ((H2F) this.getDataGroup().getItem(il,1,9,run).getData(iis-1).get(0)).fill((il==0)?e4c[is][0]/mipc[1]:e4p[is][il-1][0]/mipp[1],v13mag);
+               ((H2F) this.getDataGroup().getItem(il,1,9,run).getData(iis+5).get(0)).fill((il==0)?e4c[is][0]/mipc[1]:e4p[is][il-1][0]/mipp[1],v23mag);
+               ((H2F) this.getDataGroup().getItem(il,2,9,run).getData(iis-1).get(0)).fill((il==0)?e7c[is][0]/mipc[2]:e7p[is][il-1][0]/mipp[2],v13mag);
+               ((H2F) this.getDataGroup().getItem(il,2,9,run).getData(iis+5).get(0)).fill((il==0)?e7c[is][0]/mipc[2]:e7p[is][il-1][0]/mipp[2],v23mag);
+               }
              
                ((H2F) this.getDataGroup().getItem(0,0,10,run).getData(iis-1).get(0)).fill(e1c[is][0],w1[is][0]);
                ((H2F) this.getDataGroup().getItem(0,1,10,run).getData(iis-1).get(0)).fill(e4c[is][0],w4[is][0]);
                ((H2F) this.getDataGroup().getItem(0,2,10,run).getData(iis-1).get(0)).fill(e7c[is][0],w7[is][0]);
-               ((H2F) this.getDataGroup().getItem(0,0,10,run).getData(iis+5).get(0)).fill(v12mag,e1c[is][0]-e4c[is][0]);
-               ((H2F) this.getDataGroup().getItem(0,1,10,run).getData(iis+5).get(0)).fill(v13mag,e1c[is][0]-e7c[is][0]+18);
-               ((H2F) this.getDataGroup().getItem(0,2,10,run).getData(iis+5).get(0)).fill(v23mag,e4c[is][0]-e7c[is][0]+18);
+//               ((H2F) this.getDataGroup().getItem(0,0,10,run).getData(iis+5).get(0)).fill(v12mag,e1c[is][0]-e4c[is][0]);
+//               ((H2F) this.getDataGroup().getItem(0,1,10,run).getData(iis+5).get(0)).fill(v13mag,e1c[is][0]-e7c[is][0]+18);
+//               ((H2F) this.getDataGroup().getItem(0,2,10,run).getData(iis+5).get(0)).fill(v23mag,e4c[is][0]-e7c[is][0]+18);
+               ((H2F) this.getDataGroup().getItem(0,0,10,run).getData(iis+5).get(0)).fill(v12mag,w1[is][0]);
+               ((H2F) this.getDataGroup().getItem(0,1,10,run).getData(iis+5).get(0)).fill(v12mag,w4[is][0]);
+               ((H2F) this.getDataGroup().getItem(0,2,10,run).getData(iis+5).get(0)).fill(v12mag,w7[is][0]);
 
                
-                if(v12mag<35&&w1[is][0]==3) {
+               if(v12mag<35&&w1[is][0]==3) {
+//                if(v13mag<56&&(w1[is][0]==3||w1[is][0]==4)) { //Pixel cut too restrictive for PCAL due to target/Bfield constrained tracks
                 for(int n=0; n<n1[is]; n++) {
                 	int u = (int) cU[is][0][n]; int v = (int) cV[is][0][n]; int w = (int) cW[is][0][n]; 
                 	float ec = e1c[is][n] ; float epu = e1p[is][0][n] ; float epv = e1p[is][1][n] ; float epw = e1p[is][2][n] ;
@@ -683,7 +699,7 @@ public class ECmip extends DetectorMonitor {
                 }
                 }
                 }
-            }
+//            }
             }
         }
    
@@ -737,7 +753,7 @@ public class ECmip extends DetectorMonitor {
     }
 
     public void analyze() {    
-        System.out.println("I am in analyze()");
+    	System.out.println(getDetectorName()+".Analyze() ");
         analyzeGraphs(1,7,0,3,0,(dropSummary)?0:3,"c");
         analyzeGraphs(1,7,0,3,0,(dropSummary)?0:3,"p");
         fillTimeLineHisto();
@@ -745,10 +761,80 @@ public class ECmip extends DetectorMonitor {
         isAnalyzeDone = true;
     }
     
+    public H2F rebinY(H2F h, int... ngroups) {
+    	
+    	List<Integer> ig = new ArrayList<Integer>();
+        
+    	for (int i: ngroups) ig.add(i);
+        int nbinsY = (ngroups.length==1)?h.getYAxis().getNBins() / ig.get(0):ngroups.length;
+        H2F hrebinY = new H2F(h.getName(), h.getTitle(), h.getXAxis().getNBins(), h.getXAxis().min(), h.getXAxis().max(),nbinsY, 1, nbinsY+1); 
+        hrebinY.getAttributes().setTitleX(h.getTitleX());
+        for (int ibx = 0; ibx < h.getXAxis().getNBins(); ibx++) {
+        	int ngp=0;
+            for (int iby = 0; iby < nbinsY; iby++) {
+                double height = 0.0;
+                int ng = (ngroups.length==1)?ig.get(0):ig.get(iby);
+                for (int igroup = 0; igroup < ng; igroup++) height += h.getBinContent(ibx, ngp + igroup);
+                hrebinY.setBinContent(ibx, iby, height);
+                ngp+=ng;
+            }
+        }
+        return hrebinY;
+    }
+    
+    public H2F CombineH2F(H2F...hlist) {    	
+    	int   xbins=0,ybins=0;
+    	double xmin=0,xmax=0;
+    	for (H2F h: hlist) {xbins=h.getXAxis().getNBins(); ybins+=h.getYAxis().getNBins();xmin=h.getXAxis().min();xmax=h.getXAxis().max();}
+    	H2F hnew = new H2F("dum","dum",xbins,xmin,xmax,ybins,1.,ybins+1); 
+        int nj=-1;
+    	for (H2F h: hlist) {
+    		for (int j=0; j<h.getYAxis().getNBins(); j++) {
+    			nj++;
+    			for (int i=0; i<xbins; i++) hnew.setBinContent(i, nj, h.getBinContent(i, j));
+    		}
+    	}    	
+    	return hnew;
+    }
+    
+    public FitData fitEngine(H1F h,double min,double max) {
+    	FitData fd = new FitData(h.getGraph()); 
+    	fd.setInt((int)h.getIntegral());
+        fd.setHist(h);
+        fd.graph.getAttributes().setTitleX(h.getTitleX()); 
+        fd.hist.getAttributes().setTitleX(h.getTitleX()); 
+        fd.initFit(0,min,max); 
+        fd.fitGraph("",fitEnable,fitVerbose); 
+        return fd;
+    }
+    
+    public void fitStore(int is, int id, int il, int off, int run, double mip) {
+    	int np = npmt[id*3+il];
+        double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
+        double[]     xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
+        double[]  yMean = new double[np]; 
+        for (int i=0; i<np; i++) {
+            x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0; 
+            FitData fd = MipFits.getItem(is+10*off,id*3+il,i+1,run); 
+            fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
+            fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
+            double mean = fd.mean;                        
+            if(mean>0) yrms[i] = fd.sigma/mean; 
+                      yMean[i] = fd.getMean()/mip;
+                      ymean[i] = mean/mip;
+                     ymeane[i] = fd.meane/mip;
+        }
+        GraphErrors mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymean,xe,ymeane);                   
+        GraphErrors Mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMean,xe,ymeane);                   
+        GraphErrors  rms = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yrms,xe,ye);                  
+        MIPSummary.add(mean, 1+off,is,id*3+il,run);
+        MIPSummary.add(rms,  2+off,is,id*3+il,run);                    
+        MIPSummary.add(Mean, 5+off,is,id*3+il,run);        	        
+    }
+    
     public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2, String ro) {
         
-    	H2F h2 = null;
-        FitData fd = null;
+    	H2F h2a=null, h2b=null; FitData fd=null;       
         int off=0,ipc=0,run=getRunNumber();
         double min=1,max=20,mip=10;
         System.out.println("Analyzing run "+run);
@@ -757,47 +843,20 @@ public class ECmip extends DetectorMonitor {
                 if(ro.equals("c")) {min = fitLimc[id]; max = fitLimc[id+3]; off=0; mip=mipc[id]; ipc=2;}
                 if(ro.equals("p")) {min = fitLimp[id]; max = fitLimp[id+3]; off=2; mip=mipp[id]; ipc=1;}  
                 int iis = is+10*off;
+                h2a = rebinY(CombineH2F((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+0).get(0), 
+                		                (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+1).get(0),          
+                		                (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+2).get(0)),
+                		                npmt[id*3+0],npmt[id*3+1],npmt[id*3+2]);
                 for (int il=0; il<3; il++) {
-                    h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(3*id+il).get(0);
-                    fd = new FitData(h2.projectionX().getGraph()); 
-                    fd.setInt((int)h2.projectionX().getIntegral()); 
-                    fd.setHist(h2.projectionX());
-                    fd.graph.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.hist.getAttributes().setTitleX(h2.getTitleX()); 
-                    fd.initFit(0,min,max); fd.fitGraph(""); 
-                    MipFits.add(fd,iis,id*3+il,0,run);                 
-                }                    
-                for (int il=il1; il<il2; il++) {
-                    int np = npmt[id*3+il];
-                    double[]  x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
-                    double[] xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
-                    double[]  yMean = new double[np];
-                    h2 = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
-                    for (int i=0; i<np; i++) {                     
-                        fd = new FitData(h2.sliceY(i).getGraph()); 
-                        fd.setInt((int)h2.sliceY(i).getIntegral()); 
-                        fd.setHist(h2.sliceY(i));
-                        fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-                        fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-                        fd.initFit(0,min,max); fd.fitGraph(""); 
-                        MipFits.add(fd,iis,id*3+il,i+1,run);
-                        x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0;
-                        double mean = fd.mean;                        
-                        if(mean>0) yrms[i] = fd.sigma/mean; 
-                         yMean[i] = fd.getMean()/mip;
-                         ymean[i] = mean/mip;
-                        ymeane[i] = fd.meane/mip;
-                    }
-                    GraphErrors mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymean,xe,ymeane);                   
-                    GraphErrors Mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMean,xe,ymeane);                   
-                    GraphErrors  rms = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yrms,xe,ye);                  
-                    MIPSummary.add(mean, 1+off,is,id*3+il,run);
-                    MIPSummary.add(rms,  2+off,is,id*3+il,run);                    
-                    MIPSummary.add(Mean, 5+off,is,id*3+il,run);
-                }
+                	fd = fitEngine(h2a.sliceY(il),min,max);
+                	fd.hist.getAttributes().setTitleX(((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0)).getTitleX()); 
+                	MipFits.add(fd,iis,id*3+il,0,run); //UVW slices
+                    h2b = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
+                	for (int i=0; i<npmt[id*3+il]; i++) MipFits.add(fitEngine(h2b.sliceY(i),min,max),iis,id*3+il,i+1,run); //PMT slices
+            		fitStore(is, id, il, off, run, mip);
+                }   
             }
         }
-       
     }
 
     public void plotMeanSummary1(int index) {
@@ -914,8 +973,8 @@ public class ECmip extends DetectorMonitor {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));
     }
     
-    public void plotPathSummary(int index) {
-      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,getActiveLayer(),index,getRunNumber()));
+    public void plotPathSummary(int index, int flag) {
+      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(flag,getActiveLayer(),index,getRunNumber()));
     }
     
     public void plotUVW(int index) {
@@ -927,6 +986,9 @@ public class ECmip extends DetectorMonitor {
     
     public void createTimeLineHistos() {   
     	runIndex = 0;
+    	tl.createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",451,6,1,7);
+    	tl.createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",451,6,1,7);
+    	tl.createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",451,6,1,7);
     	createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",6,1,7);
     	createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",6,1,7);
     	createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",6,1,7);
@@ -936,9 +998,9 @@ public class ECmip extends DetectorMonitor {
     }
    
     public void createTimeLineHisto(int k, String tit, String ytit, int ny, int ymin, int ymax) {
-    	H2F h1 =  new H2F(tit,tit,351, 0., 351., ny, ymin, ymax);
+    	H2F h1 =  new H2F(tit,tit,451, 0., 451., ny, ymin, ymax);
     	h1.setTitleX("Run Index") ; h1.setTitleY(ytit); Timeline.add(h1,k,0); //mean
-    	H2F h2 =  new H2F(tit,tit,351, 0., 351., ny, ymin, ymax);
+    	H2F h2 =  new H2F(tit,tit,451, 0., 451., ny, ymin, ymax);
     	h2.setTitleX("Run Index") ; h2.setTitleY(ytit); Timeline.add(h2,k,1); //error
     }
     
@@ -976,7 +1038,7 @@ public class ECmip extends DetectorMonitor {
     	float mip[] = {30,30,48};
     	float min=0.85f,max=1.15f;
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
-        GraphErrors g1,g2 = null;
+        GraphErrors g2 = null;
         int    is = getActiveSector(); 
        
         c.clear(); c.divide(3, 3); 
@@ -991,11 +1053,14 @@ public class ECmip extends DetectorMonitor {
     		c.draw((H2F)Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		g1 = getGraph(((H2F)Timeline.getItem((i+1)*10,0)),((H2F)Timeline.getItem((i+1)*10,1)),is-1);
-    		g1.setTitleX("Run Index"); g1.setTitleY("Sector "+is+" Mean/MIP");
-    		c.draw(g1); c.draw(line5);
-    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(2); g2.setLineColor(2);
-    		g2.addPoint(runIndexSlider,g1.getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		List<GraphErrors> gglist = getGraph(((H2F)Timeline.getItem((i+1)*10,0)),((H2F)Timeline.getItem((i+1)*10,1)),is-1); 
+               
+    		for (int ii=1; ii<gglist.size(); ii++) {    
+        		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+" Mean/MIP");
+    			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);	
+    		}
+    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
+    		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");
     		
     		c.cd(i3+2); 
             MipFits.getItem(is,i3+2,0,getRunNumber()).getHist().getAttributes().setOptStat("1000100");
@@ -1005,21 +1070,30 @@ public class ECmip extends DetectorMonitor {
             line6.setLineColor(3); line6.setLineWidth(2); c.draw(line6);
         }
     }
-    
-    public GraphErrors getGraph(H2F h2a, H2F h2b, int ybin) {
-    	 
-    	H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin);   	 
-     	GraphErrors g = new GraphErrors("dummy"); g.setLineColor(1); g.setMarkerColor(1); g.setMarkerSize(3);    	 
-    	for (int i=0; i<runlist.size(); i++) g.addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
-    	return g;
+  
+    public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
+	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
+	    int[] col = {1,1,2};
+	    glist.clear();
+	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
+	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
+	    for (int i=0; i<runlist.size(); i++) {
+	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); int it = getTorusPolarity(runlist.get(i))<0?1:2;
+	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
+	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
+	    }   
+	                          gglist.add(glist.getItem(0));
+	    if (glist.hasItem(1)) gglist.add(glist.getItem(1));
+	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
+	    
+	    return gglist;
     }
-    
-    
+     
     public void plotPeakTimeLines(int index) {
     	float mip[] = {10,10,16}; String v[] = {" U "," V "," W "};
     	float min=0.7f,max=1.3f;
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
-        GraphErrors g1,g2 = null;
+        GraphErrors g2 = null;
         int    is = getActiveSector(); 
  
         c.clear(); c.divide(3, 3); 
@@ -1034,11 +1108,13 @@ public class ECmip extends DetectorMonitor {
     		c.draw((H2F)Timeline.getItem((i+1)*10+getActiveSector(),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		g1 = getGraph(((H2F)Timeline.getItem((i+1)*10+getActiveSector(),0)),((H2F)Timeline.getItem((i+1)*10+getActiveSector(),1)),getActiveView());
-    		g1.setTitleX("Run Index"); g1.setTitleY("Sector "+is+v[getActiveView()]+" Mean/MIP");
-    		c.draw(g1); c.draw(line5);
-    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(2); g2.setLineColor(2);
-    		g2.addPoint(runIndexSlider,g1.getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		List<GraphErrors> gglist = getGraph(((H2F)Timeline.getItem((i+1)*10+getActiveSector(),0)),((H2F)Timeline.getItem((i+1)*10+getActiveSector(),1)),getActiveView());
+    		for (int ii=1; ii<gglist.size(); ii++) {
+        	   gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+v[getActiveView()]+" Mean/MIP");
+   			   c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);    			
+    		}
+    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
+    		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");
     		
     		c.cd(i3+2); 
             MipFits.getItem(is+20,i3+getActiveView(),0,getRunNumber()).getHist().getAttributes().setOptStat("1000100");
@@ -1048,7 +1124,7 @@ public class ECmip extends DetectorMonitor {
             line6.setLineColor(3); line6.setLineWidth(2); c.draw(line6);
         }    	
     }
-    
+  
 /*  
  * 
  *       
