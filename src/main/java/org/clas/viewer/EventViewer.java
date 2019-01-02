@@ -422,7 +422,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 	if(autoSave&&this.runNumber!=0) this.monitors[k].saveHistosToFile();
                     this.runNumber = rNum;
                 	this.monitors[k].setRunNumber(this.runNumber); 
-                	this.monitors[k].getDataGroup().clear();
+                	this.monitors[k].localclear();
                 	this.monitors[k].createHistos(this.runNumber);
                     this.monitors[k].initGStyle();
                     this.monitors[k].plotHistos(this.runNumber);
