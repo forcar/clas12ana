@@ -56,21 +56,21 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 public class DetectorMonitor implements ActionListener {    
     
-    private final String           detectorName;
-    private ArrayList<String>      detectorTabNames  = new ArrayList();
-    private IndexedList<DataGroup> detectorData      = new IndexedList<DataGroup>(4);
+    private final String                detectorName;
+    private ArrayList<String>       detectorTabNames = new ArrayList();
+    private IndexedList<DataGroup>      detectorData = new IndexedList<DataGroup>(4);
     public  List<Integer>                    runlist = new ArrayList<Integer>();
     public  int                       runIndexSlider = 0;
-    private DataGroup              detectorSummary   = null;
+    private DataGroup                detectorSummary = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
-    private JPanel                 detectorPanel     = null;
-    private JPanel                 actionPanel       = null;
-    private JPanel                controlsPanel0     = null;
-    private JPanel                controlsPanel1     = null;
-    private JPanel                controlsPanel2     = null;
-    private JPanel                 runIndexPanel     = null;
-    private EmbeddedCanvasTabbed   detectorCanvas    = null;
-    private DetectorPane2D         detectorView      = null;
+    private JPanel                     detectorPanel = null;
+    private JPanel                       actionPanel = null;
+    private JPanel                    controlsPanel0 = null;
+    private JPanel                    controlsPanel1 = null;
+    private JPanel                    controlsPanel2 = null;
+    private JPanel                     runIndexPanel = null;
+    private EmbeddedCanvasTabbed      detectorCanvas = null;
+    private DetectorPane2D              detectorView = null;
     private ButtonGroup                          bT0 = null;
     private ButtonGroup                          bG0 = null;
     private ButtonGroup                          bG1 = null;
@@ -152,8 +152,10 @@ public class DetectorMonitor implements ActionListener {
     public Boolean     fitEnable = false; 
     public Boolean    fitVerbose = false; 
     
+    public String                 TLname = null;    
+    public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
+    
     public DetectorMonitor(String name){
-
         initGStyle();
         detectorName   = name;
         detectorPanel  = new JPanel();
@@ -174,6 +176,9 @@ public class DetectorMonitor implements ActionListener {
         pawPath = outPath+"paw/";
         vecPath = pawPath+detectorName+"/";  
         jawPath = outPath+"jaw/";
+        TimeSlice.put("UVW", 3);
+        TimeSlice.put("FADC Slot", 16);
+        TimeSlice.put("HV Slot", 24);
     }
     
     public void getEnv() {        
@@ -190,6 +195,15 @@ public class DetectorMonitor implements ActionListener {
     
     public void init() {
         initPanel();    	
+    }
+    
+    public void initTimeLine(String name) {
+    	TLname = name;
+    	if(getRunNumber()!=0) plotHistos(getRunNumber());
+    }
+    
+    public void createTimeLineHistos() {
+    	
     }
     
     public void localinit() {

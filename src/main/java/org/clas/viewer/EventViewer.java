@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
-
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -31,6 +31,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
@@ -81,7 +82,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     JCheckBoxMenuItem   co0,co1,co2,co3,co4 = null;   
     JCheckBoxMenuItem               cf0,cf1 = null;   
-    JCheckBoxMenuItem                    ct = null;  
+    JCheckBoxMenuItem                   ctr = null;  
+    JRadioButtonMenuItem        ct0,ct1,ct2 = null;  
+    
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder                clasDecoder = new CLASDecoder();
@@ -107,6 +110,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean  dumpGraphs = false;
     public Boolean   fitEnable = false;
     public Boolean  fitVerbose = false;
+    public String       TLname = "UVW";
     
     public Boolean       clear = true;    
     DetectorMonitor[] monitors = null;
@@ -191,6 +195,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuItem = new JMenuItem("Disable histogram reset"); menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
+        menu     = new JMenu("Timelines");
+        ButtonGroup group = new ButtonGroup();
+        ct0 = new JRadioButtonMenuItem("UVW");        ct0.addItemListener(this);       group.add(ct0); menu.add(ct0); 
+        ct1 = new JRadioButtonMenuItem("FADC Slot");  ct1.addItemListener(this);       group.add(ct1); menu.add(ct1);
+        ct2 = new JRadioButtonMenuItem("HV Slot");    ct2.addItemListener(this);       group.add(ct2); menu.add(ct2);
+        menuBar.add(menu);
+        
+        
         String TriggerDef[] = { "Electron",
         		        "Electron S1","Electron S2","Electron S3","Electron S4","Electron S5","Electron S6",
         		        "HTCC S1","HTCC S2","HTCC S3","HTCC S4","HTCC S5","HTCC S6",
@@ -203,10 +215,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         for (int i=0; i<32; i++) {
         	
-            ct = new JCheckBoxMenuItem(TriggerDef[i]);  
+            ctr = new JCheckBoxMenuItem(TriggerDef[i]);  
             final Integer bit = new Integer(i);
             
-            ct.addItemListener(new ItemListener() {
+            ctr.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {               	
                     if(e.getStateChange() == ItemEvent.SELECTED) {
                         for(int k=0; k<monitors.length; k++) monitors[k].setTriggerMask(bit);
@@ -215,7 +227,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     };
                 }
             });         
-            menu.add(ct);         	        	 
+            menu.add(ctr);         	        	 
         }
 
         menuBar.add(menu);    
@@ -253,6 +265,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		Object source = e.getItemSelectable();	
+		
 		if (source==co0)    clearHist = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==co1)     autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
@@ -260,13 +273,17 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==cf0)    fitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf1)   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==ct0)       TLname = ct0.getText();
+		if (source==ct1)       TLname = ct1.getText();
+		if (source==ct2)       TLname = ct2.getText();
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; 
 		                                           this.monitors[k].dropSummary=dropSummary; 
 		                                           this.monitors[k].dumpGraphs=dumpGraphs;
 		                                           this.monitors[k].autoSave=autoSave;
                                                    this.monitors[k].fitEnable=fitEnable;
-                                                   this.monitors[k].fitVerbose=fitVerbose;}
-	}  
+                                                   this.monitors[k].fitVerbose=fitVerbose;
+                                                   this.monitors[k].initTimeLine(TLname);}
+	    }  
 	
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
