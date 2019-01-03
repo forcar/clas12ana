@@ -16,9 +16,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,6 +64,7 @@ public class DetectorMonitor implements ActionListener {
     private IndexedList<DataGroup>      detectorData = new IndexedList<DataGroup>(4);
     public  List<Integer>                    runlist = new ArrayList<Integer>();
     public  int                       runIndexSlider = 0;
+    public  JSlider                           slider = null;
     private DataGroup                detectorSummary = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                     detectorPanel = null;
@@ -88,6 +92,8 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
     private Boolean                           usePID = false;
+    private Boolean                        stopBlink = true;
+    Timer timer = null;
     
     public JRadioButton bEL,bPI,bPH,bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
@@ -154,6 +160,8 @@ public class DetectorMonitor implements ActionListener {
     
     public String                 TLname = null;    
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
+    public List<Integer>       BlinkRuns = new ArrayList<Integer>();
+    int ntimer = 0;
     
     public DetectorMonitor(String name){
         initGStyle();
@@ -526,7 +534,7 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-        JSlider    slider = new JSlider(JSlider.HORIZONTAL, 0, 450,0); 
+                   slider = new JSlider(JSlider.HORIZONTAL, 0, 450,0); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(slider);
@@ -534,13 +542,16 @@ public class DetectorMonitor implements ActionListener {
         slider.setPreferredSize(new Dimension(1200,10));
         slider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                JSlider slider = (JSlider) e.getSource();  
+                JSlider slider = (JSlider) e.getSource(); 
                 runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size()-1:slider.getValue();
                 int run = runlist.get(runIndexSlider);
                 label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
                 plotHistos(run);
             }
-        });               
+        });     
+        JButton button = new JButton("Blink Run");
+        button.addActionListener(this);
+        sliderPane.add(button);
         return sliderPane;
     }
     
@@ -584,13 +595,34 @@ public class DetectorMonitor implements ActionListener {
     }  
     
     public void actionPerformed(ActionEvent e) {
-        if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
+    	if(e.getActionCommand().compareTo("Blink Run")==0)  BlinkRunAction();
+    	if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         if(bT0!=null) detectorActivePID    = Integer.parseInt(bT0.getSelection().getActionCommand()); 
         detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         plotHistos(getRunNumber());
     } 
+    
+    public void BlinkRunAction() {
+    	BlinkRuns.add(slider.getValue());
+    	if(BlinkRuns.size()==2) {stopBlink=false; doBlink();}
+    	if(BlinkRuns.size()==3) {stopBlink=true;  timer.cancel(); timer=null; BlinkRuns.clear();}
+    }
+    
+    public void doBlink() {
+     	TimerTask task;   
+    	task = new TimerTask() {
+    		@Override
+    	    public synchronized void run() {     
+    	        if(!stopBlink) {
+    	           ntimer=(ntimer==0)?1:0;   	          
+    	           slider.setValue(BlinkRuns.get(ntimer));
+    	        }
+    		}
+    	};
+    	timer = new Timer(); timer.schedule(task,1000,500);
+    }
     
     public void processEvent(DataEvent event) {
         // process event
@@ -687,7 +719,7 @@ public class DetectorMonitor implements ActionListener {
         return viewRun;
     }   
      
-    public void timerUpdate() {      
+    public void timerUpdate() { 
     }
         
     public void dumpGraph(String filename, GraphErrors graph) {

@@ -1388,7 +1388,7 @@ public class ECmip extends DetectorMonitor {
     
     @Override
     public void timerUpdate() {
-
+    	
     } 
   
 }

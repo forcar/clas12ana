@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
        
     private int   canvasUpdateTime = 2000;
-    private int analysisUpdateTime = 100;
+    private int analysisUpdateEvnt = 100;
     private int          runNumber = 0;
     private int        eventNumber = 0;
     private int      ccdbRunNumber = 0;
@@ -150,7 +150,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECpi0("ECpi0"); 
         }
     }
     
@@ -241,7 +241,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
       	tabbedpane 	= new JTabbedPane();
 
         processorPane = new DataSourceProcessorPane();
-        processorPane.setUpdateRate(analysisUpdateTime);
+        processorPane.setUpdateRate(analysisUpdateEvnt);
 
         mainPanel.add(tabbedpane);
         mainPanel.add(processorPane,BorderLayout.PAGE_END);

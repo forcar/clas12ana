@@ -419,7 +419,7 @@ public class ECpi0 extends DetectorMonitor{
     	
         int run = getRunNumber();
         
-        dropBanks(event);
+        if (dropBanks) dropBanks(event);
 
         ecClusters = part.readEC(event);  
         
