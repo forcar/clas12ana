@@ -50,6 +50,7 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
+import org.jlab.io.hipo.HipoDataBank;
 import org.jlab.io.task.IDataEventListener;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.service.eb.EBEngine;
@@ -894,5 +895,24 @@ public class DetectorMonitor implements ActionListener {
             }
         } 	       	
     } 
+    
+    /**
+     * @param fromBank the bank containing the index variable
+     * @param idxVarName the name of the index variable
+     * @return map with keys being the index in toBank and values the indices in fromBank
+     */
+     public static Map<Integer,List<Integer>> loadMapByIndex( 
+             HipoDataBank fromBank,
+             String idxVarName) {
+         Map<Integer,List<Integer>> map=new HashMap<Integer,List<Integer>>();
+         if (fromBank!=null) {
+             for (int iFrom=0; iFrom<fromBank.rows(); iFrom++) {
+                 final int iTo = fromBank.getInt(idxVarName,iFrom);
+                 if (!map.containsKey(iTo)) map.put(iTo,new ArrayList<Integer>()); 
+                 map.get(iTo).add(iFrom);
+             }
+         }
+         return map;
+     }
     
 }

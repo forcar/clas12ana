@@ -150,7 +150,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECpi0("ECpi0"); 
         }
     }
     
