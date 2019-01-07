@@ -114,6 +114,7 @@ public class ECa extends DetectorMonitor {
     }
     
     public void localinit() {
+    	System.out.println("ECpi0.localinit()");
         EB=12; Ebeam = 10.6f;
       	VB = new LorentzVector(0,0,Ebeam,Ebeam);
 	    VT = new LorentzVector(0,0,0,0.93827);
@@ -122,6 +123,8 @@ public class ECa extends DetectorMonitor {
     }
     
     public void localclear() {
+    	System.out.println("ECa.localclear()");
+    	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
     	Fits.clear();
@@ -325,7 +328,7 @@ public class ECa extends DetectorMonitor {
             fd.setHist(h1);
             fd.graph.getAttributes().setTitleX("Sector "+is+" "+h2.getTitleY()); 
             fd.hist.getAttributes().setTitleX("Sector "+is+" "+h2.getTitleY()); fd.hist.getAttributes().setOptStat("1000100");
-            fd.initFit(0,0.20,0.30); fd.fitGraph("",fitEnable,fitVerbose); 
+            fd.initFit(0,0.20,0.30,0.20,0.30); fd.fitGraph("",fitEnable,fitVerbose); 
             Fits.add(fd,10,is,run);  // E/P 
             
             if (!dropSummary) {
@@ -492,8 +495,8 @@ public class ECa extends DetectorMonitor {
     	runIndex = 0;
     	createTimeLineHisto(10,"PCAL E/P","Sector",6,1,7);
     	createTimeLineHisto(20,"ECIN E/P","Sector",6,1,7);
-    	createTimeLineHisto(30,"ECAL #sigma(E)/E","Sector",6,1,7);
-    	createTimeLineHisto(40,"ECAL E/P","Sector",6,1,7);
+    	createTimeLineHisto(40,"ECAL #sigma(E)/E","Sector",6,1,7);
+    	createTimeLineHisto(30,"ECAL E/P","Sector",6,1,7);
     }
    
     public void createTimeLineHisto(int k, String tit, String ytit, int ny, int ymin, int ymax) {
@@ -509,10 +512,10 @@ public class ECa extends DetectorMonitor {
 			float  ye = (float) Fits.getItem(10,is,getRunNumber()).meane;			 
     		float  ys = (float) Fits.getItem(10,is,getRunNumber()).sigma;
 			float yse = (float) Fits.getItem(10,is,getRunNumber()).sigmae;			 
-			((H2F)Timeline.getItem(40,0)).fill(runIndex,is,y);	
-			((H2F)Timeline.getItem(40,1)).fill(runIndex,is,ye);   		
-			((H2F)Timeline.getItem(30,0)).fill(runIndex,is,ys/y);	
-			((H2F)Timeline.getItem(30,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   		
+			((H2F)Timeline.getItem(30,0)).fill(runIndex,is,y);	
+			((H2F)Timeline.getItem(30,1)).fill(runIndex,is,ye);   		
+			((H2F)Timeline.getItem(40,0)).fill(runIndex,is,ys/y);	
+			((H2F)Timeline.getItem(40,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   		
     	} 
     	runIndex++;
     }
@@ -536,7 +539,7 @@ public class ECa extends DetectorMonitor {
     	DataLine line5 = new DataLine(-0.5,mean,runIndex,mean);                line5.setLineColor(3); line3.setLineWidth(2);
 
         for (int i=2; i<4; i++) { int i3=i*3-6;
-            min=(i==2)?0.04f:0.22f; max=(i==2)?0.1f:0.27f; 
+            min=(i==3)?0.04f:0.22f; max=(i==3)?0.1f:0.27f; 
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
     		c.draw((H2F)Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
@@ -544,7 +547,7 @@ public class ECa extends DetectorMonitor {
     		List<GraphErrors> gglist = getGraph(((H2F)Timeline.getItem((i+1)*10,0)),((H2F)Timeline.getItem((i+1)*10,1)),is-1); 
                
     		for (int ii=1; ii<gglist.size(); ii++) {    
-        		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+((i==2)?" #sigma(E)/E":" E/P"));
+        		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+((i==3)?" #sigma(E)/E":" E/P"));
     			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);	
     		}
     		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);

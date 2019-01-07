@@ -37,6 +37,8 @@ import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
@@ -116,7 +118,7 @@ public class DetectorMonitor implements ActionListener {
     public int eventResetTime_current[]=new int[19];
     public int eventResetTime_default[]=new int[19];    
     
-    public double zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
+    public double lMin=0, lMax=500, zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
     public double slideMin=1, slideMax=500;
     public  Boolean doAutoRange = false;
     
@@ -498,7 +500,7 @@ public class DetectorMonitor implements ActionListener {
                 
         if(usePC) {
         bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("1"); bP.addActionListener(this);
-        bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("2"); bC.addActionListener(this); 
+        bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("0"); bC.addActionListener(this); 
         bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC);
         bP.setSelected(true);
         }
@@ -519,7 +521,7 @@ public class DetectorMonitor implements ActionListener {
         bS6 = new JRadioButton("S6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
 	    bG1 = new ButtonGroup(); bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);
         bS2.setSelected(true);        
-        bpcal = new JRadioButton("PC"); buttonPane.add(bpcal);  bpcal.setActionCommand("0"); bpcal.addActionListener(this);
+        bpcal = new JRadioButton("PC");  buttonPane.add(bpcal); bpcal.setActionCommand("0"); bpcal.addActionListener(this);
         becin = new JRadioButton("ECi"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
         becou = new JRadioButton("ECo"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
         bG2 = new ButtonGroup(); bG2.add(bpcal); bG2.add(becin); bG2.add(becou);
@@ -558,24 +560,25 @@ public class DetectorMonitor implements ActionListener {
     public JPanel getSliderPane() {
         JPanel sliderPane = new JPanel();
         JLabel xLabel = new JLabel("Z-Range:");
-        RangeSlider slider = new RangeSlider();
-        slider.setMinimum((int) slideMin);
-        slider.setMaximum((int) slideMax);
-        slider.setValue((int)slideMin);
-        slider.setUpperValue((int)slideMax);            
-        zMin =     slider.getValue();
-        zMax = 0.1*slider.getUpperValue();
+        RangeSlider rslider = new RangeSlider();
+        rslider.setMinimum((int) slideMin);
+        rslider.setMaximum((int) slideMax);
+        rslider.setValue((int)slideMin);
+        rslider.setUpperValue((int)slideMax);            
+        zMin =     rslider.getValue();
+        zMax = 0.1*rslider.getUpperValue();
         zMinLab = Math.pow(2, zMin/10); zMaxLab = Math.pow(10, zMax/10);
         JLabel rangeSliderValue1 = new JLabel("" + String.format("%4.0f", zMinLab));
         JLabel rangeSliderValue2 = new JLabel("" + String.format("%4.0f", zMaxLab));
         sliderPane.add(xLabel);
         sliderPane.add(rangeSliderValue1);
-        sliderPane.add(slider);
+        sliderPane.add(rslider);
         sliderPane.add(rangeSliderValue2);           
-        slider.addChangeListener(new ChangeListener() {
+        rslider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                RangeSlider slider = (RangeSlider) e.getSource();                
-                zMax = 0.1*slider.getUpperValue(); zMin = Math.min(slider.getValue(),zMax); 
+                RangeSlider lslider = (RangeSlider) e.getSource();   
+                lMin = lslider.getValue(); lMax = lslider.getUpperValue();
+                zMax = 0.1*lMax; zMin = Math.min(lMin,zMax); 
                 zMaxLab = Math.pow(10, zMax/10); zMinLab = Math.pow(2, zMin/10); 
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
@@ -734,6 +737,55 @@ public class DetectorMonitor implements ActionListener {
 		}				
     	for (int i=0; i<graph.getDataSize(0); i++) writer.println(String.format("%1$.3f %2$.6f %3$.8f",graph.getDataX(i),graph.getDataY(i),graph.getDataEY(i))); 
     	writer.close();    	
+    }
+    
+    
+    //Generalization of H2F method rebinY for list of non-equal ngroups. 
+    public H2F rebinY(H2F h, int... ngroups) {
+	    List<Integer> ig = new ArrayList<Integer>();
+        for (int i: ngroups) ig.add(i);
+        int nbinsY = (ngroups.length==1)?h.getYAxis().getNBins() / ig.get(0):ngroups.length;
+        H2F hrebinY = new H2F(h.getName(), h.getTitle(), h.getXAxis().getNBins(), h.getXAxis().min(), h.getXAxis().max(),nbinsY, 1, nbinsY+1); 
+        hrebinY.getAttributes().setTitleX(h.getTitleX());
+        for (int ibx = 0; ibx < h.getXAxis().getNBins(); ibx++) {
+           int ngp=0;
+           for (int iby = 0; iby < nbinsY; iby++) {
+              double height = 0.0;
+              int ng = (ngroups.length==1)?ig.get(0):ig.get(iby);
+              for (int igroup = 0; igroup < ng; igroup++) height += h.getBinContent(ibx, ngp + igroup);
+              hrebinY.setBinContent(ibx, iby, height);
+              ngp+=ng;
+           }
+        }
+        return hrebinY;
+    }
+    
+    
+    //Performs a vertical merge of a list of H2F
+    public H2F CombineH2F(H2F...hlist) {    	
+    	int   xbins=0,ybins=0;
+    	double xmin=0,xmax=0;
+    	for (H2F h: hlist) {xbins=h.getXAxis().getNBins(); ybins+=h.getYAxis().getNBins();xmin=h.getXAxis().min();xmax=h.getXAxis().max();}
+    	H2F hnew = new H2F("dum","dum",xbins,xmin,xmax,ybins,1.,ybins+1); 
+        int nj=-1;
+    	for (H2F h: hlist) {
+    		for (int j=0; j<h.getYAxis().getNBins(); j++) {
+    			nj++;
+    			for (int i=0; i<xbins; i++) hnew.setBinContent(i, nj, h.getBinContent(i, j));
+    		}
+    	}    	
+    	return hnew;
+    }
+
+    public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax) {
+       FitData fd = new FitData(h.getGraph()); 
+       fd.setInt((int)h.getIntegral());
+       fd.setHist(h);
+       fd.graph.getAttributes().setTitleX(h.getTitleX()); 
+       fd.hist.getAttributes().setTitleX(h.getTitleX()); 
+       fd.initFit(ff,pmin,pmax,fmin,fmax); 
+       fd.fitGraph("",fitEnable,fitVerbose); 
+       return fd;
     }
         
     public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank) {

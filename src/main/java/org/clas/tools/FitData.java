@@ -13,8 +13,10 @@ public class FitData {
 	public GraphErrors graph = null;
 	public H1F          hist = null;
 
-	public double xmin;
-	public double xmax;
+	public double pmin;
+	public double pmax;
+	public double fmin;
+	public double fmax;
 	public double amp;
 	public double mean;
 	public double meane;
@@ -75,18 +77,20 @@ public class FitData {
 		this.sig2 = sig2;
 	}
 
-	public void initFit(int func, double xmin, double xmax) {
-	    this.xmin = xmin;
-	    this.xmax = xmax;
-	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], xmin, xmax));            
+	public void initFit(int func, double pmin, double pmax, double fmin, double fmax) {
+	    this.pmin = pmin; this.fmin=fmin;
+	    this.pmax = pmax; this.fmax=fmax;
+	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax));            
 	    graph.getFunction().setLineWidth(1);
-	    amp   = getMaxYIDataSet(graph,xmin,xmax);
-	    mean  = getMeanIDataSet(graph,xmin,xmax); 
-	    sigma = getRMSIDataSet(graph,xmin,xmax);
+	    amp   = getMaxYIDataSet(graph,pmin,pmax);
+	    mean  = getMeanIDataSet(graph,pmin,pmax); 
+	    sigma = getRMSIDataSet(graph,pmin,pmax);
 	    graph.getFunction().setParameter(0, amp);
 	    graph.getFunction().setParameter(1, mean);
 	    graph.getFunction().setParameter(2, sigma);
-	    graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
+	    if(func==3) {graph.getFunction().setParameter(3, -5);graph.getFunction().setParameter(4, 0.3);graph.getFunction().setParameter(5, -1e-3);}	    
+	    if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
+	    if(func==3) graph.getFunction().setRange(fmin,fmax);
 	}
 	
 	public void initFunc(int func) {
