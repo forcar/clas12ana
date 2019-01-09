@@ -46,12 +46,6 @@ public class ECpi0 extends DetectorMonitor{
     List<DetectorResponse>  ecClusters  = null;
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
     
-    IndexedList<FitData>           Fits = new IndexedList<FitData>(4);  
-    IndexedList<GraphErrors> FitSummary = new IndexedList<GraphErrors>(4);
-    IndexedList<GraphErrors>      glist = new IndexedList<GraphErrors>(1);
-    Boolean               isAnalyzeDone = false;
-    
-    TimeLine                         tl = new TimeLine();
     int                        runIndex = 0;
        
     TreeFile                       tree = null; 
@@ -628,15 +622,15 @@ public class ECpi0 extends DetectorMonitor{
 
     public void analyze() {    
         System.out.println("ECpi0.analyze()");
-        analyzeGraphs(1,7,0,(dropSummary)?0:3,0,(dropSummary)?0:3);
+        fitGraphs(1,7,0,(dropSummary)?0:3,0,(dropSummary)?0:3);
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
         isAnalyzeDone = true;       
     }
     
-    public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
-        int run=getRunNumber();
+    public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
+        int run = getRunNumber();
         for (int is=is1; is<is2; is++) {
            tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0,1,run).getData(is-1).get(0),3,pmin,pmax,fmin,fmax),is,0,0,run); 
            for (int id=id1; id<id2; id++) {
@@ -885,24 +879,6 @@ public class ECpi0 extends DetectorMonitor{
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6);
         }
     } 
-    
-    public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
-	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
-	    int[] col = {1,1,2};
-	    glist.clear();
-	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
-	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
-	    for (int i=0; i<runlist.size(); i++) {
-	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); int it = getTorusPolarity(runlist.get(i))<0?1:2;
-	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
-	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
-	    }   
-	                          gglist.add(glist.getItem(0));
-	    if (glist.hasItem(1)) gglist.add(glist.getItem(1));
-	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
-	    
-	    return gglist;
-    }
     
     @Override 
     public void timerUpdate() {

@@ -53,15 +53,9 @@ public class ECmip extends DetectorMonitor {
     int[]           npmt = {68,62,62,36,36,36,36,36,36};    
     int[]          npmts = new int[]{68,36,36};
     int         runIndex = 0;
-    
-    IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
-    IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
-    IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
-    IndexedList<Float>         PixLength = new IndexedList<Float>(3);
-    
-    TimeLine tl = new TimeLine();
-    
-    List<Float>   pmap = new ArrayList<Float>();	
+   
+    IndexedList<Float> PixLength = new IndexedList<Float>(3);    
+    List<Float>             pmap = new ArrayList<Float>();	
     
     public ECmip(String name) {
         super(name);
@@ -762,14 +756,14 @@ public class ECmip extends DetectorMonitor {
 
     public void analyze() {    
     	System.out.println(getDetectorName()+".Analyze() ");
-        analyzeGraphs(1,7,0,3,0,(dropSummary)?0:3);
+        fitGraphs(1,7,0,3,0,(dropSummary)?0:3);
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
         isAnalyzeDone = true;
     }
     
-    public void analyzeGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
+    public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
         
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
         int ipc=0,iipc=0, run=getRunNumber();
@@ -1057,24 +1051,6 @@ public class ECmip extends DetectorMonitor {
             DataLine line6 = new DataLine(mip[i],-50,mip[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
         }
-    }
-  
-    public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
-	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
-	    int[] col = {1,1,2};
-	    glist.clear();
-	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
-	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
-	    for (int i=0; i<runlist.size(); i++) {
-	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); int it = getTorusPolarity(runlist.get(i))<0?1:2;
-	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
-	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
-	    }   
-	                          gglist.add(glist.getItem(0));
-	    if (glist.hasItem(1)) gglist.add(glist.getItem(1));
-	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
-	    
-	    return gglist;
     }
      
     public void plotPeakTimeLines(int index) {

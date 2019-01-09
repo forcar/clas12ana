@@ -33,6 +33,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
 
 import org.clas.tools.FitData;
+import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
@@ -132,7 +133,7 @@ public class DetectorMonitor implements ActionListener {
     public String variation = "default";
     public String      geom = "2.5";
     public String    config = "muon";   
-	public EventBuilder eb = null;
+	public EventBuilder  eb = null;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
     int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
@@ -161,9 +162,15 @@ public class DetectorMonitor implements ActionListener {
     public Boolean     fitEnable = false; 
     public Boolean    fitVerbose = false; 
     
+    public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
+    public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
+    public IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
+    public TimeLine                          tl = new TimeLine();
+    
     public String                 TLname = null;    
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
+    
     int ntimer = 0;
     
     public DetectorMonitor(String name){
@@ -741,6 +748,24 @@ public class DetectorMonitor implements ActionListener {
     }
     
     
+    public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
+	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
+	    int[] col = {1,1,2};
+	    glist.clear();
+	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
+	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
+	    for (int i=0; i<runlist.size(); i++) {
+	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); int it = getTorusPolarity(runlist.get(i))<0?1:2;
+	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
+	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
+	    }   
+	                          gglist.add(glist.getItem(0));
+	    if (glist.hasItem(1)) gglist.add(glist.getItem(1));
+	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
+	    
+	    return gglist;
+    }
+    
     //Generalization of H2F method rebinY for list of non-equal ngroups. 
     public H2F rebinY(H2F h, int... ngroups) {
 	    List<Integer> ig = new ArrayList<Integer>();
@@ -788,6 +813,18 @@ public class DetectorMonitor implements ActionListener {
        fd.fitGraph("",fitEnable,fitVerbose); 
        return fd;
     }
+    
+    public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax, double sig1, double sig2) {
+        FitData fd = new FitData(h.getGraph()); 
+        fd.setInt((int)h.getIntegral());
+        fd.setHist(h);
+        fd.graph.getAttributes().setTitleX(h.getTitleX()); 
+        fd.hist.getAttributes().setTitleX(h.getTitleX()); 
+        fd.setSigmas(sig1,sig2);
+        fd.initFit(ff,pmin,pmax,fmin,fmax); 
+        fd.fitGraph("",fitEnable,fitVerbose); 
+        return fd;
+     }
         
     public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank) {
         HashMap<Integer,ArrayList<Integer>> map=new HashMap<Integer,ArrayList<Integer>>();
@@ -902,7 +939,7 @@ public class DetectorMonitor implements ActionListener {
      * @return map with keys being the index in toBank and values the indices in fromBank
      */
      public static Map<Integer,List<Integer>> loadMapByIndex( 
-             HipoDataBank fromBank,
+             DataBank fromBank,
              String idxVarName) {
          Map<Integer,List<Integer>> map=new HashMap<Integer,List<Integer>>();
          if (fromBank!=null) {

@@ -47,6 +47,7 @@ import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECpi0;
+import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -142,7 +143,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-        	     case    "ECa": monitors[n++]=new ECa(s);   break; 
+      	         case   "ECa":  monitors[n++]=new ECa(s);   break; 
+    	         case   "ECsf": monitors[n++]=new ECsf(s);  break; 
         	     case    "ECt": monitors[n++]=new ECt(s);   break;
         	     case  "ECmip": monitors[n++]=new ECmip(s); break;
         	     case  "ECpi0": monitors[n++]=new ECpi0(s); break;
@@ -150,7 +152,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECpi0("ECpi0"); 
+    		monitors[n] = new ECsf("ECsf"); 
         }
     }
     
