@@ -111,7 +111,7 @@ public class ECsf extends DetectorMonitor {
     public void plotSummary(int run) {
     	setRunNumber(run);
     	plotEOPHistos(7);
-   	    if(dropSummary) return;
+    	if(dropSummary) return;
     	plotEOPHistos(0);
     	plotEOPHistos(1);
     	plotEOPHistos(2);
@@ -132,7 +132,7 @@ public class ECsf extends DetectorMonitor {
     
     public void createEOPHistos(int k, int xb, double x1, double x2, String txt1, String txt2, String txt3) {
     	
-	    int run = getRunNumber();
+        int run = getRunNumber();
         H2F h;  
         DataGroup dg = new DataGroup(3,2);
     
@@ -171,7 +171,7 @@ public class ECsf extends DetectorMonitor {
     
     public void createADCHistos(int k, int pc, int nch, double x0, double x1, double x2, double x3, String txt) {
     	
-	    int run = getRunNumber();
+        int run = getRunNumber();
         H2F h;  
     
         for (int is=1; is<7; is++) {
@@ -476,8 +476,8 @@ public class ECsf extends DetectorMonitor {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
  	    DataGroup dg = getDataGroup().getItem(0,0,index,getRunNumber());
  	    
-        c.setGridX(false); c.setGridY(false);
-        c.divide(3, 3);
+ 	    c.setGridX(false); c.setGridY(false);
+ 	    c.divide(3, 3);
         
 	    H2F h2 ;
 	    
@@ -555,10 +555,10 @@ public class ECsf extends DetectorMonitor {
     }  
     
     public void plotFitSummary1(int index) {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
-	    int run = getRunNumber();
+        int run = getRunNumber();
     	for (int is=1; is<7; is++) {  
     		String txt = "Sector "+is+" Electron Energy (GeV)";
             if (FitSummary.hasItem(1,is,run)) GraphPlot((GraphErrors)FitSummary.getItem(is,0,1,run),c,is-1,1.5f,10.f,0.18f,0.300f,col[is-1],4,1,txt," E/P","");
@@ -566,10 +566,10 @@ public class ECsf extends DetectorMonitor {
     }    
     
     public void plotFitSummary8(int index) {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 4);
         int col[] = {1,2,3,4,5,7};
-	    int run = getRunNumber();    
+        int run = getRunNumber();    
 	   
 	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); 
 
@@ -585,11 +585,11 @@ public class ECsf extends DetectorMonitor {
     }
     
     public void plotFitSummary2(int index) {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         
-       int col[] = {1,2,3,4,5,7};
-	    int run = getRunNumber();
+        int col[] = {1,2,3,4,5,7};
+        int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
             F1D f = new F1D("res","sqrt([a]*[a]/x+[b]*[b])",1.6,10.0); f.setLineColor(1); f.setLineWidth(3);
             f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
@@ -599,10 +599,10 @@ public class ECsf extends DetectorMonitor {
     }
     
     public void plotFitSummary3(int index) {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
-	    int run = getRunNumber();
+        int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
             F1D f = new F1D("res","sqrt([a]*[a]*x*x+[b]*[b])",0.3,0.76); f.setLineColor(1); f.setLineWidth(3);
             f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
@@ -612,11 +612,11 @@ public class ECsf extends DetectorMonitor {
     } 
     
     public void plotFitSummary4(int index) {
- 	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
-	    int run = getRunNumber();
-    	for (int is=1; is<7; is++) {    		
+        int run = getRunNumber();
+     	for (int is=1; is<7; is++) {    		
             F1D f = new F1D("res","[a]*[a]*x+[b]*[b]",0.,0.6); f.setLineColor(1); f.setLineWidth(3);
             f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
             if (FitSummary.hasItem(is,0,4,run)) GraphPlot((GraphErrors)FitSummary.getItem(is,0,4,run),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","","");
