@@ -52,7 +52,6 @@ public class ECmip extends DetectorMonitor {
     double[]     fitLimc = {20,17,35,40,48,75};
     int[]           npmt = {68,62,62,36,36,36,36,36,36};    
     int[]          npmts = new int[]{68,36,36};
-    int         runIndex = 0;
    
     IndexedList<Float> PixLength = new IndexedList<Float>(3);    
     List<Float>             pmap = new ArrayList<Float>();	
@@ -996,19 +995,21 @@ public class ECmip extends DetectorMonitor {
 		for (int is=1; is<7; is++) {
 		  for (int id=0; id<3; id++) {	
 			int nb = tl.getNYbins(id); 
-	        for (int il=0; il<nb; il++) {
-			    float  y = (float) tl.fitData.getItem(is,id+10*(il+1),0,getRunNumber()).mean*3/mip[id];
-			    float ye = (float) tl.fitData.getItem(is,id+10*(il+1),0,getRunNumber()).meane*3/mip[id];
-			    ((H2F)tl.Timeline.getItem((id+1)*10+is,0)).fill(runIndex,il+1,y);	
-			    ((H2F)tl.Timeline.getItem((id+1)*10+is,1)).fill(runIndex,il+1,ye);	
+	        for (int iv=0; iv<nb; iv++) {
+			    float  y = (float) tl.fitData.getItem(is,id+10*(iv+1),0,getRunNumber()).mean*3/mip[id];
+			    float ye = (float) tl.fitData.getItem(is,id+10*(iv+1),0,getRunNumber()).meane*3/mip[id];
+			    ((H2F)tl.Timeline.getItem((id+1)*10+is,0)).fill(runIndex,iv+1,y);	
+			    ((H2F)tl.Timeline.getItem((id+1)*10+is,1)).fill(runIndex,iv+1,ye);	
 	        }
 		  }
 		}			
 		runIndex++;
     }
     
-    public void plotTimeLines(int index) {
-    	if (getActivePC()==0) {plotClusterTimeLines(index);} else {plotPeakTimeLines(index);}
+    public void plotTimeLines(int index) {        int iv = getActiveView();
+
+    	if(TLflag) {plotTimeLineSectors(index); } else {
+    	if (getActivePC()==0) {plotClusterTimeLines(index);} else {plotPeakTimeLines(index);}}
     }
     
     public void plotClusterTimeLines(int index) {
@@ -1016,7 +1017,6 @@ public class ECmip extends DetectorMonitor {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
         int           is = getActiveSector(); 
         
-        GraphErrors   g2 = null;
         FitData       fd = null;
        
     	float mip[] = {30,30,48};
@@ -1025,28 +1025,20 @@ public class ECmip extends DetectorMonitor {
     	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
     	DataLine line3 = new DataLine(runIndexSlider,1,  runIndexSlider,7);    line3.setLineColor(5);
     	DataLine line4 = new DataLine(runIndexSlider+1,1,runIndexSlider+1,7);  line4.setLineColor(5);
-    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                      line5.setLineColor(3); line3.setLineWidth(2);
 
         c.clear(); c.divide(3, 3); 
 
-        for (int i=0; i<3; i++) { int i3=i*3; int nb = tl.getNYbins(i); double min=0.99,max=1.01;
-            if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
+        for (int i=0; i<3; i++) { int i3=i*3; 
+            double min=0.99,max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
     		c.draw((H2F)tl.Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem((i+1)*10,0)),((H2F)tl.Timeline.getItem((i+1)*10,1)),is-1); 
-               
-    		for (int ii=1; ii<gglist.size(); ii++) {    
-        		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+" Mean/MIP");
-    			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);	
-    		}
-    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
-    		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		drawTimeLine(c,is,10*(i+1),1f,"Sector "+is+" Mean/MIP" );
     		
     		fd = tl.fitData.getItem(is,i,0,getRunNumber());
     		
-    		c.cd(i3+2); c.getPad(i3+2).getAxisY().setRange(0.,fd.getGraph().getMax()*1.1);
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             fd.getHist().getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mip[i],-50,mip[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
@@ -1054,46 +1046,54 @@ public class ECmip extends DetectorMonitor {
     }
      
     public void plotPeakTimeLines(int index) {
+    	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));                
         int           is = getActiveSector();
         int           iv = getActiveView();
         
-        GraphErrors   g2 = null;
         FitData       fd = null;
         
     	float mip[] = {10,10,16}; 
     	String  v[] = {" U "," V "," W "};
-    	float min=0.7f,max=1.3f;
         
     	DataLine line1 = new DataLine(0,iv+1,runIndex+1,iv+1);                   line1.setLineColor(5);
     	DataLine line2 = new DataLine(0,iv+2,runIndex+1,iv+2);                   line2.setLineColor(5);
     	DataLine line3 = new DataLine(runIndexSlider,  1,  runIndexSlider,  4);  line3.setLineColor(5);
     	DataLine line4 = new DataLine(runIndexSlider+1,1,  runIndexSlider+1,4);  line4.setLineColor(5);
-    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                        line5.setLineColor(3); line3.setLineWidth(2);
     	
         c.clear(); c.divide(3, 3); 
 
-        for (int i=0; i<3; i++) {int i3=i*3; int nb = tl.getNYbins(i); 
+        for (int i=0; i<3; i++) {int i3=i*3;
+            double min=0.99f,max=1.01f; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,tl.getNYbins(i)+1); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
-    		c.draw((H2F)tl.Timeline.getItem((i+1)*10+is,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+    		c.draw((H2F)tl.Timeline.getItem(10*(i+1)+is,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem((i+1)*10+is,0)),
-    				                            ((H2F)tl.Timeline.getItem((i+1)*10+is,1)),iv);
-    		for (int ii=1; ii<gglist.size(); ii++) {
-        	   gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+v[iv]+" Mean/MIP");
-   			   c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);    			
-    		}
-    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
-    		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		drawTimeLine(c,iv+1,10*(i+1)+is,1f,"Sector "+is+v[iv]+" Mean/MIP" );
     		
     		fd = tl.fitData.getItem(is,i+10*(iv+1),0,getRunNumber());
     		
-    		c.cd(i3+2); c.getPad(i3+2).getAxisY().setRange(0.,fd.getGraph().getMax()*1.1);
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             fd.getHist().getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mip[i],-50,mip[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
         }    	
+    }
+    
+    public void plotTimeLineSectors(int index) {
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        int pc = getActivePC();
+        int iv = getActiveView();
+        int  i = getActiveLayer();
+       	String  v[] = {" U "," V "," W "};
+       	String  d[] = {" PCAL "," ECIN "," ECOU "};
+        
+        c.clear(); c.divide(3, 2);
+    	for (int is=1; is<7; is++) {
+    		double min=0.99 ; double max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
+    		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
+    		drawTimeLine(c,(pc==0)?is:iv+1,(pc==0)?10*(i+1):10*(i+1)+is,1f,"Sector "+is+((pc==0)?" Mean/MIP":d[i]+v[iv]+" Mean/MIP"));
+    	}
     }
   
 /*  

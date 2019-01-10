@@ -76,8 +76,6 @@ public class ECa extends DetectorMonitor {
 	public float CVT_mom, CVT_theta, CVT_phi, CVT_vz, CVT_chi2, CVT_pathlength;
 	public int CVT_ndf;
 	public LorentzVector VB, VT, Ve, VG1, VG2, VPI0, VPIP, VPIM;  
-	   
-    int         runIndex = 0; 
     
     public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
     

@@ -37,6 +37,7 @@ import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
+import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -166,8 +167,10 @@ public class DetectorMonitor implements ActionListener {
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
     public IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
     public TimeLine                          tl = new TimeLine();
+    public int                         runIndex = 0;
     
-    public String                 TLname = null;    
+    public String                 TLname = null;
+    public Boolean                TLflag = null;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
@@ -745,6 +748,26 @@ public class DetectorMonitor implements ActionListener {
 		}				
     	for (int i=0; i<graph.getDataSize(0); i++) writer.println(String.format("%1$.3f %2$.6f %3$.8f",graph.getDataX(i),graph.getDataY(i),graph.getDataEY(i))); 
     	writer.close();    	
+    }
+    
+    public void setTLflag(Boolean flag) {
+    	this.TLflag = flag;
+    	if (getRunNumber()>0) plotHistos(getRunNumber());
+    }
+    
+    public void drawTimeLine(EmbeddedCanvas c, int is, int i, float norm, String title) {
+    	
+    	GraphErrors g2 = null;
+    	
+		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem(i,0)),((H2F)tl.Timeline.getItem(i,1)),is-1); 
+    	DataLine line = new DataLine(-0.5,norm,runIndex,norm); line.setLineColor(3); line.setLineWidth(2);
+        
+		for (int ii=1; ii<gglist.size(); ii++) {    
+    		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title);
+			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);	
+		}
+		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
+		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");    	
     }
     
     

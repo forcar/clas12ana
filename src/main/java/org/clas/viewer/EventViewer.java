@@ -84,7 +84,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JCheckBoxMenuItem   co0,co1,co2,co3,co4 = null;   
     JCheckBoxMenuItem               cf0,cf1 = null;   
     JCheckBoxMenuItem                   ctr = null;  
-    JRadioButtonMenuItem        ct0,ct1,ct2 = null;  
+    JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
     
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
@@ -112,7 +112,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   fitEnable = false;
     public Boolean  fitVerbose = false;
     public String       TLname = "UVW";
-    
+    public Boolean      TLflag = false;
     public Boolean       clear = true;    
     DetectorMonitor[] monitors = null;
     
@@ -152,7 +152,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -202,6 +202,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ct0 = new JRadioButtonMenuItem("UVW");        ct0.addItemListener(this);       group.add(ct0); menu.add(ct0); 
         ct1 = new JRadioButtonMenuItem("FADC Slot");  ct1.addItemListener(this);       group.add(ct1); menu.add(ct1);
         ct2 = new JRadioButtonMenuItem("HV Slot");    ct2.addItemListener(this);       group.add(ct2); menu.add(ct2);
+        ct3 = new JRadioButtonMenuItem("Sectors");    ct3.addItemListener(this);       group.add(ct3); menu.add(ct3);
         menuBar.add(menu);
         
         
@@ -278,13 +279,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
+		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; 
 		                                           this.monitors[k].dropSummary=dropSummary; 
 		                                           this.monitors[k].dumpGraphs=dumpGraphs;
 		                                           this.monitors[k].autoSave=autoSave;
                                                    this.monitors[k].fitEnable=fitEnable;
                                                    this.monitors[k].fitVerbose=fitVerbose;
-                                                   this.monitors[k].initTimeLine(TLname);}
+                                                   this.monitors[k].initTimeLine(TLname);
+                                                   this.monitors[k].setTLflag(TLflag);}
 	    }  
 	
     public void actionPerformed(ActionEvent e) {

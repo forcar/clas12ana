@@ -45,8 +45,6 @@ public class ECpi0 extends DetectorMonitor{
     List<List<DetectorResponse>>    res = new ArrayList<List<DetectorResponse>>();   
     List<DetectorResponse>  ecClusters  = null;
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
-    
-    int                        runIndex = 0;
        
     TreeFile                       tree = null; 
     float[]                        rowf = null; 
@@ -845,40 +843,49 @@ public class ECpi0 extends DetectorMonitor{
     }
     
     public void plotTimeLines(int index) {
+    	if(TLflag) {plotTimeLineSectors(index); } else {plotTimeLine(index);}
+    }
+    
+    public void plotTimeLine(int index) {
           
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
-        GraphErrors   g2 = null;
         int           is = getActiveSector(); 
         FitData       fd = tl.fitData.getItem(is,0,0,getRunNumber());
        
-        c.clear(); c.divide(3, 2); 
     	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                   line1.setLineColor(5);
     	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
     	DataLine line3 = new DataLine(runIndexSlider,1,  runIndexSlider,7);    line3.setLineColor(5);
     	DataLine line4 = new DataLine(runIndexSlider+1,1,runIndexSlider+1,7);  line4.setLineColor(5);
-    	DataLine line5 = new DataLine(-0.5,1,runIndex,1);                      line5.setLineColor(3); line3.setLineWidth(2);
+    	
+        c.clear(); c.divide(3, 2);
 
-        for (int i=0; i<2; i++) { int i3=i*3; //int nb = tl.getNYbins(i); 
+        for (int i=0; i<2; i++) { int i3=i*3;  
             double min=(i==1)?0.07f:0.96f; double max=(i==1)?0.11f:1.04f; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
-    		c.draw((H2F)tl.Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+    		c.draw((H2F)tl.Timeline.getItem(10*(i+1),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem((i+1)*10,0)),((H2F)tl.Timeline.getItem((i+1)*10,1)),is-1); 
-               
-    		for (int ii=1; ii<gglist.size(); ii++) {    
-        		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY("Sector "+is+((i==1)?" Pi0 #sigma(E)/E":" Pi0 Mean/Mass"));
-    			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line5);	
-    		}
-    		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
-    		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");
+    		drawTimeLine(c,is,10*(i+1),1f,"Sector "+is+((i==0)?" Pi0 Mean/Mass":" Pi0 #sigma(E)/E"));
     		
-    		c.cd(i3+2); c.getPad(i3+2).getAxisY().setRange(0.,fd.getGraph().getMax()*1.1);
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             fd.getHist().getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mpi0,-50,mpi0,fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
-            c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6);
+            c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6); 
         }
     } 
+    
+    public void plotTimeLineSectors(int index) {
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        int pc = getActivePC();
+        c.clear(); c.divide(3, 2);
+    	for (int is=1; is<7; is++) {
+    		double min=(pc==1)?0.07f:0.96f ; double max=(pc==1)?0.11f:1.04f; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
+    		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
+    		drawTimeLine(c,is,10*(pc+1),1f,"Sector "+is+((pc==0)?" Pi0 Mean/Mass":" Pi0 #sigma(E)/E"));
+    	}
+    }
+    
+    
     
     @Override 
     public void timerUpdate() {
