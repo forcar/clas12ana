@@ -236,10 +236,10 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initGStyle() {
-        GStyle.getAxisAttributesX().setTitleFontSize(18);
+        GStyle.getAxisAttributesX().setTitleFontSize(14);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
-        GStyle.getAxisAttributesY().setTitleFontSize(18);
-        GStyle.getAxisAttributesY().setLabelFontSize(18);
+        GStyle.getAxisAttributesY().setTitleFontSize(14);
+        GStyle.getAxisAttributesY().setLabelFontSize(14);
         GStyle.getAxisAttributesZ().setLabelFontSize(14); 
         GStyle.getAxisAttributesX().setAxisGrid(false);
         GStyle.getAxisAttributesY().setAxisGrid(false);

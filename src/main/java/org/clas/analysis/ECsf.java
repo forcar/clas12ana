@@ -12,6 +12,8 @@ import org.jlab.clas.detector.DetectorParticle;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Line3D;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
@@ -56,7 +58,8 @@ public class ECsf extends DetectorMonitor {
                                  "Timeline",
                                  "Fits Sig 1",
                                  "Fits Sig 2",
-                                 "Fits Sig 3");
+                                 "Fits Sig 3",
+                                 "Timing");
         this.usePCCheckBox(true);
         this.useSectorButtons(true);
         this.useSliderPane(true);
@@ -100,6 +103,7 @@ public class ECsf extends DetectorMonitor {
         createXYZHistos(6);
         createADCHistos(9,0,25,0.,0.5,0.3,0.1,"PARTIAL SF");
         createADCHistos(9,1,25,0.05,0.4,0.4,0.4,"TOTAL SF");
+        createADCHistos(16,0,100,-10.,10.,10.,10.," T-TVERT-PATH/c (ns)");
     }
 
     @Override       
@@ -120,6 +124,7 @@ public class ECsf extends DetectorMonitor {
     	plotEOPHistos(5);
     	plotXYZHistos(6);
     	plotADCHistos(9);
+    	plotADCHistos(16);
     }
     
     public void plotAnalysis(int run) {
@@ -221,10 +226,12 @@ public class ECsf extends DetectorMonitor {
         float[]    y_ecal = new float[3];
     	float[] e_ecal_TH = new float[3];
     	float[] e_ecal_EL = new float[4];
+    	float[]    t_ecal = new float[4];
+    	float[]   pa_ecal = new float[4];
     	int e_sect=0;
-    	int[] iU = new int[3];
-    	int[] iV = new int[3];
-    	int[] iW = new int[3];
+    	int[] iU = new int[3];int[] idU = new int[3]; float[] tU = new float[3];
+    	int[] iV = new int[3];int[] idV = new int[3]; float[] tV = new float[3];
+    	int[] iW = new int[3];int[] idW = new int[3]; float[] tW = new float[3];
     	
         if(dropBanks) dropBanks(event);
         
@@ -236,8 +243,11 @@ public class ECsf extends DetectorMonitor {
         
         if (!goodEvent) return;
         
+        float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
+        
       	DataBank    reccal = event.getBank("REC::Calorimeter");
       	DataBank ecalclust = event.getBank("ECAL::clusters");
+      	DataBank ecalpeaks = event.getBank("ECAL::peaks");
         DataBank     pbank = event.getBank("REC::Particle");
         
       	Map<Integer,List<Integer>> caloMap = loadMapByIndex(reccal,"pindex");
@@ -256,26 +266,46 @@ public class ECsf extends DetectorMonitor {
             float ep = (float)Math.sqrt(px*px+py*py+pz*pz);			
             float th = (float)Math.toDegrees(Math.acos(pz/ep));
             float vz = pbank.getFloat("vz", ipart);				
-            if(ep>0.01*Ebeam && ep<EB && th>6 && Math.abs(vz)<200 ){
+            e_mom    = ep;
+            e_theta  = th;
+           if(ep>0.01*Ebeam && ep<EB && th>6 && Math.abs(vz)<200 ){
                for (int icalo : caloMap.get(ipart)) {
-				    int det = reccal.getInt("layer", icalo);
-	           short iclust = reccal.getShort("index",icalo);
-                    float x = reccal.getFloat("x",icalo);
-                    float y = reccal.getFloat("y",icalo);
-                    float z = reccal.getFloat("z",icalo);					         
-                    float r = (float) Math.sqrt(x*x+y*y+z*z);
-                   if(det==1) e_sect = reccal.getByte("sector",icalo);	                 
-                   int ind = getDet(det);	
-                   e_mom           = ep;
-                   e_theta         = th;
-                   x_ecal[ind]     = x;
-                   y_ecal[ind]     = y;
-                   e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
-                   e_ecal_EL[ind] += ecalclust.getFloat("energy", iclust);
-                   e_ecal_EL[3]   += ecalclust.getFloat("energy", iclust);
-                   iU[ind]         = (ecalclust.getInt("coordU", iclust)-4)/8+1;
-                   iV[ind]         = (ecalclust.getInt("coordV", iclust)-4)/8+1;
-                   iW[ind]         = (ecalclust.getInt("coordW", iclust)-4)/8+1;        
+				    int  det = reccal.getInt("layer", icalo);
+	                short ic = reccal.getShort("index",icalo);
+                    float  x = reccal.getFloat("x",icalo);
+                    float  y = reccal.getFloat("y",icalo);
+                    float  z = reccal.getFloat("z",icalo);					         
+                    float pa = reccal.getFloat("path", icalo);
+                    float  t = reccal.getFloat("time",icalo);
+                    float  r = (float) Math.sqrt(x*x+y*y+z*z);
+                    if(det==1) e_sect = reccal.getByte("sector",icalo);	                 
+                    int ind = getDet(det);	
+                    x_ecal[ind]     = x;
+                    y_ecal[ind]     = y;
+                    t_ecal[ind]     = t-Tvertex-pa/29.98f;
+                    e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
+                    e_ecal_EL[ind] += ecalclust.getFloat("energy", ic);
+                    e_ecal_EL[3]   += ecalclust.getFloat("energy", ic);
+                    iU[ind]         = (ecalclust.getInt("coordU", ic)-4)/8+1;
+                    iV[ind]         = (ecalclust.getInt("coordV", ic)-4)/8+1;
+                    iW[ind]         = (ecalclust.getInt("coordW", ic)-4)/8+1; 
+                    /*
+                    idU[ind]        = ecalclust.getInt("idU",ic);
+                    idV[ind]        = ecalclust.getInt("idV",ic);
+                    idW[ind]        = ecalclust.getInt("idW",ic);
+                    tU[ind]         = ecalpeaks.getFloat("time",idU[ind]);
+                    tV[ind]         = ecalpeaks.getFloat("time",idV[ind]);
+                    tW[ind]         = ecalpeaks.getFloat("time",idW[ind]);
+                    Point3D  point1 = new Point3D(ecalpeaks.getFloat("xo",idU[ind]),
+		                                          ecalpeaks.getFloat("yo",idV[ind]),
+		                                          ecalpeaks.getFloat("zo",idW[ind]));
+                    Point3D  point2 = new Point3D(ecalpeaks.getFloat("xe",idU[ind]),
+		                                          ecalpeaks.getFloat("ye",idV[ind]),
+		                                          ecalpeaks.getFloat("ze",idW[ind]));
+                    Point3D   point = new Point3D(x,y,z);
+                    Line3D     line = new Line3D(point1,point2); 
+                    */
+                    
                }
            }
         }		
@@ -308,14 +338,18 @@ public class ECsf extends DetectorMonitor {
                 ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+0).get(0)).fill(sff[i]<0.5?sff[i]:0., iU[i]);
                 ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+1).get(0)).fill(sff[i]<0.5?sff[i]:0., iV[i]);
                 ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+2).get(0)).fill(sff[i]<0.5?sff[i]:0., iW[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+0).get(0)).fill(sf<0.5?sf:0.,  iU[i]);				  
+                ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+0).get(0)).fill(sf<0.5?sf:0., iU[i]);				  
                 ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+1).get(0)).fill(sf<0.5?sf:0., iV[i]);				  
                 ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+2).get(0)).fill(sf<0.5?sf:0., iW[i]);				  
+                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+0).get(0)).fill(t_ecal[i], iU[i]);				  
+                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+1).get(0)).fill(t_ecal[i], iV[i]);				  
+                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+2).get(0)).fill(t_ecal[i], iW[i]);				  
              }
            }
         }
 
     }
+
     
     @Override
     public void plotEvent(DataEvent de) {
@@ -474,6 +508,7 @@ public class ECsf extends DetectorMonitor {
     
     public void plotXYZHistos(int index) {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+ 	    System.out.println(index+" "+c.isShowing());
  	    DataGroup dg = getDataGroup().getItem(0,0,index,getRunNumber());
  	    
  	    c.setGridX(false); c.setGridY(false);
@@ -732,7 +767,7 @@ public class ECsf extends DetectorMonitor {
 
     @Override
     public void timerUpdate() {  
-    	/*
+    	
         for(int i=0; i<3; i++) {
         H2F e  = (H2F) this.getDataGroup().getItem(0,0,6,getRunNumber()).getData(i).get(0);
         H2F w  = (H2F) this.getDataGroup().getItem(0,1,6,getRunNumber()).getData(i).get(0);
@@ -743,7 +778,7 @@ public class ECsf extends DetectorMonitor {
             if (ne>0) {H2F h = (H2F) this.getDataGroup().getItem(0,0,6,getRunNumber()).getData(i+6).get(0); h.setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);}
         }
         }
-        */
+        
     }
     
 }
