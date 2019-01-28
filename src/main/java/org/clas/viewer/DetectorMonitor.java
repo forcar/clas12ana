@@ -223,6 +223,10 @@ public class DetectorMonitor implements ActionListener {
     	if(getRunNumber()!=0) plotHistos(getRunNumber());
     }
     
+    public void initCCDB(int runno) {
+    	
+    }
+    
     public void createTimeLineHistos() {
     	
     }
@@ -825,6 +829,15 @@ public class DetectorMonitor implements ActionListener {
     	}    	
     	return hnew;
     }
+    
+    public FitData fitEngine(GraphErrors g, int ff, int fmin) {
+        FitData fd = new FitData(g);        
+    	if(g.getDataSize(0)==0) return fd;
+        fd.initFit(ff,0,0,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
+        fd.doFit = true; fd.optstat="1000110";
+        fd.fitGraph("",fitEnable,fitVerbose); 
+        return fd;
+     }
 
     public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax) {
        FitData fd = new FitData(h.getGraph()); 
@@ -907,7 +920,7 @@ public class DetectorMonitor implements ActionListener {
         String folder = "/" + getDetectorName();
         dir.mkdir(folder);
         dir.cd(folder);
-        DataGroup sum = getDetectorSummary();
+        DataGroup sum = getDetectorSummary(); 
         if (sum!=null) {
         int nrows = sum.getRows();
         int ncols = sum.getColumns();

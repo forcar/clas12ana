@@ -4,7 +4,7 @@ import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.IDataSet;
-import org.jlab.groot.fitter.DataFitter;
+//import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.math.F1D;
 
@@ -22,8 +22,10 @@ public class FitData {
 	public double meane;
 	public double sigma;
 	public double sigmae;
+	public double p0,p1,p0e,p1e,p2,p2e;
 	public double sig1=2.5;
 	public double sig2=1.7;
+	public int func;
 	public int integral;
 	public int intmin=30;
 	public int fitcol=4;
@@ -34,7 +36,7 @@ public class FitData {
 			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]", "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
 			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x",
 			"[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x", "[a]*exp(x,[b])", "[a]+[b]*cos(x*[c])",
-			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)"};
+			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5"};
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
@@ -78,34 +80,49 @@ public class FitData {
 	}
 
 	public void initFit(int func, double pmin, double pmax, double fmin, double fmax) {
+		this.func = func;
 	    this.pmin = pmin; this.fmin=fmin;
 	    this.pmax = pmax; this.fmax=fmax;
-	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax));            
+	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax)); 
 	    graph.getFunction().setLineWidth(1);
-	    amp   = getMaxYIDataSet(graph,pmin,pmax);
-	    mean  = getMeanIDataSet(graph,pmin,pmax); 
-	    sigma = getRMSIDataSet(graph,pmin,pmax);
-	    graph.getFunction().setParameter(0, amp);
-	    graph.getFunction().setParameter(1, mean);
-	    graph.getFunction().setParameter(2, sigma);
-	    if(func==3) {graph.getFunction().setParameter(3, -5);graph.getFunction().setParameter(4, 0.3);graph.getFunction().setParameter(5, -1e-3);}	    
-	    if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
-	    if(func==3) graph.getFunction().setRange(fmin,fmax);
+	    if(func<5) {
+	      amp   = getMaxYIDataSet(graph,pmin,pmax);
+	      mean  = getMeanIDataSet(graph,pmin,pmax); 
+	      sigma = getRMSIDataSet(graph,pmin,pmax);
+	      initFunc(0,amp);
+	      initFunc(1,mean);
+	      initFunc(2,sigma);
+		  if(func==3) {initFunc(3,-5); initFunc(4,0.3); initFunc(5, -1e-3);}	    
+		  if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
+		  if(func==3) graph.getFunction().setRange(fmin,fmax);
+	    }
+	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ; graph.getFunction().setRange(fmin, fmax);}
+	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);}
 	}
 	
-	public void initFunc(int func) {
-		switch (func) {
-		case 0: 
-		}
+	public void initFunc(int par, double val) {
+        graph.getFunction().setParameter(par, val);
+	}
+	
+	public void initFunc(int par, double val, double min, double max) {
+        graph.getFunction().setParameter(par, val);
+        graph.getFunction().setParLimits(par, min, max);
 	}
 
 	public void fitGraph(String opt, Boolean fitEnable, Boolean fitVerbose) {
 	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, (fitVerbose)?"VE":"Q");
-	    amp   = graph.getFunction().getParameter(0);
-	    mean  = graph.getFunction().parameter(1).value();
-	    meane = graph.getFunction().parameter(1).error();
-	    sigma = graph.getFunction().parameter(2).value();   
-	    sigmae = graph.getFunction().parameter(2).error();   
+	    if (func==6)  {p0  = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); 
+	                   p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error();}
+	    if (func==13) { p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
+                       p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
+	    
+	    if (func<5) {
+	       amp   = graph.getFunction().getParameter(0);
+	       mean  = graph.getFunction().parameter(1).value();
+	       meane = graph.getFunction().parameter(1).error();
+	       sigma = graph.getFunction().parameter(2).value();   
+	      sigmae = graph.getFunction().parameter(2).error();  
+	    }
 	    graph.getFunction().setLineColor(fitcol);
 	    graph.getFunction().setOptStat(opt=="Q"?"0":optstat);
 	}

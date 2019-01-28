@@ -146,7 +146,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
       	         case   "ECa":  monitors[n++]=new ECa(s);   break; 
     	         case   "ECsf": monitors[n++]=new ECsf(s);  break; 
         	     case    "ECt": monitors[n++]=new ECt(s);   break;
-        	     case  "ECmip": monitors[n++]=new ECmip(s); break;
+        	     case  "ECmip": monitors[n++]=new ECmip(s); break; 
         	     case  "ECpi0": monitors[n++]=new ECpi0(s); break;
         	     case "ECelas": monitors[n++]=new ECelas(s); 
         	   }
@@ -427,7 +427,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 	if(autoSave&&this.runNumber!=0) this.monitors[k].saveHistosToFile();
                     this.runNumber = rNum;
                 	this.monitors[k].setRunNumber(this.runNumber); 
-                	this.monitors[k].localclear();
+                   	this.monitors[k].localclear();
+                   	this.monitors[k].initCCDB(this.runNumber);
                 	this.monitors[k].createHistos(this.runNumber);
                     this.monitors[k].initGStyle();
                     this.monitors[k].plotHistos(this.runNumber);
@@ -574,7 +575,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         for(int k=0; k<this.monitors.length; k++) {  
          	this.monitors[k].setRunNumber(runNumber);
-            this.monitors[k].createHistos(runNumber);           
+            this.monitors[k].createHistos(runNumber);    
+            this.monitors[k].initCCDB(runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
