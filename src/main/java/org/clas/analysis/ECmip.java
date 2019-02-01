@@ -865,7 +865,7 @@ public class ECmip extends DetectorMonitor {
         	GraphErrors hwplot2 = new GraphErrors();
         	int m=0; lines.clear();
             for (int il=0; il<3; il++) {           	
-                GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber());
+                GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber()); 
                 GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,getRunNumber());
                 for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
         	        hwplot1.addPoint(m, plot1.getDataY(ip), plot1.getDataEX(ip), plot1.getDataEY(ip));

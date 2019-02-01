@@ -85,6 +85,8 @@ public class ECpi0 extends DetectorMonitor{
     public void localinit() {
     	System.out.println("ECpi0.localinit()");
         configEngine("pi0");
+        engine.setVeff(18.1f);
+        engine.setNewTimeCal(true);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);   
@@ -473,7 +475,7 @@ public class ECpi0 extends DetectorMonitor{
         res.clear();
         
         for (int idet=0; idet<3; idet++) {
-            res.add(part.eb.getUnmatchedResponses(ecClusters, DetectorType.ECAL,iidet[idet]));
+            res.add(part.eb.getUnmatchedResponses(ecClusters, DetectorType.ECAL,iidet[idet])); 
             for(int i = 0; i < res.get(idet).size(); i++){
                 int        is = res.get(idet).get(i).getDescriptor().getSector();
                 double energy = res.get(idet).get(i).getEnergy();

@@ -422,7 +422,7 @@ public class ECsf extends DetectorMonitor {
             if (!dropSummary) {
             	
             fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(0,0,7,run).getData(is-1).get(0));
-            fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
+            fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX(); 
             FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); // E/P vs. measured energy
             	
     		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));

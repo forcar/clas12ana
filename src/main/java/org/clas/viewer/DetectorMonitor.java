@@ -768,7 +768,7 @@ public class DetectorMonitor implements ActionListener {
         
 		for (int ii=1; ii<gglist.size(); ii++) {    
     		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title);
-			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);	
+			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);
 		}
 		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
 		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");    	
@@ -834,7 +834,7 @@ public class DetectorMonitor implements ActionListener {
         FitData fd = new FitData(g);        
     	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,0,0,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
-        fd.doFit = true; fd.optstat="1000110";
+        fd.doFit = true; 
         fd.fitGraph("",fitEnable,fitVerbose); 
         return fd;
      }

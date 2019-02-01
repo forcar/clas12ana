@@ -83,6 +83,7 @@ public class FitData {
 		this.func = func;
 	    this.pmin = pmin; this.fmin=fmin;
 	    this.pmax = pmax; this.fmax=fmax;
+	    optstat = "110";
 	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax)); 
 	    graph.getFunction().setLineWidth(1);
 	    if(func<5) {
@@ -97,7 +98,7 @@ public class FitData {
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
 	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ; graph.getFunction().setRange(fmin, fmax);}
-	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);}
+	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);optstat="1110";}
 	}
 	
 	public void initFunc(int par, double val) {
