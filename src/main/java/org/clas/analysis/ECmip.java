@@ -82,6 +82,7 @@ public class ECmip extends DetectorMonitor {
     public void localinit() {
     	System.out.println("ECmip.localinit()");
         configEngine("muon"); 
+    	tl.setFitData(Fits);    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
     
@@ -93,7 +94,6 @@ public class ECmip extends DetectorMonitor {
     	FitSummary.clear();
     	Fits.clear();
     	tl.Timeline.clear();
-    	tl.setFitData(Fits);    	
     	slider.setValue(0);
     }
     
@@ -135,7 +135,7 @@ public class ECmip extends DetectorMonitor {
      public void plotAnalysis(int run) {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
-    	 if(!dropSummary) {updateFITS(2); plotMeanHWSummary(3); plotRmsSummary(4);}
+    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMeanSummary(3);plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
     	 updateUVW(1); plotTimeLines(11);    	    
      }
      
@@ -826,7 +826,10 @@ public class ECmip extends DetectorMonitor {
         int           pc = getActivePC();
         int            n = 0;
         
-        c.divide(9, 6);
+        double ymin=0.9f, ymax=2.0f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
         
         for (int is=1; is<7; is++) {
         for (int id=0; id<3; id++) {
@@ -835,7 +838,7 @@ public class ECmip extends DetectorMonitor {
             GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber());
             GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,getRunNumber());
             plot1.setMarkerColor(1);
-            c.cd(n); c.getPad(n).getAxisY().setRange(0.5, 1.5); 
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("MEAN / MIP");
             plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
@@ -846,49 +849,34 @@ public class ECmip extends DetectorMonitor {
         }        
     }
     
-    public void plotMeanHWSummary(int index) {
-        
+    public void plotRmsSummary(int index) {
+    	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         int           pc = getActivePC();
         int            n = 0;
         
-        List<DataLine> lines = new ArrayList<DataLine>();
+        double ymin=0.3f, ymax=1.0f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
         
-        Boolean t = TLname!="UVW";
-        float ymin=0.5f, ymax=1.5f;
-        
-        c.clear(); c.divide(3, 6);
-                
         for (int is=1; is<7; is++) {
         for (int id=0; id<3; id++) {
-        	GraphErrors hwplot1 = new GraphErrors();
-        	GraphErrors hwplot2 = new GraphErrors();
-        	int m=0; lines.clear();
-            for (int il=0; il<3; il++) {           	
-                GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber()); 
-                GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,getRunNumber());
-                for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
-        	        hwplot1.addPoint(m, plot1.getDataY(ip), plot1.getDataEX(ip), plot1.getDataEY(ip));
-        	        hwplot2.addPoint(m, plot2.getDataY(ip), plot2.getDataEX(ip), plot2.getDataEY(ip));
-        	        if(Math.floorMod(t?m:ip, t?TimeSlice.get(TLname):npmt[id*3+il])==(t?1:0)) {
-        	    	    DataLine line = new DataLine(m,ymin,m,ymax) ; line.setLineColor(1); line.setLineWidth(1); 
-        	    	    lines.add(line);
-        	        }
-                }
-            }
-            hwplot2.setMarkerColor(1);
+        for (int il=0; il<3; il++) {           	
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),2,getRunNumber());
+            plot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
-            if(n==0||n==3||n==6||n==9||n==12||n==15) hwplot1.getAttributes().setTitleY("MEAN / MIP");
-            hwplot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" PMT");
-            n++; c.draw(hwplot1); c.draw(hwplot2,"same"); for(DataLine line: lines) c.draw(line);
-            F1D f1 = new F1D("p0","[a]",0.,m); f1.setParameter(0,1);
-            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+            if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("RMS / MEAN");
+            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
+            n++; c.draw(plot1);
         }
-        }        
-    } 
+        }
+        }          
+
+    }
     
-    public void plotRmsSummary(int index) {
+    public void plotRmsHWSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         int           pc = getActivePC();
@@ -923,7 +911,50 @@ public class ECmip extends DetectorMonitor {
         f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         }
         }        
-    }     
+    }   
+    
+    public void plotMeanHWSummary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        int           pc = getActivePC();
+        int            n = 0;
+        
+        List<DataLine> lines = new ArrayList<DataLine>();
+        
+        Boolean t = TLname!="UVW";
+        double ymin=0.9f, ymax=2.0f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+        
+        c.clear(); c.divide(3, 6);
+                
+        for (int is=1; is<7; is++) {
+        for (int id=0; id<3; id++) {
+        	GraphErrors hwplot1 = new GraphErrors();
+        	GraphErrors hwplot2 = new GraphErrors();
+        	int m=0; lines.clear();
+            for (int il=0; il<3; il++) {           	
+                GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber()); 
+                GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,getRunNumber());
+                for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
+        	        hwplot1.addPoint(m, plot1.getDataY(ip), plot1.getDataEX(ip), plot1.getDataEY(ip));
+        	        hwplot2.addPoint(m, plot2.getDataY(ip), plot2.getDataEX(ip), plot2.getDataEY(ip));
+        	        if(Math.floorMod(t?m:ip, t?TimeSlice.get(TLname):npmt[id*3+il])==(t?1:0)) {
+        	    	    DataLine line = new DataLine(m,ymin,m,ymax) ; line.setLineColor(1); line.setLineWidth(1); 
+        	    	    lines.add(line);
+        	        }
+                }
+            }
+            hwplot2.setMarkerColor(1);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==3||n==6||n==9||n==12||n==15) hwplot1.getAttributes().setTitleY("MEAN / MIP");
+            hwplot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" PMT");
+            n++; c.draw(hwplot1); c.draw(hwplot2,"same"); for(DataLine line: lines) c.draw(line);
+            F1D f1 = new F1D("p0","[a]",0.,m); f1.setParameter(0,1);
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        }
+        }        
+    }   
     
     public void plotXYSummary(int index) {        
     	

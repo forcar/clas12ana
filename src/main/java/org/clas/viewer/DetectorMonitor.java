@@ -901,12 +901,12 @@ public class DetectorMonitor implements ActionListener {
             int nrows = group.getRows();
             int ncols = group.getColumns();
             int nds   = nrows*ncols;
-            DataGroup newGroup = new DataGroup(ncols,nrows);
+            DataGroup newGroup = new DataGroup(ncols,nrows);          
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = group.getData(i);
                 for(IDataSet ds : dsList){
-                    System.out.println("\t --> " + ds.getName());
-                    newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);    
+                    System.out.println("\t --> " + ds.getName());                 
+                    if(dir.getObject(folder, ds.getName())!=null) newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);    
                 }
             }
             map.replace(key, newGroup);

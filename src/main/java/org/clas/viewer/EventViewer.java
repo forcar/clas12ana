@@ -152,7 +152,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECt("ECt"); 
         }
     }
     
@@ -288,7 +288,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].fitVerbose=fitVerbose;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);}
-	    }  
+    }  
 	
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());

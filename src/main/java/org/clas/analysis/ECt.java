@@ -106,6 +106,7 @@ public class ECt extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECt.localinit()");
+    	tl.setFitData(Fits); 
     }  
     
     public void localclear() {
@@ -115,8 +116,7 @@ public class ECt extends DetectorMonitor {
     	runlist.clear();
     	FitSummary.clear();
     	Fits.clear();
-    	tl.Timeline.clear();
-    	tl.setFitData(Fits);    	
+    	tl.Timeline.clear();    	   	
     	slider.setValue(0);
     } 
     

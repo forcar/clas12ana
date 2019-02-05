@@ -4,34 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.clas.analysis.ECPart.SFFunction;
 import org.clas.tools.FitData;
+import org.clas.tools.ParallelSliceFitter;
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.detector.CalorimeterResponse;
 import org.jlab.clas.detector.DetectorParticle;
-import org.jlab.clas.physics.LorentzVector;
-import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
-import org.jlab.geom.prim.Line3D;
-import org.jlab.geom.prim.Point3D;
-import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
-import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-import org.jlab.groot.data.IDataSet;
-import org.jlab.groot.fitter.ParallelSliceFitter;
+//import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.math.Func1D;
-import org.jlab.groot.math.StatNumber;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.rec.eb.SamplingFractions;
-import org.jlab.utils.groups.IndexedList;
-
 
 public class ECsf extends DetectorMonitor {
 
@@ -70,9 +60,9 @@ public class ECsf extends DetectorMonitor {
     
     public void localinit() {
         System.out.println("ECa.localinit()");
-        tl.setFitData(Fits);
         configEngine("muon");  
         configEventBuilder();
+        tl.setFitData(Fits);
     }
     
     public void localclear() {
@@ -499,6 +489,7 @@ public class ECsf extends DetectorMonitor {
     }
    
     public void plotADCHistos(int index) {
+    	if(!getDataGroup().hasItem(getActiveSector(),getActivePC(),index,getRunNumber())) return;
   	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),getActivePC(),index,getRunNumber()));	       	
     }
     
@@ -508,7 +499,6 @@ public class ECsf extends DetectorMonitor {
     
     public void plotXYZHistos(int index) {
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
- 	    System.out.println(index+" "+c.isShowing());
  	    DataGroup dg = getDataGroup().getItem(0,0,index,getRunNumber());
  	    
  	    c.setGridX(false); c.setGridY(false);
