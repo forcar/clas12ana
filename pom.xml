@@ -9,19 +9,13 @@
       <dependency>
         <groupId>org.jlab.coat</groupId>
         <artifactId>coat-libs</artifactId>
-        <version>5.7.6-SNAPSHOT</version>
+        <version>5.7.7-SNAPSHOT</version>
          <type>jar</type>
       </dependency>
     <dependency>
       <groupId>org.jlab.elog</groupId>
       <artifactId>jlog</artifactId>
       <version>2.9.0</version>
-       <type>jar</type>
-    </dependency>
-    <dependency>
-      <groupId>org.epics</groupId>
-      <artifactId>ca</artifactId>
-      <version>1.0.0</version>
        <type>jar</type>
     </dependency>
     <dependency>
