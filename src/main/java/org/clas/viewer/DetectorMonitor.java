@@ -210,13 +210,6 @@ public class DetectorMonitor implements ActionListener {
     public void getEnv() {        
         String ostype = System.getProperty("os.name"); 
         System.out.println("DetectorMonitor.getEnv(): os.name = "+ostype);
-        
-        if (ostype!=null&&ostype.startsWith("Mac")) {
-            outPath = "/Users/cole/CLAS12ANA/";
-        } else {
-            outPath = "/home/lcsmith/CLAS12ANA/";            	
-        }
-
     }
     
     public void init() {

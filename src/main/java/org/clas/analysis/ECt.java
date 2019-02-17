@@ -368,7 +368,7 @@ public class ECt extends DetectorMonitor {
         	       double a2 = time.getDoubleValue("a2", is, il, ip);
         	       double a3 = time.getDoubleValue("a3", is, il, ip);
         	       double a4 = time.getDoubleValue("a4", is, il, ip);
-        	       double tdcmc = tdcm - a0 - tw[il-1]/radc - a2 - a3/radc - a4/Math.sqrt(radc);
+        	       double tdcmc = tdcm - a0 - tw[il-1]/radc - a2/radc - a3 - a4/Math.sqrt(radc);
 //        	       System.out.println(a0+" "+a1+" "+a2+" "+a3+" "+a4);
 //        	       System.out.println(tdcm+" "+adc+" "+tw[il-1]/radc+" "+tdcmc);
 //        	       System.out.println(" ");
@@ -641,8 +641,8 @@ public class ECt extends DetectorMonitor {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0
 				+" 0.02345 "
-				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p0)+" "
-				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p1)+" "
+				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p1)+" "
+				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p0)+" "
 				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p2)+" ";
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
