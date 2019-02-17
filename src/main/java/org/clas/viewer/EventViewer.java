@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
@@ -152,7 +153,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECt("ECt"); 
+    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -536,11 +537,26 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         System.out.println("Histogram pngs succesfully saved in: " + data);
     }
     
-    public int getFileRunNumber(String file) {
-    	String[] tokens = file.split("_");
-    	return Integer.parseInt(tokens[2]);
+    public String[] getFileTokens(String file) {
+   	    return (file.split(Pattern.quote("."))[0].split("_"));
     }
     
+    public int getFileRunNumber(String file) {
+    	return Integer.parseInt(getFileTokens(file)[2]);
+    }
+    
+    public boolean isCalibrationFile(String file) {
+    	return getFileTokens(file).length>5;
+    }
+    
+    public String getFileCalibrationTag(String file) {
+    	return getFileTokens(file)[4];
+    }
+    
+    public int getFileCalibrationIndex(String file) {
+        return Integer.parseInt(getFileTokens(file)[5]);
+    }
+  
     @Override
     public void resetEventListener() {
         for(int k=0; k<this.monitors.length; k++) {
@@ -554,15 +570,17 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         fc.setDialogTitle("Choose input histos directory...");
         fc.setMultiSelectionEnabled(true);
         fc.setAcceptAllFileFilterUsed(false);
-        for(int k=0; k<this.monitors.length; k++) {
-        	this.monitors[k].localclear();
-        }
+        for(int k=0; k<this.monitors.length; k++) this.monitors[k].localclear();
+        String fname = null;
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             for (File fd : fc.getSelectedFiles()) {
                 if (fd.isFile()) {
-                	loadHistosFromFile(fd.getAbsolutePath());
+                	fname=fd.getAbsolutePath();
+                	loadHistosFromFile(fname);
                 }                
-            }            
+            }  
+            if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+
         }
     }        
     
@@ -574,14 +592,16 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         dir.readFile(fileName); dir.cd(); dir.pwd();
         
         for(int k=0; k<this.monitors.length; k++) {  
+            if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(runNumber);    
             this.monitors[k].initCCDB(runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
-            this.monitors[k].arBtn.setSelected(true);         
+            this.monitors[k].arBtn.setSelected(true);   
         }
+        return;
     }
     
     public void saveHistosToFile(String fileName) {

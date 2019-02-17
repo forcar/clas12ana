@@ -32,9 +32,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
 
+import org.clas.tools.ECConstants;
 import org.clas.tools.FitData;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
+import org.jlab.detector.calib.utils.CalibrationConstants;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
@@ -174,6 +176,9 @@ public class DetectorMonitor implements ActionListener {
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
+    public CalibrationConstants    calib = null;
+    public int[]                  detcal = {0,0,0};
+
     int ntimer = 0;
     
     public DetectorMonitor(String name){
@@ -738,6 +743,9 @@ public class DetectorMonitor implements ActionListener {
     }   
      
     public void timerUpdate() { 
+    }
+    
+    public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
     }
         
     public void dumpGraph(String filename, GraphErrors graph) {

@@ -587,6 +587,7 @@ public class ECpi0 extends DetectorMonitor{
         for (int is=1; is<7; is++) {
         	g=tl.fitData.getItem(is,0,0,getRunNumber()).getGraph();
             c.cd(is-1); c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
+            tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1110");
             c.draw(tl.fitData.getItem(is,0,0,getRunNumber()).getHist());
             c.draw(g,"same");
             DataLine line = new DataLine(mpi0,0.,mpi0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 

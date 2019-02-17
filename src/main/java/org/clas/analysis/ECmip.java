@@ -1,37 +1,34 @@
 package org.clas.analysis;
 
-import java.awt.event.ActionEvent;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.clas.tools.FitData;
-import org.clas.tools.TimeLine;
+
 import org.clas.viewer.DetectorMonitor;
-import org.jlab.clas.physics.LorentzVector;
+
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
-import org.jlab.detector.base.DetectorDescriptor;
-import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
-import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-import org.jlab.groot.data.IDataSet;
-import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
-import org.jlab.groot.ui.LatexText;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
-import org.jlab.utils.groups.IndexedList.IndexGenerator;
+import org.jlab.utils.groups.IndexedTable;
 
 public class ECmip extends DetectorMonitor {
 	
@@ -55,6 +52,7 @@ public class ECmip extends DetectorMonitor {
    
     IndexedList<Float> PixLength = new IndexedList<Float>(3);    
     List<Float>             pmap = new ArrayList<Float>();	
+    IndexedTable time=null, offset=null, goffset=null, gain=null, veff=null;
     
     public ECmip(String name) {
         super(name);
@@ -390,7 +388,15 @@ public class ECmip extends DetectorMonitor {
         
         this.getDataGroup().add(dg,is,0,k,run);
     }
-
+    
+    
+    public void initCCDB(int runno) {
+        gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
+        time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
+        veff    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/effective_velocity");
+        offset  = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");
+        goffset = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset");    	
+    }
     
     public void processEvent(DataEvent event) {
     	
@@ -826,7 +832,7 @@ public class ECmip extends DetectorMonitor {
         int           pc = getActivePC();
         int            n = 0;
         
-        double ymin=0.9f, ymax=2.0f;
+        double ymin=0.99f, ymax=1.01f;
         ymin=ymin*lMin/250; ymax=ymax*lMax/250;
          
         c.clear(); c.divide(9, 6);
@@ -922,7 +928,7 @@ public class ECmip extends DetectorMonitor {
         List<DataLine> lines = new ArrayList<DataLine>();
         
         Boolean t = TLname!="UVW";
-        double ymin=0.9f, ymax=2.0f;
+        double ymin=0.99f, ymax=1.01f;
         ymin=ymin*lMin/250; ymax=ymax*lMax/250;
         
         c.clear(); c.divide(3, 6);
@@ -939,12 +945,13 @@ public class ECmip extends DetectorMonitor {
         	        hwplot1.addPoint(m, plot1.getDataY(ip), plot1.getDataEX(ip), plot1.getDataEY(ip));
         	        hwplot2.addPoint(m, plot2.getDataY(ip), plot2.getDataEX(ip), plot2.getDataEY(ip));
         	        if(Math.floorMod(t?m:ip, t?TimeSlice.get(TLname):npmt[id*3+il])==(t?1:0)) {
-        	    	    DataLine line = new DataLine(m,ymin,m,ymax) ; line.setLineColor(1); line.setLineWidth(1); 
+        	        	int mm = (TLname=="HV Slot"&&id==2)?m+12:m;
+        	    	    DataLine line = new DataLine(mm,ymin,mm,ymax) ; line.setLineColor(1); line.setLineWidth(1); 
         	    	    lines.add(line);
         	        }
                 }
             }
-            hwplot2.setMarkerColor(1);
+            hwplot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==3||n==6||n==9||n==12||n==15) hwplot1.getAttributes().setTitleY("MEAN / MIP");
@@ -1014,31 +1021,30 @@ public class ECmip extends DetectorMonitor {
     	
     	//clusters
 		for (int is=1; is<7; is++) {
-		  for (int id=0; id<3; id++) {
-			  float  y = (float) tl.fitData.getItem(is,id,0,getRunNumber()).mean/mip[id];
-			  float ye = (float) tl.fitData.getItem(is,id,0,getRunNumber()).meane/mip[id];
-			  ((H2F)tl.Timeline.getItem((id+1)*10,0)).fill(runIndex,is,y);
-			  ((H2F)tl.Timeline.getItem((id+1)*10,1)).fill(runIndex,is,ye);			  
+		  for (int il=0; il<3; il++) {
+			  float  y = (float) tl.fitData.getItem(is,il,0,getRunNumber()).mean/mip[il];
+			  float ye = (float) tl.fitData.getItem(is,il,0,getRunNumber()).meane/mip[il];
+			  ((H2F)tl.Timeline.getItem((il+1)*10,0)).fill(runIndex,is,y);
+			  ((H2F)tl.Timeline.getItem((il+1)*10,1)).fill(runIndex,is,ye);			  
 		  }
 		}
 		
 		//peaks
 		for (int is=1; is<7; is++) {
-		  for (int id=0; id<3; id++) {	
-			int nb = tl.getNYbins(id); 
+		  for (int il=0; il<3; il++) {	
+			int nb = tl.getNYbins(il); 
 	        for (int iv=0; iv<nb; iv++) {
-			    float  y = (float) tl.fitData.getItem(is,id+10*(iv+1),0,getRunNumber()).mean*3/mip[id];
-			    float ye = (float) tl.fitData.getItem(is,id+10*(iv+1),0,getRunNumber()).meane*3/mip[id];
-			    ((H2F)tl.Timeline.getItem((id+1)*10+is,0)).fill(runIndex,iv+1,y);	
-			    ((H2F)tl.Timeline.getItem((id+1)*10+is,1)).fill(runIndex,iv+1,ye);	
+			    float  y = (float) tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()).mean*3/mip[il];
+			    float ye = (float) tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()).meane*3/mip[il];
+			    ((H2F)tl.Timeline.getItem((il+1)*10+is,0)).fill(runIndex,iv+1,y);	
+			    ((H2F)tl.Timeline.getItem((il+1)*10+is,1)).fill(runIndex,iv+1,ye);	
 	        }
 		  }
 		}			
 		runIndex++;
     }
     
-    public void plotTimeLines(int index) {        int iv = getActiveView();
-
+    public void plotTimeLines(int index) {        
     	if(TLflag) {plotTimeLineSectors(index); } else {
     	if (getActivePC()==0) {plotClusterTimeLines(index);} else {plotPeakTimeLines(index);}}
     }
@@ -1059,19 +1065,19 @@ public class ECmip extends DetectorMonitor {
 
         c.clear(); c.divide(3, 3); 
 
-        for (int i=0; i<3; i++) { int i3=i*3; 
+        for (int il=0; il<3; il++) { int i3=il*3; 
             double min=0.99,max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
-    		c.draw((H2F)tl.Timeline.getItem((i+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+    		c.draw((H2F)tl.Timeline.getItem((il+1)*10,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		drawTimeLine(c,is,10*(i+1),1f,"Sector "+is+" Mean/MIP" );
+    		drawTimeLine(c,is,10*(il+1),1f,"Sector "+is+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,i,0,getRunNumber());
+    		fd = tl.fitData.getItem(is,il,0,getRunNumber());
     		
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             fd.getHist().getAttributes().setOptStat("1000100");
-            DataLine line6 = new DataLine(mip[i],-50,mip[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
+            DataLine line6 = new DataLine(mip[il],-50,mip[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
         }
     }
@@ -1094,19 +1100,19 @@ public class ECmip extends DetectorMonitor {
     	
         c.clear(); c.divide(3, 3); 
 
-        for (int i=0; i<3; i++) {int i3=i*3;
+        for (int il=0; il<3; il++) {int i3=il*3;
             double min=0.99f,max=1.01f; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
-    		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,tl.getNYbins(i)+1); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
-    		c.draw((H2F)tl.Timeline.getItem(10*(i+1)+is,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+    		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,tl.getNYbins(il)+1); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
+    		c.draw((H2F)tl.Timeline.getItem(10*(il+1)+is,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		drawTimeLine(c,iv+1,10*(i+1)+is,1f,"Sector "+is+v[iv]+" Mean/MIP" );
+    		drawTimeLine(c,iv+1,10*(il+1)+is,1f,"Sector "+is+v[iv]+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,i+10*(iv+1),0,getRunNumber());
+    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber());
     		
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             fd.getHist().getAttributes().setOptStat("1000100");
-            DataLine line6 = new DataLine(mip[i],-50,mip[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
+            DataLine line6 = new DataLine(mip[il],-50,mip[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
         }    	
     }
@@ -1115,17 +1121,71 @@ public class ECmip extends DetectorMonitor {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         int pc = getActivePC();
         int iv = getActiveView();
-        int  i = getActiveLayer();
+        int il = getActiveLayer();
        	String  v[] = {" U "," V "," W "};
-       	String  d[] = {" PCAL "," ECIN "," ECOU "};
+       	String  l[] = {" PCAL "," ECIN "," ECOU "};
         
         c.clear(); c.divide(3, 2);
     	for (int is=1; is<7; is++) {
     		double min=0.99 ; double max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
-    		drawTimeLine(c,(pc==0)?is:iv+1,(pc==0)?10*(i+1):10*(i+1)+is,1f,"Sector "+is+((pc==0)?" Mean/MIP":d[i]+v[iv]+" Mean/MIP"));
+    		drawTimeLine(c,(pc==0)?is:iv+1,(pc==0)?10*(il+1):10*(il+1)+is,1f,"Sector "+is+((pc==0)?" Mean/MIP":l[il]+v[iv]+" Mean/MIP"));
     	}
     }
+    
+    @Override
+	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
+		
+		String path = "/Users/colesmith/CLAS12ANA/";
+		String line = new String();
+		
+		try { 
+			File outputFile = new File(path+table+"_"+detcal[0]);
+			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+			BufferedWriter outputBw = new BufferedWriter(outputFw);
+			
+			System.out.println("ECmip.writefile("+table+")");
+
+			for (int is=is1; is<is2; is++) {
+				for (int il=il1; il<il2; il++ ) {
+					for (int iv=iv1; iv<iv2; iv++) {
+						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
+							switch (table) {
+							case "gain": line =  getGAIN(is,il,iv,ip,detcal[il]); break;
+							}
+						    System.out.println(line);
+						    outputBw.write(line);
+						    outputBw.newLine();
+						}
+					}
+				}
+			}
+
+			outputBw.close();
+			outputFw.close();
+		}
+		catch(IOException ex) {
+			System.out.println("Error writing file '" );                   
+			ex.printStackTrace();
+		}
+
+	}
+	
+	public String getGAIN(int is, int il, int iv, int ip, int run) {
+		int pc = 1; 
+		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
+		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
+			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
+			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
+				+ge;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "+gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)+" 0.0";
+		}
+		
+	}
+	
   
 /*  
  * 
