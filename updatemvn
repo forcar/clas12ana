@@ -1,3 +1,8 @@
- mvn install:install-file -Dfile=/Users/cole/coatjava/lib/services/clas12detector-ec-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-ec -Dpackaging=jar -Dversion=1.0-SNAPSHOT
- mvn install:install-file -Dfile=/Users/cole/coatjava/lib/services/clas12detector-eb-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-eb -Dpackaging=jar -Dversion=1.0-SNAPSHOT
+#!/bin/sh -f
+
+SCRIPT_DIR=`dirname $0`
+DISTRO_DIR=$SCRIPT_DIR/../ ; export DISTRO_DIR
+
+mvn install:install-file -Dfile=$DISTO_DIR/lib/clas12detector-ec-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-ec -Dpackaging=jar -Dversion=1.0-SNAPSHOT
+mvn install:install-file -Dfile=$DISTO_DIR/lib/clas12detector-eb-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-eb -Dpackaging=jar -Dversion=1.0-SNAPSHOT
  
