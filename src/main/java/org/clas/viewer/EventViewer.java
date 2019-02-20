@@ -50,6 +50,8 @@ import org.clas.analysis.ECmip;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
+import org.clas.io.DataSourceProcessorPane;
+import org.clas.io.IDataEventListener;
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorEventDecoder;
@@ -65,14 +67,14 @@ import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioSource;
 import org.jlab.io.hipo.HipoDataEvent;
-import org.jlab.io.hipo.HipoDataSource;
-import org.jlab.io.task.DataSourceProcessorPane;
-import org.jlab.io.task.IDataEventListener;
+import org.jlab.io.hipo3.Hipo3DataEvent;
+import org.jlab.io.hipo3.Hipo3DataSource;
+//import org.jlab.io.task.DataSourceProcessorPane;
+//import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
 import org.jlab.elog.LogEntry; 
         
-/**
- *
+/*
  * @author lcsmith
  */
 
@@ -153,7 +155,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECt("ECt"); 
         }
     }
     
@@ -405,22 +407,32 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     @Override
     public void dataEventAction(DataEvent event) {
 		
-        HipoDataEvent hipo = null;
-        
+        Hipo3DataEvent hipo3 = null;
+        HipoDataEvent   hipo = null;
+                
         if(event!=null ){
             if(event instanceof EvioDataEvent){
-             	hipo = (HipoDataEvent) clasDecoder.getDataEvent(event);
+             	if(processorPane.isHipo3Event)  hipo3 = (Hipo3DataEvent) clasDecoder.getDataEvent(event);
+             	if(!processorPane.isHipo3Event) hipo  = (HipoDataEvent)  clasDecoder.getDataEvent(event);
                 DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
                 DataBank  trigger = clasDecoder.createTriggerBank(hipo);
                 hipo.appendBanks(header);
                 hipo.appendBank(trigger);
             } 
             else {
-                hipo = (HipoDataEvent) event;    
+                if( processorPane.isHipo3Event) hipo3 = (Hipo3DataEvent) event;    
+                if(!processorPane.isHipo3Event) hipo  = (HipoDataEvent) event;    
             }
             
-            int rNum = getRunNumber(hipo);
-            int eNum = getEventNumber(hipo);
+            int rNum = 0; int eNum = 0;
+            
+            if(processorPane.isHipo3Event) {
+                rNum = getRunNumber(hipo3);
+                eNum = getEventNumber(hipo3);
+            } else {
+                rNum = getRunNumber(hipo);
+                eNum = getEventNumber(hipo);               
+            }
            
             if(rNum!=0 && this.runNumber!=rNum && clear) {  
             	System.out.println("Processing Run "+rNum);
@@ -454,7 +466,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     private void readFiles() {
         EvioSource     evioReader = new EvioSource();
-        HipoDataSource hipoReader = new HipoDataSource();
+        Hipo3DataSource hipoReader = new Hipo3DataSource();
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setDialogTitle("Choose input files directory...");
         fc.setMultiSelectionEnabled(true);

@@ -22,7 +22,8 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioETSource;
 import org.jlab.io.evio.EvioSource;
-import org.jlab.io.hipo3.HipoDataSource;
+import org.jlab.io.hipo3.Hipo3DataSource;
+import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.hipo.HipoRingSource;
 import org.jlab.io.ui.ConnectionDialog;
 import org.jlab.io.ui.DialogUtilities;
@@ -49,7 +50,8 @@ public class DataSourceProcessorPane extends JPanel implements ActionListener {
     private JButton              sourceFile    = null;
     private JButton              sourceEt      = null;
     private int                  eventDelay    = 0;
-    private Color paneBackground        = Color.GRAY;
+    private Color paneBackground               = Color.GRAY;
+    public boolean               isHipo3Event  = false;          
         
     public DataSourceProcessorPane(){
         super();
@@ -300,12 +302,38 @@ public class DataSourceProcessorPane extends JPanel implements ActionListener {
             this.setDataFile(null);
         }
         
-        if(e.getActionCommand().compareTo("OpenFileHipo")==0){
+        if(e.getActionCommand().compareTo("OpenFileHipo3")==0){
             if(this.processTimer!=null){
                 this.processTimer.cancel();
                 this.processTimer = null;
             }
+            isHipo3Event = true;
+            JFileChooser fc = new JFileChooser();
+            fc.setCurrentDirectory(null);
+            int returnVal = fc.showOpenDialog(this);
             
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                String fileName = fc.getSelectedFile().getAbsolutePath();
+                System.out.println("file -> " + fileName);
+                Hipo3DataSource source = new Hipo3DataSource();
+                source.open(fileName);
+
+                //This is where a real application would open the file.
+                this.dataProcessor.setSource(source);
+                statusLabel.setText(dataProcessor.getStatusString());
+                mediaNext.setEnabled(true);
+                mediaPrev.setEnabled(true);
+                mediaPlay.setEnabled(true);
+                this.setDataFile(fileName);
+            }
+        }
+        
+        if(e.getActionCommand().compareTo("OpenFileHipo4")==0){
+            if(this.processTimer!=null){
+                this.processTimer.cancel();
+                this.processTimer = null;
+            }
+            isHipo3Event = false;
             JFileChooser fc = new JFileChooser();
             fc.setCurrentDirectory(null);
             int returnVal = fc.showOpenDialog(this);
@@ -323,10 +351,9 @@ public class DataSourceProcessorPane extends JPanel implements ActionListener {
                 mediaPrev.setEnabled(true);
                 mediaPlay.setEnabled(true);
                 this.setDataFile(fileName);
-            } else {
-                
             }
         }
+        
     }
     
     private void startProcessorTimer(){

@@ -9,7 +9,8 @@ import org.jlab.io.base.DataEventType;
 import org.jlab.io.base.DataSource;
 import org.jlab.io.base.DataSourceType;
 import org.jlab.io.evio.EvioSource;
-import org.jlab.io.hipo.HipoDataSource;
+//import org.jlab.io.hipo.HipoDataSource;
+import org.jlab.io.hipo3.Hipo3DataSource;
 
 /**
  *
@@ -75,7 +76,7 @@ public class DataSourceProcessor {
     
     public void openFile(String file){
         if(file.endsWith(".hipo")==true){
-            HipoDataSource  reader = new HipoDataSource();
+            Hipo3DataSource  reader = new Hipo3DataSource();
             reader.open(file);
             this.setSource(reader);
             return;
