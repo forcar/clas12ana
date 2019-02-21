@@ -1,22 +1,18 @@
 package org.clas.viewer;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -33,16 +29,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextPane;
-import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
@@ -52,27 +42,23 @@ import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
 import org.clas.io.DataSourceProcessorPane;
 import org.clas.io.IDataEventListener;
+
 import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorEventDecoder;
 import org.jlab.detector.view.DetectorListener;
-import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.detector.view.DetectorShape2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.TDirectory;
-import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioSource;
-import org.jlab.io.hipo.HipoDataEvent;
-import org.jlab.io.hipo3.Hipo3DataEvent;
+import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.hipo3.Hipo3DataSource;
 //import org.jlab.io.task.DataSourceProcessorPane;
 //import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
-import org.jlab.elog.LogEntry; 
         
 /*
  * @author lcsmith
@@ -283,12 +269,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
 		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks = dropBanks; 
-		                                           this.monitors[k].dropSummary=dropSummary; 
-		                                           this.monitors[k].dumpGraphs=dumpGraphs;
-		                                           this.monitors[k].autoSave=autoSave;
-                                                   this.monitors[k].fitEnable=fitEnable;
-                                                   this.monitors[k].fitVerbose=fitVerbose;
+		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
+		                                           this.monitors[k].dropSummary = dropSummary; 
+		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
+		                                           this.monitors[k].autoSave    = autoSave;
+                                                   this.monitors[k].fitEnable   = fitEnable;
+                                                   this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);}
     }  
@@ -406,33 +392,20 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
     @Override
     public void dataEventAction(DataEvent event) {
-		
-        Hipo3DataEvent hipo3 = null;
-        HipoDataEvent   hipo = null;
                 
         if(event!=null ){
             if(event instanceof EvioDataEvent){
-             	if(processorPane.isHipo3Event)  hipo3 = (Hipo3DataEvent) clasDecoder.getDataEvent(event);
-             	if(!processorPane.isHipo3Event) hipo  = (HipoDataEvent)  clasDecoder.getDataEvent(event);
-                DataBank   header = clasDecoder.createHeaderBank(hipo, this.ccdbRunNumber, 0, (float) 0, (float) 0);
-                DataBank  trigger = clasDecoder.createTriggerBank(hipo);
-                hipo.appendBanks(header);
-                hipo.appendBank(trigger);
+             	event = clasDecoder.getDataEvent(event);
+                DataBank   header = clasDecoder.createHeaderBank(event, this.ccdbRunNumber, 0, (float) 0, (float) 0);
+                DataBank  trigger = clasDecoder.createTriggerBank(event);
+                event.appendBanks(header);
+                event.appendBank(trigger);
             } 
-            else {
-                if( processorPane.isHipo3Event) hipo3 = (Hipo3DataEvent) event;    
-                if(!processorPane.isHipo3Event) hipo  = (HipoDataEvent) event;    
-            }
             
             int rNum = 0; int eNum = 0;
             
-            if(processorPane.isHipo3Event) {
-                rNum = getRunNumber(hipo3);
-                eNum = getEventNumber(hipo3);
-            } else {
-                rNum = getRunNumber(hipo);
-                eNum = getEventNumber(hipo);               
-            }
+            rNum = getRunNumber(event);
+            eNum = getEventNumber(event);
            
             if(rNum!=0 && this.runNumber!=rNum && clear) {  
             	System.out.println("Processing Run "+rNum);
@@ -457,16 +430,17 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             
             for(int k=0; k<this.monitors.length; k++) {
             	this.monitors[k].setEventNumber(this.eventNumber);
-            	this.monitors[k].setTriggerPhase(getTriggerPhase(hipo));
-                this.monitors[k].setTriggerWord(getTriggerWord(hipo));        	    
-                this.monitors[k].dataEventAction(hipo);
+            	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
+                this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
+                this.monitors[k].dataEventAction(event);
             }      
 	    }
     }
     
     private void readFiles() {
         EvioSource     evioReader = new EvioSource();
-        Hipo3DataSource hipoReader = new Hipo3DataSource();
+        Hipo3DataSource hipo3Reader = new Hipo3DataSource();
+        HipoDataSource   hipoReader = new HipoDataSource();
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setDialogTitle("Choose input files directory...");
         fc.setMultiSelectionEnabled(true);
@@ -479,11 +453,16 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                         Integer current = 0;
                         Integer nevents = 0;
                         DataEvent event = null;
-                        if(fd.getName().contains(".hipo")) {
+                        if(fd.getName().contains(".hipo3")) {
+                            hipo3Reader.open(fd);
+                            current = hipo3Reader.getCurrentIndex();
+                            nevents = hipo3Reader.getSize();                            
+                        }
+                        else if(fd.getName().contains(".hipo")) {
                             hipoReader.open(fd);
                             current = hipoReader.getCurrentIndex();
-                            nevents = hipoReader.getSize();                            
-                        }
+                            nevents = hipoReader.getSize();
+                        }                        
                         else if(fd.getName().contains(".evio")) {
                             evioReader.open(fd);
                             current = evioReader.getCurrentIndex();
@@ -493,9 +472,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                         System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());                        
 
                         for (int k = 0; k < nevents; k++) {
-                            if(fd.getName().contains(".hipo")) {
-                                if (hipoReader.hasEvent()) {
-                                    event = hipoReader.getNextEvent();                          
+                            if(fd.getName().contains(".hipo3")) {
+                                if (hipo3Reader.hasEvent()) {
+                                    event = hipo3Reader.getNextEvent();                          
+                                }
+                            }
+                            else if(fd.getName().contains(".hipo")) {
+                                if (evioReader.hasEvent()) {
+                                    event = evioReader.getNextEvent();
                                 }
                             }
                             else if(fd.getName().contains(".evio")) {
