@@ -40,7 +40,7 @@ import org.jlab.utils.groups.IndexedTable;
 public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, offset=null, goffset=null, gain=null, veff=null;
+    IndexedTable time=null, gtw=null, fo=null, fgo=null, tgo=null, gain=null, veff=null;
 
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -56,6 +56,7 @@ public class ECt extends DetectorMonitor {
     Boolean     isMC = false;
     
 //  static float TOFFSET = 436; 
+   
     static float   FTOFFSET = 0;
     static float    TOFFSET = 0;
     static float  TOFFSETMC = 180;
@@ -305,8 +306,10 @@ public class ECt extends DetectorMonitor {
         gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
         time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
         veff    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/effective_velocity");
-        offset  = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");
-        goffset = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset");    	
+        fo      = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");
+        fgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset");
+        tgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tdc_global_offset");  
+        gtw     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/global_time_walk"); 
     }
     
     @Override
@@ -320,8 +323,10 @@ public class ECt extends DetectorMonitor {
     
     public void processRaw(DataEvent event) { //To cross-check ECengine for consistency
     	
- 	   int run = getRunNumber();
-       FTOFFSET = (float) goffset.getDoubleValue("global_offset",0,0,0);
+ 	   int  run = getRunNumber();
+ 	   
+       FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0);
+        TOFFSET = (float) tgo.getDoubleValue("offset", 0,0,0); 
         
        tdcs.clear();
        
@@ -352,7 +357,7 @@ public class ECt extends DetectorMonitor {
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);
                int adc = Math.abs(bank.getInt("ADC",i));
-               float t = bank.getFloat("time",i) + (float) offset.getDoubleValue("offset",is,il,0);  // FADC-TDC offset (sector, UVW layer)              
+               float t = bank.getFloat("time",i) + (float) fo.getDoubleValue("offset",is,il,0);  // FADC-TDC offset (sector, UVW layer)              
                
                float tmax = 1000; float tdcm = 1000;
                
@@ -502,7 +507,7 @@ public class ECt extends DetectorMonitor {
                 	   
                        float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c);
                	   
-                	   float vcorr = Tvertex - phase;
+                	   float vcorr = Tvertex - phase + TOFFSET + TVOffset;
                 	   float pcorr = path/vel;
                 	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
                        float tdif  = tu  - vcorr;

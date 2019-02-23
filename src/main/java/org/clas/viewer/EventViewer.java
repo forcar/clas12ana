@@ -81,6 +81,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
        
     private int   canvasUpdateTime = 2000;
+    private int           TVOffset = 0;
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 0;
     private int        eventNumber = 0;
@@ -174,7 +175,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf1 = new JCheckBoxMenuItem("Verbose");       cf1.addItemListener(this);       menu.add(cf1);
         menuBar.add(menu);
               
-        menu     = new JMenu("Settings");              
+        menu     = new JMenu("Settings");       
+        menuItem = new JMenuItem("Set TVOffset");                menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Set global z-axis log scale"); menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Set global z-axis lin scale"); menuItem.addActionListener(this); menu.add(menuItem);
@@ -286,6 +288,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Analyze Data"):                this.readFiles(); break;
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
+          case("Set TVOffset"):                this.chooseTVOffset(); break;
           case("Set global z-axis log scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true); break;
           case("Set global z-axis lin scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
@@ -338,7 +341,25 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }
         }
     }
-        
+    public void chooseTVOffset() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "Time Vertex Offset (ns)",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            int time = 0;
+            try { 
+                time= Integer.parseInt(s);
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setTVOffset(time);
+        }
+    }        
     private JLabel getImage(String path,double scale) {
         JLabel label = null;
         Image image = null;
@@ -614,6 +635,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         this.canvasUpdateTime = time;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setCanvasUpdate(time);
+        }
+    }
+    
+    public void setTVOffset(int time) {
+        System.out.println("Setting Tvertex offset " + time + " ns");
+        this.TVOffset = time;
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setTVOffset(time);
         }
     }
 

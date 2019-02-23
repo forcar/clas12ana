@@ -178,6 +178,7 @@ public class DetectorMonitor implements ActionListener {
     
     public CalibrationConstants    calib = null;
     public int[]                  detcal = {0,0,0};
+    public float                TVOffset = 0;
 
     int ntimer = 0;
     
@@ -681,6 +682,10 @@ public class DetectorMonitor implements ActionListener {
         for(int tab=0; tab<detectorTabNames.size(); tab++) {
             detectorCanvas.getCanvas(detectorTabNames.get(tab)).initTimer(time);
         }
+    }
+    
+    public void setTVOffset(int time) {
+    	TVOffset = time;
     }
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
