@@ -100,7 +100,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                            usePC = false;
     private Boolean                           usePID = false;
     private Boolean                        stopBlink = true;
-    Timer timer = null;
+    Timer                                      timer = null;
     
     public JRadioButton bEL,bPI,bPH,bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
@@ -162,7 +162,10 @@ public class DetectorMonitor implements ActionListener {
     public Boolean     dropBanks = false;
     public Boolean   dropSummary = false; 
     public Boolean    dumpGraphs = false; 
-    public Boolean     fitEnable = false; 
+    public Boolean    cfitEnable = false; 
+    public Boolean    dfitEnable = false; 
+    public Boolean   gdfitEnable = false; 
+    public Boolean    sfitEnable = false; 
     public Boolean    fitVerbose = false; 
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
@@ -239,6 +242,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initGStyle() {
+
         GStyle.getAxisAttributesX().setTitleFontSize(14);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
         GStyle.getAxisAttributesY().setTitleFontSize(14);
@@ -746,6 +750,14 @@ public class DetectorMonitor implements ActionListener {
     public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
     }
         
+    public void GraphPlot(GraphErrors graph, EmbeddedCanvas c, int zone, float xmin, float xmax, float ymin, float ymax, int mcol, int msiz, int msty, String xtit, String ytit, String opt) {
+    	c.cd(zone); c.getPad(zone).getAxisX().setRange(xmin, xmax); c.getPad(zone).getAxisY().setRange(ymin, ymax); 
+    	graph.setMarkerColor(mcol); graph.setMarkerSize(msiz); graph.setMarkerStyle(msty); graph.setLineColor(mcol);
+    	if(!(xtit=="")) graph.setTitleX(xtit); 
+    	if(!(ytit=="")) graph.setTitleY(ytit); 
+    	c.draw(graph,opt);
+    }
+        
     public void dumpGraph(String filename, GraphErrors graph) {
     	PrintWriter writer = null;
 		try 
@@ -841,7 +853,16 @@ public class DetectorMonitor implements ActionListener {
     	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,0,0,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
         fd.doFit = true; 
-        fd.fitGraph("",fitEnable,fitVerbose); 
+        fd.fitGraph("",cfitEnable,fitVerbose); 
+        return fd;
+     }
+    
+    public FitData fitEngine(GraphErrors g, int ff, double pmin, double pmax, double fmin, double fmax ) {
+        FitData fd = new FitData(g);        
+    	if(g.getDataSize(0)==0) return fd;
+        fd.initFit(ff,pmin,pmax,fmin,fmax); 
+        fd.doFit = true; 
+        fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      }
 
@@ -852,7 +873,7 @@ public class DetectorMonitor implements ActionListener {
        fd.graph.getAttributes().setTitleX(h.getTitleX()); 
        fd.hist.getAttributes().setTitleX(h.getTitleX()); 
        fd.initFit(ff,pmin,pmax,fmin,fmax); 
-       fd.fitGraph("",fitEnable,fitVerbose); 
+       fd.fitGraph("",cfitEnable,fitVerbose); 
        return fd;
     }
     
@@ -864,7 +885,7 @@ public class DetectorMonitor implements ActionListener {
         fd.hist.getAttributes().setTitleX(h.getTitleX()); 
         fd.setSigmas(sig1,sig2);
         fd.initFit(ff,pmin,pmax,fmin,fmax); 
-        fd.fitGraph("",fitEnable,fitVerbose); 
+        fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      }
         
@@ -957,6 +978,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void drawGroup(EmbeddedCanvas c, DataGroup group) {
+    	if(group==null) return;
         int nrows = group.getRows();
         int ncols = group.getColumns();
         c.divide(ncols, nrows); 	    

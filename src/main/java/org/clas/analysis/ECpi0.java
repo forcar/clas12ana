@@ -14,6 +14,7 @@ import org.jlab.clas.detector.CalorimeterResponse;
 import org.jlab.clas.detector.DetectorResponse;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Point3D;
+import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -180,7 +181,7 @@ public class ECpi0 extends DetectorMonitor{
     public void createUVWHistos(int k, int n, int nch, double x1, double x2, String txt) {
     	
 	   int run = getRunNumber();
-   
+       GStyle.getH1FAttributes().setOptStat("1000000");
        for (int is=1; is<7; is++) {
            String tag = is+"_"+n+"_"+k+"_"+run;
            dg = new DataGroup(3,3);
@@ -221,6 +222,7 @@ public class ECpi0 extends DetectorMonitor{
     	
 	    int run = getRunNumber();
         dg = new DataGroup(3,2);
+        GStyle.getH1FAttributes().setOptStat("1000000");
         
         for (int is=1; is<7; is++) {
             String tag = var+"_"+is+"_"+k+"_"+run;
@@ -587,7 +589,7 @@ public class ECpi0 extends DetectorMonitor{
         for (int is=1; is<7; is++) {
         	g=tl.fitData.getItem(is,0,0,getRunNumber()).getGraph();
             c.cd(is-1); c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
-            tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1110");
+            tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1100");
             c.draw(tl.fitData.getItem(is,0,0,getRunNumber()).getHist());
             c.draw(g,"same");
             DataLine line = new DataLine(mpi0,0.,mpi0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 
