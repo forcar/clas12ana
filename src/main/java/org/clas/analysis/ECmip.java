@@ -68,7 +68,8 @@ public class ECmip extends DetectorMonitor {
                                  "PathIJ",
                                  "PIXEL",
                                  "Timeline",
-                                 "ATT");
+                                 "ATT",
+                                 "MIPvP");
         
         this.usePCCheckBox(true);
         this.useSectorButtons(true);
@@ -110,6 +111,7 @@ public class ECmip extends DetectorMonitor {
 //	     createPathHistos(9);
 	     createPixHistos(10);	
 	     createUVWHistos(12,25,0.,2.," MIP ");
+	     createMIPvPHistos(13);
      }
      
      @Override       
@@ -127,7 +129,8 @@ public class ECmip extends DetectorMonitor {
     	 plotMIP(7);
 //    	 plotPathSummary(9,getActivePC()==1?getActiveView()+1:0);
 //    	 plotPathSummary(10,0);
-    	 plotUVW(12);    	 
+    	 plotUVW(12);    
+    	 plotPIDSummary(13);
      }
      
      public void plotAnalysis(int run) {
@@ -373,20 +376,39 @@ public class ECmip extends DetectorMonitor {
         
         F1D f1 = new F1D("f_1"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f1.setParameter(0,0.13957); f1.setLineColor(1); f1.setLineStyle(1);   
         F1D f2 = new F1D("f_2"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f2.setParameter(0,0.93827); f2.setLineColor(1); f2.setLineStyle(1);   
-        h = new H2F("pid_pos_"+tag,"pid_pos_"+tag,100,0.,3.5,100,0.4,1.1);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_pos_"+tag,"pid_pos_"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 0); dg.addDataSet(f1,0); dg.addDataSet(f2,0); 
-        h = new H2F("pid_neg_"+tag,"pid_neg_"+tag,100,0.,3.5,100,0.4,1.1);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_neg_"+tag,"pid_neg_"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 1); dg.addDataSet(f1,1); 
-        h = new H2F("pid_fc_pos_"+tag,"pid_fc_pos_"+tag,100,0.,3.5,100,0.4,1.1); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_fc_pos_"+tag,"pid_fc_pos_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 2); dg.addDataSet(f1,2); dg.addDataSet(f2,2); 
-        h = new H2F("pid_fc_neg_"+tag,"pid_fc_neg_"+tag,100,0.,3.5,100,0.4,1.1); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_fc_neg_"+tag,"pid_fc_neg_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 3); dg.addDataSet(f1,3); 
-        h = new H2F("pid_fc_ppi_"+tag,"pid_fc_ppi_"+tag,100,0.,3.5,100,0.4,1.1); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_fc_ppi_"+tag,"pid_fc_ppi_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 4); dg.addDataSet(f1,4); dg.addDataSet(f2,4); 
-        h = new H2F("pid_fc_npi_"+tag,"pid_fc_npi_"+tag,100,0.,3.5,100,0.4,1.1); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid_fc_npi_"+tag,"pid_fc_npi_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 5); dg.addDataSet(f1,5); 
         
         this.getDataGroup().add(dg,is,0,k,run);
+    }
+    
+    public void createMIPvPHistos(int k) {
+ 	    int run = getRunNumber();
+        
+        dg = new DataGroup(3,4); 
+        for (int is=1; is<7; is++) {
+            String tag = is+"_"+k+"_"+run;
+            h = new H2F("hi_pcal_dedx_pm"+tag,"hi_pcal_dedx_pm"+tag,50,0.3,6.,30,0.5,2);
+            h.setTitleX("Sector "+is+" P (GeV)");
+            h.setTitleY("MEAN/MIP");
+            dg.addDataSet(h, is-1);   
+            h = new H2F("hi_pcal_dedx_pp"+tag,"hi_pcal_dedx_pp"+tag,100,0.3,6.,30,0.5,2);
+            h.setTitleX("Sector "+is+" P (GeV)");
+            h.setTitleY("MEAN/MIP");
+            dg.addDataSet(h, is+5);   
+         }
+        this.getDataGroup().add(dg,0,0,k,run); 
+        
     }
     
     
@@ -407,46 +429,58 @@ public class ECmip extends DetectorMonitor {
 
        Boolean goodPC,goodECi,goodECo;       
        DataBank bank1 = null;
-       int nrows = 0;
+       int nrows = 0, trigger=0;
+       double startTime = -1000;
        Boolean goodEvt  = false, goodRows = false;
     	   
 	   int run = getRunNumber();
 	   
 	   if(dropBanks) dropBanks(event);
 	   
-       if (event.hasBank("REC::Particle")) {
+       if (event.hasBank("REC::Particle")&&event.hasBank("REC::Event")) {
     	    isMuon = false;
-            DataBank bank = event.getBank("REC::Particle");
-            for(int loop = 0; loop < bank.rows(); loop++){
-            	    if(bank.getInt("pid",loop)!=0) {
-                    Particle p = new Particle(bank.getInt("pid", loop),
-                                              bank.getFloat("px", loop),
-                                              bank.getFloat("py", loop),
-                                              bank.getFloat("pz", loop),
-                                              bank.getFloat("vx", loop),
-                                              bank.getFloat("vy", loop),
-                                              bank.getFloat("vz", loop));
-                    p.setProperty("beta",     bank.getFloat("beta", loop));
-                    part.add(loop,p);
-            	    }
+            DataBank recPart = event.getBank("REC::Particle");
+            DataBank recEven = event.getBank("REC::Event");
+            startTime = recEven.getFloat("STTime", 0);
+            if(startTime > -100) {
+                for(int i = 0; i < recPart.rows(); i++){
+                    int      pid = recPart.getInt("pid", i);              
+                    float     px = recPart.getFloat("px", i);
+                    float     py = recPart.getFloat("py", i);
+                    float     pz = recPart.getFloat("pz", i);
+                    float     vx = recPart.getFloat("vx", i);
+                    float     vy = recPart.getFloat("vy", i);
+                    float     vz = recPart.getFloat("vz", i);
+                    float   beta = recPart.getFloat("beta", i);
+                    short status = recPart.getShort("status", i);
+                    if(i==0) trigger = pid;
+                    if (pid!=0) {
+                        Particle p = new Particle(pid,px,py,pz,vx,vy,vz);
+                        p.setProperty("status", status);
+                        p.setProperty("beta", beta);
+                        part.add(i,p);     
+                    }
+                }
             } 
         }
-       
+            
        for (Particle p: part) {
-    	       if (p.charge()!=0) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
+           if (p.pid()!=11 && p.pid()!=0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+              ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
+           }
        }
        
        Boolean goodREC  = event.hasBank("REC::Calorimeter");
        Boolean goodECAL = event.hasBank("ECAL::clusters")&&event.hasBank("ECAL::calib");
        
-       if( isMuon)  goodEvt = goodECAL;
+       if( isMuon)                     goodEvt = goodECAL;
        if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = event.getBank("REC::Calorimeter");}
        
        if (goodEvt) {
            DataBank bank2 = event.getBank("ECAL::clusters"); 
            DataBank bank3 = event.getBank("ECAL::calib");
            
-           if ( isMuon) {goodRows = true; nrows = bank2.rows();}
+           if ( isMuon) {goodRows = true;                                                   nrows = bank2.rows();}
            if (!isMuon) {goodRows = bank1.rows()==bank2.rows()&&bank1.rows()==bank3.rows(); nrows = bank1.rows();}
            
            int[] n1 = new int[6]; int[] n4 = new int[6]; int[] n7 = new int[6];
@@ -463,12 +497,12 @@ public class ECmip extends DetectorMonitor {
            float[][][] cV = new float[6][3][20];
            float[][][] cW = new float[6][3][20];
            
-           if(goodRows) {
+           if(goodRows) { //When re-running ECEngine this may not always be true
            
-           for(int loop = 0; loop < nrows; loop++){
+           for(int loop = 0; loop < nrows; loop++){ //loop over REC::calorimeter (!isMuon) or ECAL::cluster (isMuon)
         	   int ic=0, is=0, il=0;
 	           if (!isMuon) {ic = bank1.getShort("index",  loop); is = bank1.getByte("sector",loop); il = bank1.getByte("layer",loop);}
-	           if ( isMuon) {ic =loop; is = bank2.getByte("sector",loop); il = bank2.getByte("layer",loop);}          
+	           if ( isMuon) {ic = loop;                           is = bank2.getByte("sector",loop); il = bank2.getByte("layer",loop);}          
 	           float   en = bank2.getFloat("energy",ic)*1000;
                float   ti = bank2.getFloat("time",ic)*1000;
                float    x = bank2.getFloat("x", ic);
@@ -485,37 +519,42 @@ public class ECmip extends DetectorMonitor {
                float  enw = bank3.getFloat("recEW", ic)*1000;   
                
                float wsum = wu+wv+ww;
-               Particle p = new Particle(); 
                float pm = -100, pp = -100;
                
-               if(!isMuon) {
-    	       int     ip = bank1.getShort("pindex", loop);
-               p.copy(part.get(ip));
-               p.setProperty("beta",part.get(ip).getProperty("beta"));
-               p.setProperty("energy",en);
-    	       p.setProperty("time",ti);
-    	       p.setProperty("x",x);
-    	       p.setProperty("y",y);
-    	       p.setProperty("z",z);
-               p.setProperty("iU",iU);
-               p.setProperty("iV",iV);
-               p.setProperty("iW",iW);
-               p.setProperty("enu",enu);
-               p.setProperty("env",env);
-               p.setProperty("enw",enw);
+               Particle p = new Particle(); 
                
-               if (p.charge()>0) {pp = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pp,p.getProperty("beta"));}
-               if (p.charge()<0) {pm = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));} 
+               if(!isMuon) { //PID diagnostics
+    	         int     ip = bank1.getShort("pindex", loop);
+                 p.copy(part.get(ip));
+                 p.setProperty("beta",part.get(ip).getProperty("beta"));
+                 p.setProperty("status",part.get(ip).getProperty("status"));
+                 if (p.pid()!=11 && p.pid()!=0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+                   p.setProperty("energy",en);
+    	           p.setProperty("time",ti);
+    	           p.setProperty("x",x);
+    	           p.setProperty("y",y);
+    	           p.setProperty("z",z);
+                   p.setProperty("iU",iU);
+                   p.setProperty("iV",iV);
+                   p.setProperty("iW",iW);
+                   p.setProperty("enu",enu);
+                   p.setProperty("env",env);
+                   p.setProperty("enw",enw);
+                                
+                   if (p.charge()>0) {pp = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pp,p.getProperty("beta"));}
+                   if (p.charge()<0) {pm = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));} 
                
-               if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pp,p.getProperty("beta"));
-               if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
+                   if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pp,p.getProperty("beta"));
+                   if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
+                 
+                   if (!ecpart.hasItem(is,il)) ecpart.add(new ArrayList<Particle>(), is,il);    	                
+ 	                    ecpart.getItem(is,il).add(p);  
+                 }
                }
                
-               Boolean goodPID = isMuon ? true:Math.abs(p.pid())==211;
-   	           
-               if (!ecpart.hasItem(is,il)) ecpart.add(new ArrayList<Particle>(), is,il);    	                
-    	            ecpart.getItem(is,il).add(p);    	   
-               
+//               Boolean goodPID = isMuon ? true:(Math.abs(p.pid())==211&&p.getProperty("status")>=2000);
+               Boolean goodPID = isMuon ? true:(Math.abs(p.pid())==211 && p.getProperty("status")>=2000);
+   	                         
                Vector3 r = new Vector3(x,y,z);
                
                goodPC = goodPID&&il==1&&n1[is-1]<20;  goodECi = goodPID&&il==4&&n4[is-1]<20;  goodECo = goodPID&&il==7&&n7[is-1]<20; 
@@ -629,7 +668,10 @@ public class ECmip extends DetectorMonitor {
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(0).get(0)).fill(p1p[is][0][n],u);
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(1).get(0)).fill(p1p[is][1][n],v);
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(2).get(0)).fill(p1p[is][2][n],w); 
-                		
+                	
+                	((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is).get(0)).fill(p1c[is][n],ec/mipc[0]); 
+                	((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is+6).get(0)).fill(p1p[is][0][n],ec/mipc[0]); 
+               		
                 	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),ec<mxc[0]?mipc[0]:0);
                     ((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),ec<mxc[0]?ec:0); 
                 	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(0).get(0)).fill(-rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),epu<mxp[0]?mipp[0]:0);
@@ -662,7 +704,10 @@ public class ECmip extends DetectorMonitor {
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(3).get(0)).fill(p4p[is][0][n],u);
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(4).get(0)).fill(p4p[is][1][n],v);
                 	((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(5).get(0)).fill(p4p[is][2][n],w);
-                    
+                	
+//                	((H2F) this.getDataGroup().getItem(iis,2,13,run).getData(1).get(0)).fill(p4c[is][n],ec/mipc[1]); 
+//                	((H2F) this.getDataGroup().getItem(iis,1,13,run).getData(1).get(0)).fill(p4p[is][0][n],ec/mipc[1]); 
+                   
                 	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),ec<mxc[1]?mipc[1]:0);
                 	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(1).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),ec<mxc[1]?ec:0); 
                 	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(3).get(0)).fill(-rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),epu<mxp[1]?mipp[1]:0);
@@ -695,6 +740,9 @@ public class ECmip extends DetectorMonitor {
             		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(6).get(0)).fill(p7p[is][0][n],u);
             		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(7).get(0)).fill(p7p[is][1][n],v);
             		((H2F) this.getDataGroup().getItem(iis,1,7,run).getData(8).get(0)).fill(p7p[is][2][n],w);
+            		
+//                	((H2F) this.getDataGroup().getItem(iis,2,13,run).getData(2).get(0)).fill(p7c[is][n],ec/mipc[2]); 
+//                	((H2F) this.getDataGroup().getItem(iis,1,13,run).getData(2).get(0)).fill(p7p[is][0][n],ec/mipc[2]); 
                     
                 	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?mipc[2]:0);
                 	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?ec:0); 
