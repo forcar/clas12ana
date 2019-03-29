@@ -29,7 +29,8 @@ public class FitData {
 	public int integral;
 	public int intmin=30;
 	public int fitcol=4;
-	public String optstat="1100";
+	public String g_optstat="1100";
+	public String h_optstat="1000000";
 	public Boolean doFit = false;
 	
 	String predefFunctionsF1D[] = {"[amp]*gaus(x,[mean],[sigma])", "[amp]*gaus(x,[mean],[sigma])+[p0]",
@@ -44,12 +45,13 @@ public class FitData {
 
 	public void setGraph(GraphErrors graph) {
 	    this.graph = graph;
+	    this.graph.getAttributes().setOptStat(g_optstat);
 	}
 	
 	public void setHist(H1F hist) {
 		this.hist = hist;
 		this.hist.setLineWidth(1);
-		this.hist.setOptStat("100");
+		this.hist.setOptStat(h_optstat);
 		this.hist.setTitle("");
 	}
 	
@@ -83,7 +85,6 @@ public class FitData {
 		this.func = func;
 	    this.pmin = pmin; this.fmin=fmin;
 	    this.pmax = pmax; this.fmax=fmax;
-	    optstat = "110";
 	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax)); 
 	    graph.getFunction().setLineWidth(1);
 	    if(func<5) {
@@ -98,7 +99,7 @@ public class FitData {
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
 	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ; graph.getFunction().setRange(fmin, fmax);}
-	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);optstat="1110";}
+	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
 	}
 	
 	public void initFunc(int par, double val) {
@@ -125,7 +126,7 @@ public class FitData {
 	      sigmae = graph.getFunction().parameter(2).error();  
 	    }
 	    graph.getFunction().setLineColor(fitcol);
-	    graph.getFunction().setOptStat(opt=="Q"?"0":optstat);
+	    graph.getFunction().setOptStat(opt=="Q"?"0":g_optstat);
 	}
 
 	public void plotGraph(EmbeddedCanvas c, int col) {
