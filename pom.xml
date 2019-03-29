@@ -9,7 +9,7 @@
       <dependency>
         <groupId>org.jlab.coat</groupId>
         <artifactId>coat-libs</artifactId>
-        <version>5.7.7-SNAPSHOT</version>
+        <version>5.7.8-SNAPSHOT</version>
          <type>jar</type>
       </dependency>
     <dependency>
