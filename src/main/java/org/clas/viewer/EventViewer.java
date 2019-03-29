@@ -71,7 +71,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;
     DataSourceProcessorPane   processorPane = null;
     JCheckBoxMenuItem   co0,co1,co2,co3,co4 = null;   
-    JCheckBoxMenuItem               cf0,cf1 = null;   
+    JCheckBoxMenuItem    cf,cf0,cf1,cf2,cf3 = null;   
     JCheckBoxMenuItem                   ctr = null;  
     JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
     
@@ -99,7 +99,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   dropBanks = false;
     public Boolean dropSummary = false;
     public Boolean  dumpGraphs = false;
-    public Boolean   fitEnable = false;
+    public Boolean  cfitEnable = false;
+    public Boolean  sfitEnable = false;
+    public Boolean  dfitEnable = false;
+    public Boolean gdfitEnable = false;
     public Boolean  fitVerbose = false;
     public String       TLname = "UVW";
     public Boolean      TLflag = false;
@@ -142,7 +145,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECt("ECt"); 
+    		monitors[n] = new ECsf("ECsf"); 
         }
     }
     
@@ -171,8 +174,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
         
         menu     = new JMenu("Fitting");
-        cf0 = new JCheckBoxMenuItem("Enable");        cf0.addItemListener(this);       menu.add(cf0); cf0.doClick();
-        cf1 = new JCheckBoxMenuItem("Verbose");       cf1.addItemListener(this);       menu.add(cf1);
+        cf  = new JCheckBoxMenuItem("Verbose");        cf.addItemListener(this);       menu.add(cf);
+        cf0 = new JCheckBoxMenuItem("Calibration");   cf0.addItemListener(this);       menu.add(cf0);  
+        cf1 = new JCheckBoxMenuItem("Residual");      cf1.addItemListener(this);       menu.add(cf1);  
+        cf2 = new JCheckBoxMenuItem("TMF");           cf2.addItemListener(this);       menu.add(cf2);  
+        cf3 = new JCheckBoxMenuItem("GTMF");          cf3.addItemListener(this);       menu.add(cf3);
         menuBar.add(menu);
               
         menu     = new JMenu("Settings");       
@@ -265,8 +271,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co3)  dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==cf0)    fitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf1)   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf )   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf0)   cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf1)   sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf2)   dfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf3)  gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
@@ -275,7 +284,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
 		                                           this.monitors[k].autoSave    = autoSave;
-                                                   this.monitors[k].fitEnable   = fitEnable;
+                                                   this.monitors[k].cfitEnable  = cfitEnable;
+                                                   this.monitors[k].sfitEnable  = sfitEnable;
+                                                   this.monitors[k].dfitEnable  = dfitEnable;
+                                                   this.monitors[k].gdfitEnable = gdfitEnable;
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);}

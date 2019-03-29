@@ -40,7 +40,7 @@ import org.jlab.utils.groups.IndexedTable;
 public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, gtw=null, fo=null, fgo=null, tgo=null, gain=null, veff=null;
+    IndexedTable time=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null;
 
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -50,6 +50,9 @@ public class ECt extends DetectorMonitor {
     IndexedList<GraphErrors>  TDCSummary = new IndexedList<GraphErrors>(4);
     IndexedList<FitData>         TDCFits = new IndexedList<FitData>(4);
     Boolean                isAnalyzeDone = false;
+    Boolean               isResidualDone = false;
+    Boolean                    isTMFDone = false;
+    Boolean                   isGTMFDone = false;
     
     int trigger_sect = 0;
     int        phase = 0;
@@ -89,8 +92,10 @@ public class ECt extends DetectorMonitor {
                                  "LEFF v TIME",
                                  "LEFF v TTW",
                                  "LEFF v TVERT",
-                                 "TDIF",
-                                 "MISC",
+                                 "VTX",
+                                 "RESID",
+                                 "TMF",
+                                 "GTMF",
                                  "LTFITS",
                                  "TWFITS");
 
@@ -150,7 +155,7 @@ public class ECt extends DetectorMonitor {
         createUVWHistos(19,50,50,0,50,0,430,"T","LEFF ");
         createUVWHistos(20,50,50,0,50,0,430,"TTW","LEFF ");
         createUVWHistos(21,50,50,160,190,0,430,"TVERT","LEFF ");        
-        createMISCHistos(23,0,300,"Start Time","Counts");
+        createMISCHistos(22,0,300,"Start Time","Counts");
     }
 
     @Override        
@@ -178,8 +183,11 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(19);
     	    plotUVWHistos(20);
     	    plotUVWHistos(21);
-    	    if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(24);updateFITS(25);}
-    	    plotMISCHistos(23);
+    	    plotMISCHistos(22);
+    	    if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
+    	    if(isResidualDone) plotResidualSummary(23);
+    	    if(isTMFDone)      plotTMFSummary(24);
+    	    if(isGTMFDone)     plotGTMFSummary(25);
     }
     
     public void createMISCHistos(int k, int xmin, int xmax, String xtxt, String ytxt) {
@@ -306,10 +314,11 @@ public class ECt extends DetectorMonitor {
         gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
         time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
         veff    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/effective_velocity");
-        fo      = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");
-        fgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset");
-        tgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tdc_global_offset");  
-        gtw     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/global_time_walk"); 
+        fo      = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
+        fgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
+        tgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
+        gtw     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
+        tmf     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
     }
     
     @Override
@@ -357,27 +366,24 @@ public class ECt extends DetectorMonitor {
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);
                int adc = Math.abs(bank.getInt("ADC",i));
-               float t = bank.getFloat("time",i) + (float) fo.getDoubleValue("offset",is,il,0);  // FADC-TDC offset (sector, UVW layer)              
+               float t = bank.getFloat("time",i) + (float) tmf.getDoubleValue("offset",is,il,ip)  // FADC-TDC offset (sector, layer, PMT) 
+                                                 + (float)  fo.getDoubleValue("offset",is,il,0) ; // FADC-TDC offset (sector, layer)              
                
                float tmax = 1000; float tdcm = 1000;
                
                if (tdcs.hasItem(is,il,ip)) { // sector,layer,component FADC/TDC match
-                   for (float tdc : tdcs.getItem(is,il,ip)) {
-                	    float tdif = tdc-FTOFFSET-t;
+                 float radc = (float)Math.sqrt(adc);
+                 for (float tdc : tdcs.getItem(is,il,ip)) {
+                	    float tdif = tdc - tw[il-1]/radc - FTOFFSET - t;
              	      ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
-            	          if (Math.abs(tdif)<20 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
+            	          if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
                    }
-                   float radc = (float)Math.sqrt(adc);
         	       double a0 = time.getDoubleValue("a0", is, il, ip); 
         	       double a1 = time.getDoubleValue("a1", is, il, ip);
         	       double a2 = time.getDoubleValue("a2", is, il, ip);
         	       double a3 = time.getDoubleValue("a3", is, il, ip);
         	       double a4 = time.getDoubleValue("a4", is, il, ip);
         	       double tdcmc = tdcm - a0 - tw[il-1]/radc - a2/radc - a3 - a4/Math.sqrt(radc);
-//        	       System.out.println(a0+" "+a1+" "+a2+" "+a3+" "+a4);
-//        	       System.out.println(tdcm+" "+adc+" "+tw[il-1]/radc+" "+tdcmc);
-//        	       System.out.println(" ");
-//                   double tdcmc = tdcm - a0 - a2 / Math.sqrt(adc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); // calibrated time
                }
@@ -409,7 +415,7 @@ public class ECt extends DetectorMonitor {
                int   ip = bank.getByte("strip", loop);
                float  t = bank.getFloat("time", loop);
                if (true||is==trigger_sect||isMC) {
-            	      ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(t, ip); //calibrated triggered matched hits
+            	      ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(t+TOFFSET, ip); //calibrated triggered matched hits
                }
             }
        }
@@ -418,7 +424,7 @@ public class ECt extends DetectorMonitor {
        
        if(!goodEvent) return;
        
-       ((H1F) this.getDataGroup().getItem(0,0,23,run).getData(0).get(0)).fill(Tvertex);  
+       ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(0).get(0)).fill(Tvertex);  
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
@@ -429,8 +435,8 @@ public class ECt extends DetectorMonitor {
        Map<Integer,List<Integer>> partMap = loadMapByIndex(bankp,"pid");    
        
        trigger_sect = getElecTriggerSector(); 
-//       if (!(trigger_sect>0)) return;
        
+//       if (!(trigger_sect>0)) return;       
 //       if(!partMap.containsKey(11)) return;
       
        for(int loop = 0; loop < bankc.rows(); loop++){
@@ -486,7 +492,7 @@ public class ECt extends DetectorMonitor {
                          tu    = (float) clusters.get(loop).getTime(i); 
                          ip    =         clusters.get(loop).getPeak(i).getMaxStrip();
                          adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
-                         tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true);
+                         tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
                          tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
 //                         tdcc = tdc-tw[il+i-1]/(float)Math.sqrt(adc);
                          tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
@@ -507,14 +513,14 @@ public class ECt extends DetectorMonitor {
                 	   
                        float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c);
                	   
-                	   float vcorr = Tvertex - phase + TOFFSET + TVOffset;
+                	   float vcorr = Tvertex - phase + TVOffset;
                 	   float pcorr = path/vel;
                 	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
                        float tdif  = tu  - vcorr;
                        float resid = tdif - pcorr;
                        
-                       ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu, ip); //peak times
-                       ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t,  ip); //cluster times
+                       ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET, ip); //peak times
+                       ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
                        ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
 //                       if (pid==22) {
@@ -523,14 +529,14 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,13,run).getData(ip-1).get(0)).fill(leff, resid);
-                           ((H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0)).fill(tu,   resid);  
+                           ((H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0)).fill(tu+TOFFSET,   resid);  
                            ((H2F) this.getDataGroup().getItem(is,il+i,15,run).getData(ip-1).get(0)).fill(adc,  resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,16,run).getData(ip-1).get(0)).fill(tdc- vcorr-pcorr-lcorr, radc);
                            ((H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr-lcorr, radc);
                            ((H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr-lcorr, adc);
                            ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdc- vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr, leff);
-                           ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr,leff);  	
+                           ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET,leff);  	
                        } 	      
                    } 
                }
@@ -603,6 +609,236 @@ public class ECt extends DetectorMonitor {
         }
     }
     
+    @Override
+    public void plotEvent(DataEvent de) {
+       analyze();
+    }
+
+    public void analyze() {    
+       System.out.println("I am in analyze()");
+       if(cfitEnable)  analyzeCalibration();
+       if(sfitEnable)  analyzeResiduals();
+       if(dfitEnable)  analyzeTMF();
+       if(gdfitEnable) analyzeGTMF();
+    }
+    
+    public void analyzeCalibration() {
+        analyzeGraphs(1,7,0,3,0,3);
+        System.out.println("analyzeCalibration Finished");
+        writeFile("timing",1,7,0,3,0,3);
+        writeFile("effective_velocity",1,7,0,3,0,3);    
+        isAnalyzeDone = true;
+    }
+    
+    public void analyzeResiduals() {
+        getResidualSummary(1,7,0,3,0,3);
+        System.out.println("analyzeResiduals Finished");
+        isResidualDone = true;
+    }
+    
+    public void analyzeTMF() {
+        getTMFSummary(1,7,0,3,0,3);
+        System.out.println("analyzeTMF Finished");
+        writeFile("tmf_offset",1,7,0,3,0,3);
+        isTMFDone = true;
+    }
+    
+    public void analyzeGTMF() {
+        getGTMFSummary(1,7,0,3,0,3);
+        System.out.println("analyzeGTMF Finished");
+        writeFile("fadc_offset",1,7,0,3,0,3);
+        isGTMFDone = true;
+    }
+    
+    public GraphErrors graphShift(GraphErrors g, double shift) {
+    	GraphErrors gnew = new GraphErrors();      	
+    	for (int i=0; i<g.getDataSize(0); i++) {
+           gnew.addPoint(g.getDataX(i),g.getDataY(i)+shift,g.getDataEX(i),g.getDataEY(i));
+    	}
+    	return gnew;
+    }
+    
+    public void analyzeGraphs(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+        
+       ParallelSliceFitter fitter1, fitter2;
+       GraphErrors g;
+       
+       int run=getRunNumber();
+       double min=0,max=420;
+       for (int is=is1; is<is2; is++) {            
+          for (int il=il1; il<il2; il++) {
+             for (int iv=iv1; iv<iv2; iv++) {
+                for (int ip=0; ip<npmt[3*il+iv]; ip++) {
+                   System.out.println("Fitting Sector "+is+" Layer "+il+" View "+iv+" PMT "+ip+" "+this.getDataGroup().hasItem(is,3*il+iv+1,20,run)); 
+                   
+                   fitter1 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,20,run).getData(ip).get(0));
+                   fitter1.setRange(0,50); fitter1.fitSlicesY();
+                   g = fitter1.getMeanSlices(); 
+                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
+               	   tl.fitData.add(fitEngine(g,6,0),is,3*il+iv+1,ip,run); //LEFF fits
+              	   
+                   fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
+                   fitter2.setRange(-10,50); fitter2.fitSlicesY();
+                   g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0);
+                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");  
+            	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+100,run); //TW fits            	   
+                }
+             }
+          }
+       } 
+    }
+    
+    public void getResidualSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+        ParallelSliceFitter fitter;
+        GraphErrors g1,g2;
+        
+        int run=getRunNumber();
+        
+        for (int is=is1; is<is2; is++) {            
+           for (int il=il1; il<il2; il++) {
+              for (int iv=iv1; iv<iv2; iv++) {
+                  fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,10,run).getData(3*il+iv).get(0));
+                  fitter.setRange(-10,10); fitter.fitSlicesY();
+                  g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
+                  g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
+                  GraphErrors mean = new GraphErrors("RESIDUAL_"+is+"_"+il+" "+iv,g1.getVectorX().getArray(),
+                		                                                          g1.getVectorY().getArray(),
+                		                                                          new double[g1.getDataSize(0)],
+                		                                                          g2.getVectorY().getArray()); 
+                  mean.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]); mean.getAttributes().setTitleY("");  
+             	  FitSummary.add(mean, is,il,iv,run);
+              }
+           }
+        } 
+    }
+    
+    public void plotResidualSummary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));      
+        int            n = 0;
+        
+        double ymin=-3f, ymax=3f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
+        
+        for (int is=1; is<7; is++) {
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<3; iv++) {           	
+            F1D f1 = new F1D("p0","[a]",0.,npmt[3*il+iv]); f1.setParameter(0,0);
+            GraphErrors plot1 = FitSummary.getItem(is,il,iv,getRunNumber());
+            plot1.setMarkerColor(1);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("RESIDUAL");
+            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[il]+" "+v[iv].toUpperCase()+" PMT");
+            n++; c.draw(plot1); 
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        }
+        }
+        }        
+    }
+    
+    public void getTMFSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+        ParallelSliceFitter fitter;
+        GraphErrors g1;
+        
+        int run=getRunNumber();
+        
+        for (int is=is1; is<is2; is++) {            
+           for (int il=il1; il<il2; il++) {
+              for (int iv=iv1; iv<iv2; iv++) {
+                  fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,8,run).getData(3*il+iv).get(0));
+                  fitter.setRange(-20,15); fitter.fitSlicesY();
+                  g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
+                  GraphErrors mean = new GraphErrors("TMF_"+is+"_"+il+" "+iv,g1.getVectorX().getArray(),
+                		                                                     g1.getVectorY().getArray(),
+                		                                                     new double[g1.getDataSize(0)],
+                		                                                     new double[g1.getDataSize(0)]); 
+                  mean.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]); mean.getAttributes().setTitleY("");  
+             	  FitSummary.add(mean, is+10,il,iv,run);
+              }
+           }
+        } 
+    }
+    
+    public void plotTMFSummary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));      
+        int            n = 0;
+        
+        double ymin=-30f, ymax=30f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
+        
+        for (int is=1; is<7; is++) {
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<3; iv++) {            
+            F1D f1 = new F1D("p0","[a]",0.,npmt[3*il+iv]); f1.setParameter(0,0);
+            GraphErrors plot1 = FitSummary.getItem(is+10,il,iv,getRunNumber());
+            plot1.setMarkerColor(1);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("TDC-FADC (ns)");
+            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[il]+" "+v[iv].toUpperCase()+" PMT");
+            n++; c.draw(plot1); 
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        }
+        }
+        }        
+    }
+    
+    public void getGTMFSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+    	
+        int run=getRunNumber();
+        
+        for (int is=is1; is<is2; is++) {            
+           GraphErrors g1 = new GraphErrors();
+           for (int il=il1; il<il2; il++) {
+              for (int iv=iv1; iv<iv2; iv++) {            	  
+                  tl.fitData.add(fitEngine(((H2F)this.getDataGroup().getItem(is,0,8,run).getData(3*il+iv).get(0)).projectionX(),0,-10,10,-10,10),is+20,3*il+iv+1,0,run);
+                  g1.addPoint(3*il+iv+1, tl.fitData.getItem(is+20,3*il+iv+1,0,run).mean,0,tl.fitData.getItem(is+20,3*il+iv+1,0,run).meane);
+              }
+           } 
+           FitSummary.add(g1,is+20,0,0,run);
+        } 
+      
+    }  
+    
+    public void plotGTMFSummary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));      
+        int            n = 0;
+        
+        double ymin=-5f, ymax=5f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(3, 2);
+        
+        for (int is=1; is<7; is++) {          	
+            F1D f1 = new F1D("p0","[a]",0.,10.); f1.setParameter(0,0);
+            GraphErrors plot1 = FitSummary.getItem(is+20,0,0,getRunNumber());
+            plot1.setMarkerColor(1); plot1.setMarkerSize(4);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            plot1.getAttributes().setTitleY("Global TMF Offset (ns)");
+            plot1.getAttributes().setTitleX("SECTOR "+is+" "+" LAYERS");
+            n++; c.draw(plot1); 
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        }        
+    }
+    
+    public GraphErrors sliceToGraph(GraphErrors gin, int il, int iv) {
+    	int np = npmt[3*il+iv]; 
+    	double[] x = new double[np]; double[] xe = new double[np]; 
+    	double[] y = new double[np]; double[] ye = new double[np]; 
+    	double[] dx =  gin.getVectorX().getArray(); double[] dy = gin.getVectorY().getArray();
+    	for (int i=0; i<np; i++) x[i]=i+1;
+    	int n=0; for(double ddy : dy) {y[(int)(dx[n]-1)] = ddy; n++;}
+        return new GraphErrors("TMF",x,y,xe,ye);    	
+    }
+    
 	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
 		
 		String path = "/Users/colesmith/CLAS12ANA/";
@@ -620,12 +856,16 @@ public class ECt extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "timing":             line =  getTW(is,il,iv,ip); break;
-							case "effective_velocity": line =  getEV(is,il,iv,ip);  
+							case "timing":             line =  getTW(is,il,iv,ip);  break;
+							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
+							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
+							case "fadc_offset":        line =  getGTMF(is,il,iv,ip);  
 							}
-						    System.out.println(line);
-						    outputBw.write(line);
-						    outputBw.newLine();
+							if (line!=null) {
+						      System.out.println(line);
+						      outputBw.write(line);
+						      outputBw.newLine();
+							}
 						}
 					}
 				}
@@ -663,61 +903,31 @@ public class ECt extends DetectorMonitor {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 17.0";
 		}		
 	}
-    
-    @Override
-    public void plotEvent(DataEvent de) {
-       analyze();
-    }
-
-    public void analyze() {    
-       System.out.println("I am in analyze()");
-       if(!fitEnable) return;
-       analyzeGraphs(1,7,0,3,0,3);
-       System.out.println("Finished");
-       writeFile("timing",1,7,0,3,0,3);
-       writeFile("effective_velocity",1,7,0,3,0,3);
-       isAnalyzeDone = true;
-    }
-    
-    public GraphErrors graphShift(GraphErrors g, double shift) {
-    	GraphErrors gnew = new GraphErrors();      	
-    	for (int i=0; i<g.getDataSize(0); i++) {
-           gnew.addPoint(g.getDataX(i),g.getDataY(i)+shift,g.getDataEX(i),g.getDataEY(i));
-    	}
-    	return gnew;
-    }
-    
-    public void analyzeGraphs(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+	
+	public String getTMF(int is, int il, int iv, int ip) {
+		float off = 0;
+		if(FitSummary.hasItem(is+10,il,iv,getRunNumber())) {
+			double ev = FitSummary.getItem(is+10,il,iv,getRunNumber()).getDataY(ip);
+			off = (float) tmf.getDoubleValue("offset",is,3*il+iv+1,ip+1);
+//			float off = (float)  fo.getDoubleValue("offset",is,3*il+iv+1,0);
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+ (ev + off);
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 0.0";
+		}		
+	}
+	
+	public String getGTMF(int is, int il, int iv, int ip) {		
+		if (ip>0) return null;
+		float off = 0;
+		if(tl.fitData.hasItem(is+20,3*il+iv+1,0,getRunNumber())) {
+			off = (float) fo.getDoubleValue("offset",is,3*il+iv+1,0);
+			double ev = tl.fitData.getItem(is+20,3*il+iv+1,0,getRunNumber()).mean;
+		    return is+" "+(3*il+iv+1)+" "+ip+" "+ (ev + off);
+		} else {
+			return is+" "+(3*il+iv+1)+" "+ip+" 0.0";
+		}		
+	}	
         
-       ParallelSliceFitter fitter1, fitter2;
-       GraphErrors g;
-       
-       int run=getRunNumber();
-       double min=0,max=420;
-       for (int is=is1; is<is2; is++) {            
-          for (int il=il1; il<il2; il++) {
-             for (int iv=iv1; iv<iv2; iv++) {
-                for (int ip=0; ip<npmt[3*il+iv]; ip++) {
-                   System.out.println("Fitting Sector "+is+" Layer "+il+" View "+iv+" PMT "+ip+" "+this.getDataGroup().hasItem(is,3*il+iv+1,20,run)); 
-                   
-                   fitter1 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,20,run).getData(ip).get(0));
-                   fitter1.setRange(0,50); fitter1.fitSlicesY();
-                   g = fitter1.getMeanSlices(); 
-                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
-               	   tl.fitData.add(fitEngine(g,6,0),is,3*il+iv+1,ip,run); //LEFF fits
-              	   
-                   fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
-                   fitter2.setRange(-10,50); fitter2.fitSlicesY();
-                   g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0);
-                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");  
-            	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+100,run); //TW fits
-            	   
-                }
-             }
-          }
-       } 
-    }  
-    
     public void plotUVWHistos(int index) {
        int run = getRunNumber();
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
