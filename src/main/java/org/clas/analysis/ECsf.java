@@ -84,8 +84,8 @@ public class ECsf extends DetectorMonitor {
         this.setNumberOfEvents(0);        
         createEOPHistos(7,0,50,0.,2.5,"ep_em", " Measured Energy (GeV)", " E/P");
         if(dropSummary) return;
-        createEOPHistos(0,0,50,0.5,10.5,"ep_pf", " Momentum (GeV)",      " E/P");
-        createEOPHistos(0,1,50,0.5,10.5,"ep_p",  " Momentum (GeV)",      " E/P");
+        createEOPHistos(0,0,50,0.5,10.5,"ep_p", " Momentum (GeV)",      " E/P");
+        createEOPHistos(0,1,50,0.5,10.5,"ep_pnf",  " Momentum (GeV)",   " E/P");
         createEOPHistos(1,0,30,  6.,36.,"ep_thv"," VertexTheta (deg)",   " E/P");
         createEOPHistos(2,0,48,  3.,37.,"ep_thd"," Detector Theta (deg)"," E/P");
         createEOPHistos(3,0,48,  3.,27.,"ep_th0"," PC Theta (deg)",      "EPC / P");
@@ -404,7 +404,7 @@ public class ECsf extends DetectorMonitor {
             fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(0,0,7,run).getData(is-1).get(0));
             fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX(); 
             FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); // E/P vs. measured energy
-            	
+            
     		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    FitSummary.add(fitter.getMeanSlices(), is, 0, 1, run);  // E/P vs. tracking momentum
@@ -675,7 +675,8 @@ public class ECsf extends DetectorMonitor {
             ((H2F)tl.Timeline.getItem(10,0)).fill(runIndex,is,y);	
             ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,ye);   		
             ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,ys/y);	
-            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   		
+            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   
+            
         } 
         runIndex++;
     }

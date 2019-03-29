@@ -8,6 +8,7 @@ import java.util.Map;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
+import org.jlab.groot.data.TDirectory;
 import org.jlab.utils.groups.IndexedList;
 
 public class TimeLine {
@@ -15,6 +16,7 @@ public class TimeLine {
 	 public IndexedList<IDataSet> Timeline = new IndexedList<IDataSet>(2);
 	 public IndexedList<FitData>   fitData = null;
 	 private Map<Integer,Integer>   NYbins = new HashMap<Integer,Integer>();  
+	 private TDirectory                dir = null;
 	 
 	 static void Timeline() {
 		 
@@ -30,6 +32,11 @@ public class TimeLine {
 		 h.setTitleX("Run Index") ; h.setTitleY(ytit); Timeline.add(h,k,0); //mean
 		 h =  new H2F(tit, tit, nx, 0, nx, ny, ymin, ymax);
 		 h.setTitleX("Run Index") ; h.setTitleY(ytit); Timeline.add(h,k,1); //error
+	 }
+	 
+	 public void initTimelineFile() {
+		 dir = new TDirectory();
+		 dir.mkdir("/timelines");
 	 }
 	 
 	 public void setFitData(IndexedList<FitData> fitData) {
