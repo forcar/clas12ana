@@ -145,7 +145,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECpi0("ECpi0"); 
         }
     }
     
@@ -162,6 +162,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuItem = new JMenuItem("Analyze Histos");          menuItem.addActionListener(this); menu.add(menuItem); menu.addSeparator();
         menuItem = new JMenuItem("Open histograms file");    menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Save histograms to file"); menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Save timelines to file");  menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Print histograms as png"); menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
 
@@ -306,6 +307,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
           case("Open histograms file"):        this.histoChooser(); break;
           case("Save histograms to file"):     this.histoSaver(); break;
+          case("Save timelines to file"):      this.timelineSaver(); break;
           case("Print histograms as png"):     this.printHistosToFile(); break;
           case("Default for all"):             for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = this.monitors[k].eventResetTime_default[k]; break;       
           case("Disable histogram reset"):     for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = 0; break;
@@ -327,6 +329,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setSelectedFile(new File(fileName));
         if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) this.saveHistosToFile(fc.getSelectedFile().getAbsolutePath());   	
+    }
+    
+    public void timelineSaver() {
+        for(int k=0; k<this.monitors.length; k++) this.monitors[k].saveTimelines();	
     }
 
     public void chooseUpdateInterval() {
@@ -609,7 +615,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 }                
             }  
             if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
-
         }
     }        
     

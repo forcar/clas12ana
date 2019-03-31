@@ -847,6 +847,12 @@ public class ECpi0 extends DetectorMonitor{
 		runIndex++;
     }
     
+    public void saveTimelines() {
+    	System.out.println("ECpi0: Saving timelines");
+    	saveTimeLine(10,0,0,"PI0mean","PI0");
+    	saveTimeLine(20,0,0,"PI0sigm","PI0");
+    }
+    
     public void plotTimeLines(int index) {
     	if(TLflag) {plotTimeLineSectors(index); } else {plotTimeLine(index);}
     }

@@ -681,6 +681,12 @@ public class ECsf extends DetectorMonitor {
         runIndex++;
     }
     
+    public void saveTimelines() {
+    	System.out.println("ECsf: Saving timelines");
+    	saveTimeLine(10,0,7,"SampFrac","SF");
+    	saveTimeLine(20,0,7,"Resolution","SF");
+    }
+    
     public void plotTimeLines(int index) {
     	if(TLflag) {plotTimeLineSectors(index); } else {plotClusterTimeLines(index);}
     }   

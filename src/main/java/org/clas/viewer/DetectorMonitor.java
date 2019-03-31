@@ -155,6 +155,7 @@ public class DetectorMonitor implements ActionListener {
     public String  outPath = "/home/lcsmith/CLAS12ANA/";
     public String  pawPath = outPath+"paw/";
     public String  jawPath = outPath+"jaw/";
+    public String   tlPath = null;
     public String  vecPath = null;
     
     public Boolean isAnalyzeDone = false;
@@ -206,6 +207,7 @@ public class DetectorMonitor implements ActionListener {
         pawPath = outPath+"paw/";
         vecPath = pawPath+detectorName+"/";  
         jawPath = outPath+"jaw/";
+        tlPath  = outPath+detectorName+"/timelines/";
         TimeSlice.put("UVW", 3);
         TimeSlice.put("FADC Slot", 16);
         TimeSlice.put("HV Slot", 24);
@@ -788,6 +790,7 @@ public class DetectorMonitor implements ActionListener {
     		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title);
 			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);
 		}
+		
 		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
 		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");    	
     }
@@ -809,6 +812,32 @@ public class DetectorMonitor implements ActionListener {
 	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
 	    
 	    return gglist;
+    }
+    
+    public void saveTimelines() {
+    	
+    }
+    
+    public void saveTimeLine(int i, int il, int ip, String fname, String tag) {
+		 TDirectory dir = new TDirectory();
+		 GraphErrors g[]= new GraphErrors[6];
+		 for (int is=0; is<6; is++) g[is] = new GraphErrors("sec"+(is+1));		 
+		 H2F h2a = (H2F) tl.Timeline.getItem(i,0); H2F h2b = (H2F) tl.Timeline.getItem(i,1);
+		 for (int ir=0; ir<runlist.size(); ir++) {
+			 dir.mkdir("/"+runlist.get(ir)); dir.cd("/"+runlist.get(ir));
+			 for (int is=0; is<6; is++) {
+				 g[is].addPoint(runlist.get(ir),h2a.getSlicesY().get(is).getDataY(ir),0,h2b.getSlicesY().get(is).getDataY(ir));				  			 
+		         FitData fd = tl.fitData.getItem(is+1,il,ip,runlist.get(ir));
+		         H1F h1 = fd.getHist(); h1.setTitle("hsec"+(is+1)); h1.setName(tag+" Sector "+(is+1));
+		         F1D f1 = new F1D("fit:"+h1.getName()); f1 = (F1D) fd.graph.getFunction(); f1.setName("fit:"+h1.getName());
+		         dir.addDataSet(h1); dir.addDataSet(f1);
+			 }
+			 
+		 }
+		 dir.mkdir("/timelines");  dir.cd("/timelines");
+		 for (int is=0; is<6; is++) dir.addDataSet(g[is]);
+    	 System.out.println("Saving timeline to "+tlPath+fname+".hipo");
+		 dir.writeFile(tlPath+fname+".hipo");		 
     }
     
     //Generalization of H2F method rebinY for list of non-equal ngroups. 
