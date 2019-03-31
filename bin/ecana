@@ -3,4 +3,4 @@
 SCRIPT_DIR=`dirname $0`
 DISTRO_DIR=$SCRIPT_DIR/../ ; export DISTRO_DIR
 
-java -cp "$DISTRO_DIR/lib/*" org.clas.viewer.EventViewer $*
+java -Xmx4095m -cp "$DISTRO_DIR/lib/*" org.clas.viewer.EventViewer $*
