@@ -437,6 +437,12 @@ public class DetectorMonitor implements ActionListener {
     public void plotTimeLine(int index) {
     	
     }
+    
+    
+    public int getDet(int layer) {
+        int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
+        return il[layer-1];
+    }	
 
     public String getDetectorName() {
         return detectorName;

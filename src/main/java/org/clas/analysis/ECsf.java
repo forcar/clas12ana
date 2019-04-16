@@ -735,11 +735,6 @@ public class ECsf extends DetectorMonitor {
     		drawTimeLine(c,is,10*(pc+1),((pc==0)?0.25f:0.06f),"Sector "+is+((pc==0)?"  E / P":"  #sigma(E) / E"));
     	}
     }
-        
-    public int getDet(int layer) {
-	    int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
-	    return il[layer-1];
-	}	
 
     public static class SFFunction extends Func1D{
     	

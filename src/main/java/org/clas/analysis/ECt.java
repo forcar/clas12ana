@@ -45,6 +45,7 @@ public class ECt extends DetectorMonitor {
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
     String[]   det = new String[]{"pcal","ecin","ecou"};
+    String[]   pid = new String[]{"elec","pion","neut"};
     String[]     v = new String[]{"u","v","w"};  
     
     IndexedList<GraphErrors>  TDCSummary = new IndexedList<GraphErrors>(4);
@@ -92,12 +93,13 @@ public class ECt extends DetectorMonitor {
                                  "LEFF v TIME",
                                  "LEFF v TTW",
                                  "LEFF v TVERT",
-                                 "VTX",
+                                 "BETA",
                                  "RESID",
                                  "TMF",
                                  "GTMF",
                                  "LTFITS",
-                                 "TWFITS");
+                                 "TWFITS",
+                                 "MISC");
 
         
         this.useSectorButtons(true);
@@ -155,7 +157,8 @@ public class ECt extends DetectorMonitor {
         createUVWHistos(19,50,50,0,50,0,430,"T","LEFF ");
         createUVWHistos(20,50,50,0,50,0,430,"TTW","LEFF ");
         createUVWHistos(21,50,50,160,190,0,430,"TVERT","LEFF ");        
-        createMISCHistos(22,0,300,"Start Time","Counts");
+        createBETAHistos(22);
+        createMISCHistos(28);
     }
 
     @Override        
@@ -184,21 +187,40 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(20);
     	    plotUVWHistos(21);
     	    plotMISCHistos(22);
+    	    plotMISCHistos(28);
     	    if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
     	    if(isResidualDone) plotResidualSummary(23);
     	    if(isTMFDone)      plotTMFSummary(24);
     	    if(isGTMFDone)     plotGTMFSummary(25);
     }
     
-    public void createMISCHistos(int k, int xmin, int xmax, String xtxt, String ytxt) {
+    public void createBETAHistos(int k) {
         H1F h;
-        DataGroup dg1 = new DataGroup(1,1);
-        int xbins = 100;
         int run = getRunNumber();
-        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,xbins,xmin,xmax);
-        h.setTitleX(xtxt); h.setTitleY(ytxt);       
-        dg1.addDataSet(h,0);
-        this.getDataGroup().add(dg1,0,0,k,run);        
+       
+        DataGroup dg = new DataGroup(3,3);
+        for (int id=1; id<4; id++) {
+    	for (int il=1; il<4; il++) {
+        for (int is=1; is<7 ; is++) {
+           h = new H1F("beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,"beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,50,0,1.5);
+           h.setTitleX(pid[id-1]+" "+det[il-1]+" beta "); h.setTitleY("Counts"); h.setLineColor(is);
+           dg.addDataSet(h,id*3+il-4);
+        }
+    	}
+        }
+        this.getDataGroup().add(dg,0,0,k,run);  
+                
+    }
+    
+    public void createMISCHistos(int k) {
+        H1F h;
+        int run = getRunNumber();
+        
+        DataGroup dg = new DataGroup(1,1);
+        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,100,0,300);
+        h.setTitleX("Start Time"); h.setTitleY("Counts");       
+        dg.addDataSet(h,0);    	
+        this.getDataGroup().add(dg,0,0,k,run);  
     }
     
     public void createUVWHistos(int k, int xbins, int ybins, double xmin, double xmax, double ymin, double ymax, String xtxt, String ytxt) {
@@ -424,7 +446,7 @@ public class ECt extends DetectorMonitor {
        
        if(!goodEvent) return;
        
-       ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(0).get(0)).fill(Tvertex);  
+       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)).fill(Tvertex);  
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
@@ -516,15 +538,16 @@ public class ECt extends DetectorMonitor {
                 	   float vcorr = Tvertex - phase + TVOffset;
                 	   float pcorr = path/vel;
                 	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
-                       float tdif  = tu  - vcorr;
-                       float resid = tdif - pcorr;
+                       float tvcor = tu  - vcorr;
+                       float resid = tvcor - pcorr;
+                       float mybet = path/tvcor/c;
                        
                        ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET, ip); //peak times
                        ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
-                       ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tdif, ip);
+                       ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
 //                       if (pid==22) {
-                           if (true||pid==11||Math.abs(pid)==211) {
+                       if (true||pid==11||Math.abs(pid)==211) {
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, resid);
@@ -537,7 +560,10 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdc- vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET,leff);  	
-                       } 	      
+                       } 
+                       if(pid==11)                     ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)).get(is-1)).fill(mybet);  
+                       if(Math.abs(pid)==211)          ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
+                       if(Math.abs(pid)!=211&&pid!=11) ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+6).get(is-1)).fill(beta);                         
                    } 
                }
            }
@@ -633,6 +659,7 @@ public class ECt extends DetectorMonitor {
     public void analyzeResiduals() {
         getResidualSummary(1,7,0,3,0,3);
         System.out.println("analyzeResiduals Finished");
+        writeFile("timing_update",1,7,0,3,0,3);
         isResidualDone = true;
     }
     
@@ -664,7 +691,9 @@ public class ECt extends DetectorMonitor {
        GraphErrors g;
        
        int run=getRunNumber();
+       
        double min=0,max=420;
+       
        for (int is=is1; is<is2; is++) {            
           for (int il=il1; il<il2; il++) {
              for (int iv=iv1; iv<iv2; iv++) {
@@ -689,6 +718,7 @@ public class ECt extends DetectorMonitor {
     }
     
     public void getResidualSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+    	
         ParallelSliceFitter fitter;
         GraphErrors g1,g2;
         
@@ -698,7 +728,7 @@ public class ECt extends DetectorMonitor {
            for (int il=il1; il<il2; il++) {
               for (int iv=iv1; iv<iv2; iv++) {
                   fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,10,run).getData(3*il+iv).get(0));
-                  fitter.setRange(-10,10); fitter.fitSlicesY();
+                  fitter.setRange(-10,10); fitter.fitSlicesY(); 
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
                   g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
                   GraphErrors mean = new GraphErrors("RESIDUAL_"+is+"_"+il+" "+iv,g1.getVectorX().getArray(),
@@ -714,9 +744,9 @@ public class ECt extends DetectorMonitor {
     
     public void plotResidualSummary(int index) {
         
-        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));      
-        int            n = 0;
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));     
         
+        int n = 0;        
         double ymin=-3f, ymax=3f;
         ymin=ymin*lMin/250; ymax=ymax*lMax/250;
          
@@ -856,6 +886,7 @@ public class ECt extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
+							case "timing_update":      line =  getA0(is,il,iv,ip);  break;
 							case "timing":             line =  getTW(is,il,iv,ip);  break;
 							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
 							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
@@ -889,6 +920,20 @@ public class ECt extends DetectorMonitor {
 				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p1)+" "
 				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p0)+" "
 				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p2)+" ";
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
+		}
+		
+	}
+	
+	public String getA0(int is, int il, int iv, int ip) {
+		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "
+				+" 0.02345 "
+				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
+				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
+				+time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" ";
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
