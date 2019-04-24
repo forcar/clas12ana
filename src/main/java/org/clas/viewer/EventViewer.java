@@ -44,6 +44,7 @@ import org.clas.io.DataSourceProcessorPane;
 import org.clas.io.IDataEventListener;
 
 import org.jlab.detector.decode.CLASDecoder;
+import org.jlab.detector.decode.CLASDecoder4;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorEventDecoder;
 import org.jlab.detector.view.DetectorListener;
@@ -54,11 +55,16 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioSource;
+import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.hipo3.Hipo3DataSource;
+import org.jlab.jnp.hipo4.data.Bank;
+import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.SchemaFactory;
 //import org.jlab.io.task.DataSourceProcessorPane;
 //import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
+import org.jlab.utils.system.ClasUtilsFile;
         
 /*
  * @author lcsmith
@@ -77,8 +83,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
-    CLASDecoder                clasDecoder = new CLASDecoder();
+    CLASDecoder4               clasDecoder = new CLASDecoder4();
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
+    private SchemaFactory    schemaFactory = new SchemaFactory();
        
     private int   canvasUpdateTime = 2000;
     private int           TVOffset = 0;
@@ -126,6 +133,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	createMonitors(args);
     	createMenuBar();
     	createPanels();
+   	    String dir = ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4");
+        schemaFactory.initFromDirectory(dir);
     }
     
     public void createMonitors(String[] args) {
@@ -145,7 +154,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECt("ECt"); 
+    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -432,7 +441,22 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     @Override
     public void dataEventAction(DataEvent event) {
                 
-        if(event!=null ){
+    	DataEvent hipo = null;
+       	
+	    if(event!=null ){
+            if(event instanceof EvioDataEvent){
+             	Event    dump = clasDecoder.getDataEvent(event);    
+                Bank   header = clasDecoder.createHeaderBank(this.ccdbRunNumber, getEventNumber(event), (float) 0, (float) 0);
+                Bank  trigger = clasDecoder.createTriggerBank();
+                if(header!=null)  dump.write(header);
+                if(trigger!=null) dump.write(trigger);
+                hipo = new HipoDataEvent(dump,schemaFactory);
+            }   
+            else {            	
+            	hipo = event; 
+            }
+/*    	
+    	if(event!=null ){
             if(event instanceof EvioDataEvent){
              	event = clasDecoder.getDataEvent(event);
                 DataBank   header = clasDecoder.createHeaderBank(event, this.ccdbRunNumber, 0, (float) 0, (float) 0);
@@ -440,7 +464,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 event.appendBanks(header);
                 event.appendBank(trigger);
             } 
-            
+*/            
             int rNum = 0; int eNum = 0;
             
             rNum = getRunNumber(event);
