@@ -40,10 +40,7 @@ import org.clas.analysis.ECmip;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
-import org.clas.io.DataSourceProcessorPane;
-import org.clas.io.IDataEventListener;
 
-import org.jlab.detector.decode.CLASDecoder;
 import org.jlab.detector.decode.CLASDecoder4;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorEventDecoder;
@@ -61,8 +58,8 @@ import org.jlab.io.hipo3.Hipo3DataSource;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
-//import org.jlab.io.task.DataSourceProcessorPane;
-//import org.jlab.io.task.IDataEventListener;
+import org.jlab.io.task.DataSourceProcessorPane;
+import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
 import org.jlab.utils.system.ClasUtilsFile;
         
