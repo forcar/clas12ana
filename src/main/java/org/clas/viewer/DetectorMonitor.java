@@ -737,19 +737,30 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getTorusPolarity(int run) {
-    	if (run>=3029&&run<=3065) return -1.00f;
-    	if (run>=3072&&run<=3087) return -0.75f;
-    	if (run>=3097&&run<=3105) return  0.75f;
-    	if (run>=3131&&run<=3293) return  1.00f;
-    	if (run>=3304&&run<=3817) return -1.00f;
-    	if (run>=3819&&run<=3834) return  0.75f;
-    	if (run>=3839&&run<=3987) return  1.00f;
-    	if (run>=3995&&run<=4326) return -1.00f;  
-    	if (run>=4624&&run<=5419) return -1.00f;  
-    	if (run>=5420&&run<=5995) return  1.00f;  
-    	if (run>=5996&&run<=6000) return  0.50f;  
-    	if (run>=6142&&run<=6783) return -1.00f;  
+    	if (run>=3029&&run<=3065) return getTorusColor("-1.0");
+    	if (run>=3072&&run<=3087) return getTorusColor("-0.75");
+    	if (run>=3097&&run<=3105) return getTorusColor("+0.75");
+    	if (run>=3131&&run<=3293) return getTorusColor("+1.00");
+    	if (run>=3304&&run<=3817) return getTorusColor("-1.00");
+    	if (run>=3819&&run<=3834) return getTorusColor("+0.75");
+    	if (run>=3839&&run<=3987) return getTorusColor("+1.00");
+    	if (run>=3995&&run<=4326) return getTorusColor("-1.00");  
+    	if (run>=4624&&run<=5419) return getTorusColor("-1.00");  
+    	if (run>=5420&&run<=5995) return getTorusColor("+1.00");  
+    	if (run>=5996&&run<=6000) return getTorusColor("+0.50");  
+    	if (run>=6142&&run<=6783) return getTorusColor("-1.00");  
     	return 0f;
+    }
+    
+    public int getTorusColor(String val) {
+    	switch (val) {
+    	case "-1.00": return 1;  
+    	case "-0.75": return 7;  
+    	case "+0.50": return 4;  
+    	case "+0.75": return 3;  
+    	case "+1.00": return 2; 
+    	}
+    	return 0;
     }
 
     public int getViewRun() {
