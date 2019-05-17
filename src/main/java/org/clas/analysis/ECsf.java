@@ -662,8 +662,8 @@ public class ECsf extends DetectorMonitor {
     public void createTimeLineHistos() {   
     	System.out.println("Initializing "+TLname+" timeline"); 
     	runIndex = 0;
-    	tl.createTimeLineHisto(10,"ECAL E/P","Sector",451,6,1,7);
-    	tl.createTimeLineHisto(20,"ECAL #sigma(E)/E","Sector",451,6,1,7);
+    	tl.createTimeLineHisto(10,"ECAL E/P","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(20,"ECAL #sigma(E)/E","Sector",TLmax,6,1,7);
     }
     
     public void fillTimeLineHisto() {

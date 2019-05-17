@@ -829,8 +829,8 @@ public class ECpi0 extends DetectorMonitor{
     public void createTimeLineHistos() {   
     	System.out.println("Initializing "+TLname+" timeline"); 
     	runIndex = 0;   	
-    	tl.createTimeLineHisto(10,"Pi0 Mean/Mass","Sector",451,6,1,7);
-    	tl.createTimeLineHisto(20,"Pi0 #sigma(E)/E","Sector",451,6,1,7);
+    	tl.createTimeLineHisto(10,"Pi0 Mean/Mass","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(20,"Pi0 #sigma(E)/E","Sector",TLmax,6,1,7);
     }  
     
     public void fillTimeLineHisto() {    	
