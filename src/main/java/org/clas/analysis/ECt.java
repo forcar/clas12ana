@@ -415,8 +415,9 @@ public class ECt extends DetectorMonitor {
     
     public void processRec(DataEvent event) {
   	   
-       float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
-        
+       float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
+    	                                                             event.getBank("REC::Event").getFloat("startTime", 0)):0;
+
        if(!(Tvertex>0)) return;
        
        int run = getRunNumber();
