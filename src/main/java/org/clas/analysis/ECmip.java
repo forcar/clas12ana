@@ -53,6 +53,7 @@ public class ECmip extends DetectorMonitor {
     IndexedList<Float> PixLength = new IndexedList<Float>(3);    
     List<Float>             pmap = new ArrayList<Float>();	
     IndexedTable time=null, offset=null, goffset=null, gain=null, veff=null;
+    List<Particle>           part = new ArrayList<Particle>();
     
     public ECmip(String name) {
         super(name);
@@ -423,27 +424,56 @@ public class ECmip extends DetectorMonitor {
     public void processEvent(DataEvent event) {
     	
        IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(2);
-       List<Particle>                part = new ArrayList<Particle>();
        IndexedList<Vector3>            rl = new IndexedList<Vector3>(2);  
 	   Boolean                     isMuon = true;
-
        Boolean goodPC,goodECi,goodECo;       
-       DataBank bank1 = null;
-       int nrows = 0, trigger=0;
+       int nrows = 0;
        double startTime = -1000;
-       Boolean goodEvt  = false, goodRows = false;
+       Boolean goodEvt  = false, goodRows = false;	   
+
+       DataBank bank1    = null;
+       DataBank bank2    = null;
+       DataBank bank3    = null;
+       DataBank runConf  = null;
+       DataBank recPart  = null;
+       DataBank recScin  = null;
+       DataBank recCalo  = null;
+       DataBank recTrac  = null;
+       DataBank recEven  = null;
+       DataBank ecalClus = null;
+       DataBank ecalCali = null;
+
+       if(event.hasBank("RUN::config"))            runConf  = event.getBank("RUN::config");
+       if(event.hasBank("REC::Particle"))          recPart  = event.getBank("REC::Particle");
+       if(event.hasBank("REC::Scintillator"))      recScin  = event.getBank("REC::Scintillator");
+       if(event.hasBank("REC::Calorimeter"))       recCalo  = event.getBank("REC::Calorimeter");
+       if(event.hasBank("REC::Track"))             recTrac  = event.getBank("REC::Track");
+       if(event.hasBank("REC::Event"))             recEven  = event.getBank("REC::Event");
+       if(event.hasBank("ECAL::clusters"))         ecalClus = event.getBank("ECAL::clusters");
+       if(event.hasBank("ECAL::calib"))            ecalCali = event.getBank("ECAL::calib");
+
+       if(runConf == null) return;
     	   
 	   int run = getRunNumber();
 	   
 	   if(dropBanks) dropBanks(event);
 	   
-       if (event.hasBank("REC::Particle")&&event.hasBank("REC::Event")) {
-    	    isMuon = false;
-            DataBank recPart = event.getBank("REC::Particle");
-            DataBank recEven = event.getBank("REC::Event");
+       int trigger = 0;
+       int trig = 211;
+       
+//       System.out.println("New Event");
+       part.clear();
+//       System.out.println("I am here 1");
+      
+       if (recPart!=null && recEven!=null) {
+//    	   System.out.println("Inside PID loop");   	   
+    	    isMuon = false;   
             startTime = recEven.getFloat("STTime", 0);
-            if(startTime > -100) {
+            
+            if(startTime > -100) { 
+            	
                 for(int i = 0; i < recPart.rows(); i++){
+               	
                     int      pid = recPart.getInt("pid", i);              
                     float     px = recPart.getFloat("px", i);
                     float     py = recPart.getFloat("py", i);
@@ -452,33 +482,58 @@ public class ECmip extends DetectorMonitor {
                     float     vy = recPart.getFloat("vy", i);
                     float     vz = recPart.getFloat("vz", i);
                     float   beta = recPart.getFloat("beta", i);
-                    short status = recPart.getShort("status", i);
-                    if(i==0) trigger = pid;
+                    short status = (short) Math.abs(recPart.getShort("status", i));
+                    if (i==0) trigger = Math.abs(pid);
+                    Particle p = new Particle(); 
+                    if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0);}             
                     if (pid!=0) {
-                        Particle p = new Particle(pid,px,py,pz,vx,vy,vz);
+                    	p.initParticle(pid, px, py, pz, vx, vy, vz);
+                    	   
+                    	p.setProperty("ppid", pid);
                         p.setProperty("status", status);
                         p.setProperty("beta", beta);
-                        part.add(i,p);     
+                        p.setProperty("index",i);                        
+//                        System.out.println("i1="+i+" "+trigger+" "+p.charge()+" "+p.getProperty("status")+" "+p.getProperty("beta"));                       
+                        if(trigger==trig && i>0 && p.charge()!=0 && p.getProperty("status")>=2000) {                        	
+//                            System.out.println("i1="+i+" "+p.getProperty("beta"));                      
+//                            ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));                       	
+                        }                        
                     }
+                    part.add(i,p);     //Lists do not support sparse indices !!!!!            
                 }
-            } 
-        }
+                
+            }
             
-       for (Particle p: part) {
-           if (p.pid()!=11 && p.pid()!=0 && p.charge()!=0 && p.getProperty("status")>=2000) {
-              ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
+            
+       }
+       
+//       System.out.println("I am here 2");
+       
+//       System.out.println(part.isEmpty()+" "+part.size());
+//       if(true) return;
+    		   
+       if (!part.isEmpty()) {
+           for (Particle p: part) {
+        	   if(p.getProperty("ppid")!=0) {
+        	   if (trigger==trig && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+//        		   System.out.println("i2="+p.getProperty("index")+" "+p.getProperty("beta"));
+        		   ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));   
+        	   }
+        	   }
            }
        }
        
-       Boolean goodREC  = event.hasBank("REC::Calorimeter");
-       Boolean goodECAL = event.hasBank("ECAL::clusters")&&event.hasBank("ECAL::calib");
+//       if(true) return;
+       
+       Boolean goodREC  = recCalo!=null, goodECAL = ecalClus!=null && ecalCali!=null;
        
        if( isMuon)                     goodEvt = goodECAL;
-       if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = event.getBank("REC::Calorimeter");}
+       if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = recCalo;}
        
        if (goodEvt) {
-           DataBank bank2 = event.getBank("ECAL::clusters"); 
-           DataBank bank3 = event.getBank("ECAL::calib");
+    	   
+           bank2 = ecalClus; 
+           bank3 = ecalCali;
            
            if ( isMuon) {goodRows = true;                                                   nrows = bank2.rows();}
            if (!isMuon) {goodRows = bank1.rows()==bank2.rows()&&bank1.rows()==bank3.rows(); nrows = bank1.rows();}
@@ -522,13 +577,16 @@ public class ECmip extends DetectorMonitor {
                float pm = -100, pp = -100;
                
                Particle p = new Particle(); 
+               int ppid = 0;
                
                if(!isMuon) { //PID diagnostics
     	         int     ip = bank1.getShort("pindex", loop);
                  p.copy(part.get(ip));
                  p.setProperty("beta",part.get(ip).getProperty("beta"));
                  p.setProperty("status",part.get(ip).getProperty("status"));
-                 if (p.pid()!=11 && p.pid()!=0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+                 p.setProperty("ppid",part.get(ip).getProperty("ppid"));
+                 ppid = (int) part.get(ip).getProperty("ppid");
+                 if (trigger==trig && ppid!=11 && ppid!=0 && p.charge()!=0 && p.getProperty("status")>=2000) {
                    p.setProperty("energy",en);
     	           p.setProperty("time",ti);
     	           p.setProperty("x",x);
@@ -544,8 +602,8 @@ public class ECmip extends DetectorMonitor {
                    if (p.charge()>0) {pp = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(2).get(0)).fill(pp,p.getProperty("beta"));}
                    if (p.charge()<0) {pm = (float) p.p(); ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(3).get(0)).fill(pm,p.getProperty("beta"));} 
                
-                   if (p.pid()==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pp,p.getProperty("beta"));
-                   if (p.pid()==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
+                   if (ppid==+211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(4).get(0)).fill(pp,p.getProperty("beta"));
+                   if (ppid==-211) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(5).get(0)).fill(pm,p.getProperty("beta"));
                  
                    if (!ecpart.hasItem(is,il)) ecpart.add(new ArrayList<Particle>(), is,il);    	                
  	                    ecpart.getItem(is,il).add(p);  
@@ -553,7 +611,7 @@ public class ECmip extends DetectorMonitor {
                }
                
 //               Boolean goodPID = isMuon ? true:(Math.abs(p.pid())==211&&p.getProperty("status")>=2000);
-               Boolean goodPID = isMuon ? true:(Math.abs(p.pid())==211 && p.getProperty("status")>=2000);
+               Boolean goodPID = isMuon ? true:(Math.abs(ppid)==211 && p.getProperty("status")>=2000);
    	                         
                Vector3 r = new Vector3(x,y,z);
                
@@ -576,7 +634,7 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+1;
 //                if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
-                if(n1[is]==1&n4[is]==1&&n7[is]==1) { //Only one cluster in each layer to reject vertical cosmics
+                if(trigger==trig && n1[is]==1 && n4[is]==1 && n7[is]==1) { //Only one cluster in each layer to reject vertical cosmics
 
 //                    Boolean goodU = Math.abs(cU[is][1][n4[is]]-cU[is][2][n7[is]])<=1;
 //                    Boolean goodV = Math.abs(cV[is][1][n4[is]]-cV[is][2][n7[is]])<=1;
@@ -1055,18 +1113,18 @@ public class ECmip extends DetectorMonitor {
     public void createTimeLineHistos() {   
     	System.out.println("Initializing "+TLname+" timeline"); 
     	runIndex = 0;
-    	tl.createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",451,6,1,7);    	
-    	tl.createTimeLineHisto( 1,"PCAL U Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 2,"PCAL V Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 3,"PCAL W Peak Mean/MIP","Sector",451,6,1,7);    	
-    	tl.createTimeLineHisto( 4,"ECIN U Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 5,"ECIN V Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 6,"ECIN W Peak Mean/MIP","Sector",451,6,1,7);    	
-    	tl.createTimeLineHisto( 7,"ECOU U Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 8,"ECOU V Peak Mean/MIP","Sector",451,6,1,7);
-    	tl.createTimeLineHisto( 9,"ECOU W Peak Mean/MIP","Sector",451,6,1,7);
+    	tl.createTimeLineHisto(10,"PCAL Cluster Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(20,"ECIN Cluster Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(30,"ECOU Cluster Mean/MIP","Sector",TLmax,6,1,7);    	
+    	tl.createTimeLineHisto( 1,"PCAL U Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 2,"PCAL V Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 3,"PCAL W Peak Mean/MIP","Sector",TLmax,6,1,7);    	
+    	tl.createTimeLineHisto( 4,"ECIN U Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 5,"ECIN V Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 6,"ECIN W Peak Mean/MIP","Sector",TLmax,6,1,7);    	
+    	tl.createTimeLineHisto( 7,"ECOU U Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 8,"ECOU V Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto( 9,"ECOU W Peak Mean/MIP","Sector",TLmax,6,1,7);
     }
     
     public void fillTimeLineHisto() {    	
