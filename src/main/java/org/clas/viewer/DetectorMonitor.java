@@ -117,6 +117,7 @@ public class DetectorMonitor implements ActionListener {
     public int       TriggerMask = 0;
     
     private int   runNumber = 0;
+    public  int    runIndex = 0;
     private int eventNumber = 0;
     private int     viewRun = 0;  
     
@@ -137,6 +138,8 @@ public class DetectorMonitor implements ActionListener {
     public String      geom = "2.5";
     public String    config = "muon";   
 	public EventBuilder  eb = null;
+	
+	public Boolean  isHipo3Event = true;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
     int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
@@ -173,10 +176,10 @@ public class DetectorMonitor implements ActionListener {
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
     public IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
     public TimeLine                          tl = new TimeLine();
-    public int                         runIndex = 0;
     
     public String                 TLname = null;
     public Boolean                TLflag = null;
+    public int                     TLmax = 800;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
@@ -227,20 +230,16 @@ public class DetectorMonitor implements ActionListener {
     	if(getRunNumber()!=0) plotHistos(getRunNumber());
     }
     
-    public void initCCDB(int runno) {
-    	
+    public void initCCDB(int runno) {    	
     }
     
-    public void createTimeLineHistos() {
-    	
+    public void createTimeLineHistos() {    	
     }
     
-    public void localinit() {
-    	
+    public void localinit() {    	
     }
     
-    public void localclear() {
-    	
+    public void localclear() {    	
     }
     
     public void initGStyle() {
@@ -376,7 +375,7 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       analyze(); if(autoSave) saveHistosToFile();
+        case EVENT_STOP:       {System.out.println("EVENT_STOP"); analyze(); if(autoSave) saveHistosToFile();}
 	    }
     }
 
@@ -562,7 +561,7 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-                   slider = new JSlider(JSlider.HORIZONTAL, 0, 450,0); 
+                   slider = new JSlider(JSlider.HORIZONTAL, 0, TLmax-1, 0); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(slider);
@@ -736,7 +735,11 @@ public class DetectorMonitor implements ActionListener {
         return runNumber;
     }
     
-    public float getTorusPolarity(int run) {
+    public int getRunIndex() {
+    	return runIndexSlider;
+    }
+    
+    public int getTorusPolarity(int run) {
     	if (run>=3029&&run<=3065) return getTorusColor("-1.0");
     	if (run>=3072&&run<=3087) return getTorusColor("-0.75");
     	if (run>=3097&&run<=3105) return getTorusColor("+0.75");
@@ -749,7 +752,22 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5420&&run<=5995) return getTorusColor("+1.00");  
     	if (run>=5996&&run<=6000) return getTorusColor("+0.50");  
     	if (run>=6142&&run<=6783) return getTorusColor("-1.00");  
-    	return 0f;
+    	return getTorusColor("0");
+    }
+    
+    public int getRunGroup(int run) {
+    	if (run>=5674&&run<=6000) return getRGIndex("rgk");
+    	if (run>=6132&&run<=6604) return getRGIndex("rgb");
+    	return getRGIndex("rga");
+    }
+    
+    public int getRGIndex(String val) {
+    	switch (val) {
+    	case "rgk": return 6;
+    	case "rgb": return 3;
+    	case "rga": return 1;
+    	}
+    	return 0;    	
     }
     
     public int getTorusColor(String val) {
@@ -760,7 +778,7 @@ public class DetectorMonitor implements ActionListener {
     	case "+0.75": return 3;  
     	case "+1.00": return 2; 
     	}
-    	return 0;
+    	return 6;
     }
 
     public int getViewRun() {
@@ -824,8 +842,9 @@ public class DetectorMonitor implements ActionListener {
 	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
 	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
 	    for (int i=0; i<runlist.size(); i++) {
-	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); int it = getTorusPolarity(runlist.get(i))<0?1:2;
-	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
+	    	int it = getTorusPolarity(runlist.get(i)); int im = getRunGroup(runlist.get(i));
+	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); 
+	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerStyle(im);g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
 	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
 	    }   
 	                          gglist.add(glist.getItem(0));
