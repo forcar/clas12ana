@@ -28,6 +28,7 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
+import org.jlab.io.hipo3.Hipo3DataSource;
 //import org.jlab.service.eb.EBConstants;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.ec.ECEngine;
@@ -504,7 +505,7 @@ public class ECPart  {
     
     public void electronDemo(String[] args) {
     	
-        HipoDataSource reader = new HipoDataSource();
+        Hipo3DataSource reader = new Hipo3DataSource();
         ECEngine       engine = new ECEngine();
         ECPart           part = new ECPart();  
         
@@ -652,7 +653,7 @@ public class ECPart  {
     public void pizeroDemo(String[] args) {
     	
         DataGroup      dg_pi0 = new DataGroup(1,1);
-        HipoDataSource reader = new HipoDataSource();
+        Hipo3DataSource reader = new Hipo3DataSource();
         ECEngine       engine = new ECEngine();
         ECPart           part = new ECPart();  
         
@@ -663,7 +664,7 @@ public class ECPart  {
         int n2rec2=0;
         
         String evioPath = "/Users/colesmith/clas12/sim/pizero/hipo/";
-//        String evioFile = "fc-pizero-100k-s2-newgeom-0.35-2.35.hipo"; int sec=2;
+//        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
         String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
         
@@ -677,6 +678,7 @@ public class ECPart  {
             reader.open(inputFile);
         }
               
+//        engine.setGeomVariation("rga_fall2018");
         engine.init();
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
