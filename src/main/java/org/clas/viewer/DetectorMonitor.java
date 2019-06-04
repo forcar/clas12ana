@@ -806,7 +806,7 @@ public class DetectorMonitor implements ActionListener {
 			writer = new PrintWriter(filename);
 		} 
 		catch (FileNotFoundException e) 
-		{			// TODO Auto-generated catch block
+		{
 			e.printStackTrace();
 		}				
     	for (int i=0; i<graph.getDataSize(0); i++) writer.println(String.format("%1$.3f %2$.6f %3$.8f",graph.getDataX(i),graph.getDataY(i),graph.getDataEY(i))); 

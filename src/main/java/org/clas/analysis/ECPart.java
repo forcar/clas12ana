@@ -132,30 +132,7 @@ public class ECPart  {
         h5.fill(refE);
     }
     
-    public List<DetectorResponse> readEvioEvent(DataEvent event, String bankName, DetectorType type) {
-        List<DetectorResponse> responseList = new ArrayList<DetectorResponse>();
-        if(event.hasBank(bankName)==true){
-            EvioDataBank bank = (EvioDataBank) event.getBank(bankName);
-            int nrows = bank.rows();
-            for(int row = 0; row < nrows; row++){
-                int sector = bank.getInt("sector", row);
-                int  layer = bank.getInt("layer",  row);
-                CalorimeterResponse  response = new CalorimeterResponse(sector,layer,0);
-                response.getDescriptor().setType(type);
-                double x = bank.getDouble("X", row);
-                double y = bank.getDouble("Y", row);
-                double z = bank.getDouble("Z", row);
-                response.setPosition(x, y, z);
-                response.setEnergy(bank.getDouble("energy", row));
-                response.setTime(bank.getDouble("time", row));
-                responseList.add(response);
-            }
-        }
-        return responseList;                      
-    }
-    
-    public static List<DetectorResponse>  readHipoEvent(DataEvent event, 
-            String bankName, DetectorType type){        
+    public static List<DetectorResponse>  readEvent(DataEvent event, String bankName, DetectorType type){        
             List<DetectorResponse> responseList = new ArrayList<DetectorResponse>();
             if(event.hasBank(bankName)==true){
                 DataBank bank = event.getBank(bankName);
@@ -183,9 +160,7 @@ public class ECPart  {
         List<DetectorResponse> rEC = new ArrayList<DetectorResponse>();
         Boolean isEvio = event instanceof EvioDataEvent;                  
         eb.initEvent();
-        if (isEvio) rEC =                  readEvioEvent(event, "ECDetector::clusters", DetectorType.ECAL); 
-//        if(!isEvio) rEC = DetectorResponse.readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
-        if(!isEvio) rEC =                  readHipoEvent(event, "ECAL::clusters", DetectorType.ECAL);
+        if(!isEvio) rEC = readEvent(event, "ECAL::clusters", DetectorType.ECAL);
         eb.addDetectorResponses(rEC); 
         return rEC;
     } 

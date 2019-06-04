@@ -6,13 +6,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -78,7 +82,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JCheckBoxMenuItem                   ctr = null;  
     JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
     
-    
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
@@ -112,6 +115,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean      TLflag = false;
     public Boolean       clear = true;    
     DetectorMonitor[] monitors = null;
+    public JFileChooser     fc = null; 
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
         
@@ -151,7 +155,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECpi0("ECpi0"); 
         }
     }
     
@@ -163,8 +167,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         JMenuItem menuItem;
                
         menu     = new JMenu("File");
-        menuItem = new JMenuItem("Timeline Data");           menuItem.addActionListener(this); menu.add(menuItem);
-        menuItem = new JMenuItem("Analyze Data");            menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Load Run");                menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Load Summary");            menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Analyze Histos");          menuItem.addActionListener(this); menu.add(menuItem); menu.addSeparator();
         menuItem = new JMenuItem("Open histograms file");    menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Save histograms to file"); menuItem.addActionListener(this); menu.add(menuItem);
@@ -252,7 +256,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
         mainPanel.add(tabbedpane);
         mainPanel.add(processorPane,BorderLayout.PAGE_END);
-           
+       
         GStyle.getAxisAttributesX().setTitleFontSize(18);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
         GStyle.getAxisAttributesY().setTitleFontSize(18);
@@ -303,7 +307,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
         switch (e.getActionCommand()) {
-          case("Timeline Data"):               this.readFiles(); break;
+          case("Load Run"):                    this.loadHistoFromRunIndex(); break;
+//          case("Load Summary"):                this.readHistosFromSummary(); break;
           case("Analyze Data"):                this.readFiles(); break;
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
@@ -452,16 +457,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             else {            	
             	hipo = event; 
             }
-/*    	
-    	if(event!=null ){
-            if(event instanceof EvioDataEvent){
-             	event = clasDecoder.getDataEvent(event);
-                DataBank   header = clasDecoder.createHeaderBank(event, this.ccdbRunNumber, 0, (float) 0, (float) 0);
-                DataBank  trigger = clasDecoder.createTriggerBank(event);
-                event.appendBanks(header);
-                event.appendBank(trigger);
-            } 
-*/            
+            
             int rNum = 0; int eNum = 0;
             
             rNum = getRunNumber(event);
@@ -472,6 +468,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 for(int k=0; k<this.monitors.length; k++) {
                 	if(autoSave&&this.runNumber!=0) this.monitors[k].saveHistosToFile();
                     this.runNumber = rNum;
+                    this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
                 	this.monitors[k].setRunNumber(this.runNumber); 
                    	this.monitors[k].localclear();
                    	this.monitors[k].initCCDB(this.runNumber);
@@ -619,25 +616,61 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].resetEventListener();
             this.monitors[k].timerUpdate();
         }      
-    }    
+    } 
     
-    private void readHistos() {
-        JFileChooser fc = new JFileChooser(new File(workDir));
+    private List<File> selectHistos() {
+        fc = new JFileChooser(new File(workDir+monitors[0].getDetectorName()));
         fc.setDialogTitle("Choose input histos directory...");
         fc.setMultiSelectionEnabled(true);
-        fc.setAcceptAllFileFilterUsed(false);
-        for(int k=0; k<this.monitors.length; k++) this.monitors[k].localclear();
-        String fname = null;
+        fc.setAcceptAllFileFilterUsed(false);  
+        List<File> files = new ArrayList<File>();
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            for (File fd : fc.getSelectedFiles()) {
-                if (fd.isFile()) {
-                	fname=fd.getAbsolutePath();
-                	loadHistosFromFile(fname);
-                }                
-            }  
-            if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
-        }
-    }        
+        	if(fc.getSelectedFile().getName().contains("summary")) {
+        		String fname = fc.getSelectedFile().getAbsolutePath();
+        		try 
+        		{
+        	    BufferedReader reader = new BufferedReader(new FileReader(fname));
+        	    String line;
+        	    while ((line = reader.readLine()) != null)
+        	    {        	    	
+        	      files.add(new File(line));
+        	    }
+        		reader.close();
+        	}
+        	  catch (Exception e)
+        	  {
+        	    System.err.format("Exception occurred trying to read '%s'.", fname);
+        	    e.printStackTrace();        	   
+        	  }
+        	} else {
+                for (File fd : fc.getSelectedFiles()) {
+                    if (fd.isFile()) {
+                        files.add(new File(fd.getAbsolutePath()));
+                    }                
+                } 
+        	}
+        } 
+        return files;
+    }
+    
+    private void readHistos() {
+    	String fname = null;
+        for(int k=0; k<this.monitors.length; k++) this.monitors[k].localclear();
+
+        for (File fd : selectHistos()) {
+            if (fd.isFile()) {
+                fname=fd.getAbsolutePath();
+                loadHistosFromFile(fname);
+            }                
+        }  
+//        if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+    }
+             
+    public void loadHistoFromRunIndex() {
+    	File[] f = fc.getSelectedFiles();
+    	monitors[0].dropSummary=false;
+    	loadHistosFromFile(f[monitors[0].getRunIndex()].getAbsolutePath());
+    }
     
     public void loadHistosFromFile(String fileName) {
         System.out.println("Opening file: " + fileName);

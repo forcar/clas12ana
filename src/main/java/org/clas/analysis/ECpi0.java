@@ -25,6 +25,7 @@ import org.jlab.groot.math.F1D;
 import org.jlab.groot.tree.TreeFile;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.service.ec.ECStrip;
 import org.jlab.utils.groups.IndexedList;
 
 import Jampack.Inv;
@@ -48,6 +49,7 @@ public class ECpi0 extends DetectorMonitor{
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
        
     TreeFile                       tree = null; 
+    boolean                  isTreeOpen = false;
     float[]                        rowf = null; 
     int                         mcevent = 0;
     
@@ -88,11 +90,12 @@ public class ECpi0 extends DetectorMonitor{
         configEngine("pi0");
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
+        engine.setLogWeight(true);
+        engine.setLogParam(2.0);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);   
     	tl.setFitData(Fits);
-//        openTree();
     }
     
     public void localclear() {
@@ -105,9 +108,10 @@ public class ECpi0 extends DetectorMonitor{
     	slider.setValue(0);
     }  
     
-    public void openTree() {
+    public boolean openTree() {
     	tree  = new TreeFile(jawPath+"mctrue.hipo","T","ev:avgT:avgZ:vz:mvz:aR:vR:mvR:tedep");
-    	rowf = new float[9];    	
+    	rowf = new float[9]; 
+    	return true;
     }
     
     @Override
@@ -156,7 +160,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(9);
         plotXYSummary(10);
         plotPI0Summary(11);
-//        plotMCPHOT(12);
+        plotMCPHOT(12);
     }
     
     public void plotAnalysis(int run) {
@@ -344,7 +348,7 @@ public class ECpi0 extends DetectorMonitor{
     public void processMC(DataEvent event, DataBank ecBank) {
     	
         int run = getRunNumber();
-        
+        if (!isTreeOpen) isTreeOpen = openTree();
         double refE=0,refP=0,refTH=25,tmax=30;
         double pcx=0,pcy=0,pcz=0;
     	
@@ -359,7 +363,7 @@ public class ECpi0 extends DetectorMonitor{
             refE  = Math.sqrt(refP*refP+rm*rm);    
             refTH = Math.acos(ppz/refP)*180/Math.PI;
         }
-            
+
         if(event.hasBank("MC::True")==true) {
             DataBank bank = event.getBank("MC::True");
             rowf[0] = mcevent++;
@@ -461,7 +465,7 @@ public class ECpi0 extends DetectorMonitor{
         int run = getRunNumber();
         
         if (dropBanks) dropBanks(event);
-
+        
         ecClusters = part.readEC(event);  
         
         if (ecClusters.size()==0) return;
@@ -629,6 +633,7 @@ public class ECpi0 extends DetectorMonitor{
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
+        if(isTreeOpen) tree.close();
         isAnalyzeDone = true;       
     }
     
