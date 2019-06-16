@@ -131,7 +131,7 @@ public class ECperf extends DetectorMonitor {
 		for(int s=0;s<6;s++){Ntrigs_sect[s]=0;Nelecs_sect[s]=0;}
 		trigger_bits = new boolean[32];
 		Mp = 0.93827f;
-        Eb = getBeamEnergy(run);
+        Eb = EB = getBeamEnergy(run);
         System.out.println("Eb="+Eb+" run="+runNum);
 		rfPeriod = 4.008f;
         engine.getConstantsManager().init(Arrays.asList(new String[]{"/daq/tt/fthodo","/calibration/eb/rf/config"}));
