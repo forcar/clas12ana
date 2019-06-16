@@ -1,5 +1,7 @@
 package org.clas.analysis;
 
+import java.util.Arrays;
+
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Vector3;
@@ -8,14 +10,20 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.utils.groups.IndexedTable;
 
 public class ECperf extends DetectorMonitor {
 	
 	public int Nevts, Nelecs, Ntrigs, runNum;
-	boolean[] trigger_bits;
-	public int[] Ntrigs_sect, Nelecs_sect;
-
+	boolean[] trigger_bits = new boolean[32];
+	public int[] Ntrigs_sect = new int[6];
+    public int[] Nelecs_sect = new int[6];
+    
+	public float EB, Eb, Mp;
 	public float RFT, STT;
+	public long TriggerWord;
+	public float rfPeriod;
+	public int rf_large_integer;
 	
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, VG1, VG2, VPI0;
 	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
@@ -52,38 +60,38 @@ public class ECperf extends DetectorMonitor {
 	public H2F H_e_t_f, H_e_p_f, H_e_vz_f, H_e_vt_vz, H_e_vt_p, H_e_vt_t;
 	public H2F H_e_PCAL, H_e_FTOF, H_e_LTCC, H_e_DCSL6, H_e_DCSL5, H_e_DCSL4, H_e_DCSL3, H_e_DCSL2, H_e_DCSL1, H_e_HTCC;
     public H2F H_e_nphe_HTCC, H_e_bin_theta_HTCC, H_e_bin_phi_HTCC, H_e_theta_HTCC, H_e_phi_HTCC;
-	public H2F[] H_e_HTCC_cut; 
-	public H2F[] H_e_t_p, H_e_vz_t, H_e_vz_p;
-	public H2F[] H_e_EC_etot_p, H_e_EC_vt_theta, H_e_EC_XY;
-	public H2F[] H_e_FTOF_vt_pad1a, H_e_FTOF_edep_pad1a, H_e_FTOF_XY_pad1a;
-	public H2F[] H_e_FTOF_vt_pad1b, H_e_FTOF_edep_pad1b, H_e_FTOF_XY_pad1b;
-	public H2F[] H_FTOF_pos_beta_mom_pad1a, H_FTOF_neg_beta_mom_pad1a, H_FTOF_pos_beta_mom_pad1b, H_FTOF_neg_beta_mom_pad1b;
-	public H2F[] H_FTOF_pos_mass_mom_pad1a, H_FTOF_pos_mass_the_pad1a, H_FTOF_neg_mass_mom_pad1a, H_FTOF_neg_mass_the_pad1a;
-	public H2F[] H_FTOF_pos_mass_mom_pad1b, H_FTOF_pos_mass_the_pad1b, H_FTOF_neg_mass_mom_pad1b, H_FTOF_neg_mass_the_pad1b;
+	public H2F[] H_e_HTCC_cut = new H2F[6]; 
+	public H2F[] H_e_t_p=new H2F[6], H_e_vz_t=new H2F[6], H_e_vz_p=new H2F[6];
+	public H2F[] H_e_EC_etot_p=new H2F[6], H_e_EC_vt_theta=new H2F[6], H_e_EC_XY=new H2F[6];
+	public H2F[] H_e_FTOF_vt_pad1a=new H2F[6], H_e_FTOF_edep_pad1a=new H2F[6], H_e_FTOF_XY_pad1a=new H2F[6];
+	public H2F[] H_e_FTOF_vt_pad1b=new H2F[6], H_e_FTOF_edep_pad1b=new H2F[6], H_e_FTOF_XY_pad1b=new H2F[6];
+	public H2F[] H_FTOF_pos_beta_mom_pad1a=new H2F[6], H_FTOF_neg_beta_mom_pad1a=new H2F[6], H_FTOF_pos_beta_mom_pad1b=new H2F[6], H_FTOF_neg_beta_mom_pad1b=new H2F[6];
+	public H2F[] H_FTOF_pos_mass_mom_pad1a=new H2F[6], H_FTOF_pos_mass_the_pad1a=new H2F[6], H_FTOF_neg_mass_mom_pad1a=new H2F[6], H_FTOF_neg_mass_the_pad1a=new H2F[6];
+	public H2F[] H_FTOF_pos_mass_mom_pad1b=new H2F[6], H_FTOF_pos_mass_the_pad1b=new H2F[6], H_FTOF_neg_mass_mom_pad1b=new H2F[6], H_FTOF_neg_mass_the_pad1b=new H2F[6];
 	//from tof_monitor.java for timing and gain calibration, but from Dan's comment
 	//use leptons/pions (both charges) for p1a, p1b and all particles (both charges) for p2.
-	public H2F[] p1a_pad_vt_elec, p1a_pad_vt_pion, p1b_pad_vt_elec, p1b_pad_vt_pion, p2_pad_vt;
-	public H1F[] p1a_pad_edep_elec, p1a_pad_edep_pion, p1b_pad_edep_elec, p1b_pad_edep_pion, p2_pad_edep;
+	public H2F[] p1a_pad_vt_elec=new H2F[6], p1a_pad_vt_pion=new H2F[6], p1b_pad_vt_elec=new H2F[6], p1b_pad_vt_pion=new H2F[6], p2_pad_vt=new H2F[6];
+	public H1F[] p1a_pad_edep_elec=new H1F[6], p1a_pad_edep_pion=new H1F[6], p1b_pad_edep_elec=new H1F[6], p1b_pad_edep_pion=new H1F[6], p2_pad_edep=new H1F[6];
 
-	public H2F[] H_e_LTCC_vt_theta, H_e_LTCC_nphe_theta, H_e_LTCC_XY;
-	public H2F[] H_e_HTCC_vt_theta, H_e_HTCC_nphe_theta, H_e_HTCC_XY;
+	public H2F[] H_e_LTCC_vt_theta=new H2F[6], H_e_LTCC_nphe_theta=new H2F[6], H_e_LTCC_XY=new H2F[6];
+	public H2F[] H_e_HTCC_vt_theta=new H2F[6], H_e_HTCC_nphe_theta=new H2F[6], H_e_HTCC_XY=new H2F[6];
 	public H1F[][][] H_e_bin_nphe_HTCC;
 
 	public H2F H_elast_e_th_p, H_elast_p_th_p, H_elast_vz_vz, H_elast_dvz_phi, H_elast_dvz_theta_all, H_elast_dvz_vz;
 	public H2F H_elast_Dphi_phi, H_elast_Dphi_theta, H_elast_Dphi_vz, H_elast_EB_phi, H_elast_EB_theta, H_elast_EB_vz ;
-	public H2F[] H_elast_W_theta, H_elast_W_Q2, H_elast_inc_W_theta, H_elast_dvz_theta;
+	public H2F[] H_elast_W_theta=new H2F[6], H_elast_W_Q2=new H2F[6], H_elast_inc_W_theta=new H2F[6], H_elast_dvz_theta=new H2F[6];
 
 	public H2F H_epip_e_th_p, H_epip_p_th_p, H_epip_vz_vz, H_epip_dvz_phi, H_epip_dvz_theta, H_epip_dvz_vz;
 	public H2F H_epip_Dphi_phi, H_epip_Dphi_theta, H_epip_Dphi_vz, H_epip_beta_p, H_epip_FTOF1b_dt_epad, H_epip_FTOF1b_dt_pippad;
-	public H2F[] H_epip_W_theta, H_epip_inc_W_theta;
+	public H2F[] H_epip_W_theta=new H2F[6], H_epip_inc_W_theta=new H2F[6];
 	
 	public H2F H_pi0_G1_XY, H_pi0_G1_TR, H_pi0_G1_vt_evt, H_pi0_G1_layer_E;//4
 	public H2F H_pi0_G2_XY, H_pi0_G2_TR, H_pi0_G2_vt_evt, H_pi0_G2_layer_E;//8
 	public H2F H_pi0_G1_mom_the, H_pi0_G1_phi_the, H_pi0_G2_mom_the, H_pi0_G2_phi_the;//12
 	public H2F H_pi0_open_E, H_pi0_E_the, H_pi0_phi_the;//15
     public H1F H_pi0_mass, H_pi0_G1_layers, H_pi0_G2_layers;//18
-
-	public float EB, Eb, Mp;
+    
+	public IndexedTable rfTable;	
 	
     public ECperf(String name) {
         super(name);
@@ -94,14 +102,13 @@ public class ECperf extends DetectorMonitor {
         		                 "ECtime");
         
         this.init();
-        this.localinit();  
-    
+        this.localinit();      
     }
     
     public void localinit() {
     	System.out.println("ECperf.localinit()");
+        configEngine("muon"); 
     	tl.setFitData(Fits);   
-    	EB = 10.607f; Mp = 0.93827f;
     }  
     
     public void localclear() {
@@ -115,8 +122,34 @@ public class ECperf extends DetectorMonitor {
     	slider.setValue(0);
     } 
     
+    public void dstinit(int run) {
+	    System.out.println("ECperf:dstinit("+run+")");
+		runNum = run;
+		Nevts=0;Nelecs=0;Ntrigs=0;
+		Ntrigs_sect = new int[6];
+		Nelecs_sect = new int[6];
+		for(int s=0;s<6;s++){Ntrigs_sect[s]=0;Nelecs_sect[s]=0;}
+		trigger_bits = new boolean[32];
+		Mp = 0.93827f;
+        Eb = getBeamEnergy(run);
+        System.out.println("Eb="+Eb+" run="+runNum);
+		rfPeriod = 4.008f;
+        engine.getConstantsManager().init(Arrays.asList(new String[]{"/daq/tt/fthodo","/calibration/eb/rf/config"}));
+        rfTable = engine.getConstantsManager().getConstants(runNum,"/calibration/eb/rf/config");
+        if (rfTable.hasEntry(1, 1, 1)){
+            System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
+            rfPeriod = (float)rfTable.getDoubleValue("clock",1,1,1);
+        }
+		rf_large_integer = 1000;    	
+        VB = new LorentzVector(0,0,Eb,Eb);
+        VT = new LorentzVector(0,0,0,Mp);    
+    }
+    
     @Override    
-    public void createHistos(int run) {   
+    public void createHistos(int run) {  
+	    System.out.println("ECperf:createHistos("+run+")");
+    	setRunNumber(run);
+    	dstinit(run);
 		H_epip_e_th_p = new H2F("H_epip_e_th_p","H_epip_e_th_p",100,0,EB,100,0,40);
 		H_epip_e_th_p.setTitle("electron #theta vs p");
 		H_epip_e_th_p.setTitleX("p (GeV)");
@@ -157,7 +190,19 @@ public class ECperf extends DetectorMonitor {
 		H_epip_beta_p = new H2F("H_epip_beta_p","H_epip_beta_p",100,0,EB,100,0.8,1.2);
 		H_epip_beta_p.setTitle("pip #beta vs p");
 		H_epip_beta_p.setTitleX("p (GeV)");
-		H_epip_beta_p.setTitleY("#beta");    	
+		H_epip_beta_p.setTitleY("#beta");    
+		
+		for(int s=0;s<6;s++){
+			H_epip_W_theta[s] = new H2F("H_epip_W_theta_"+(s+1),"H_epip_W_theta_"+(s+1),100,0,4,100,0,40);
+			H_epip_W_theta[s].setTitle("#theta vs W S"+(s+1));
+			H_epip_W_theta[s].setTitleX("W ( GeV)");
+			H_epip_W_theta[s].setTitleY("#theta (^o)");
+			H_epip_inc_W_theta[s] = new H2F("H_epip_inc_W_theta_"+(s+1),"H_epip_inc_W_theta_"+(s+1),100,0,4,100,0,40);
+			H_epip_inc_W_theta[s].setTitle("#theta vs W S"+(s+1));
+			H_epip_inc_W_theta[s].setTitleX("W ( GeV)");
+			H_epip_inc_W_theta[s].setTitleY("#theta (^o)");
+		}
+
     }
     
 	public void resetCounters(){
@@ -165,7 +210,6 @@ public class ECperf extends DetectorMonitor {
         pim_part_ind = -1; pip_part_ind = -1;pip_FTOF_pad1b = -1;prot_part_ind = -1;G1_part_ind = -1;G2_part_ind = -1;G1_pcal_ind = -1;G2_pcal_ind = -1;
         G1_cal_layers = 0;G2_cal_layers = 0;G1_mom = 0;G2_mom = 0;
     }
-
 	
     public double Vangle(Vector3 v1, Vector3 v2){
         double res = 0;
@@ -177,16 +221,16 @@ public class ECperf extends DetectorMonitor {
     }
    
     public int getSect(DataBank bank, int partInd){
-        for(int k = 0; k < bank.rows(); k++){
-                if(bank.getShort("pindex",k)==partInd)return bank.getInt("sector",k);
-        }   
+        for(int k = 0; k < bank.rows(); k++) if(bank.getShort("pindex",k)==partInd)return bank.getInt("sector",k);  
         return -1; 
     } 
     
 	public boolean fillConfBank(DataBank confbank){
 		boolean selectTrig = false;
 		long TriggerWord = confbank.getLong("trigger",0);
+		
 		for (int i = 31; i >= 0; i--) {trigger_bits[i] = (TriggerWord & (1 << i)) != 0;} 
+		
 		if(trigger_bits[1] || trigger_bits[2] || trigger_bits[3] || trigger_bits[4] || trigger_bits[5] || trigger_bits[6]){
 			selectTrig = true;
 			Ntrigs++;
@@ -200,10 +244,8 @@ public class ECperf extends DetectorMonitor {
 		return selectTrig;
 	}
 	
-
-	
 	public void fillRecBank(DataBank recBank){
-		STT = recBank.getFloat("STTime",0);
+	    STT = isHipo3Event ? recBank.getFloat("STTime", 0):recBank.getFloat("startTime", 0);
 		RFT = recBank.getFloat("RFTime",0);
 	}
 	
@@ -321,7 +363,8 @@ public class ECperf extends DetectorMonitor {
                 float px = bank.getFloat("px", k); 
                 float py = bank.getFloat("py", k); 
                 float pz = bank.getFloat("pz", k); 
-                int status = bank.getShort("status", k); 
+//                int status = bank.getShort("status", k);  
+                short status = (short) Math.abs(bank.getShort("status", k));
                 boolean inDC = (status>=2000 && status<4000);
                 e_mom = (float)Math.sqrt(px*px+py*py+pz*pz);
                 e_the = (float)Math.toDegrees(Math.acos(pz/e_mom));
@@ -332,10 +375,10 @@ public class ECperf extends DetectorMonitor {
                         e_vx = bank.getFloat("vx", k); 
                         e_vy = bank.getFloat("vy", k); 
                         Ve = new LorentzVector(px,py,pz,e_mom);
-                        VGS = new LorentzVector(0,0,0,0);
-                        VGS.add(VB);
-                        VGS.sub(Ve);
-                        e_Q2 = (float) -VGS.mass2();
+                        VGS = new LorentzVector(0,0,0,0);                	     
+                        VGS.add(VB);               	         
+                        VGS.sub(Ve);                	                   	    
+                	    e_Q2 = (float) -VGS.mass2();
                         e_xB = e_Q2/(2f*Mp*(Eb-e_mom));
                         e_W  = (float) Math.sqrt(Mp*Mp + e_Q2*(1f/e_xB-1f) );
                         return k;
@@ -354,7 +397,8 @@ public class ECperf extends DetectorMonitor {
 			float vy = bank.getFloat("vy", k);
 			float vz = bank.getFloat("vz", k);
 			float be = bank.getFloat("beta", k);
-			int status = bank.getShort("status", k);
+//			int status = bank.getShort("status", k);
+            short status = (short) Math.abs(bank.getShort("status", k));
 			boolean inDC = (status>=2000 && status<4000);
 			float mom = (float)Math.sqrt(px*px+py*py+pz*pz);
 			float the = (float)Math.toDegrees(Math.acos(pz/mom));
@@ -366,7 +410,7 @@ public class ECperf extends DetectorMonitor {
 				pip_phi = (float)Math.toDegrees(Math.atan2(py,px));
 				pip_vx = vx;pip_vy = vy;pip_vz = vz;
 				pip_beta = be;
-                                Vpip = new LorentzVector(px,py,pz,Math.sqrt(pip_mom*pip_mom+0.13957f*0.13957f));
+                Vpip = new LorentzVector(px,py,pz,Math.sqrt(pip_mom*pip_mom+0.13957f*0.13957f));
 			}
 			if(pid == -211 && pim_part_ind==-1 && inDC && (mom>1.5||runNum<2600) ){
 				pim_part_ind = k;
@@ -416,6 +460,7 @@ public class ECperf extends DetectorMonitor {
 		}
 		return res;
 	}
+	
 	public boolean select_epip(){
 		if(pip_part_ind>-1){
 			epip_dPhi = pip_phi - e_phi + 180f;
@@ -431,6 +476,7 @@ public class ECperf extends DetectorMonitor {
 		}
 		return false;
 	}
+	
 	public boolean select_epi0(){
 		boolean res = false;
 		if( true
@@ -453,27 +499,31 @@ public class ECperf extends DetectorMonitor {
 		return res;
 	}
 	
+	
     public void processEvent(DataEvent event) {
-	resetCounters();
-	if(event.hasBank("RUN::config") && fillConfBank(event.getBank("RUN::config")) ){
-		if(event.hasBank("REC::Event"))fillRecBank(event.getBank("REC::Event"));
-		if(event.hasBank("REC::Particle"))e_part_ind = makeElectron(event.getBank("REC::Particle"));
-		if(e_part_ind>-1){
-			makeOthers(event.getBank("REC::Particle"));
-			e_sect = 0;
-			if(event.hasBank("REC::Track"))e_sect = getSect(event.getBank("REC::Track"),e_part_ind);
-			if(event.hasBank("REC::Traj"))fillTraj(event.getBank("REC::Traj"));
-//			if(event.hasBank("REC::Cherenkov"))fillCerenkov(event.getBank("REC::Cherenkov"));
-//			if(event.hasBank("REC::Scintillator"))fillFTOF(event.getBank("REC::Particle"),event.getBank("REC::Scintillator"));
-			if(event.hasBank("REC::Calorimeter"))fillECAL(event.getBank("REC::Calorimeter"));
-			//if(e_sect>0 && found_eTraj){}
-			if(e_sect>0 ){
-				Nelecs++;Nelecs_sect[e_sect-1]++;
-				FillHists();
-			}
-		}//if e_part_ind>-1
-	}//event.hasBank("RUN::config")
-    }//processEvent  
+	    resetCounters();
+	    if(event.hasBank("RUN::config") && fillConfBank(event.getBank("RUN::config")) ){
+	    	
+	    	if(event.hasBank("REC::Event"))fillRecBank(event.getBank("REC::Event"));
+	    	
+		    if(event.hasBank("REC::Particle"))e_part_ind = makeElectron(event.getBank("REC::Particle"));
+		    
+		    if(e_part_ind>-1){
+			    makeOthers(event.getBank("REC::Particle"));
+			    e_sect = 0;
+			    if(event.hasBank("REC::Track"))e_sect = getSect(event.getBank("REC::Track"),e_part_ind);
+			    if(event.hasBank("REC::Traj"))fillTraj(event.getBank("REC::Traj"));
+//			    if(event.hasBank("REC::Cherenkov"))fillCerenkov(event.getBank("REC::Cherenkov"));
+//			    if(event.hasBank("REC::Scintillator"))fillFTOF(event.getBank("REC::Particle"),event.getBank("REC::Scintillator"));
+			    if(event.hasBank("REC::Calorimeter"))fillECAL(event.getBank("REC::Calorimeter"));
+			    //if(e_sect>0 && found_eTraj){}
+			    if(e_sect>0 ){
+				    Nelecs++;Nelecs_sect[e_sect-1]++;
+				    FillHists();
+			    }
+		    }
+	    }
+    }  
     
 	public void FillHists(){
 		
@@ -500,12 +550,9 @@ public class ECperf extends DetectorMonitor {
 	}
 	
 	public void epipPlot(int index) {
+		System.out.println("isAnalyzeDone = "+isAnalyzeDone);
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-		c.setSize(3600,2400);
 		c.divide(6,4);
-		c.setAxisTitleSize(24);
-		c.setAxisFontSize(24);
-		c.setTitleSize(24);
 		c.cd(0);c.draw(H_epip_e_th_p);
 		c.cd(1);c.draw(H_epip_p_th_p);
 		c.cd(2);c.draw(H_epip_vz_vz);
@@ -516,19 +563,36 @@ public class ECperf extends DetectorMonitor {
 		c.cd(7);c.draw(H_epip_Dphi_theta);
 		c.cd(8);c.draw(H_epip_Dphi_vz);
 		c.cd(9);c.draw(H_epip_beta_p);
-		c.cd(10);c.draw(H_epip_FTOF1b_dt_epad);
-		c.cd(11);c.draw(H_epip_FTOF1b_dt_pippad);
+//		c.cd(10);c.draw(H_epip_FTOF1b_dt_epad);
+//		c.cd(11);c.draw(H_epip_FTOF1b_dt_pippad);
 		for(int s=0;s<6;s++){
-			c.cd(12+s);c.draw(H_epip_W_theta[s]);
+			H2F h2 =  H_epip_W_theta[s];
+			c.cd(12+s);c.draw(h2);
 			c.cd(18+s);c.draw(H_epip_W_theta[s].projectionX());
-			c.getPad(18+s).getAxisX().setRange(0.25,3.25);
-		}		
+//			c.getPad(18+s).getAxisX().setRange(0.25,3.25);
+		}	
+		c.repaint();
 	}
 	
     @Override       
     public void plotHistos(int run) {
     	setRunNumber(run);
         epipPlot(1);
+    }
+    
+    @Override
+    public void plotEvent(DataEvent de) {
+       analyze();
+    }
+    
+    public void analyze() {    
+        System.out.println("I am in analyze()");
+        isAnalyzeDone = true;
+    }
+    
+    @Override
+    public void timerUpdate() {
+    	
     }
     
 }

@@ -41,6 +41,7 @@ import javax.swing.filechooser.FileSystemView;
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmip;
+import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
@@ -81,6 +82,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JCheckBoxMenuItem    cf,cf0,cf1,cf2,cf3 = null;   
     JCheckBoxMenuItem                   ctr = null;  
     JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
+    JRadioButtonMenuItem          ctr0,ctr1 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -113,7 +115,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean  fitVerbose = false;
     public String       TLname = "UVW";
     public Boolean      TLflag = false;
-    public Boolean       clear = true;    
+    public Boolean       clear = true; 
+    public Integer       TRpid = 11;
     DetectorMonitor[] monitors = null;
     public JFileChooser     fc = null; 
     
@@ -146,16 +149,17 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-      	         case   "ECa":  monitors[n++]=new ECa(s);   break; 
-    	         case   "ECsf": monitors[n++]=new ECsf(s);  break; 
-        	     case    "ECt": monitors[n++]=new ECt(s);   break;
-        	     case  "ECmip": monitors[n++]=new ECmip(s); break; 
-        	     case  "ECpi0": monitors[n++]=new ECpi0(s); break;
+      	         case   "ECa":  monitors[n++]=new ECa(s);    break; 
+    	         case   "ECsf": monitors[n++]=new ECsf(s);   break; 
+        	     case    "ECt": monitors[n++]=new ECt(s);    break;
+        	     case  "ECmip": monitors[n++]=new ECmip(s);  break; 
+        	     case  "ECpi0": monitors[n++]=new ECpi0(s);  break;
+        	     case  "ECperf":monitors[n++]=new ECperf(s); break;
         	     case "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
     	} else {
-    		monitors[n] = new ECpi0("ECpi0"); 
+    		monitors[n] = new ECperf("ECperf"); 
         }
     }
     
@@ -213,6 +217,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ct3 = new JRadioButtonMenuItem("Sectors");    ct3.addItemListener(this);       group.add(ct3); menu.add(ct3);
         menuBar.add(menu);
         
+
         
         String TriggerDef[] = { "Electron",
         		        "Electron S1","Electron S2","Electron S3","Electron S4","Electron S5","Electron S6",
@@ -221,7 +226,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         		        "ECAL S1","ECAL S2","ECAL S3","ECAL S4","ECAL S5","ECAL S6",
         		        "HT.PC","HT.EC","PC.EC","FTOF.PC","Unused","Unused",
         		        "1K Pulser"};
-        		             
+        		        
         menu = new JMenu("TriggerBits");
         
         for (int i=0; i<32; i++) {
@@ -240,6 +245,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             });         
             menu.add(ctr);         	        	 
         }
+        
+        menu     = new JMenu("MIP Trigger");
+        group = new ButtonGroup();
+        ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); 
+        ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
+        menuBar.add(menu);
 
         menuBar.add(menu);    
     }
@@ -291,6 +302,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
 		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
+		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?11:211; 
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
@@ -300,6 +312,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].dfitEnable  = dfitEnable;
                                                    this.monitors[k].gdfitEnable = gdfitEnable;
                                                    this.monitors[k].fitVerbose  = fitVerbose;
+                                                   this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);}
     }  
@@ -442,7 +455,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
     @Override
     public void dataEventAction(DataEvent event) {
-                
+
     	DataEvent hipo = null;
        	
 	    if(event!=null ){
@@ -480,11 +493,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 }
                 if(!clearHist) clear=false;
             } 
-           
+          
             this.eventNumber = eNum;
             
             setTriggerPhaseConstants(this.runNumber);
-            
+
             for(int k=0; k<this.monitors.length; k++) {
             	this.monitors[k].setEventNumber(this.eventNumber);
             	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
@@ -663,7 +676,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 loadHistosFromFile(fname);
             }                
         }  
-//        if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+        if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
     }
              
     public void loadHistoFromRunIndex() {

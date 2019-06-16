@@ -234,8 +234,8 @@ public class ECsf extends DetectorMonitor {
         
         if (!goodEvent) return;
         
-        float Tvertex = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("STTime", 0):0;
-        
+        float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
+                                                                      event.getBank("REC::Event").getFloat("startTime", 0)):0;        
       	DataBank    reccal = event.getBank("REC::Calorimeter");
       	DataBank ecalclust = event.getBank("ECAL::clusters");
       	DataBank ecalpeaks = event.getBank("ECAL::peaks");

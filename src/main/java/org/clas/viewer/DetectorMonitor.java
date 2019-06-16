@@ -111,6 +111,7 @@ public class DetectorMonitor implements ActionListener {
     public int  triggerPhase = 0;
     public int        trigFD = 0;
     public int        trigCD = 0;
+    public int         TRpid = 11;
     
     public boolean   testTrigger = false;
     public boolean TriggerBeam[] = new boolean[32];
@@ -342,13 +343,14 @@ public class DetectorMonitor implements ActionListener {
      } 
     
     public void dropBanks(DataEvent event) {
-        if(event.hasBank("ECAL::hits")) {
-            event.removeBank("ECAL::hits");        
-            event.removeBank("ECAL::peaks");        
-            event.removeBank("ECAL::clusters");        
-            event.removeBank("ECAL::calib");
-            event.removeBank("ECAL::moments");
-         } 
+//    	System.out.println(" ");
+//    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));
+//    	event.show();
+        if(event.hasBank("ECAL::clusters")) event.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
+//        System.out.println(" ");
+//        event.show();
+        
+//    	System.out.println("CLUSTER AFTER? "+event.hasBank("ECAL::clusters"));
         if(event.hasBank("ECAL::adc")) engine.processDataEvent(event);     	
     }
     
@@ -375,7 +377,7 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       {System.out.println("EVENT_STOP"); analyze(); if(autoSave) saveHistosToFile();}
+        case EVENT_STOP:       {System.out.println("EVENT_STOP"); analyze(); plotHistos(getRunNumber()); if(autoSave) saveHistosToFile();}
 	    }
     }
 
@@ -737,6 +739,16 @@ public class DetectorMonitor implements ActionListener {
     
     public int getRunIndex() {
     	return runIndexSlider;
+    }
+    
+    public float getBeamEnergy(int run) {    	
+    	if (run<=5699) return 10.6041f;
+    	if (run<=5875) return 7.54626f;
+    	if (run<=5957) return 6.53536f;
+    	if (run<=6399) return 10.5986f;
+    	if (run<=6399) return 10.5986f;
+    	if (run<=6783) return 10.1998f;
+    	return 0.0f;
     }
     
     public int getTorusPolarity(int run) {

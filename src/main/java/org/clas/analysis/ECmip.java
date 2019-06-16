@@ -137,7 +137,8 @@ public class ECmip extends DetectorMonitor {
      public void plotAnalysis(int run) {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
-    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMeanSummary(3);plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
+//    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMeanSummary(3);plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
+    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
     	 updateUVW(1); plotTimeLines(11);    	    
      }
      
@@ -442,6 +443,8 @@ public class ECmip extends DetectorMonitor {
        DataBank recEven  = null;
        DataBank ecalClus = null;
        DataBank ecalCali = null;
+       
+	   if(dropBanks) dropBanks(event);
 
        if(event.hasBank("RUN::config"))            runConf  = event.getBank("RUN::config");
        if(event.hasBank("REC::Particle"))          recPart  = event.getBank("REC::Particle");
@@ -456,10 +459,8 @@ public class ECmip extends DetectorMonitor {
     	   
 	   int run = getRunNumber();
 	   
-	   if(dropBanks) dropBanks(event);
-	   
        int trigger = 0;
-       int trig = 211;
+       int trig = TRpid;
        
 //       System.out.println("New Event");
        part.clear();
@@ -467,8 +468,9 @@ public class ECmip extends DetectorMonitor {
       
        if (recPart!=null && recEven!=null) {
 //    	   System.out.println("Inside PID loop");   	   
-    	    isMuon = false;   
-            startTime = recEven.getFloat("STTime", 0);
+    	    isMuon = false;  
+    	    startTime = (isHipo3Event) ? recEven.getFloat("STTime", 0):
+                                         recEven.getFloat("startTime", 0);
             
             if(startTime > -100) { 
             	
@@ -1273,7 +1275,7 @@ public class ECmip extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "gain": line =  getGAIN(is,il,iv,ip,detcal[il]); break;
+							case "gain": line =  getGAIN(is,il,iv,ip,getRunNumber()); break;
 							}
 						    System.out.println(line);
 						    outputBw.write(line);
