@@ -461,6 +461,7 @@ public class ECt extends DetectorMonitor {
        
 //       if (!(trigger_sect>0)) return;       
 //       if(!partMap.containsKey(11)) return;
+     
       
        for(int loop = 0; loop < bankc.rows(); loop++){
           int   is = bankc.getByte("sector", loop);
