@@ -23,11 +23,14 @@ public class ECperf extends DetectorMonitor {
 	
 	Event ev = new Event();
 	
+	public boolean goodELEC,goodPIP,goodNEUT,goodPHOT;
+	
 	public int Nevts, Nelecs, Ntrigs, runNum;
 	boolean[] trigger_bits = new boolean[32];
 	public int[] Ntrigs_sect = new int[6];
     public int[] Nelecs_sect = new int[6];
-    
+	float n_neut_ecal = 0, n_neut_mm = 0, n_neut_mm_save=0;
+
 	public float EB, Eb, Mp;
 	public float RFT, STT;
 	public long TriggerWord;
@@ -36,7 +39,7 @@ public class ECperf extends DetectorMonitor {
 	
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, VG1, VG2, VPI0;
 	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
-	public int e_part_ind, e_sect, e_FTOF_pad1a, e_FTOF_pad1b, e_HTCC_bin_phi, e_HTCC_bin_theta;
+	public int   e_part_ind, e_sect, e_FTOF_pad1a, e_FTOF_pad1b, e_HTCC_bin_phi, e_HTCC_bin_theta;
 	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz;
 	public float e_xB, e_Q2, e_W;
 	public float e_HTCC_tX, e_HTCC_tY, e_HTCC_tZ, e_LTCC_tX, e_LTCC_tY, e_FTOF_tX, e_FTOF_tY, e_PCAL_tX, e_PCAL_tY;
@@ -50,14 +53,14 @@ public class ECperf extends DetectorMonitor {
 	public int prot_part_ind;
 	public float prot_mom, prot_the, prot_phi, prot_vx, prot_vy, prot_vz, prot_beta;
 
-	public int pim_part_ind, pip_part_ind, pip_FTOF_pad1b;
+	public int   pim_part_ind, pip_part_ind, pip_FTOF_pad1b;
 	public float pip_mom, pip_the, pip_phi, pip_vx, pip_vy, pip_vz, pip_beta, pip_FTOF1b_t, pip_FTOF1b_path, pip_FTOF1b_vt;
 	public float pip_FTOF1a_t, pip_FTOF1a_path, pip_FTOF1a_vt;
 	public float pim_mom, pim_FTOF1a_t, pim_FTOF1a_path, pim_FTOF1a_vt;
 	public float pim_FTOF1b_t, pim_FTOF1b_path, pim_FTOF1b_vt;
 	public float thisTime;
 
-	public int G1_part_ind, G2_part_ind, G1_pcal_ind, G2_pcal_ind, G1_cal_layers, G2_cal_layers;
+	public int   G1_part_ind, G2_part_ind, G1_pcal_ind, G2_pcal_ind, G1_cal_layers, G2_cal_layers;
 	public float G1_mom, G1_the, G1_phi, G2_mom, G2_the, G2_phi;
 	public float G1_pcal_X, G1_pcal_Y, G1_pcal_Z, G1_pcal_t, G1_pcal_R, G1_pcal_vt, G2_pcal_X, G2_pcal_Y, G2_pcal_Z, G2_pcal_t, G2_pcal_R, G2_pcal_vt;
 	public float G1_ein_t, G1_eout_t, G2_ein_t, G2_eout_t;
@@ -68,10 +71,14 @@ public class ECperf extends DetectorMonitor {
 	
 	public float neut_mom,neut_the,neut_phi;
 	public float ecal_neut_the,ecal_neut_phi,ecal_neut_beta;
+	public float ecal_phot_the,ecal_phot_phi,ecal_phot_beta;
+	public int   ecal_neut_sec, ecal_phot_sec;
+	public int[] ecal_neut_esum = new int[6];
+	public int[] ecal_phot_esum = new int[6];
 
-	public H2F H_e_t_f, H_e_p_f, H_e_vz_f, H_e_vt_vz, H_e_vt_p, H_e_vt_t;
-	public H2F H_e_PCAL, H_e_FTOF, H_e_LTCC, H_e_DCSL6, H_e_DCSL5, H_e_DCSL4, H_e_DCSL3, H_e_DCSL2, H_e_DCSL1, H_e_HTCC;
-    public H2F H_e_nphe_HTCC, H_e_bin_theta_HTCC, H_e_bin_phi_HTCC, H_e_theta_HTCC, H_e_phi_HTCC;
+	public H2F   H_e_t_f, H_e_p_f, H_e_vz_f, H_e_vt_vz, H_e_vt_p, H_e_vt_t;
+	public H2F   H_e_PCAL, H_e_FTOF, H_e_LTCC, H_e_DCSL6, H_e_DCSL5, H_e_DCSL4, H_e_DCSL3, H_e_DCSL2, H_e_DCSL1, H_e_HTCC;
+    public H2F   H_e_nphe_HTCC, H_e_bin_theta_HTCC, H_e_bin_phi_HTCC, H_e_theta_HTCC, H_e_phi_HTCC;
 	public H2F[] H_e_HTCC_cut = new H2F[6]; 
 	public H2F[] H_e_t_p=new H2F[6], H_e_vz_t=new H2F[6], H_e_vz_p=new H2F[6];
 	public H2F[] H_e_EC_etot_p=new H2F[6], H_e_EC_vt_theta=new H2F[6], H_e_EC_XY=new H2F[6];
@@ -96,6 +103,7 @@ public class ECperf extends DetectorMonitor {
 	public H2F H_epip_e_th_p, H_epip_p_th_p, H_epip_vz_vz, H_epip_dvz_phi, H_epip_dvz_theta, H_epip_dvz_vz;
 	public H2F H_epip_Dphi_phi, H_epip_Dphi_theta, H_epip_Dphi_vz, H_epip_beta_p, H_epip_FTOF1b_dt_epad, H_epip_FTOF1b_dt_pippad;
 	public H2F[] H_epip_W_theta=new H2F[6], H_epip_inc_W_theta=new H2F[6];
+	public H1F[] H_epip_W=new H1F[6];
 	
 	public H2F H_pi0_G1_XY, H_pi0_G1_TR, H_pi0_G1_vt_evt, H_pi0_G1_layer_E;//4
 	public H2F H_pi0_G2_XY, H_pi0_G2_TR, H_pi0_G2_vt_evt, H_pi0_G2_layer_E;//8
@@ -103,8 +111,14 @@ public class ECperf extends DetectorMonitor {
 	public H2F H_pi0_open_E, H_pi0_E_the, H_pi0_phi_the;//15
     public H1F H_pi0_mass, H_pi0_G1_layers, H_pi0_G2_layers;//18
     
-    public H2F H_neut_e_th_p, H_neut_dth_dph, H_neut_p_beta,H_neut_p_beta_cut;
-    public H1F H_neut_phi1_phi2,H_neut_th1_th2;
+    public H2F H_neut_e_th_p, H_neut_dth_dph, H_neut_p_beta,H_neut_p_beta_cut, H_neut_esum_the_elec, H_neut_esum_the;
+    public H2F H_neut_phi_the,H_neut_phie_the;
+    public H2F[] H_neut_rad_tail = new H2F[6];
+    public H2F[] H_neut_phi_the_eff = new H2F[6];
+    public H1F[] H_neut_mass2 = new H1F[6];
+    public H1F H_neut_phi1_phi2,H_neut_th1_th2, H_neut_avg_mom;
+    
+    public H2F H_phot_esum_the_elec;
     
 	public IndexedTable rfTable;	
 	
@@ -114,6 +128,7 @@ public class ECperf extends DetectorMonitor {
         		                 "ECpip",
         		                 "ECpi0",
         		                 "ECneut",
+        		                 "ECphot",
         		                 "ECtime");
         
         this.init();
@@ -216,35 +231,87 @@ public class ECperf extends DetectorMonitor {
 			H_epip_inc_W_theta[s].setTitle("#theta vs W S"+(s+1));
 			H_epip_inc_W_theta[s].setTitleX("W ( GeV)");
 			H_epip_inc_W_theta[s].setTitleY("#theta (^o)");
+			H_epip_W[s] = new H1F("H_epip_W_"+(s+1),"H_epip_W_"+(s+1),100,0,4);
 		}
+		
 		H_neut_e_th_p = new H2F("H_neut_e_th_p","H_neut_e_th_p",50,0,2.5,50,0,40);
 		H_neut_e_th_p.setTitle("neutron #theta vs p");
 		H_neut_e_th_p.setTitleX("p_mm (GeV)");
 		H_neut_e_th_p.setTitleY("#theta_mm (^o)");
+		
 		H_neut_dth_dph = new H2F("H_neut_dth_dph","H_neut_dth_dph",50,-20,20,50,-180,180);
-		H_neut_dth_dph.setTitle("#delta #theta vs #delta #phi");
-		H_neut_dth_dph.setTitleX("#theta_mm -#theta_ecal (^o)");
+		H_neut_dth_dph.setTitle("#delta #phi vs #delta #theta");
+		H_neut_dth_dph.setTitleX("#theta_mm - #theta_ecal (^o)");
 		H_neut_dth_dph.setTitleY("#phi_mm - #phi_ecal (^o)");
+		
 		H_neut_p_beta = new H2F("H_neut_p_beta","H_neut_p_beta",50,0,2.5,50,0,1.0);
-		H_neut_p_beta.setTitle("#beta_ecal vs p_mm");
+		H_neut_p_beta.setTitle("#beta_ecal vs p_mm (no electron)");
 		H_neut_p_beta.setTitleX("p_mm (GeV)");
-		H_neut_p_beta.setTitleY("#beta_ecal");		
+		H_neut_p_beta.setTitleY("#beta_ecal");	
+		
 		H_neut_p_beta_cut = new H2F("H_neut_p_beta_cut","H_neut_p_beta_cut",50,0,2.5,50,0,1.0);
 		H_neut_p_beta_cut.setTitle("#beta_ecal vs p_mm");
 		H_neut_p_beta_cut.setTitleX("p_mm (GeV)");
-		H_neut_p_beta_cut.setTitleY("#beta_ecal");		
+		H_neut_p_beta_cut.setTitleY("#beta_ecal");	
+		
+		H_neut_esum_the = new H2F("H_neut_esum_the","H_neut_esum_the",50,0,300.,50,0,35.);
+		H_neut_esum_the.setTitle("#theta_ecal vs esum_ecal (no electron)");
+		H_neut_esum_the.setTitleX("esum_ecal (MeV)");
+		H_neut_esum_the.setTitleY("#theta_ecal (deg)");		
+		
+		H_neut_phi_the = new H2F("H_neut_phi_the","H_neut_phi_the",80,-180,180.,80,5,22.);
+		H_neut_phi_the.setTitle("#theta_ecal vs #phi_ecal (electron)");
+		H_neut_phi_the.setTitleX("#phi_ecal (deg)");
+		H_neut_phi_the.setTitleY("#theta_ecal (deg)");	
+		
+		H_neut_phie_the = new H2F("H_neut_phie_the","H_neut_phie_the",80,-180,180.,80,5,22.);
+		H_neut_phie_the.setTitle("#theta_ecal vs #phi_e (electron)");
+		H_neut_phie_the.setTitleX("#phi_e (deg)");
+		H_neut_phie_the.setTitleY("#theta_ecal (deg)");		
+		
+		H_neut_esum_the_elec = new H2F("H_neut_esum_the_elec","H_neut_esum_the_elec",50,0,300.,50,0,35.);
+		H_neut_esum_the_elec.setTitle("#theta_ecal vs esum_ecal (electron)");
+		H_neut_esum_the_elec.setTitleX("esum_ecal (MeV)");
+		H_neut_esum_the_elec.setTitleY("#theta_ecal (deg)");	
+		
 		H_neut_phi1_phi2 = new H1F("H_neut_phi1_phi2","H_neut_phi1_phi2",50,-180.,180.);
 		H_neut_phi1_phi2.setTitle("#phi_mm - #phi_ecal");
-		H_neut_phi1_phi2.setTitleX("#phi_mm - #phi_ecal (deg)");				
+		H_neut_phi1_phi2.setTitleX("#phi_mm - #phi_ecal (deg)");	
+		
 		H_neut_th1_th2 = new H1F("H_neut_th1_th2","H_neut_th1_th2",50,-20.,20.);
 		H_neut_th1_th2.setTitle("#theta_mm - #theta_ecal");
-		H_neut_th1_th2.setTitleX("#theta_mm - #theta_ecal (deg)");				
+		H_neut_th1_th2.setTitleX("#theta_mm - #theta_ecal (deg)");
+		
+		H_neut_avg_mom = new H1F("H_neut_avg_mom","H_neut_avg_mom",50,0.,2.5);
+		H_neut_avg_mom.setTitle("p_mm (Mass^2 > 0.3)");
+		H_neut_avg_mom.setTitleX("p_mm (GeV)");
+		
+		String[] tit1 = {"(electron)","(no electron)"};
+		String[] tit2 = {"(#theta,#phi cut)","(no electron)"};
+		String[] tit3 = {"mm","ecal"};
+		for (int is=0; is<2; is++ ) {
+			H_neut_rad_tail[is] = new H2F("H_neut_rad_tail_"+is,"H_neut_rad_tail_"+is,50,0.,25.,50,0.,25.);
+			H_neut_rad_tail[is].setTitle("#theta_elec vs #theta_ecal "+tit1[is]);
+			H_neut_rad_tail[is].setTitleX("#theta_ecal (deg)");
+			H_neut_rad_tail[is].setTitleY("#theta_elec (deg)");
+			H_neut_mass2[is] = new H1F("H_neut_mass2_"+is,"H_neut_mass2_"+is,60,-0.1,2.0);
+			H_neut_mass2[is].setTitle("Mass^2 "+tit2[is]);
+			H_neut_mass2[is].setTitleX("Mass^2 (GeV^2)");
+			H_neut_phi_the_eff[is] = new H2F("H_neut_phi_the_eff_"+tit3[is],"H_neut_phi_the_eff_"+tit3[is],40,-40.,40.,21,5.,37.);
+			H_neut_phi_the_eff[is].setTitle("#theta_"+tit3[is]+" vs phi_"+tit3[is]);
+			H_neut_phi_the_eff[is].setTitleX("#phi_"+tit3[is]+" (deg)");
+			H_neut_phi_the_eff[is].setTitleY("#theta_"+tit3[is]+" (deg)");
+		}
+		
+		H_phot_esum_the_elec = new H2F("H_phot_esum_the_elec","H_neut_phot_the_elec",50,0,500.,60,5,25.);
+		H_phot_esum_the_elec.setTitle("#theta_ecal vs esum_ecal (electron)");
+		H_phot_esum_the_elec.setTitleX("esum_ecal (MeV)");
+		H_phot_esum_the_elec.setTitleY("#theta_ecal (deg)");		
     }
     
-	public void resetCounters(){
-        e_part_ind = -1;found_eTraj=false;found_eECAL=false;found_eFTOF1a=false;found_eFTOF1b=false;found_eLTCC=false;found_eHTCC=false;
-        pim_part_ind = -1; pip_part_ind = -1;pip_FTOF_pad1b = -1;prot_part_ind = -1;G1_part_ind = -1;G2_part_ind = -1;G1_pcal_ind = -1;G2_pcal_ind = -1;
-        G1_cal_layers = 0;G2_cal_layers = 0;G1_mom = 0;G2_mom = 0;
+	public void myinit(){
+		goodELEC = false; goodPIP  = false; goodNEUT = false; goodPHOT = false;   
+		e_EC_etot = 0; e_PCAL_edep=0; e_EC_ein=0; e_EC_eout=0;
     }
 	
     public double Vangle(Vector3 v1, Vector3 v2){
@@ -288,7 +355,6 @@ public class ECperf extends DetectorMonitor {
 	}
 	
 	public void fillECAL(DataBank bank){
-		e_EC_etot = 0;e_PCAL_edep=0;e_EC_ein=0;e_EC_eout=0;
 		for(int r=0;r<bank.rows();r++){
 			if(bank.getShort("pindex",r)==e_part_ind){
 				if(bank.getByte("layer",r)==1){
@@ -401,7 +467,7 @@ public class ECperf extends DetectorMonitor {
         e_mom = (float) epart.p();       
         e_vz  = (float) epart.vz();
         short status = (short) epart.getProperty("status");
-        boolean inDC = (status>=2000 && status<4000);
+        boolean inDC = (status>=2000 && status<3000);
         if(inDC && Math.abs(e_vz+3)<12 && (e_mom>1.5 || runNum<2600 ) ){
         	e_sect = (int)   epart.getProperty("sector");
             e_the  = (float) Math.toDegrees(epart.theta());
@@ -428,7 +494,7 @@ public class ECperf extends DetectorMonitor {
         
         pip_mom  = (float) pipart.p();
         short status = (short) pipart.getProperty("status");
-        boolean inDC = (status>=2000 && status<4000);
+        boolean inDC = (status>=2000 && status<3000);
         
         if(inDC && (pip_mom>0.5||runNum<2600) ){ 
             pip_the  = (float) Math.toDegrees(pipart.theta());
@@ -442,15 +508,36 @@ public class ECperf extends DetectorMonitor {
     }
     
     public boolean makeNEUT() {
+    	
         List<Particle> nlist = ev.getParticle(2112);
-        ecal_neut_the = -1f; ecal_neut_beta=-1f;ecal_neut_phi=-500f;
+        
+        for (int is=0; is<6; is++) ecal_neut_esum[is]=0;
         if(nlist.size()==1) {
+        	ecal_neut_sec  = (int)   nlist.get(0).getProperty("sector");
         	ecal_neut_the  = (float) Math.toDegrees(nlist.get(0).theta());
         	ecal_neut_phi  = (float) Math.toDegrees(nlist.get(0).phi());
         	ecal_neut_beta = (float) nlist.get(0).getProperty("beta");
+        	for (Particle p : nlist) ecal_neut_esum[0] += p.getProperty("energy");        	
+        	return true;
         }
-    	return nlist.size()==1;
+    	return false;
     }
+    
+    public boolean makePHOT() {
+    	
+        List<Particle> nlist = ev.getParticle(22);
+        
+        for (int is=0; is<6; is++) ecal_phot_esum[is]=0;
+        if(nlist.size()==1) {
+        	ecal_phot_sec  = (int)   nlist.get(0).getProperty("sector");
+        	ecal_phot_the  = (float) Math.toDegrees(nlist.get(0).theta());
+        	ecal_phot_phi  = (float) Math.toDegrees(nlist.get(0).phi());
+        	ecal_phot_beta = (float) nlist.get(0).getProperty("beta");
+        	for (Particle p : nlist) ecal_phot_esum[ecal_phot_sec-1] += p.getProperty("energy");        	    
+        	return true;
+        }
+    	return false;
+    } 
     
 	public void makeOthers(DataBank bank){
 		for(int k = 0; k < bank.rows(); k++){
@@ -526,7 +613,7 @@ public class ECperf extends DetectorMonitor {
 	}
 	
 	public boolean select_epip(){
-		if(makeELEC()&&makePIP()) {
+		if(goodELEC&&goodPIP) {
 			epip_dPhi = pip_phi - e_phi + 180f;
 			while(epip_dPhi> 180f)epip_dPhi -= 360f;
 			while(epip_dPhi<-180f)epip_dPhi += 360f;
@@ -541,7 +628,7 @@ public class ECperf extends DetectorMonitor {
 				neut_mom=(float)VmissN.p();
 				neut_the=(float)Math.toDegrees(VmissN.theta());
 				neut_phi=(float)Math.toDegrees(VmissN.phi());
-				return makeNEUT();
+				return goodNEUT;
 			}
 		}
 		return false;
@@ -585,18 +672,33 @@ public class ECperf extends DetectorMonitor {
 	
 	
     public void processEvent(DataEvent event) {
-	    resetCounters();
-	    
+    	
 	    ev.procEvent(event);
 	   	    
-	    if(!ev.countElectronTriggers(false)) return;	
+	    if(!ev.countElectronTriggers(false)) return;
 	    
-	    if(select_epip()) FillHists();
+	    this.myinit();	    	    
+	    goodELEC = makeELEC();
+	    goodPIP  = makePIP();
+	    goodNEUT = makeNEUT();
+	    goodPHOT = goodELEC&&makePHOT();
+	    
+	    FillHists();
 	    
     }  
     
 	public void FillHists(){
-		int s = e_sect-1;
+		
+		if(e_sect>0) H_epip_W[e_sect-1].fill(epip_MM);
+		
+		if(select_epip()) {
+			FillHepip();
+			FillHneut();
+			FillHphot();
+		}	
+	}    
+	
+    public void FillHepip() {
 		H_epip_e_th_p.fill(e_mom,e_the);
 		H_epip_p_th_p.fill(pip_mom,pip_the);
 		H_epip_vz_vz.fill(e_vz,pip_vz);
@@ -608,19 +710,73 @@ public class ECperf extends DetectorMonitor {
 		H_epip_Dphi_vz.fill(pip_vz,epip_dPhi);
 		H_epip_beta_p.fill(pip_mom,pip_beta);
 		//H_epip_W_theta[s].fill(e_W,e_the);
-		H_epip_W_theta[s].fill(epip_MM,e_the);
+		H_epip_W_theta[e_sect-1].fill(epip_MM,e_the);
+		
 		if(found_eFTOF1b && pip_FTOF_pad1b>-1){
 			H_epip_FTOF1b_dt_epad.fill(    e_FTOF_pad1b, pip_FTOF1b_vt - e_FTOF1b_vt);
 			H_epip_FTOF1b_dt_pippad.fill(pip_FTOF_pad1b, pip_FTOF1b_vt - e_FTOF1b_vt);
 		}
+    	
+    }
+    
+    public void FillHneut() {
+    	
+		boolean phicut = Math.abs(neut_phi-ecal_neut_phi)<30;	
+	    boolean thecut = Math.abs(neut_the-ecal_neut_the)<8;
+	    
+	    float mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
+	    	    
 		H_neut_e_th_p.fill(neut_mom, neut_the);
-		H_neut_dth_dph.fill(neut_the-ecal_neut_the,neut_phi-ecal_neut_phi);
-		H_neut_p_beta.fill(neut_mom, ecal_neut_beta);
-		H_neut_phi1_phi2.fill(neut_phi-ecal_neut_phi);
-		H_neut_th1_th2.fill(neut_the-ecal_neut_the);
-		if (Math.abs(neut_phi-ecal_neut_phi)<15 &&
-		    Math.abs(neut_the-ecal_neut_the)<7) H_neut_p_beta_cut.fill(neut_mom, ecal_neut_beta);		
-	}
+    	if(neut_mom>0.4) H_neut_phi_the_eff[0].fill(newPhi(neut_phi),neut_the);
+		
+		if(ecal_neut_sec!=e_sect) {
+			H_neut_dth_dph.fill(neut_the-ecal_neut_the,neut_phi-ecal_neut_phi);
+			if(thecut) H_neut_phi1_phi2.fill(neut_phi-ecal_neut_phi);
+			if(phicut) H_neut_th1_th2.fill(neut_the-ecal_neut_the); 
+			H_neut_esum_the.fill(ecal_neut_esum[0],ecal_neut_the);  
+			H_neut_p_beta.fill(neut_mom, ecal_neut_beta);        
+        	H_neut_rad_tail[1].fill(ecal_neut_the,e_the);
+           	H_neut_mass2[1].fill(mass2);
+		}
+		
+        if(ecal_neut_sec==e_sect) {
+        	H_neut_esum_the_elec.fill(ecal_neut_esum[0],ecal_neut_the); 
+        	H_neut_rad_tail[0].fill(ecal_neut_the,e_the);
+        	H_neut_phi_the.fill(ecal_neut_phi,ecal_neut_the);
+           	H_neut_phie_the.fill(e_phi,ecal_neut_the);
+        }
+        
+		if (thecut && phicut) {
+			H_neut_p_beta_cut.fill(neut_mom, ecal_neut_beta);	    	
+        	H_neut_mass2[0].fill(mass2);
+        	if(mass2>0.3&&neut_mom>0.4) {
+        		H_neut_phi_the_eff[1].fill(newPhi(ecal_neut_phi),ecal_neut_the);
+        		H_neut_avg_mom.fill(neut_mom);
+        	}
+		}		
+		
+    }
+    
+    public float newPhi(float phi) {
+    	float newphi=phi;
+    	if(phi<-30) newphi=360+phi;
+    	if(newphi<30) return newphi;
+    	if(newphi>30&&newphi<90)   return newphi-60;
+    	if(newphi>90&&newphi<150)  return newphi-120;
+    	if(newphi>150&&newphi<210) return newphi-180;
+    	if(newphi>210&&newphi<270) return newphi-240;
+    	if(newphi>270&&newphi<330) return newphi-300;
+    	return phi;
+    }
+    
+    public void FillHphot() {
+    	for (int is=0; is<6; is++) {
+    		if(ecal_phot_esum[is]>0 && (is+1)==e_sect) {
+    			H_phot_esum_the_elec.fill(ecal_phot_esum[is],ecal_phot_the); 
+    		}
+        }    	
+    }
+
 	
 	public void epipPlot(int index) {
 		System.out.println("isAnalyzeDone = "+isAnalyzeDone);
@@ -641,7 +797,7 @@ public class ECperf extends DetectorMonitor {
 		for(int s=0;s<6;s++){
 			H2F h2 =  H_epip_W_theta[s];
 			c.cd(12+s);c.draw(h2);
-			c.cd(18+s);c.draw(H_epip_W_theta[s].projectionX());
+			c.cd(18+s);c.draw(H_epip_W[s]); c.draw(H_epip_W_theta[s].projectionX(),"same");
 //			c.getPad(18+s).getAxisX().setRange(0.25,3.25);
 		}	
 		c.repaint();
@@ -649,17 +805,35 @@ public class ECperf extends DetectorMonitor {
 	
 	public void neutPlot(int index) {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-		c.divide(3,2);
+		c.divide(4,3);
         F1D f1 = new F1D("neut","1/(1+[a]^2/x^2)^0.5", 0.21,2.5); 
         f1.setParameter(0,0.93957); f1.setLineColor(0); f1.setLineStyle(1); f1.setLineWidth(2);  
 		
 		c.cd(0);c.draw(H_neut_e_th_p);
 		c.cd(1);c.draw(H_neut_dth_dph);
-		c.cd(2);c.draw(H_neut_p_beta); c.draw(f1,"same");
-		c.cd(3);c.draw(H_neut_phi1_phi2);
-		c.cd(4);c.draw(H_neut_th1_th2);
+		c.cd(2);c.draw(H_neut_phi1_phi2);
+		c.cd(3);c.draw(H_neut_th1_th2);		
+		c.cd(4);c.draw(H_neut_p_beta);     c.draw(f1,"same");
 		c.cd(5);c.draw(H_neut_p_beta_cut); c.draw(f1,"same");
+		c.cd(6);c.draw(H_neut_mass2[1]);
+		c.cd(7);c.draw(H_neut_mass2[0]);
+		c.cd(8);c.draw(H_neut_phi_the_eff[0]);
+		c.cd(9);c.draw(H_neut_phi_the_eff[1]);
+		c.cd(10);c.draw(H_neut_avg_mom);
 		c.repaint();		
+	}
+	
+	public void photPlot(int index) {
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+		c.divide(4,3);		
+		c.cd(0);c.draw(H_phot_esum_the_elec);
+		c.cd(1);c.draw(H_neut_esum_the_elec);
+		c.cd(2);c.draw(H_neut_esum_the);
+		c.cd(3);c.draw(H_neut_rad_tail[0]);
+		c.cd(4);c.draw(H_neut_rad_tail[1]);
+		c.cd(5);c.draw(H_neut_phi_the);
+		c.cd(6);c.draw(H_neut_phie_the);
+		c.repaint();
 	}
 	
     @Override       
@@ -667,6 +841,8 @@ public class ECperf extends DetectorMonitor {
     	setRunNumber(run);
         epipPlot(1);
         neutPlot(3);
+        photPlot(4);
+        neutronEff();
     }
     
     @Override
@@ -676,12 +852,45 @@ public class ECperf extends DetectorMonitor {
     
     public void analyze() {    
         System.out.println("I am in analyze()");
+        neutronEff();
         isAnalyzeDone = true;
+    }
+    
+    public void neutronEff() {
+    	float eff_rat=0, eff_err=0;
+    	n_neut_ecal = 0; n_neut_mm = 0;
+    	
+		for(int iy=0; iy<18; iy++) { //theta bins
+	    	int ix1=0, ix2=0;
+			for (int ix=0; ix<H_neut_phi_the_eff[0].getDataSize(0); ix++) { //phi bins
+    			if (H_neut_phi_the_eff[1].getData(ix, iy)>0) { //get phi fiducial limits for neut_mm
+    				if (ix1==0) ix1=ix; //phi_min
+    			    if (ix1>0 ) ix2=ix; //phi_max
+    				n_neut_ecal+=(float)H_neut_phi_the_eff[1].getData(ix, iy); //accumulate efficiency numerator
+    			}
+    		}
+    		for (int ix=ix1; ix<ix2+1; ix++) { //loop over neut_mm w/ phi fiducial limits from data
+				  n_neut_mm+=(float)H_neut_phi_the_eff[0].getData(ix, iy); //accumulate efficiency denominator
+    		}
+    	}
+    	
+    	if (n_neut_mm>0&&n_neut_ecal>0) {
+    	  eff_rat = n_neut_ecal/n_neut_mm; 
+//    	  eff_err = (float) (eff_rat*Math.sqrt(1/n_neut_ecal+1/n_neut_mm)); //only true for uncorrelated numerator/denominator
+    	  eff_err = (float) Math.sqrt((n_neut_mm-1)*eff_rat*(1-eff_rat))/(n_neut_mm-1);
+    	}
+    
+    	
+    	if(n_neut_mm>n_neut_mm_save) {
+    	    System.out.println("N_ecal = "+n_neut_ecal+" N_mm = "+n_neut_mm+" EFF = "+eff_rat+" +/- "+eff_err);
+    	    n_neut_mm_save = n_neut_mm;
+    	}    	
     }
     
     @Override
     public void timerUpdate() {
-    	
+    	neutronEff();
+    	return;
     }
     
 }

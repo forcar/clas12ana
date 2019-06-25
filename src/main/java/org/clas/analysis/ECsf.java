@@ -36,7 +36,7 @@ public class ECsf extends DetectorMonitor {
         this.setDetectorTabNames("E/P v P",
                                  "E/P v ThV",
                                  "E/P v ThD",
-                                 "EPC/P v ThD",
+                                 "EPC/P v ThD", 
                                  "EECi/P v ThD",
                                  "EECo/P v ThD",
                                  "E/P v XY",

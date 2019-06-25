@@ -139,7 +139,7 @@ public class Event {
          	          p.setProperty("x",      caloBank.getFloat("x",ic));
          	          p.setProperty("y",      caloBank.getFloat("y",ic));
          	          p.setProperty("z",      caloBank.getFloat("z",ic));
-                      p.setProperty("beta", (pid==2112)?newBeta(p):beta);
+                      p.setProperty("beta", (pid==2112||pid==22)?newBeta(p):beta);
          	          int ip = pid<0?Math.abs(pid)+1:pid;
          	          int is = caloBank.getByte("sector",ic); 
          	          if(!part.hasItem(ip,is)) part.add(new ArrayList<Particle>(),ip,is);
