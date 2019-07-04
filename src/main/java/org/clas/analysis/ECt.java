@@ -132,14 +132,14 @@ public class ECt extends DetectorMonitor {
     public void createHistos(int run) {  
         setRunNumber(run);
         runlist.add(run);        
-        createTDCHistos(0,150,350,"TIME (ns)");
-        createTDCHistos(1,150,350,"TIME (ns)");
-        createTDCHistos(2,150,350,"TIME (ns)");
-        createTDCHistos(3,150,350,"TIME (ns)");
-        createTDCHistos(4,150,350,"TIME (ns)");    
-        createTDCHistos(5,150,350,"TIME (ns)");    
-        createTDCHistos(6,150,350,"TIME (ns)");    
-        createTDCHistos(7,150,350,"TIME (ns)");    
+        createTDCHistos(0,120,350,"TIME (ns)");
+        createTDCHistos(1,120,350,"TIME (ns)");
+        createTDCHistos(2,120,350,"TIME (ns)");
+        createTDCHistos(3,120,350,"TIME (ns)");
+        createTDCHistos(4,120,350,"TIME (ns)");    
+        createTDCHistos(5,120,350,"TIME (ns)");    
+        createTDCHistos(6,120,350,"TIME (ns)");    
+        createTDCHistos(7,120,350,"TIME (ns)");    
         createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
         createTDCHistos(9,  0.,50.,"T-TVERT (ns)");    
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
@@ -392,11 +392,11 @@ public class ECt extends DetectorMonitor {
                                                  + (float)  fo.getDoubleValue("offset",is,il,0) ; // FADC-TDC offset (sector, layer)              
                
                float tmax = 1000; float tdcm = 1000;
-               
+              
                if (tdcs.hasItem(is,il,ip)) { // sector,layer,component FADC/TDC match
                  float radc = (float)Math.sqrt(adc);
                  for (float tdc : tdcs.getItem(is,il,ip)) {
-                	    float tdif = tdc - tw[il-1]/radc - FTOFFSET - t;
+                	    float tdif = tdc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - FTOFFSET - t;
              	      ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
             	          if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
                    }
@@ -405,7 +405,7 @@ public class ECt extends DetectorMonitor {
         	       double a2 = time.getDoubleValue("a2", is, il, ip);
         	       double a3 = time.getDoubleValue("a3", is, il, ip);
         	       double a4 = time.getDoubleValue("a4", is, il, ip);
-        	       double tdcmc = tdcm - a0 - tw[il-1]/radc - a2/radc - a3 - a4/Math.sqrt(radc);
+        	       double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); // calibrated time
                }
