@@ -539,7 +539,7 @@ public class ECt extends DetectorMonitor {
                	   
                 	   float vcorr = Tvertex - phase + TVOffset;
                 	   float pcorr = path/vel;
-                	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
+                	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                        float tvcor = tu  - vcorr;
                        float resid = tvcor - pcorr;
                        float mybet = path/tvcor/c;

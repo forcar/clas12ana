@@ -32,7 +32,7 @@ import Jampack.Inv;
 
 public class ECpi0 extends DetectorMonitor{
 	
-	H1F                              h1 = null;      
+	H1F                              h1 = null;       
 	H2F                              h2 = null;
 	DataGroup                        dg = null;
 	

@@ -49,13 +49,16 @@ public class ECperf extends DetectorMonitor {
 	public float e_FTOF1b_X, e_FTOF1b_Y, e_FTOF1b_Z, e_FTOF1b_edep, e_FTOF1b_t, e_FTOF1b_path, e_FTOF1b_vt;
 	public float e_LTCC_X, e_LTCC_Y, e_LTCC_Z, e_LTCC_t, e_LTCC_nphe, e_LTCC_path, e_LTCC_vt;
 	public float e_HTCC_X, e_HTCC_Y, e_HTCC_Z, e_HTCC_theta, e_HTCC_phi, e_HTCC_t, e_HTCC_nphe, e_HTCC_path, e_HTCC_vt;
-
+    public float e_ecal_esum;
+    
 	public int prot_part_ind;
 	public float prot_mom, prot_the, prot_phi, prot_vx, prot_vy, prot_vz, prot_beta;
 
 	public int   pim_part_ind, pip_part_ind, pip_FTOF_pad1b;
 	public float pip_mom, pip_the, pip_phi, pip_vx, pip_vy, pip_vz, pip_beta, pip_FTOF1b_t, pip_FTOF1b_path, pip_FTOF1b_vt;
 	public float pip_FTOF1a_t, pip_FTOF1a_path, pip_FTOF1a_vt;
+	public float pip_ecal_esum;
+	
 	public float pim_mom, pim_FTOF1a_t, pim_FTOF1a_path, pim_FTOF1a_vt;
 	public float pim_FTOF1b_t, pim_FTOF1b_path, pim_FTOF1b_vt;
 	public float thisTime;
@@ -79,6 +82,7 @@ public class ECperf extends DetectorMonitor {
 	public H2F   H_e_t_f, H_e_p_f, H_e_vz_f, H_e_vt_vz, H_e_vt_p, H_e_vt_t;
 	public H2F   H_e_PCAL, H_e_FTOF, H_e_LTCC, H_e_DCSL6, H_e_DCSL5, H_e_DCSL4, H_e_DCSL3, H_e_DCSL2, H_e_DCSL1, H_e_HTCC;
     public H2F   H_e_nphe_HTCC, H_e_bin_theta_HTCC, H_e_bin_phi_HTCC, H_e_theta_HTCC, H_e_phi_HTCC;
+    
 	public H2F[] H_e_HTCC_cut = new H2F[6]; 
 	public H2F[] H_e_t_p=new H2F[6], H_e_vz_t=new H2F[6], H_e_vz_p=new H2F[6];
 	public H2F[] H_e_EC_etot_p=new H2F[6], H_e_EC_vt_theta=new H2F[6], H_e_EC_XY=new H2F[6];
@@ -96,12 +100,12 @@ public class ECperf extends DetectorMonitor {
 	public H2F[] H_e_HTCC_vt_theta=new H2F[6], H_e_HTCC_nphe_theta=new H2F[6], H_e_HTCC_XY=new H2F[6];
 	public H1F[][][] H_e_bin_nphe_HTCC;
 
-	public H2F H_elast_e_th_p, H_elast_p_th_p, H_elast_vz_vz, H_elast_dvz_phi, H_elast_dvz_theta_all, H_elast_dvz_vz;
-	public H2F H_elast_Dphi_phi, H_elast_Dphi_theta, H_elast_Dphi_vz, H_elast_EB_phi, H_elast_EB_theta, H_elast_EB_vz ;
+	public H2F   H_elast_e_th_p, H_elast_p_th_p, H_elast_vz_vz, H_elast_dvz_phi, H_elast_dvz_theta_all, H_elast_dvz_vz;
+	public H2F   H_elast_Dphi_phi, H_elast_Dphi_theta, H_elast_Dphi_vz, H_elast_EB_phi, H_elast_EB_theta, H_elast_EB_vz ;
 	public H2F[] H_elast_W_theta=new H2F[6], H_elast_W_Q2=new H2F[6], H_elast_inc_W_theta=new H2F[6], H_elast_dvz_theta=new H2F[6];
 
-	public H2F H_epip_e_th_p, H_epip_p_th_p, H_epip_vz_vz, H_epip_dvz_phi, H_epip_dvz_theta, H_epip_dvz_vz;
-	public H2F H_epip_Dphi_phi, H_epip_Dphi_theta, H_epip_Dphi_vz, H_epip_beta_p, H_epip_FTOF1b_dt_epad, H_epip_FTOF1b_dt_pippad;
+	public H2F   H_epip_e_th_p, H_epip_p_th_p, H_epip_vz_vz, H_epip_dvz_phi, H_epip_dvz_theta, H_epip_dvz_vz;
+	public H2F   H_epip_Dphi_phi, H_epip_Dphi_theta, H_epip_Dphi_vz, H_epip_beta_p, H_epip_FTOF1b_dt_epad, H_epip_FTOF1b_dt_pippad;
 	public H2F[] H_epip_W_theta=new H2F[6], H_epip_inc_W_theta=new H2F[6];
 	public H1F[] H_epip_W=new H1F[6];
 	
@@ -111,14 +115,14 @@ public class ECperf extends DetectorMonitor {
 	public H2F H_pi0_open_E, H_pi0_E_the, H_pi0_phi_the;//15
     public H1F H_pi0_mass, H_pi0_G1_layers, H_pi0_G2_layers;//18
     
-    public H2F H_neut_e_th_p, H_neut_dth_dph, H_neut_p_beta,H_neut_p_beta_cut, H_neut_esum_the_elec, H_neut_esum_the;
-    public H2F H_neut_phi_the,H_neut_phie_the;
+    public H2F   H_neut_e_th_p, H_neut_dth_dph, H_neut_p_beta,H_neut_p_beta_cut, H_neut_esum_the_elec, H_neut_esum_the;
+    public H2F   H_neut_phi_the,H_neut_phie_the;
     public H2F[] H_neut_rad_tail = new H2F[6];
     public H2F[] H_neut_phi_the_eff = new H2F[6];
     public H1F[] H_neut_mass2 = new H1F[6];
-    public H1F H_neut_phi1_phi2,H_neut_th1_th2, H_neut_avg_mom;
+    public H1F   H_neut_phi1_phi2,H_neut_th1_th2, H_neut_avg_mom;
     
-    public H2F H_phot_esum_the_elec;
+    public H2F   H_phot_esum_the_elec;
     
 	public IndexedTable rfTable;	
 	
@@ -180,6 +184,14 @@ public class ECperf extends DetectorMonitor {
 	    System.out.println("ECperf:createHistos("+run+")");
     	setRunNumber(run);
     	dstinit(run);
+    	
+		for(int s=0;s<6;s++){    	
+			H_e_EC_etot_p[s] = new H2F(String.format("H_e_EC_etot_p_%d",s+1),String.format("H_e_EC_etot_p_%d",s+1),100,0,EB,100,0.0,EB/4);
+			H_e_EC_etot_p[s].setTitle(String.format("ECAL vs p S%d",s+1));
+			H_e_EC_etot_p[s].setTitleX("p (GeV)");
+			H_e_EC_etot_p[s].setTitleY("ECAL (GeV)");
+		}
+		
 		H_epip_e_th_p = new H2F("H_epip_e_th_p","H_epip_e_th_p",100,0,EB,100,0,40);
 		H_epip_e_th_p.setTitle("electron #theta vs p");
 		H_epip_e_th_p.setTitleX("p (GeV)");
@@ -462,12 +474,18 @@ public class ECperf extends DetectorMonitor {
 	
     public boolean makeELEC(){
     	
-        Particle epart = ev.getParticle(11).get(0);
+        List<Particle> nlist = ev.getParticle(11);
+        
+        Particle epart = nlist.get(0);
         
         e_mom = (float) epart.p();       
         e_vz  = (float) epart.vz();
         short status = (short) epart.getProperty("status");
         boolean inDC = (status>=2000 && status<3000);
+        
+        e_ecal_esum = 0f;
+    	for (Particle p : nlist) e_ecal_esum += p.getProperty("energy");        	
+        
         if(inDC && Math.abs(e_vz+3)<12 && (e_mom>1.5 || runNum<2600 ) ){
         	e_sect = (int)   epart.getProperty("sector");
             e_the  = (float) Math.toDegrees(epart.theta());
@@ -490,12 +508,16 @@ public class ECperf extends DetectorMonitor {
     
     public boolean makePIP() {
     	
-        Particle pipart = ev.getParticle(211).get(0);
+        List<Particle> nlist = ev.getParticle(211);
+        
+        Particle pipart = nlist.get(0);
         
         pip_mom  = (float) pipart.p();
         short status = (short) pipart.getProperty("status");
         boolean inDC = (status>=2000 && status<3000);
         
+        pip_ecal_esum = 0f;
+    	for (Particle p : nlist) pip_ecal_esum += p.getProperty("energy");        	
         if(inDC && (pip_mom>0.5||runNum<2600) ){ 
             pip_the  = (float) Math.toDegrees(pipart.theta());
             pip_phi  = (float) Math.toDegrees(pipart.phi());
@@ -673,6 +695,7 @@ public class ECperf extends DetectorMonitor {
 	
     public void processEvent(DataEvent event) {
     	
+    	ev.setHipoEvent(isHipo3Event);
 	    ev.procEvent(event);
 	   	    
 	    if(!ev.countElectronTriggers(false)) return;
@@ -683,22 +706,28 @@ public class ECperf extends DetectorMonitor {
 	    goodNEUT = makeNEUT();
 	    goodPHOT = goodELEC&&makePHOT();
 	    
-	    FillHists();
+	    fillHists();
 	    
     }  
     
-	public void FillHists(){
+	public void fillHists(){
 		
 		if(e_sect>0) H_epip_W[e_sect-1].fill(epip_MM);
 		
 		if(select_epip()) {
-			FillHepip();
-			FillHneut();
-			FillHphot();
+			fillHelec();
+			fillHepip();
+			fillHneut();
+			fillHphot();
 		}	
 	}    
 	
-    public void FillHepip() {
+	public void fillHelec() {
+		H_e_EC_etot_p[0].fill(e_mom,e_ecal_esum/1000f);
+	}
+	
+    public void fillHepip() {
+		H_e_EC_etot_p[0].fill(pip_mom,pip_ecal_esum/1000f);
 		H_epip_e_th_p.fill(e_mom,e_the);
 		H_epip_p_th_p.fill(pip_mom,pip_the);
 		H_epip_vz_vz.fill(e_vz,pip_vz);
@@ -719,7 +748,7 @@ public class ECperf extends DetectorMonitor {
     	
     }
     
-    public void FillHneut() {
+    public void fillHneut() {
     	
 		boolean phicut = Math.abs(neut_phi-ecal_neut_phi)<30;	
 	    boolean thecut = Math.abs(neut_the-ecal_neut_the)<8;
@@ -769,7 +798,7 @@ public class ECperf extends DetectorMonitor {
     	return phi;
     }
     
-    public void FillHphot() {
+    public void fillHphot() {
     	for (int is=0; is<6; is++) {
     		if(ecal_phot_esum[is]>0 && (is+1)==e_sect) {
     			H_phot_esum_the_elec.fill(ecal_phot_esum[is],ecal_phot_the); 
@@ -777,6 +806,11 @@ public class ECperf extends DetectorMonitor {
         }    	
     }
 
+    public void elecPlot(int index) {
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+		c.divide(3,2);
+		c.cd(0);c.draw(H_e_EC_etot_p[0]);   	
+    }
 	
 	public void epipPlot(int index) {
 		System.out.println("isAnalyzeDone = "+isAnalyzeDone);
@@ -839,6 +873,7 @@ public class ECperf extends DetectorMonitor {
     @Override       
     public void plotHistos(int run) {
     	setRunNumber(run);
+    	elecPlot(0);
         epipPlot(1);
         neutPlot(3);
         photPlot(4);

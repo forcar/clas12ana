@@ -20,6 +20,7 @@ public class Event {
 	private DataEvent ev = null;
 	private DataBank caloBank = null;
 	public int TRpid = 0;
+	private boolean isHipo3Event; 
 	
 	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(2);
 	Map<Integer,List<Integer>> caloMap = null;
@@ -58,9 +59,13 @@ public class Event {
 	           long hash = entry.getKey();
 	           int pid = ig.getIndex(hash, 0);
 	           int sec = ig.getIndex(hash, 1);
-	           if(ipid==pid) {for (Particle pp : part.getItem(pid,sec)) pout.add(pp);}
+	           if(ipid==pid) {for (Particle pp : part.getItem(pid,sec)) pout.add(pp);} 
 	    }	    
 	    return pout;
+	}
+	
+	public void setHipoEvent(boolean val) {
+		this.isHipo3Event = val;
 	}
 	
 	public void setTrigger(int trig) {
@@ -108,10 +113,12 @@ public class Event {
 	}
 	
 	public void storeRECevent(DataBank bank) {
-		this.starttime = bank.getFloat("startTime",0);
+		this.starttime = isHipo3Event ? bank.getFloat("STTime", 0):
+                                        bank.getFloat("startTime", 0);		
 	}
 	
 	public void storeRECparticle(DataBank bank) {
+		
         if(starttime > -100) {        	
             for(int i = 0; i < bank.rows(); i++){           	
                 int      pid = bank.getInt("pid", i);              

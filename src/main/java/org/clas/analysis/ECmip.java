@@ -395,7 +395,7 @@ public class ECmip extends DetectorMonitor {
     }
     
     public void createMIPvPHistos(int k) {
- 	    int run = getRunNumber();
+ 	    int run = getRunNumber(); 
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {

@@ -159,7 +159,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECperf("ECperf"); 
+    		monitors[n] = new ECt("ECt"); 
         }
     }
     
@@ -465,7 +465,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 Bank  trigger = clasDecoder.createTriggerBank();
                 if(header!=null)  dump.write(header);
                 if(trigger!=null) dump.write(trigger);
-                hipo = new HipoDataEvent(dump,schemaFactory);
+                hipo = new HipoDataEvent(dump,schemaFactory); 
             }   
             else {            	
             	hipo = event; 
