@@ -88,8 +88,9 @@ public class FitData {
 	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax)); 
 	    graph.getFunction().setLineWidth(1);
 	    if(func<5) {
-	      amp   = getMaxYIDataSet(graph,pmin,pmax);
-	      mean  = getMeanIDataSet(graph,pmin,pmax); 
+	      amp   = getMaxYIDataSet(graph,pmin,pmax,true);
+	      mean  = getMaxYIDataSet(graph,pmin,pmax,false);
+//	      mean  = getMeanIDataSet(graph,pmin,pmax); 
 	      sigma = getRMSIDataSet(graph,pmin,pmax);
 	      initFunc(0,amp);
 	      initFunc(1,mean);
@@ -138,7 +139,7 @@ public class FitData {
 	    return graph;
 	}
 
-	private double getMaxYIDataSet(IDataSet data, double min, double max) {
+	private double getMaxYIDataSet(IDataSet data, double min, double max, boolean opt) {
 	    double max1 = 0;
 	    double xMax = 0;
 	    for (int i = 0; i < data.getDataSize(0); i++) {
@@ -151,7 +152,7 @@ public class FitData {
 	            }
 	        }
 	    }
-	    return max1;
+	    return opt?max1:xMax;
 	}
 
 	private double getMeanIDataSet(IDataSet data, double min, double max) {

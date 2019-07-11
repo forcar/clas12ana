@@ -14,6 +14,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -425,7 +426,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setTriggerPhaseConstants(int run) {
-		IndexedTable   jitter = this.monitors[0].engine.getConstantsManager().getConstants(run, "/calibration/ec/time_jitter");        
+		IndexedTable   jitter = this.monitors[0].ccdb.getConstants(run, "/calibration/ec/time_jitter");        
         PERIOD = jitter.getDoubleValue("period",0,0,0);
         PHASE  = jitter.getIntValue("phase",0,0,0); 
         CYCLES = jitter.getIntValue("cycles",0,0,0);
@@ -470,7 +471,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             else {            	
             	hipo = event; 
             }
-            
             int rNum = 0; int eNum = 0;
             
             rNum = getRunNumber(event);
@@ -696,7 +696,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(runNumber);    
-            this.monitors[k].initCCDB(runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}

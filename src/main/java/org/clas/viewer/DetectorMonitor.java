@@ -12,6 +12,7 @@ import java.awt.event.ItemListener;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.clas.tools.FitData;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.calib.utils.CalibrationConstants;
+import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
@@ -172,6 +174,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean   gdfitEnable = false; 
     public Boolean    sfitEnable = false; 
     public Boolean    fitVerbose = false; 
+    public Boolean isEngineReady = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -184,11 +187,28 @@ public class DetectorMonitor implements ActionListener {
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
+    public ConstantsManager         ccdb = new ConstantsManager();
     public CalibrationConstants    calib = null;
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
 
     int ntimer = 0;
+    
+    String[]  ccdbTables = new String[]{
+            "/calibration/ec/attenuation", 
+            "/calibration/ec/gain", 
+            "/calibration/ec/timing",
+            "/calibration/ec/time_jitter",
+            "/calibration/ec/fadc_offset",
+            "/calibration/ec/fadc_global_offset",
+            "/calibration/ec/tdc_global_offset",
+            "/calibration/ec/global_gain_shift",
+            "/calibration/ec/global_time_walk",
+            "/calibration/ec/effective_velocity",
+            "/calibration/ec/tmf_offset",
+            "/calibration/ec/tmf_window",
+            "/calibration/eb/rf/config"
+    };
     
     public DetectorMonitor(String name){
         initGStyle();
@@ -215,6 +235,7 @@ public class DetectorMonitor implements ActionListener {
         TimeSlice.put("UVW", 3);
         TimeSlice.put("FADC Slot", 16);
         TimeSlice.put("HV Slot", 24);
+    	ccdb.init(Arrays.asList(ccdbTables));
     }
     
     public void getEnv() {        
@@ -231,7 +252,7 @@ public class DetectorMonitor implements ActionListener {
     	if(getRunNumber()!=0) plotHistos(getRunNumber());
     }
     
-    public void initCCDB(int runno) {    	
+    public void initCCDB(int runNumber) {    	
     }
     
     public void createTimeLineHistos() {    	
@@ -288,6 +309,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void configEngine(String config) {
+    	System.out.println("DetectorMonitor:configEngine("+config+")");
     	engine.isSingleThreaded=true;
         engine.setVariation(variation);
         engine.init();
@@ -343,13 +365,21 @@ public class DetectorMonitor implements ActionListener {
      } 
     
     public void dropBanks(DataEvent event) {
+    	
+    	if(!isEngineReady) {configEngine("muon"); isEngineReady = true;}
+    	
 //    	System.out.println(" ");
 //    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));
 //    	event.show();
-        if(event.hasBank("ECAL::clusters")) event.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
+        if(!isHipo3Event&&event.hasBank("ECAL::clusters")) event.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
+        if( isHipo3Event&&event.hasBank("ECAL::clusters")) event.removeBank("ECAL::clusters");
+        if( isHipo3Event&&event.hasBank("ECAL::hits"))     event.removeBank("ECAL::hits");
+        if( isHipo3Event&&event.hasBank("ECAL::peaks"))    event.removeBank("ECAL::peaks");
+        if( isHipo3Event&&event.hasBank("ECAL::calib"))    event.removeBank("ECAL::calib");
+        if( isHipo3Event&&event.hasBank("ECAL::moments"))  event.removeBank("ECAL::moments");
+
 //        System.out.println(" ");
-//        event.show();
-        
+//        event.show();        
 //    	System.out.println("CLUSTER AFTER? "+event.hasBank("ECAL::clusters"));
         if(event.hasBank("ECAL::adc")) engine.processDataEvent(event);     	
     }

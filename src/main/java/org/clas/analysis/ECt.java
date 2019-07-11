@@ -17,6 +17,7 @@ import org.clas.viewer.DetectorMonitor;
 import org.dom4j.CDATA;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
+import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.DataVector;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -40,7 +41,7 @@ import org.jlab.utils.groups.IndexedTable;
 public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>> tdcs = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null;
+    IndexedTable time=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
 
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -54,9 +55,11 @@ public class ECt extends DetectorMonitor {
     Boolean               isResidualDone = false;
     Boolean                    isTMFDone = false;
     Boolean                   isGTMFDone = false;
+    Boolean           isTimeLineFitsDone = false;
     
     int trigger_sect = 0;
     int        phase = 0;
+    float        STT = 0;
     Boolean     isMC = false;
     
 //  static float TOFFSET = 436; 
@@ -64,7 +67,9 @@ public class ECt extends DetectorMonitor {
     static float   FTOFFSET = 0;
     static float    TOFFSET = 0;
     static float  TOFFSETMC = 180;
+    static float   RFPERIOD = 4.008f;    
     static float          c = 29.98f;
+    
     float               tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
     float[] tw = {300,300,300,100,100,100,100,100,100};
@@ -99,17 +104,19 @@ public class ECt extends DetectorMonitor {
                                  "GTMF",
                                  "LTFITS",
                                  "TWFITS",
-                                 "MISC");
+                                 "MISC",
+                                 "Timeline");
+        
 
         
         this.useSectorButtons(true);
         this.useSliderPane(true);
         this.variation = "default";
-        configEngine("muon");
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
         this.init();
         this.localinit();
+        this.localclear();
     }
     
     public void localinit() {
@@ -122,16 +129,20 @@ public class ECt extends DetectorMonitor {
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
-    	FitSummary.clear();
     	Fits.clear();
+    	FitSummary.clear();
     	tl.Timeline.clear();    	   	
     	slider.setValue(0);
     } 
     
     @Override
     public void createHistos(int run) {  
+	    System.out.println("ECt.createHistos("+run+")");
         setRunNumber(run);
         runlist.add(run);        
+        this.setNumberOfEvents(0);        
+        createMISCHistos(28);
+        if(dropSummary) return;
         createTDCHistos(0,120,350,"TIME (ns)");
         createTDCHistos(1,120,350,"TIME (ns)");
         createTDCHistos(2,120,350,"TIME (ns)");
@@ -158,12 +169,18 @@ public class ECt extends DetectorMonitor {
         createUVWHistos(20,50,50,0,50,0,430,"TTW","LEFF ");
         createUVWHistos(21,50,50,160,190,0,430,"TVERT","LEFF ");        
         createBETAHistos(22);
-        createMISCHistos(28);
     }
-
-    @Override        
-    public void plotHistos(int run) {  
+    
+    @Override       
+    public void plotHistos(int run) {
+    	plotSummary(run);
+    	plotAnalysis(run);
+    }
+      
+    public void plotSummary(int run) {  
     	    setRunNumber(run);
+    	    plotMISCHistos(28);  	
+    	    if(dropSummary) return;
     	    plotTDCHistos(0);
     	    plotTDCHistos(1);    	    	    
     	    plotTDCHistos(2);    	    	    
@@ -187,11 +204,18 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(20);
     	    plotUVWHistos(21);
     	    plotMISCHistos(22);
-    	    plotMISCHistos(28);
-    	    if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
-    	    if(isResidualDone) plotResidualSummary(23);
-    	    if(isTMFDone)      plotTMFSummary(24);
-    	    if(isGTMFDone)     plotGTMFSummary(25);
+    }
+    
+    public void plotAnalysis(int run) {
+    	    setRunNumber(run);
+    	    if(isTimeLineFitsDone) plotTimeLines(29);
+    	    if(!isAnalyzeDone) return;
+    	    if(!dropSummary) {
+    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
+    	    	if(isResidualDone) plotResidualSummary(23);
+    	    	if(isTMFDone)      plotTMFSummary(24);
+    	    	if(isGTMFDone)     plotGTMFSummary(25);
+    	    }
     }
     
     public void createBETAHistos(int k) {
@@ -217,7 +241,7 @@ public class ECt extends DetectorMonitor {
         int run = getRunNumber();
         
         DataGroup dg = new DataGroup(1,1);
-        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,100,0,300);
+        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,100,0,150);
         h.setTitleX("Start Time"); h.setTitleY("Counts");       
         dg.addDataSet(h,0);    	
         this.getDataGroup().add(dg,0,0,k,run);  
@@ -331,34 +355,51 @@ public class ECt extends DetectorMonitor {
         }            
 
     } 
-    
+   
     public void initCCDB(int runno) {
-        gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
-        time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
-        veff    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/effective_velocity");
-        fo      = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
-        fgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
-        tgo     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
-        gtw     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
-        tmf     = engine.getConstantsManager().getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
+        gain    = ccdb.getConstants(runno, "/calibration/ec/gain");
+        time    = ccdb.getConstants(runno, "/calibration/ec/timing");
+        veff    = ccdb.getConstants(runno, "/calibration/ec/effective_velocity");
+        fo      = ccdb.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
+        fgo     = ccdb.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
+        tgo     = ccdb.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
+        gtw     = ccdb.getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
+        tmf     = ccdb.getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
+        rfT     = ccdb.getConstants(runno, "/calibration/eb/rf/config");          //rfTable
     }
     
     @Override
     public void processEvent(DataEvent event) {   
        isMC = (getRunNumber()<100) ? true:false;
        trigger_sect = getElecTriggerSector(); 
-       phase        = getTriggerPhase();
+       phase        = getTriggerPhase(); 
+       processTL(event);
+       if(dropSummary) return;
        processRaw(event);
        processRec(event);             
+    }
+    
+    public void processTL(DataEvent event) {
+    	
+  	   int  run = getRunNumber();
+    	
+       STT = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
+             event.getBank("REC::Event").getFloat("startTime", 0)):0; 
+       
+       if(STT>0 && event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter")) {       
+    	   ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)).fill(STT); 
+       }
+
     }
     
     public void processRaw(DataEvent event) { //To cross-check ECengine for consistency
     	
  	   int  run = getRunNumber();
- 	   
+ 	  
        FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0);
         TOFFSET = (float) tgo.getDoubleValue("offset", 0,0,0); 
-        
+       RFPERIOD = (float) rfT.getDoubleValue("clock",1,1,1);
+       
        tdcs.clear();
        
        if(event.hasBank("ECAL::tdc")==true){
@@ -415,10 +456,19 @@ public class ECt extends DetectorMonitor {
     
     public void processRec(DataEvent event) {
   	   
-       float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
-    	                                                             event.getBank("REC::Event").getFloat("startTime", 0)):0;
 
-       if(!(Tvertex>0)) return;
+       float rftime = event.hasBank("REC::Event") ?              event.getBank("REC::Event").getFloat("RFTime",0):0;
+
+       DataBank recRunRF  = null;
+
+       if(event.hasBank("RUN::rf"))  recRunRF = event.getBank("RUN::rf");      
+       
+       float trf = 0;
+       for(int k = 0; k < recRunRF.rows(); k++){
+           if(recRunRF.getInt("id", k)==1) trf = recRunRF.getFloat("time",k);
+       }   
+       
+       if(!(STT>0)) return;
        
        int run = getRunNumber();
         
@@ -446,8 +496,6 @@ public class ECt extends DetectorMonitor {
        boolean goodEvent = event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter");
        
        if(!goodEvent) return;
-       
-       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)).fill(Tvertex);  
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
@@ -536,20 +584,26 @@ public class ECt extends DetectorMonitor {
                 	   float radc = (float) Math.sqrt(adc);
                 	   
                        float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c);
-               	   
-                	   float vcorr = Tvertex - phase + TVOffset;
+                       
+                	   float vcorr = STT - phase + TVOffset;
                 	   float pcorr = path/vel;
                 	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                        float tvcor = tu  - vcorr;
                        float resid = tvcor - pcorr;
                        float mybet = path/tvcor/c;
+//                       System.out.println((tu-pcorr)+" "+STT+" "+phase+" "+TVOffset+" "+rftime);
+//                       double dt = (time - path/(beta*29.97) - trf + 120.5*this.rfPeriod)%this.rfPeriod-this.rfPeriod/2;
+                       
+                       float dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
                        
                        ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET, ip); //peak times
                        ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
                        ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
 //                       if (pid==22) {
-                       if (true||pid==11||Math.abs(pid)==211) {
+//                       if (pid==11) {
+                           if (true||pid==11||Math.abs(pid)==211) {
+//                    	   System.out.println(tdc+" "+radc+" "+vcorr+" "+pcorr+" "+lcorr+" "+(tdc-vcorr-pcorr-lcorr));
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, resid);
@@ -643,11 +697,31 @@ public class ECt extends DetectorMonitor {
     }
 
     public void analyze() {    
-       System.out.println("I am in analyze()");
-       if(cfitEnable)  analyzeCalibration();
-       if(sfitEnable)  analyzeResiduals();
-       if(dfitEnable)  analyzeTMF();
-       if(gdfitEnable) analyzeGTMF();
+       System.out.println(getDetectorName()+".Analyze() ");
+     
+       if(!dropSummary) {
+    	   if(cfitEnable)  analyzeCalibration();
+    	   if(sfitEnable)  analyzeResiduals();
+    	   if(dfitEnable)  analyzeTMF();
+    	   if(gdfitEnable) analyzeGTMF();
+       }
+       
+       if(!isTimeLineFitsDone) analyzeTimeLineFits();
+       
+       System.out.println("Finished");
+    }
+    
+    public void analyzeTimeLineFits() {
+    	fitGraphs(1,1,0,0,0,0); 
+        if(!isTimeLineFitsDone) createTimeLineHistos();
+    	fillTimeLineHisto();   	
+        System.out.println("analyzeTimeLineFits Finished");
+        isTimeLineFitsDone = true;      
+    }
+    
+    public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {    	
+        int run = getRunNumber();	         
+        tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)),0,70,105,75,101,0.8,2.5),is1,0,28,run); 
     }
     
     public void analyzeCalibration() {
@@ -990,6 +1064,73 @@ public class ECt extends DetectorMonitor {
        int run = getRunNumber();
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	    
     }  
+    
+/*   TIMELINES */
+    
+    public void createTimeLineHistos() {   
+    	System.out.println("Initializing "+TLname+" timeline"); 
+    	runIndex = 0;
+    	tl.createTimeLineHisto(10,"StartTime","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(20,"Resolution","Sector",TLmax,6,1,7);
+    }   
+    
+    public void fillTimeLineHisto() {
+    	System.out.println("Filling "+TLname+" timeline"); 
+        System.out.println(this.getDataGroup().hasItem(0,0,28,getRunNumber()));  
+        for (int is=1; is<2; is++) {
+            float   y = (float) tl.fitData.getItem(is,0,28,getRunNumber()).mean; 
+            float  ye = (float) tl.fitData.getItem(is,0,28,getRunNumber()).meane;			 
+            float  ys = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigma;
+            float yse = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigmae;			 
+            ((H2F)tl.Timeline.getItem(10,0)).fill(runIndex,is,y);	
+            ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,ye);   		
+            ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,ys/y);	
+            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   
+            
+        } 
+        runIndex++;
+    } 
+    
+    public void saveTimelines() {
+    	System.out.println("ECt: Saving timelines");
+    	saveTimeLine(10,0,7,"StartTime","TIME");
+    	saveTimeLine(20,0,7,"Resolution","TIME");
+    }
+    
+    public void plotTimeLines(int index) {
+    	plotSttTimeLines(index);
+    } 
+  
+    public void plotSttTimeLines(int index) {
+    	
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
+        int           is = 1; 
+        FitData       fd = tl.fitData.getItem(is,0,28,getRunNumber());
+        
+    	double[] tlmin = {85,0.03}, tlmax= {90,0.06};
+    	float[] tlmean = {89.06f,4.18f};
+       
+    	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                   line1.setLineColor(5);
+    	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
+    	DataLine line3 = new DataLine(runIndexSlider,1,  runIndexSlider,7);    line3.setLineColor(5);
+    	DataLine line4 = new DataLine(runIndexSlider+1,1,runIndexSlider+1,7);  line4.setLineColor(5);
+    	
+        c.clear(); c.divide(3, 2); 
+
+        for (int i=0; i<2; i++) { int i3=i*3;
+            double min=tlmin[i]; double max=tlmax[i]; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
+    		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
+    		c.draw((H2F)tl.Timeline.getItem(10*(i+1),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
+             
+    		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
+    		drawTimeLine(c,is,10*(i+1),tlmean[i],"Sector "+is+((i==0)?" StartTime":" #sigma(T) / T"));
+    		    
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(tlmean[i]*0.8,tlmean[i]*1.2,0.,fd.getGraph().getMax()*1.1);
+    		fd.getHist().getAttributes().setOptStat("1000100");
+    		DataLine line6 = new DataLine(tlmean[0],-50,tlmean[0],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
+    		c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6);
+        }
+    }
     
     @Override
     public void timerUpdate() {
