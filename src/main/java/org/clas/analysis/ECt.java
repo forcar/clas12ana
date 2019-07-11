@@ -62,6 +62,8 @@ public class ECt extends DetectorMonitor {
     float        STT = 0;
     Boolean     isMC = false;
     
+    Boolean isGoodTL = false;
+    
 //  static float TOFFSET = 436; 
    
     static float   FTOFFSET = 0;
@@ -104,7 +106,7 @@ public class ECt extends DetectorMonitor {
                                  "GTMF",
                                  "LTFITS",
                                  "TWFITS",
-                                 "MISC",
+                                 "TL",
                                  "Timeline");
         
 
@@ -127,6 +129,7 @@ public class ECt extends DetectorMonitor {
     public void localclear() {
     	System.out.println("ECt:localclear()");
     	isAnalyzeDone = false;
+        isTimeLineFitsDone = false;
     	getDataGroup().clear();
     	runlist.clear();
     	Fits.clear();
@@ -141,17 +144,17 @@ public class ECt extends DetectorMonitor {
         setRunNumber(run);
         runlist.add(run);        
         this.setNumberOfEvents(0);        
-        createMISCHistos(28);
-        if(dropSummary) return;
+        createTLHistos(28);
         createTDCHistos(0,120,350,"TIME (ns)");
         createTDCHistos(1,120,350,"TIME (ns)");
         createTDCHistos(2,120,350,"TIME (ns)");
         createTDCHistos(3,120,350,"TIME (ns)");
         createTDCHistos(4,120,350,"TIME (ns)");    
+        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
+        if(dropSummary) return;
         createTDCHistos(5,120,350,"TIME (ns)");    
         createTDCHistos(6,120,350,"TIME (ns)");    
         createTDCHistos(7,120,350,"TIME (ns)");    
-        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
         createTDCHistos(9,  0.,50.,"T-TVERT (ns)");    
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
         createUVWHistos(11,50,50,700,800,-5,5,"PATH","RESID ");
@@ -179,17 +182,17 @@ public class ECt extends DetectorMonitor {
       
     public void plotSummary(int run) {  
     	    setRunNumber(run);
-    	    plotMISCHistos(28);  	
-    	    if(dropSummary) return;
+    	    plotTLHistos(28);  	
     	    plotTDCHistos(0);
     	    plotTDCHistos(1);    	    	    
     	    plotTDCHistos(2);    	    	    
     	    plotTDCHistos(3);    	    	    
     	    plotTDCHistos(4);    	    	    
+    	    plotTDCHistos(8);    	    	    
+            if(dropSummary) return;
     	    plotTDCHistos(5);    	    	    
     	    plotTDCHistos(6);    	    	    
     	    plotTDCHistos(7);    	    	    
-    	    plotTDCHistos(8);    	    	    
     	    plotTDCHistos(9);    	    	    
     	    plotTDCHistos(10); 
     	    plotUVWHistos(11);
@@ -203,12 +206,13 @@ public class ECt extends DetectorMonitor {
     	    plotUVWHistos(19);
     	    plotUVWHistos(20);
     	    plotUVWHistos(21);
-    	    plotMISCHistos(22);
+    	    plotTLHistos(22);
     }
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-    	    if(isTimeLineFitsDone) plotTimeLines(29);
+    	    if(!isTimeLineFitsDone) return;
+    	    plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
     	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
@@ -236,14 +240,20 @@ public class ECt extends DetectorMonitor {
                 
     }
     
-    public void createMISCHistos(int k) {
+    public void createTLHistos(int k) {
         H1F h;
-        int run = getRunNumber();
+        int run = getRunNumber(); 
         
-        DataGroup dg = new DataGroup(1,1);
-        h = new H1F("misc_"+k+"_"+run,"misc_"+k+"_"+run,100,0,150);
-        h.setTitleX("Start Time"); h.setTitleY("Counts");       
-        dg.addDataSet(h,0);    	
+        DataGroup dg = new DataGroup(6,2);
+        
+        for (int is=1; is<7; is++) {
+        	h = new H1F("TL1_"+k+"_"+is+"_"+run,"TL1_"+k+"_"+is+"_"+run,100,40,140);
+        	h.setTitleX("Sector "+is+" Start Time"); h.setTitleY("Counts");       
+            dg.addDataSet(h,is-1);    	
+        	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,60,195,225);
+        	h.setTitleX("Sector "+is+" PCAL U3 Time"); h.setTitleY("Counts");       
+            dg.addDataSet(h,is+5);
+        }
         this.getDataGroup().add(dg,0,0,k,run);  
     }
     
@@ -373,23 +383,20 @@ public class ECt extends DetectorMonitor {
        isMC = (getRunNumber()<100) ? true:false;
        trigger_sect = getElecTriggerSector(); 
        phase        = getTriggerPhase(); 
-       processTL(event);
-       if(dropSummary) return;
+       STT          = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
+                      event.getBank("REC::Event").getFloat("startTime", 0)):0; 
+       isGoodTL     = event.hasBank("REC::Event")&&event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter")
+    		                                     && STT>0 && trigger_sect>0 && trigger_sect<7;
+       if(isGoodTL) processTL(event); 
        processRaw(event);
+       if(dropSummary) return;
        processRec(event);             
     }
     
     public void processTL(DataEvent event) {
     	
   	   int  run = getRunNumber();
-    	
-       STT = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
-             event.getBank("REC::Event").getFloat("startTime", 0)):0; 
-       
-       if(STT>0 && event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter")) {       
-    	   ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)).fill(STT); 
-       }
-
+       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT); 
     }
     
     public void processRaw(DataEvent event) { //To cross-check ECengine for consistency
@@ -449,6 +456,7 @@ public class ECt extends DetectorMonitor {
         	       double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); // calibrated time
+          	       if(isGoodTL&&il==1&&ip==3) ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)).fill(tdcmc); 
                }
            }
        }    	
@@ -706,12 +714,13 @@ public class ECt extends DetectorMonitor {
     	   if(gdfitEnable) analyzeGTMF();
        }
        
-       if(!isTimeLineFitsDone) analyzeTimeLineFits();
+       analyzeTimeLineFits();
        
        System.out.println("Finished");
     }
     
     public void analyzeTimeLineFits() {
+    	cfitEnable = true;
     	fitGraphs(1,1,0,0,0,0); 
         if(!isTimeLineFitsDone) createTimeLineHistos();
     	fillTimeLineHisto();   	
@@ -721,7 +730,7 @@ public class ECt extends DetectorMonitor {
     
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {    	
         int run = getRunNumber();	         
-        tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)),0,70,105,75,101,0.8,2.5),is1,0,28,run); 
+        tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)),0,70,105,75,101,1.5,2.5),is1,0,28,run); 
     }
     
     public void analyzeCalibration() {
@@ -1060,7 +1069,7 @@ public class ECt extends DetectorMonitor {
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,run));	    
     }
     
-    public void plotMISCHistos(int index) {
+    public void plotTLHistos(int index) {
        int run = getRunNumber();
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	    
     }  
@@ -1093,8 +1102,8 @@ public class ECt extends DetectorMonitor {
     
     public void saveTimelines() {
     	System.out.println("ECt: Saving timelines");
-    	saveTimeLine(10,0,7,"StartTime","TIME");
-    	saveTimeLine(20,0,7,"Resolution","TIME");
+    	saveTimeLine(10,0,28,"StartTime","TIME");
+    	saveTimeLine(20,0,28,"Resolution","TIME");
     }
     
     public void plotTimeLines(int index) {

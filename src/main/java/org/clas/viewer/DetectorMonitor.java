@@ -175,6 +175,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean    sfitEnable = false; 
     public Boolean    fitVerbose = false; 
     public Boolean isEngineReady = false;
+    public Boolean isTimeLineFitsDone = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -903,11 +904,11 @@ public class DetectorMonitor implements ActionListener {
     public void saveTimeLine(int i, int il, int ip, String fname, String tag) {
 		 TDirectory dir = new TDirectory();
 		 GraphErrors g[]= new GraphErrors[6];
-		 for (int is=0; is<6; is++) g[is] = new GraphErrors("sec"+(is+1));		 
+		 for (int is=0; is<1; is++) g[is] = new GraphErrors("sec"+(is+1));		 
 		 H2F h2a = (H2F) tl.Timeline.getItem(i,0); H2F h2b = (H2F) tl.Timeline.getItem(i,1);
 		 for (int ir=0; ir<runlist.size(); ir++) {
 			 dir.mkdir("/"+runlist.get(ir)); dir.cd("/"+runlist.get(ir));
-			 for (int is=0; is<6; is++) {
+			 for (int is=0; is<1; is++) {
 				 g[is].addPoint(runlist.get(ir),h2a.getSlicesY().get(is).getDataY(ir),0,h2b.getSlicesY().get(is).getDataY(ir));				  			 
 		         FitData fd = tl.fitData.getItem(is+1,il,ip,runlist.get(ir));
 		         H1F h1 = fd.getHist(); h1.setTitle("hsec"+(is+1)); h1.setName(tag+" Sector "+(is+1));
@@ -917,7 +918,7 @@ public class DetectorMonitor implements ActionListener {
 			 
 		 }
 		 dir.mkdir("/timelines");  dir.cd("/timelines");
-		 for (int is=0; is<6; is++) dir.addDataSet(g[is]);
+		 for (int is=0; is<1; is++) dir.addDataSet(g[is]);
     	 System.out.println("Saving timeline to "+tlPath+fname+".hipo");
 		 dir.writeFile(tlPath+fname+".hipo");		 
     }
