@@ -145,16 +145,16 @@ public class ECt extends DetectorMonitor {
         runlist.add(run);        
         this.setNumberOfEvents(0);        
         createTLHistos(28);
+        if(dropSummary) return;
         createTDCHistos(0,120,350,"TIME (ns)");
         createTDCHistos(1,120,350,"TIME (ns)");
         createTDCHistos(2,120,350,"TIME (ns)");
         createTDCHistos(3,120,350,"TIME (ns)");
         createTDCHistos(4,120,350,"TIME (ns)");    
-        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
-        if(dropSummary) return;
         createTDCHistos(5,120,350,"TIME (ns)");    
         createTDCHistos(6,120,350,"TIME (ns)");    
         createTDCHistos(7,120,350,"TIME (ns)");    
+        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
         createTDCHistos(9,  0.,50.,"T-TVERT (ns)");    
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
         createUVWHistos(11,50,50,700,800,-5,5,"PATH","RESID ");
@@ -183,16 +183,17 @@ public class ECt extends DetectorMonitor {
     public void plotSummary(int run) {  
     	    setRunNumber(run);
     	    plotTLHistos(28);  	
+            if(dropSummary) return;
     	    plotTDCHistos(0);
     	    plotTDCHistos(1);    	    	    
     	    plotTDCHistos(2);    	    	    
     	    plotTDCHistos(3);    	    	    
     	    plotTDCHistos(4);    	    	    
     	    plotTDCHistos(8);    	    	    
-            if(dropSummary) return;
     	    plotTDCHistos(5);    	    	    
     	    plotTDCHistos(6);    	    	    
     	    plotTDCHistos(7);    	    	    
+    	    plotTDCHistos(8);    	    	    
     	    plotTDCHistos(9);    	    	    
     	    plotTDCHistos(10); 
     	    plotUVWHistos(11);
@@ -251,7 +252,7 @@ public class ECt extends DetectorMonitor {
         	h.setTitleX("Sector "+is+" Start Time"); h.setTitleY("Counts");       
             dg.addDataSet(h,is-1);    	
         	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,60,195,225);
-        	h.setTitleX("Sector "+is+" PCAL U3 Time"); h.setTitleY("Counts");       
+        	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time"); h.setTitleY("Counts");       
             dg.addDataSet(h,is+5);
         }
         this.getDataGroup().add(dg,0,0,k,run);  
@@ -375,18 +376,23 @@ public class ECt extends DetectorMonitor {
         tgo     = ccdb.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
         gtw     = ccdb.getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
         tmf     = ccdb.getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
-        rfT     = ccdb.getConstants(runno, "/calibration/eb/rf/config");          //rfTable
+        rfT     = ccdb.getConstants(runno, "/calibration/eb/rf/config");  
+        
+        FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0);
+        TOFFSET  = (float) tgo.getDoubleValue("offset", 0,0,0); 
+        RFPERIOD = (float) rfT.getDoubleValue("clock",1,1,1);     
     }
     
     @Override
     public void processEvent(DataEvent event) {   
-       isMC = (getRunNumber()<100) ? true:false;
+       isMC         = (getRunNumber()<100) ? true:false;
        trigger_sect = getElecTriggerSector(); 
        phase        = getTriggerPhase(); 
        STT          = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
                       event.getBank("REC::Event").getFloat("startTime", 0)):0; 
        isGoodTL     = event.hasBank("REC::Event")&&event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter")
     		                                     && STT>0 && trigger_sect>0 && trigger_sect<7;
+       
        if(isGoodTL) processTL(event); 
        processRaw(event);
        if(dropSummary) return;
@@ -396,7 +402,21 @@ public class ECt extends DetectorMonitor {
     public void processTL(DataEvent event) {
     	
   	   int  run = getRunNumber();
-       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT); 
+       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT);
+       
+       if(event.hasBank("ECAL::clusters")){       
+       DataBank  bank1 = event.getBank("ECAL::clusters");
+       for(int loop = 0; loop < bank1.rows(); loop++){
+           int is = bank1.getByte("sector", loop);
+           int il = bank1.getByte("layer", loop);
+           if (is==trigger_sect&&il==1){
+               float    t = bank1.getFloat("time",loop);
+               int iU = (bank1.getInt("coordU", loop)-4)/8+1;
+               if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)).fill(t+TOFFSET);
+           }
+       }
+       }
+      
     }
     
     public void processRaw(DataEvent event) { //To cross-check ECengine for consistency

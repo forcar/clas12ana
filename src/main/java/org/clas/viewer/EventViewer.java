@@ -433,7 +433,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public long getTriggerWord(DataEvent event) {    	
- 	    DataBank bank = event.getBank("RUN::config");	        
+ 	    DataBank bank = event.getBank("RUN::config");        
         return bank.getLong("trigger", 0);
     }
   
