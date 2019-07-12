@@ -388,14 +388,19 @@ public class ECt extends DetectorMonitor {
        isMC         = (getRunNumber()<100) ? true:false;
        trigger_sect = getElecTriggerSector(); 
        phase        = getTriggerPhase(); 
-       STT          = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
-                      event.getBank("REC::Event").getFloat("startTime", 0)):0; 
-       isGoodTL     = event.hasBank("REC::Event")&&event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter")
-    		                                     && STT>0 && trigger_sect>0 && trigger_sect<7;
+       STT          = event.hasBank("REC::Event") ? 
+    		          (isHipo3Event ? 
+    		          event.getBank("REC::Event").getFloat("STTime", 0):
+                      event.getBank("REC::Event").getFloat("startTime", 0)):
+                      0; 
+       isGoodTL     = event.hasBank("REC::Event")&&
+    		          event.hasBank("REC::Particle")&&
+    		          event.hasBank("REC::Calorimeter")&&
+    		          STT>0 && trigger_sect>0 && trigger_sect<7;
        
        if(isGoodTL) processTL(event); 
-       processRaw(event);
        if(dropSummary) return;
+       processRaw(event);
        processRec(event);             
     }
     
@@ -741,7 +746,7 @@ public class ECt extends DetectorMonitor {
     
     public void analyzeTimeLineFits() {
     	cfitEnable = true;
-    	fitGraphs(1,1,0,0,0,0); 
+    	fitGraphs(1,7,0,0,0,0); 
         if(!isTimeLineFitsDone) createTimeLineHistos();
     	fillTimeLineHisto();   	
         System.out.println("analyzeTimeLineFits Finished");
@@ -749,8 +754,11 @@ public class ECt extends DetectorMonitor {
     }
     
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {    	
-        int run = getRunNumber();	         
-        tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(0).get(0)),0,70,105,75,101,1.5,2.5),is1,0,28,run); 
+        int run = getRunNumber();	 
+        for (int is=is1; is<is2; is++) {
+        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(is-1).get(0)),0,70,105,75,101,1.5,2.5),is,0,28,run); 
+        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)),0,190,230,190,130,2.0,2.0),is,1,28,run); 
+        }
     }
     
     public void analyzeCalibration() {
@@ -1100,21 +1108,28 @@ public class ECt extends DetectorMonitor {
     	System.out.println("Initializing "+TLname+" timeline"); 
     	runIndex = 0;
     	tl.createTimeLineHisto(10,"StartTime","Sector",TLmax,6,1,7);
-    	tl.createTimeLineHisto(20,"Resolution","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(20,"PCALU3","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(30,"Resolution","Sector",TLmax,6,1,7);
     }   
     
     public void fillTimeLineHisto() {
     	System.out.println("Filling "+TLname+" timeline"); 
         System.out.println(this.getDataGroup().hasItem(0,0,28,getRunNumber()));  
-        for (int is=1; is<2; is++) {
+        for (int is=1; is<7; is++) {
             float   y = (float) tl.fitData.getItem(is,0,28,getRunNumber()).mean; 
             float  ye = (float) tl.fitData.getItem(is,0,28,getRunNumber()).meane;			 
-            float  ys = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigma;
-            float yse = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigmae;			 
             ((H2F)tl.Timeline.getItem(10,0)).fill(runIndex,is,y);	
-            ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,ye);   		
-            ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,ys/y);	
-            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   
+            ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,ye);  
+            
+            float  y1 = (float) tl.fitData.getItem(is,1,28,getRunNumber()).mean; 
+            float y1e = (float) tl.fitData.getItem(is,1,28,getRunNumber()).meane;			 
+            ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,y1);	
+            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,y1e); 
+            
+            float  ys = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigma;
+            float yse = (float) tl.fitData.getItem(is,0,28,getRunNumber()).sigmae;			   		
+            ((H2F)tl.Timeline.getItem(30,0)).fill(runIndex,is,ys/y);	
+            ((H2F)tl.Timeline.getItem(30,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   
             
         } 
         runIndex++;
@@ -1123,7 +1138,8 @@ public class ECt extends DetectorMonitor {
     public void saveTimelines() {
     	System.out.println("ECt: Saving timelines");
     	saveTimeLine(10,0,28,"StartTime","TIME");
-    	saveTimeLine(20,0,28,"Resolution","TIME");
+    	saveTimeLine(20,0,28,"PCAL U3","TIME");
+    	saveTimeLine(30,0,28,"Resolution","TIME");
     }
     
     public void plotTimeLines(int index) {
@@ -1133,11 +1149,12 @@ public class ECt extends DetectorMonitor {
     public void plotSttTimeLines(int index) {
     	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); 
-        int           is = 1; 
-        FitData       fd = tl.fitData.getItem(is,0,28,getRunNumber());
+        int           is = getActiveSector(); 
         
-    	double[] tlmin = {85,0.03}, tlmax= {90,0.06};
-    	float[] tlmean = {89.06f,4.18f};
+    	double[] tlmin = {85,210,0.02}, tlmax= {90,214,.06};
+    	float[] tlmean = {89.06f,212f,0.04f};
+    	String[]   tit = {" StartTime"," PCAL U3 Time"," #sigma(T) / T"};
+    	int[]      ind = {0,2,1};
        
     	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                   line1.setLineColor(5);
     	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
@@ -1152,11 +1169,12 @@ public class ECt extends DetectorMonitor {
     		c.draw((H2F)tl.Timeline.getItem(10*(i+1),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
-    		drawTimeLine(c,is,10*(i+1),tlmean[i],"Sector "+is+((i==0)?" StartTime":" #sigma(T) / T"));
-    		    
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(tlmean[i]*0.8,tlmean[i]*1.2,0.,fd.getGraph().getMax()*1.1);
+    		drawTimeLine(c,is,10*(i+1),tlmean[i],"Sector "+is+tit[i]);
+    		
+    		FitData       fd = tl.fitData.getItem(is,i==1?1:0,28,getRunNumber());   
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(tlmean[i>1?0:i]*0.8,tlmean[i>1?0:i]*1.2,0.,fd.getGraph().getMax()*1.1);
     		fd.getHist().getAttributes().setOptStat("1000100");
-    		DataLine line6 = new DataLine(tlmean[0],-50,tlmean[0],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
+    		DataLine line6 = new DataLine(tlmean[i],-50,tlmean[i],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
     		c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6);
         }
     }
