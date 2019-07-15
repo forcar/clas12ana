@@ -212,7 +212,6 @@ public class ECt extends DetectorMonitor {
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-    	    if(!isTimeLineFitsDone) return;
     	    plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
@@ -221,6 +220,7 @@ public class ECt extends DetectorMonitor {
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
     	    }
+    	    if(!isTimeLineFitsDone) return;
     }
     
     public void createBETAHistos(int k) {
@@ -634,8 +634,8 @@ public class ECt extends DetectorMonitor {
                        ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
 //                       if (pid==22) {
-//                       if (pid==11) {
-                           if (true||pid==11||Math.abs(pid)==211) {
+//                         if (isGoodTL) {
+                           if (pid==11||Math.abs(pid)==211||pid==22) {
 //                    	   System.out.println(tdc+" "+radc+" "+vcorr+" "+pcorr+" "+lcorr+" "+(tdc-vcorr-pcorr-lcorr));
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
@@ -740,7 +740,7 @@ public class ECt extends DetectorMonitor {
        }
        
        analyzeTimeLineFits();
-       
+       isAnalyzeDone = true;
        System.out.println("Finished");
     }
     

@@ -695,7 +695,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         for(int k=0; k<this.monitors.length; k++) {  
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
-            this.monitors[k].createHistos(runNumber);    
+            this.monitors[k].createHistos(runNumber);  
+            this.monitors[k].initCCDB(runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
