@@ -212,7 +212,7 @@ public class ECt extends DetectorMonitor {
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-    	    plotTimeLines(29);
+//    	    plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
     	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
@@ -220,7 +220,7 @@ public class ECt extends DetectorMonitor {
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
     	    }
-    	    if(!isTimeLineFitsDone) return;
+//    	    if(!isTimeLineFitsDone) return;
     }
     
     public void createBETAHistos(int k) {
@@ -701,7 +701,7 @@ public class ECt extends DetectorMonitor {
         int    iv = getActiveView();
         
         int    np = npmt[3*il+iv];
-        int    off = (index-24)*100;
+        int    off = (index-26)*100;
         
         c.clear();
         if (np==36) c.divide(6,6); if (np>36) c.divide(9,8);
@@ -709,7 +709,7 @@ public class ECt extends DetectorMonitor {
         for (int ipp=0; ipp<np ; ipp++) {
         	int ip=ipp+off;
         	if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
-        		g=tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).getGraph();        	
+        		g=tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).getGraph(); 
         		if(g.getDataSize(0)>0) {
                    c.cd(ipp); c.getPad(ipp); c.getPad(ipp).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
                                   if(off!=100) {double min = tl.fitData.getItem(is,3*il+iv+1,ipp,getRunNumber()).p0;
@@ -739,7 +739,7 @@ public class ECt extends DetectorMonitor {
     	   if(gdfitEnable) analyzeGTMF();
        }
        
-       analyzeTimeLineFits();
+//       analyzeTimeLineFits();
        isAnalyzeDone = true;
        System.out.println("Finished");
     }
@@ -868,6 +868,7 @@ public class ECt extends DetectorMonitor {
         for (int is=1; is<7; is++) {
         for (int il=0; il<3; il++) {
         for (int iv=0; iv<3; iv++) {           	
+        	if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
             F1D f1 = new F1D("p0","[a]",0.,npmt[3*il+iv]); f1.setParameter(0,0);
             GraphErrors plot1 = FitSummary.getItem(is,il,iv,getRunNumber());
             plot1.setMarkerColor(1);
@@ -877,6 +878,7 @@ public class ECt extends DetectorMonitor {
             plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[il]+" "+v[iv].toUpperCase()+" PMT");
             n++; c.draw(plot1); 
             f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        	}
         }
         }
         }        
@@ -1114,7 +1116,6 @@ public class ECt extends DetectorMonitor {
     
     public void fillTimeLineHisto() {
     	System.out.println("Filling "+TLname+" timeline"); 
-        System.out.println(this.getDataGroup().hasItem(0,0,28,getRunNumber()));  
         for (int is=1; is<7; is++) {
             float   y = (float) tl.fitData.getItem(is,0,28,getRunNumber()).mean; 
             float  ye = (float) tl.fitData.getItem(is,0,28,getRunNumber()).meane;			 
