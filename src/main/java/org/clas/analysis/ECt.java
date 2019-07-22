@@ -490,20 +490,21 @@ public class ECt extends DetectorMonitor {
     public void processRec(DataEvent event) {
   	   
 
-       float rftime = event.hasBank("REC::Event") ?              event.getBank("REC::Event").getFloat("RFTime",0):0;
+       float rftime = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
 
        DataBank recRunRF  = null;
-
-       if(event.hasBank("RUN::rf"))  recRunRF = event.getBank("RUN::rf");      
-       
        float trf = 0;
-       for(int k = 0; k < recRunRF.rows(); k++){
-           if(recRunRF.getInt("id", k)==1) trf = recRunRF.getFloat("time",k);
-       }   
+
+       if(event.hasBank("RUN::rf"))  {
+    	   recRunRF = event.getBank("RUN::rf");             
+           for(int k = 0; k < recRunRF.rows(); k++){
+        	   if(recRunRF.getInt("id", k)==1) trf = recRunRF.getFloat("time",k);
+           }    
+       }
        
        if(!(STT>0)) return;
        
-       int run = getRunNumber();
+       int run = getRunNumber(); 
         
        if(dropBanks) dropBanks(event);
        
@@ -538,7 +539,8 @@ public class ECt extends DetectorMonitor {
        Map<Integer,List<Integer>> caloMap = loadMapByIndex(bankc,"pindex");
        Map<Integer,List<Integer>> partMap = loadMapByIndex(bankp,"pid");    
        
-       trigger_sect = getElecTriggerSector(); 
+       trigger_sect = getElecTriggerSector();
+       boolean good_trig = trigger_sect>0 && trigger_sect < 7;
        
 //       if (!(trigger_sect>0)) return;       
 //       if(!partMap.containsKey(11)) return;
@@ -562,7 +564,8 @@ public class ECt extends DetectorMonitor {
        DataBank  bank3 = event.getBank("ECAL::peaks");
        for(int loop = 0; loop < bank1.rows(); loop++){
            int is = bank1.getByte("sector", loop);
-           if (true||is==trigger_sect||isMC){
+//           if (true||is==trigger_sect||isMC){
+             if (good_trig) {
                int     il = bank1.getByte("layer", loop);
                float ener = bank1.getFloat("energy",loop)*1000;
                float    t = bank1.getFloat("time",loop);
@@ -618,16 +621,17 @@ public class ECt extends DetectorMonitor {
                 	   
                        float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c);
                        
-                	   float vcorr = STT - phase + TVOffset;
+                	   float vcorr = STT - phase + TVOffset;  
                 	   float pcorr = path/vel;
                 	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                        float tvcor = tu  - vcorr;
-                       float resid = tvcor - pcorr;
+                       float resid = tvcor - pcorr; 
                        float mybet = path/tvcor/c;
 //                       System.out.println((tu-pcorr)+" "+STT+" "+phase+" "+TVOffset+" "+rftime);
 //                       double dt = (time - path/(beta*29.97) - trf + 120.5*this.rfPeriod)%this.rfPeriod-this.rfPeriod/2;
                        
-                       float dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
+                       float dt = 0;
+                       if(recRunRF!=null) dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
                        
                        ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET, ip); //peak times
                        ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
@@ -635,7 +639,8 @@ public class ECt extends DetectorMonitor {
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
 //                       if (pid==22) {
 //                         if (isGoodTL) {
-                           if (pid==11||Math.abs(pid)==211||pid==22) {
+//                           if (pid==11||Math.abs(pid)==211||pid==22) {
+                           if (Math.abs(pid)==22) {
 //                    	   System.out.println(tdc+" "+radc+" "+vcorr+" "+pcorr+" "+lcorr+" "+(tdc-vcorr-pcorr-lcorr));
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
@@ -986,11 +991,10 @@ public class ECt extends DetectorMonitor {
     
 	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
 		
-		String path = "/Users/colesmith/CLAS12ANA/";
 		String line = new String();
 		
 		try { 
-			File outputFile = new File(path+table+"_"+getRunNumber());
+			File outputFile = new File(outPath+table+"_"+getRunNumber());
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
