@@ -302,25 +302,25 @@ public class ECpi0 extends DetectorMonitor{
     public void createMCHistos(int k) {
  	   int run = getRunNumber();
        double xmin=-20, xmax=20.;
-       double ymin= 20.,ymax=30.;
+       double ymin= 5.,ymax=35.;
        String tag = k+"_"+run;
        for (int idet=0; idet<3; idet++) {
            DataGroup dg = new DataGroup(4,2);
     	   if (idet==0) {
               h2 = new H2F("pi0_mc80_"+det[idet]+"_"+tag, 50, 2*xmin,2*xmax, 3, 1., 4.);  
               dg.addDataSet(h2, 0);
-              h2 = new H2F("pi0_mc81_"+det[idet]+"_"+tag, 50, xmin,xmax,100, ymin,ymax);  
+              h2 = new H2F("pi0_mc81_"+det[idet]+"_"+tag, 100, xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 1);
-              h2 = new H2F("pi0_mc82_"+det[idet]+"_"+tag, 50, xmin,xmax,100, ymin,ymax);  
+              h2 = new H2F("pi0_mc82_"+det[idet]+"_"+tag, 100, xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 2);
-              h2 = new H2F("pi0_mc83_"+det[idet]+"_"+tag, 50, 2*xmin,2*xmax,100, ymin,ymax);  
+              h2 = new H2F("pi0_mc83_"+det[idet]+"_"+tag, 100, 2*xmin,2*xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 3);
-              h2 = new H2F("pi0_mc84_"+det[idet]+"_"+tag, 50, xmin,xmax,100, ymin,ymax);  
+              h2 = new H2F("pi0_mc84_"+det[idet]+"_"+tag, 100, 0.*xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 4);
     	   }
            h2 = new H2F("pi0_mc85_"+det[idet]+"_"+tag, 50, -1.5, 1.5,3, 1., 4.);  
            dg.addDataSet(h2, 5);
-           h2 = new H2F("pi0_mc86_"+det[idet]+"_"+tag, 50, -1, 1, 100, ymin,ymax);  
+           h2 = new H2F("pi0_mc86_"+det[idet]+"_"+tag, 100, -1, 1, 200, ymin,ymax);  
            dg.addDataSet(h2, 6);
            h2 = new H2F("pi0_mc87_"+det[idet]+"_"+tag, 50, 0., 3.5, 40, 0.15, 0.35);  
            dg.addDataSet(h2, 7);
@@ -393,7 +393,7 @@ public class ECpi0 extends DetectorMonitor{
             double x = ecBank.getFloat("x", i);
             double y = ecBank.getFloat("y", i);
             double z = ecBank.getFloat("z", i);        	
-        	if (layer==1&&sector==2) {
+        	if (layer==1&&sector==1) {
                 ((H1F) this.getDataGroup().getItem(0,0,12,run).getData(10).get(0)).fill(z);        		
                 ((H1F) this.getDataGroup().getItem(0,0,12,run).getData(11).get(0)).fill(0.1*pcz);        		
         	}
@@ -406,17 +406,22 @@ public class ECpi0 extends DetectorMonitor{
         ((H2F) this.getDataGroup().getItem(0,0,12,run).getData(5).get(0)).fill(refTH-mcThet,1.);
         
         res.clear();
+        double shift = 9.0;
         
         for (int idet=0; idet<3; idet++) {
             res.add(part.eb.getUnmatchedResponses(ecClusters, DetectorType.ECAL,iidet[idet]));
             for(int i = 0; i < res.get(idet).size(); i++){
                 int        is = res.get(idet).get(i).getDescriptor().getSector();
                 double energy = res.get(idet).get(i).getEnergy();
-                double      X = res.get(idet).get(i).getPosition().x();
+                double      X = res.get(idet).get(i).getPosition().x()+shift*0.423;
+//                double      X = res.get(idet).get(i).getPosition().x();
                 double      Y = res.get(idet).get(i).getPosition().y();
-                double      Z = res.get(idet).get(i).getPosition().z();
+                double      Z = res.get(idet).get(i).getPosition().z()+shift*0.906;
+//                double      Z = res.get(idet).get(i).getPosition().z();
                 double      T = res.get(idet).get(i).getTime();
                 double    pcR = Math.sqrt(X*X+Y*Y+Z*Z);
+                double     dR = Math.sqrt((0.1*pcx-X)*(0.1*pcx-X)+(0.1*pcz-Z)*(0.1*pcz-Z));
+               
                 double pcThet = Math.asin(Math.sqrt(X*X+Y*Y)/pcR)*180/Math.PI;
                 double   beta = T>0 ? pcR/T/29.98:0.;
                 if (false&&idet==0) {
@@ -441,10 +446,11 @@ public class ECpi0 extends DetectorMonitor{
                     ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(2).get(0)).fill(0.1*pcy-Y,refTH);
                     ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(3).get(0)).fill(0.1*pcz-Z,refTH);
                     if((0.1*pcz-Z)>0) {
+                        ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(4).get(0)).fill(dR,refTH);
                         ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(8).get(0)).fill(mcB,0.1*mcR);
                     	((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(12).get(0)).fill(0.1*mcR,pcR);
                         ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(13).get(0)).fill(tmax,T);
-                        ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(4).get(0)).fill(0.1*mcR-pcR,refTH);
+//                        ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(4).get(0)).fill(0.1*mcR-pcR,refTH);
                         ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(14).get(0)).fill(pcR,T);
                         ((H2F) this.getDataGroup().getItem(0,idet,12,run).getData(15).get(0)).fill(energy,0.1*mcR);
                     }
@@ -798,9 +804,13 @@ public class ECpi0 extends DetectorMonitor{
         h1 = (H1F) this.getDataGroup().getItem(0,getActiveLayer(),12,run).getData(11).get(0) ;  
         h1.setTitleX(dname[getActiveLayer()]+"GEMC Z (cm) ");  h1.setFillColor(2); 
         h1.setOptStat(Integer.parseInt("1001100")); h1.setTitle(" "); c.cd(ii); ii++; c.draw(h1);
-*/        
+        
         h2 =  (H2F) this.getDataGroup().getItem(0,getActiveLayer(),12,run).getData(12).get(0);  
         h2.setTitleX(dname[getActiveLayer()]+" GEMC R (cm)");  h2.setTitleY("PCAL R (cm)");  
+        h2.setTitle(" "); c.cd(ii); c.getPad(ii).getAxisZ().setLog(true); ii++; c.draw(h2);
+*/        
+        h2 =  (H2F) this.getDataGroup().getItem(0,getActiveLayer(),12,run).getData(4).get(0);  
+        h2.setTitleX(dname[getActiveLayer()]+" PCAL RXZ: GEMC-Cluster (cm)");  h2.setTitleY("True Theta (deg)");  
         h2.setTitle(" "); c.cd(ii); c.getPad(ii).getAxisZ().setLog(true); ii++; c.draw(h2);
         
         h2 =  (H2F) this.getDataGroup().getItem(0,getActiveLayer(),12,run).getData(13).get(0);  
