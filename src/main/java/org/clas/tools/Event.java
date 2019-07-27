@@ -19,11 +19,21 @@ public class Event {
 	
 	private DataEvent ev = null;
 	private DataBank caloBank = null;
+	private DataBank clusBank = null;
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
 	
 	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(2);
 	Map<Integer,List<Integer>> caloMap = null;
+	
+	private boolean hasRUNconfig = false;
+	private boolean hasRECevent  = false;
+	private boolean hasRECscintillator = false;
+	private boolean hasRECcalorimeter = false;
+	private boolean hasECALclusters = false;
+	private boolean hasRECparticle = false;
+	private boolean hasRECtrack = false;
+	private boolean hasECALcalib = false;
 	
 	int[]        tb = new int[32];
 	public int[] N1 = new int[6];
@@ -37,19 +47,36 @@ public class Event {
 		trigger=0;
 		starttime = -100;	
 		part.clear();
+		caloBank = null;
+		clusBank = null;
 	}
 	
-	public void procEvent(DataEvent event) {
+	public boolean filter() {
+		hasRUNconfig       = ev.hasBank("RUN::config");
+		hasRECevent        = ev.hasBank("REC::Event");
+		hasRECscintillator = ev.hasBank("REC::Scintillator");
+		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
+		hasECALclusters    = ev.hasBank("ECAL::clusters");
+		hasRECparticle     = ev.hasBank("REC::Particle");
+		hasRECtrack        = ev.hasBank("REC::Track");
+		hasECALcalib       = ev.hasBank("ECAL::calib");	
+		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
+	}
+	
+	public boolean procEvent(DataEvent event) {
 		this.ev = event;
         init(); 
-	    if(ev.hasBank("RUN::config"))        processRUNconfig();
-	    if(ev.hasBank("REC::Event"))         processRECevent();
-	    if(ev.hasBank("REC::Calorimeter"))   processRECcalorimeter();
-	    if(ev.hasBank("REC::Particle"))      processRECparticle();
-	    if(ev.hasBank("REC::Scintillator"))  processRECscintillator();
-	    if(ev.hasBank("REC::Track"))         processRECtrack();
-	    if(ev.hasBank("ECAL::clusters"))     processECALclusters();
-	    if(ev.hasBank("ECAL::calib"))        processECALcalib();		
+        if(!filter()) return false;
+	    if(hasRUNconfig)      processRUNconfig();
+	    if(!countElectronTriggers(false)) return false;
+	    if(hasRECevent)       processRECevent();
+	    if(hasRECcalorimeter) processRECcalorimeter();
+	    if(hasECALclusters)   processECALclusters();
+	    if(hasRECcalorimeter) processRECscintillator();
+	    if(hasRECtrack)       processRECtrack();
+	    if(hasECALcalib)      processECALcalib();		
+	    if(hasRECparticle)    processRECparticle();
+	    return true;
 	}
 	
 	public List<Particle> getParticle(int ipid) {		
@@ -73,34 +100,42 @@ public class Event {
 	}
 	
 	public void processRUNconfig() {
+		
 		storeRUNconfig(ev.getBank("RUN::config"));
 	}
 	
 	public void processRECevent() {
+		
 		storeRECevent(ev.getBank("REC::Event"));  	
 	}	
 	
 	public void processRECparticle() {
+		
 	 	storeRECparticle(ev.getBank("REC::Particle"));	 
 	}
 	
 	public void processRECscintillator() {
+		
 		storeRECscintillator(ev.getBank("REC::Scintillator"));				
 	}	
 	
 	public void processRECcalorimeter() {
+		
 		storeRECcalorimeter(ev.getBank("REC::Calorimeter"));  		
 	}
 	
 	public void processRECtrack() {
+		
 		storeRECtrack(ev.getBank("REC::Track"));		
 	}
 	
 	public void processECALclusters() {
+		
 		storeECALclusters(ev.getBank("ECAL::clusters"));		
 	}	
 	
 	public void processECALcalib() {
+		
 		storeECALcalib(ev.getBank("ECAL::calib"));		
 	}
 	
@@ -118,7 +153,6 @@ public class Event {
 	}
 	
 	public void storeRECparticle(DataBank bank) {
-		
         if(starttime > -100) {        	
             for(int i = 0; i < bank.rows(); i++){           	
                 int      pid = bank.getInt("pid", i);              
@@ -146,6 +180,13 @@ public class Event {
          	          p.setProperty("x",      caloBank.getFloat("x",ic));
          	          p.setProperty("y",      caloBank.getFloat("y",ic));
          	          p.setProperty("z",      caloBank.getFloat("z",ic));
+         	          p.setProperty("hx",     caloBank.getFloat("hx",ic));
+         	          p.setProperty("hy",     caloBank.getFloat("hy",ic));
+         	          p.setProperty("hz",     caloBank.getFloat("hz",ic));
+         	          int ical = (int) p.getProperty("index");
+                      p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
+                      p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
+                      p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
                       p.setProperty("beta", (pid==2112||pid==22)?newBeta(p):beta);
          	          int ip = pid<0?Math.abs(pid)+1:pid;
          	          int is = caloBank.getByte("sector",ic); 
@@ -160,7 +201,7 @@ public class Event {
 	public float newBeta(Particle p) {
 		double path= p.getProperty("path");
 		double time= p.getProperty("time");
-		return (float) (path/(time-starttime-2.0f)/29.97f);
+		return (float) (path/(time-starttime)/29.97f);
 	}
 	
 	public void storeRECscintillator(DataBank bank) {	
@@ -177,12 +218,12 @@ public class Event {
 	}
 	
 	public void storeECALclusters(DataBank bank) {	
-		
+		clusBank = bank;
 	}
 	
 	public void storeECALcalib(DataBank bank) {	
 		
-	}
+	}		
 	
     public int     getFDTrigger()            {return (int)(trigger)&0x000000000ffffffff;}
     public int     getCDTrigger()            {return (int)(trigger>>32)&0x00000000ffffffff;}
@@ -203,7 +244,7 @@ public class Event {
 			System.out.println(N1[0]+" "+N1[1]+" "+N1[2]+" "+N1[3]+" "+N1[4]+" "+N1[5]);
 			System.out.println(N2[0]+" "+N2[1]+" "+N2[2]+" "+N2[3]+" "+N2[4]+" "+N2[5]);
 		}
-		if(tbsum==0) return false;
+		if(tbsum==0||tbsum>1) return false;
 		return true;			
 	}
 	
