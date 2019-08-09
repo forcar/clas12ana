@@ -101,10 +101,12 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
     private Boolean                           usePID = false;
+    private Boolean                           useUVW = false;
+    private Boolean                           use123 = false;
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
     
-    public JRadioButton bEL,bPI,bPH,bP,bC,bS1,bS2,bS3,bS4,bS5,bS6,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bEL,bPI,bPH,bP,bC,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
     public  JCheckBox arBtn;
     
@@ -157,6 +159,8 @@ public class DetectorMonitor implements ActionListener {
     double[] cerrMuon = {5.5,10.,10.};
     double[] cerrPhot = {7,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
+    
+    private int[] npmt = {68,62,62,36,36,36,36,36,36};    
     
     public String  outPath = "/home/lcsmith/CLAS12ANA/";
     public String  pawPath = outPath+"paw/";
@@ -496,8 +500,12 @@ public class DetectorMonitor implements ActionListener {
         return detectorView;
     }
     
+    public void useSubTabButtons(boolean flag) {
+    	use123 = flag;
+    }
+    
     public void useSectorButtons(boolean flag) {
-    	sectorButtons = flag;
+    	useUVW = flag;
     }
     
     public void useSliderPane(boolean flag) {
@@ -513,7 +521,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public int getActivePC() {
-    	    return detectorActivePC;
+    	return detectorActivePC;
     }
     
     public int getActiveSector() {
@@ -542,9 +550,8 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public JPanel packActionPanel() {
-        if (sectorButtons) actionPanel.add(getButtonPane()); 
-        if    (sliderPane) actionPanel.add(getSliderPane());
-//                           actionPanel.add(getRunSliderPane());
+        if (use123||useUVW) actionPanel.add(getButtonPane()); 
+        if     (sliderPane) actionPanel.add(getSliderPane());
     	return actionPanel;
     }
     
@@ -566,11 +573,26 @@ public class DetectorMonitor implements ActionListener {
         if(usePID) {
         bEL = new JRadioButton("e-"); buttonPane.add(bEL); bEL.setActionCommand("1"); bP.addActionListener(this);
         bPI = new JRadioButton("pi"); buttonPane.add(bPI); bPI.setActionCommand("2"); bPI.addActionListener(this); 
-        bPH = new JRadioButton("ph"); buttonPane.add(bPH); bPH.setActionCommand("2"); bPH.addActionListener(this); 
+        bPH = new JRadioButton("ph"); buttonPane.add(bPH); bPH.setActionCommand("3"); bPH.addActionListener(this); 
         bT0 = new ButtonGroup(); bT0.add(bEL); bT0.add(bPI); bT0.add(bPH);
         bEL.setSelected(true);
         }   
+       
+        if(use123) {
+            bS0 = new JRadioButton("0"); buttonPane.add(bS0); bS0.setActionCommand("0"); bS0.addActionListener(this);
+            bS1 = new JRadioButton("1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this); 
+            bS2 = new JRadioButton("2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
+            bS3 = new JRadioButton("3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
+            bS4 = new JRadioButton("4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this);  
+            bS5 = new JRadioButton("5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this); 
+            bS6 = new JRadioButton("6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
+            bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
+   	        bG1 = new ButtonGroup(); bG1.add(bS0);bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);
+   	                                 bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);bG1.add(bS7);
+            bS0.setSelected(true);         	
+        }
         
+        if(useUVW) {
         bS1 = new JRadioButton("S1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
         bS2 = new JRadioButton("S2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
         bS3 = new JRadioButton("S3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
@@ -588,7 +610,8 @@ public class DetectorMonitor implements ActionListener {
         bv = new JRadioButton("V"); buttonPane.add(bv); bv.setActionCommand("1"); bv.addActionListener(this); 
         bw = new JRadioButton("W"); buttonPane.add(bw); bw.setActionCommand("2"); bw.addActionListener(this); 
         bG3 = new ButtonGroup(); bG3.add(bu); bG3.add(bv); bG3.add(bw);
-        bu.setSelected(true);                
+        bu.setSelected(true); 
+        }
         return buttonPane;
     } 
     
@@ -660,8 +683,8 @@ public class DetectorMonitor implements ActionListener {
     	if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         if(bT0!=null) detectorActivePID    = Integer.parseInt(bT0.getSelection().getActionCommand()); 
         detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
-        detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
-        detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
+        if(bG2!=null) detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
+        if(bG3!=null) detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         plotHistos(getRunNumber());
     } 
     
@@ -709,7 +732,7 @@ public class DetectorMonitor implements ActionListener {
         // print canvas to files
         int run = getViewRun();
         if(run==0) run = getRunNumber();
-        for(int tab=0; tab<detectorTabNames.size(); tab++) {
+        for(int tab=0; tab<detectorTabNames.size(); tab++) {  
             String fileName = dir + "/" + detectorName + "_" + run + "_canvas" + tab + ".png";
             System.out.println(fileName);
             detectorCanvas.getCanvas(detectorTabNames.get(tab)).save(fileName);
@@ -841,6 +864,16 @@ public class DetectorMonitor implements ActionListener {
     	if(!(ytit=="")) graph.setTitleY(ytit); 
     	c.draw(graph,opt);
     }
+    
+    public GraphErrors sliceToGraph(GraphErrors gin, int il, int iv) {
+    	int np = npmt[3*il+iv]; 
+    	double[] x = new double[np]; double[] xe = new double[np]; 
+    	double[] y = new double[np]; double[] ye = new double[np]; 
+    	double[] dx =  gin.getVectorX().getArray(); double[] dy = gin.getVectorY().getArray();
+    	for (int i=0; i<np; i++) x[i]=i+1;
+    	int n=0; for(double ddy : dy) {y[(int)(dx[n]-1)] = ddy; n++;}
+        return new GraphErrors("TMF",x,y,xe,ye);    	
+    }  
         
     public void dumpGraph(String filename, GraphErrors graph) {
     	PrintWriter writer = null;
@@ -1098,7 +1131,7 @@ public class DetectorMonitor implements ActionListener {
         for (int i = 0; i < nds; i++) {
             List<IDataSet> dsList = group.getData(i);
             //System.out.println(" pad = " + i + " size = " + dsList.size());
-            c.cd(i);  String opt = " ";
+            c.cd(i);  String opt = " ";c.getPad().getAxisY().setAutoScale(true);
             c.getPad().getAxisZ().setLog(getLogZ());
             if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
             if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);

@@ -28,6 +28,7 @@ public class ECsf extends DetectorMonitor {
     String[]  det = {"pcal","ecin","ecou"};
     int[]    npmt = {68,62,62,36,36,36,36,36,36};    
     String[]    v = new String[]{"u","v","w"};    
+    int nelec=0;
     
     public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
     
@@ -245,22 +246,27 @@ public class ECsf extends DetectorMonitor {
       	Map<Integer,List<Integer>> partMap = loadMapByIndex(recpar,"pid");
       	
       	trigger_sect = getElecTriggerSector(); 
-      	
+        int tpid = -211;
+        
       	if (!(trigger_sect>0)) return;
       	
-      	if(!partMap.containsKey(11)) return;
-      	if(partMap.get(11).size()!=1) return;
+      	if(!partMap.containsKey(tpid)) return;
+      	if(partMap.get(tpid).size()!=1) return;
+      	
+//	    nelec++;System.out.println("Evnt "+getEventNumber()+" Nelec "+nelec);
       	    
-        for (int ipart : partMap.get(11)) {			
+        for (int ipart : partMap.get(tpid)) {			
             float px = recpar.getFloat("px", ipart);
             float py = recpar.getFloat("py", ipart);
             float pz = recpar.getFloat("pz", ipart);
             float vz = recpar.getFloat("vz", ipart);				
             float ep = (float)Math.sqrt(px*px+py*py+pz*pz);			
             float th = (float)Math.toDegrees(Math.acos(pz/ep));
+            short status = (short) Math.abs(recpar.getShort("status", ipart));
+            boolean inDC = (status>=2000 && status<3000);
             e_mom    = ep;
             e_theta  = th;
-           if(ep>0.01*Ebeam && ep<EB && th>6 && Math.abs(vz)<200 ){
+           if(inDC && ep>0.01*Ebeam && ep<EB && th>6 && Math.abs(vz)<200 ){
                for (int icalo : caloMap.get(ipart)) {
 				    int  det = reccal.getInt("layer", icalo);
 	                short ic = reccal.getShort("index",icalo);

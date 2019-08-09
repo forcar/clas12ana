@@ -979,16 +979,6 @@ public class ECt extends DetectorMonitor {
         }        
     }
     
-    public GraphErrors sliceToGraph(GraphErrors gin, int il, int iv) {
-    	int np = npmt[3*il+iv]; 
-    	double[] x = new double[np]; double[] xe = new double[np]; 
-    	double[] y = new double[np]; double[] ye = new double[np]; 
-    	double[] dx =  gin.getVectorX().getArray(); double[] dy = gin.getVectorY().getArray();
-    	for (int i=0; i<np; i++) x[i]=i+1;
-    	int n=0; for(double ddy : dy) {y[(int)(dx[n]-1)] = ddy; n++;}
-        return new GraphErrors("TMF",x,y,xe,ye);    	
-    }
-    
 	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
 		
 		String line = new String();
