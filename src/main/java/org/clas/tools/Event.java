@@ -21,12 +21,14 @@ public class Event {
 	private DataEvent      ev = null;
 	private DataBank partBank = null;
 	private DataBank caloBank = null;
+	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
 	
-	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(1);
+	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(2);
 	Map<Integer,List<Integer>>      caloMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>      ftofMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>      partMap = new HashMap<Integer,List<Integer>>();
 	
 	private boolean hasRUNconfig = false;
@@ -55,9 +57,11 @@ public class Event {
 		starttime = -100;
 		part.clear();
 		partMap.clear();
+		ftofMap.clear();
 		caloMap.clear();
 		partBank = null;
 		caloBank = null;
+		ftofBank = null;
 		clusBank = null;
 	}
 	
@@ -71,7 +75,7 @@ public class Event {
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
 //		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
-		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter;
+		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
 	}
 	
 	public boolean procEvent(DataEvent event) {
@@ -97,12 +101,13 @@ public class Event {
 	    return true;
 	}
 	
-	public List<Particle> getParticle(int ipid) {		
+	public List<Particle> getParticle(int ipid, int idet) {		
 		List<Particle> pout = new ArrayList<Particle>();
 	    IndexGenerator ig = new IndexGenerator();                
 	    for (Map.Entry<Long,List<Particle>>  entry : part.getMap().entrySet()){
 	           int pid = ig.getIndex(entry.getKey(), 0);   
-	           if(ipid==pid) {for (Particle pp : entry.getValue()) pout.add(pp);} 
+	           int det = ig.getIndex(entry.getKey(), 1);  	           
+	           if(ipid==pid && idet==det) {for (Particle pp : entry.getValue()) pout.add(pp);} 
 	    }	
 	    return pout;
 	}
@@ -180,7 +185,8 @@ public class Event {
 	}
 	
 	public void storeRECscintillator(DataBank bank) {	
-		
+		ftofBank = bank;
+		ftofMap  = loadMapByIndex(ftofBank,"pindex");		
 	}	
 	
 	public void storeRECtrack(DataBank bank) {	
@@ -241,40 +247,63 @@ public class Event {
 			float     vz = partBank.getFloat("vz", ipart);
 			float   beta = partBank.getFloat("beta", ipart);
 			short status = (short) Math.abs(partBank.getShort("status", ipart));
-			if(caloMap.containsKey(ipart)) {
-			for(int icalo : caloMap.get(ipart)) {				
+			
+			if(ftofMap.containsKey(ipart)) {
+			for(int imap : ftofMap.get(ipart)) {				
 				Particle p = new Particle();                         
 				p.initParticle(pid, px, py, pz, vx, vy, vz);                	   
 				p.setProperty("ppid", pid);
 				p.setProperty("status", status);
 				p.setProperty("pindex",ipart); 
-				p.setProperty("sector", caloBank.getByte("sector",icalo)); 
-				p.setProperty("layer",  caloBank.getByte("layer",icalo));
-				p.setProperty("index",  caloBank.getShort("index",icalo));
-				p.setProperty("energy", caloBank.getFloat("energy",icalo)*1000);
-				p.setProperty("time",   caloBank.getFloat("time",icalo));
-				p.setProperty("path",   caloBank.getFloat("path",icalo));
-				Point3D xyz = new Point3D(caloBank.getFloat("x",icalo),
-										  caloBank.getFloat("y",icalo),
-                    		              caloBank.getFloat("z",icalo));                    		                    
-				p.setProperty("x",      xyz.x());
-				p.setProperty("y",      xyz.y());
-				p.setProperty("z",      xyz.z());
-				p.setProperty("hx",     caloBank.getFloat("hx",icalo));
-				p.setProperty("hy",     caloBank.getFloat("hy",icalo));
-				p.setProperty("hz",     caloBank.getFloat("hz",icalo));
+				p.setProperty("sector", ftofBank.getByte("sector",imap)); 
+				p.setProperty("layer",  ftofBank.getByte("layer",imap));
+				p.setProperty("index",  ftofBank.getShort("index",imap));
+				p.setProperty("energy", ftofBank.getFloat("energy",imap));
+				p.setProperty("time",   ftofBank.getFloat("time",imap));
+				p.setProperty("path",   ftofBank.getFloat("path",imap));                   		                    
+				p.setProperty("x",      ftofBank.getFloat("x",imap));
+				p.setProperty("y",      ftofBank.getFloat("y",imap)); 
+				p.setProperty("z",      ftofBank.getFloat("z",imap)); 
+				p.setProperty("hx",     ftofBank.getFloat("hx",imap));
+				p.setProperty("hy",     ftofBank.getFloat("hy",imap));
+				p.setProperty("hz",     ftofBank.getFloat("hz",imap));
+				
+				int ip = pid<0?Math.abs(pid)+1:pid;				
+				if(!part.hasItem(ip,1)) {part.add(new ArrayList<Particle>(),ip,1);}
+				    part.getItem(ip,1).add(p);
+			}
+			}
+			if(caloMap.containsKey(ipart)) {
+			for(int imap : caloMap.get(ipart)) {				
+				Particle p = new Particle();                         
+				p.initParticle(pid, px, py, pz, vx, vy, vz);                	   
+				p.setProperty("ppid", pid);
+				p.setProperty("status", status);
+				p.setProperty("pindex",ipart); 
+				p.setProperty("sector", caloBank.getByte("sector",imap)); 
+				p.setProperty("layer",  caloBank.getByte("layer",imap));
+				p.setProperty("index",  caloBank.getShort("index",imap));
+				p.setProperty("energy", caloBank.getFloat("energy",imap)*1000);
+				p.setProperty("time",   caloBank.getFloat("time",imap));
+				p.setProperty("path",   caloBank.getFloat("path",imap));                   		                    
+				p.setProperty("x",      caloBank.getFloat("x",imap));
+				p.setProperty("y",      caloBank.getFloat("y",imap)); 
+				p.setProperty("z",      caloBank.getFloat("z",imap)); 
+				p.setProperty("hx",     caloBank.getFloat("hx",imap));
+				p.setProperty("hy",     caloBank.getFloat("hy",imap));
+				p.setProperty("hz",     caloBank.getFloat("hz",imap));
+
 				int ical = (int) p.getProperty("index");
 				if(clusBank!=null) {
-				p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
-				p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
-				p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
+					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
+					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
+					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
 				}
 				p.setProperty("beta", (pid==2112||pid==22)?newBeta(p):beta);
-				int ip = pid<0?Math.abs(pid)+1:pid;
 				
-				if(!part.hasItem(ip)) {part.add(new ArrayList<Particle>(),ip);}
-				    part.getItem(ip).add(p);  
-				
+				int ip = pid<0?Math.abs(pid)+1:pid;				
+				if(!part.hasItem(ip,0)) {part.add(new ArrayList<Particle>(),ip,0);}
+				    part.getItem(ip,0).add(p);  				
 			}
 			}			
 		}		
