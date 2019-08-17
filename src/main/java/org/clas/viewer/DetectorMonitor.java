@@ -821,6 +821,22 @@ public class DetectorMonitor implements ActionListener {
     	return getTorusColor("0");
     }
     
+    public float getTorusCurrent(int run) {
+    	if (run>=3029&&run<=3065) return -1.00f;
+    	if (run>=3072&&run<=3087) return -0.75f;
+    	if (run>=3097&&run<=3105) return +0.75f;
+    	if (run>=3131&&run<=3293) return +1.00f;
+    	if (run>=3304&&run<=3817) return -1.00f;
+    	if (run>=3819&&run<=3834) return +0.75f;
+    	if (run>=3839&&run<=3987) return +1.00f;
+    	if (run>=3995&&run<=4326) return -1.00f;  
+    	if (run>=4624&&run<=5419) return -1.00f;  
+    	if (run>=5420&&run<=5995) return +1.00f;  
+    	if (run>=5996&&run<=6000) return +0.50f;  
+    	if (run>=6142&&run<=6783) return -1.00f;  
+    	return 0.00f;
+    } 
+    
     public int getRunGroup(int run) {
     	if (run>=5674&&run<=6000) return getRGIndex("rgk");
     	if (run>=6132&&run<=6604) return getRGIndex("rgb");

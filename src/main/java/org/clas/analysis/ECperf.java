@@ -204,13 +204,13 @@ public class ECperf extends DetectorMonitor {
         case 1:        
         dg = new DataGroup(6,4);        
         String xyz[] = new String[]{"X","Y","Z"};       
-		f1 = new F1D("H_e_SC_resid_f+"+run,"[a]",6,35); 
+		f1 = new F1D("H_e_SC_resid_f+"+run,"[a]",5,35); 
 		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
 		for(int i=0;i<2;i++) { //p1a,p1b
 			for(int n=0; n<2; n++) { //x,y,z
 				for(int is=1;is<7;is++){  //sector  	
 					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					h2 = new H2F("H_e_SC_resid_"+tag,"H_e_SC_resid_"+tag,60,6,35,40,-5,5);
+					h2 = new H2F("H_e_SC_resid_"+tag,"H_e_SC_resid_"+tag,60,5,35,40,-5,5);
 					h2.setTitleX("S"+is+" #theta_e"); h2.setTitleY("DC"+xyz[n]+"-"+scdet[i]);
 					dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
 				}
@@ -267,7 +267,7 @@ public class ECperf extends DetectorMonitor {
         case 1:        
         dg = new DataGroup(6,6);        
         String xyz[] = new String[]{"X","Y","Z"};       
-		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",6,35); 
+		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",5,35); 
 //		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0,9.5); 
 		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
 		for(int i=0;i<3;i++) { //pcal,ecin,ecou
@@ -275,7 +275,7 @@ public class ECperf extends DetectorMonitor {
 			for(int n=0; n<2; n++) { //x,y,z
 				for(int is=1;is<7;is++){  //sector  	
 					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,6,35,40,-ylim,ylim);
+					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,5,35,40,-ylim,ylim);
 //					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,0,9.5,40,-5,5);
 					h2.setTitleX("S"+is+" #theta_e"); h2.setTitleY("DC"+xyz[n]+"-"+det[i]);
 					dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
@@ -288,14 +288,14 @@ public class ECperf extends DetectorMonitor {
         case 2:
         dg = new DataGroup(6,6);        
         String lab2[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};
-		f1 = new F1D("H_e_EC_rad2_f+"+run,"[a]",6,35); 
+		f1 = new F1D("H_e_EC_rad2_f+"+run,"[a]",5,35); 
         f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
 		for(int i=0;i<3;i++) { //pcal,ecin,ecou
 			for(int n=0; n<2; n++) { //thet,phi
 				for(int is=1;is<7;is++){  //sector  	
 					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,6,35,60,-2,7):
-				         		 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,6,35,50,-5,20);
+					h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,5,35,60,-5,20):
+				         		 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,5,35,60,-5,20);
 					h2.setTitleX("S"+is+" #theta_e"); h2.setTitleY(lab2[n]+" "+det[i]);
 					dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
 			}
@@ -313,8 +313,8 @@ public class ECperf extends DetectorMonitor {
     		for(int n=0; n<2; n++) { //thet,phi
     			for(int is=1;is<7;is++){  //sector  	
     				tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,0.5,60,-2,7):
-					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,0.5,50,-5,20);
+    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,0.5,60,-5,20):
+					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,0.5,60,-5,20);
     				h2.setTitleX("S"+is+" "+det[i]+" E"); h2.setTitleY(lab3[n]+" "+det[i]);
     				dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
     			}
@@ -332,8 +332,8 @@ public class ECperf extends DetectorMonitor {
     		for(int n=0; n<2; n++) { //thet,phi
     			for(int is=1;is<7;is++){  //sector  	
     				tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,60,-2,7):
-					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,50,-5,20);
+    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,60,-5,20):
+					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,60,-5,20);
     				h2.setTitleX("S"+is+" p_e"); h2.setTitleY(lab4[n]+" "+det[i]);
     				dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
     			}
@@ -731,8 +731,8 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==2) good_fiduc3 = iU>2&&iV<36&&iW<36;   		
    	    }
     	
-    	if (!((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
-//    	if (!(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
+//    	if (!((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
+    	if (!(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         boolean       inDC = (status>=2000 && status<3000);
         
@@ -1039,9 +1039,11 @@ public class ECperf extends DetectorMonitor {
 		        	if(ic==0&&ecal_rad.getItem(is,0,il)>-1&&ecal_rad.getItem(is,0,il)<1)   counter[e_sect-1][1]++;
 		        	if(ic==1&&ecal_rad.getItem(is,1,il)>-2&&ecal_rad.getItem(is,1,il)<1.5) counter[e_sect-1][2]++;
 		        }
-				((H2F)dg2.getData(is-1+ic*6+il*12).get(0)).fill(e_the,entry.getValue()); 
-				((H2F)dg4.getData(is-1+ic*6+il*12).get(0)).fill(e_mom,entry.getValue());
-				((H2F)dg3.getData(is-1+ic*6+il*12).get(0)).fill(ecal_rad.getItem(is,2,il)/1e3,entry.getValue());
+				int sgn = getTorusCurrent(run)<0?1:-1;
+		        if(ic==1) sgn=1;
+				((H2F)dg2.getData(is-1+ic*6+il*12).get(0)).fill(e_the,sgn*entry.getValue()); 
+				((H2F)dg4.getData(is-1+ic*6+il*12).get(0)).fill(e_mom,sgn*entry.getValue());
+				((H2F)dg3.getData(is-1+ic*6+il*12).get(0)).fill(ecal_rad.getItem(is,2,il)/1e3,sgn*entry.getValue());
 			}
 		}
 	}
