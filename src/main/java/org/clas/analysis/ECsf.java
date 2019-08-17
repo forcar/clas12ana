@@ -246,7 +246,7 @@ public class ECsf extends DetectorMonitor {
       	Map<Integer,List<Integer>> partMap = loadMapByIndex(recpar,"pid");
       	
       	trigger_sect = getElecTriggerSector(); 
-        int tpid = -211;
+        int tpid = 11;
         
       	if (!(trigger_sect>0)) return;
       	
