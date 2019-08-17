@@ -202,7 +202,7 @@ public class ECperf extends DetectorMonitor {
     	switch (st) {
     	
         case 1:        
-        dg = new DataGroup(6,6);        
+        dg = new DataGroup(6,4);        
         String xyz[] = new String[]{"X","Y","Z"};       
 		f1 = new F1D("H_e_SC_resid_f+"+run,"[a]",6,35); 
 		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
@@ -229,8 +229,8 @@ public class ECperf extends DetectorMonitor {
             	dg.addDataSet(g, is); 
     			tag = is+"_"+"2"+"_"+st+"_"+k+"_"+run;
             	g = new GraphErrors(tag); g.setMarkerSize(5); g.setMarkerColor(2); g.setLineColor(2);
-            	dg.addDataSet(g, is-1); 
-            	dg.addDataSet(f1, is-1);
+            	dg.addDataSet(g, is); 
+            	dg.addDataSet(f1, is);
             	
             }		
     	}
@@ -249,15 +249,18 @@ public class ECperf extends DetectorMonitor {
     	switch (st) {
         
         case 0: 
-        dg = new DataGroup(3,4);
+        dg = new DataGroup(6,3);
 		for(int is=1;is<7;is++){    	
 	        tag = is+"_"+st+"_"+k+"_"+run;
-	        h2 = new H2F("H_e_EC_eop_"+tag,"H_e_EC_eop_"+tag,50,0,EB,50,0.15,0.35);			
+	        h2 = new H2F("H_e_EC_eop_p_"+tag,"H_e_EC_eop_p_"+tag,50,0,EB*0.94,50,0.15,0.35);			
 			h2.setTitleX("p (GeV)"); h2.setTitleY("E/P");
             dg.addDataSet(h2, is-1);
-	        h2 = new H2F("H_e_EC_ecpc_"+tag,"H_e_EC_ecpc_"+tag,50,0,EB/7,50,0.0,EB/7);			
+	        h2 = new H2F("H_e_EC_eop_r_"+tag,"H_e_EC_eop_r_"+tag,68,1,69,50,0.15,0.35);			
+			h2.setTitleX("PCAL U STRIP"); h2.setTitleY("E/P");
+            dg.addDataSet(h2, is-1+6);	        
+            h2 = new H2F("H_e_EC_ecpc_"+tag,"H_e_EC_ecpc_"+tag,50,0,EB/6,50,0.0,EB/6);			
 			h2.setTitleX("PC (GeV)"); h2.setTitleY("EC (GeV)");
-            dg.addDataSet(h2, is-1+6);
+            dg.addDataSet(h2, is-1+12);
 		}
 		break;
 		
@@ -702,21 +705,23 @@ public class ECperf extends DetectorMonitor {
     	            float dz = ((float)psc.getProperty("z")-(float)psc.getProperty("hz"));
     	            Point3D xyz = new Point3D(dx,dy,dz);
     	            xyz.rotateZ(Math.toRadians(-60*(epart.getProperty("sector")-1)));
-    	            xyz.rotateY(Math.toRadians(25)); 
+    	            xyz.rotateY(Math.toRadians(-25)); 
     	            ftof_resid.add((float)xyz.x(),iS,0,scind-1);
     	    		ftof_resid.add((float)xyz.y(),iS,1,scind-1);
 //    	    		ftof_resid.add((float)xyz.z(),iS,2,scind-1); 
-   			}
+    			}
     		}
             float dx = ((float)p.getProperty("x")-(float)p.getProperty("hx"));
             float dy = ((float)p.getProperty("y")-(float)p.getProperty("hy"));
             float dz = ((float)p.getProperty("z")-(float)p.getProperty("hz"));
             Point3D xyz = new Point3D(dx,dy,dz);
             xyz.rotateZ(Math.toRadians(-60*(epart.getProperty("sector")-1)));
-	        xyz.rotateY(Math.toRadians(25)); 
+	        xyz.rotateY(Math.toRadians(-25)); 
+	        
     		ecal_resid.add((float)xyz.x(),iS,0,ind);
     		ecal_resid.add((float)xyz.y(),iS,1,ind);
 //    		ecal_resid.add((float)xyz.z(),iS,2,ind);
+    		ecal_resid.add((float)p.getProperty("iu"),iS,2,ind);
     		if(ind>-1) e_ecal_esum  += en;
     		if(ind==0) e_ecal_pcsum  = en;
     		if(ind>0)  e_ecal_ecsum += en;
@@ -727,6 +732,7 @@ public class ECperf extends DetectorMonitor {
    	    }
     	
     	if (!((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
+//    	if (!(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         boolean       inDC = (status>=2000 && status<3000);
         
@@ -1012,13 +1018,16 @@ public class ECperf extends DetectorMonitor {
 		DataGroup dg4 = this.getDataGroup().getItem(0,4,k,run);				
 		
 		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_mom,e_ecal_esum/1000f/e_mom);
-		((H2F) dg0.getData(e_sect-1+6).get(0)).fill(e_ecal_pcsum/1000f,e_ecal_ecsum/1000f);
+		((H2F) dg0.getData(e_sect-1+12).get(0)).fill(e_ecal_pcsum/1000f,e_ecal_ecsum/1000f);
 		
 		for (Map.Entry<Long,Float>  entry : ecal_resid.getMap().entrySet()){
 			long hash = entry.getKey();
 			int is = ig.getIndex(hash, 0); int ic = ig.getIndex(hash, 1); int il = ig.getIndex(hash, 2);
+			if(ic==2) ((H2F) dg0.getData(e_sect-1+6).get(0)).fill(ecal_resid.getItem(e_sect,2,0),e_ecal_esum/1000f/e_mom);
+			if(ic<2) {
 			((H2F)dg1.getData(is-1+ic*6+il*12).get(0)).fill(e_the,entry.getValue());
 //			((H2F)dg1.getData(is-1+ic*6+il*12).get(0)).fill(e_mom,entry.getValue());
+			}
 		}
 		counter[e_sect-1][0]++;
 		
