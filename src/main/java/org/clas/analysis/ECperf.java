@@ -252,13 +252,13 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,3);
 		for(int is=1;is<7;is++){    	
 	        tag = is+"_"+st+"_"+k+"_"+run;
-	        h2 = new H2F("H_e_EC_eop_p_"+tag,"H_e_EC_eop_p_"+tag,50,0,EB*0.94,50,0.15,0.35);			
+	        h2 = new H2F("H_e_EC_eop_p_"+tag,"H_e_EC_eop_p_"+tag,60,0,EB*0.96,60,0.15,0.35);			
 			h2.setTitleX("p (GeV)"); h2.setTitleY("E/P");
             dg.addDataSet(h2, is-1);
 	        h2 = new H2F("H_e_EC_eop_r_"+tag,"H_e_EC_eop_r_"+tag,68,1,69,50,0.15,0.35);			
 			h2.setTitleX("PCAL U STRIP"); h2.setTitleY("E/P");
             dg.addDataSet(h2, is-1+6);	        
-            h2 = new H2F("H_e_EC_ecpc_"+tag,"H_e_EC_ecpc_"+tag,50,0,EB/6,50,0.0,EB/6);			
+            h2 = new H2F("H_e_EC_ecpc_"+tag,"H_e_EC_ecpc_"+tag,70,0,EB/6,70,0.0,EB/5);			
 			h2.setTitleX("PC (GeV)"); h2.setTitleY("EC (GeV)");
             dg.addDataSet(h2, is-1+12);
 		}
@@ -332,8 +332,8 @@ public class ECperf extends DetectorMonitor {
     		for(int n=0; n<2; n++) { //thet,phi
     			for(int is=1;is<7;is++){  //sector  	
     				tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,60,-5,20):
-					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,9.5,60,-5,20);
+    				h2 = (n==0)? new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,EB*0.96,60,-5,20):
+					         	 new H2F("H_e_EC_rad_"+tag,"H_e_EC_rad_"+tag,60,0.0,EB*0.96,60,-5,20);
     				h2.setTitleX("S"+is+" p_e"); h2.setTitleY(lab4[n]+" "+det[i]);
     				dg.addDataSet(h2, in); dg.addDataSet(f1, in); in++; 
     			}
