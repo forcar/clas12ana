@@ -465,7 +465,7 @@ public class ECsf extends DetectorMonitor {
             FitSummary.add(resGraph, is, 0, 3, run);  
             
             GraphErrors res2Graph = new GraphErrors();
-            res2Graph.setTitleX("Sector "+is+"  (1/GeV) ");  res2Graph.setTitleY("[#sigma(E)/E]^2"); 
+            res2Graph.setTitleX("Sector "+is+"  (1/GeV) ");  res2Graph.setTitleY("[#sigma(E)/E]^2");             
             res2Graph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
             
             n=0;
@@ -475,7 +475,7 @@ public class ECsf extends DetectorMonitor {
                     xs = 1/sigGraph.getDataX(i);  //sig(E)/E vs True Energy
             	    ys = Math.pow(y/ym[i],2); //sigma(E)/E = sigma(E/P)*(P/E)
             	   yse = 2*ys*Math.sqrt(Math.pow(ye/y,2)+Math.pow(yme[i]/ym[i],2));
-            	   res2Graph.addPoint(xs, ys, 0., yse);
+            	   if(ys>0&&yse/ys<0.12) res2Graph.addPoint(xs, ys, 0., yse);
             	}
             }  
             System.out.println("Fit 4: "+is+" "+sigGraph.getDataSize(0));
@@ -608,8 +608,9 @@ public class ECsf extends DetectorMonitor {
     } 
     
     public void plotFitSummary4(int index) {
+    	GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        c.setGridX(false); c.setGridY(false); c.divide(3, 2);
+        c.setGridX(false); c.setGridY(false); c.divide(6, 2);
         int col[] = {1,2,3,4,5,7};
         int run = getRunNumber();
      	for (int is=1; is<7; is++) {    		
@@ -617,8 +618,11 @@ public class ECsf extends DetectorMonitor {
 //            f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
 //            if (FitSummary.hasItem(is,0,4,run)) GraphPlot((GraphErrors)FitSummary.getItem(is,0,4,run),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","","");
               GraphPlot((GraphErrors)tl.fitData.getItem(is,0,4,run).getGraph(),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","",""); 
+              g1.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1e));
+              g2.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0e));
 //            if (FitSummary.hasItem(is,0,4,run)) c.draw(f,"same");            
     	}    	
+        GraphPlot(g1,c,7,0.5f,6.5f,0.0f,0.11f,1,6,1,"SECTOR","",""); GraphPlot(g2,c,7,0.5f,6.5f,0.0f,0.11f,1,7,2,"","","same"); 
     }  
     
     public void plotXYZHistos(int index) {
