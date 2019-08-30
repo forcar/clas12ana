@@ -276,10 +276,10 @@ public class Event {
 			if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) {				
 				Particle p = new Particle();                         
-				p.initParticle(pid, px, py, pz, vx, vy, vz);                	   
-				p.setProperty("ppid", pid);
+				p.initParticle(pid, px, py, pz, vx, vy, vz);               	   
+				p.setProperty("ppid",   pid);
 				p.setProperty("status", status);
-				p.setProperty("pindex",ipart); 
+				p.setProperty("pindex", ipart); 
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
 				p.setProperty("layer",  caloBank.getByte("layer",imap));
 				p.setProperty("index",  caloBank.getShort("index",imap));
