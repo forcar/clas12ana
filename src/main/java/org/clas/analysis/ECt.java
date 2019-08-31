@@ -213,7 +213,7 @@ public class ECt extends DetectorMonitor {
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-//    	    plotTimeLines(29);
+    	    plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
     	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
@@ -221,7 +221,7 @@ public class ECt extends DetectorMonitor {
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
     	    }
-//    	    if(!isTimeLineFitsDone) return;
+    	    if(!isTimeLineFitsDone) return;
     }
     
     public void createBETAHistos(int k) {
@@ -741,7 +741,7 @@ public class ECt extends DetectorMonitor {
     	   if(gdfitEnable) analyzeGTMF();
        }
        
-//       analyzeTimeLineFits();
+       analyzeTimeLineFits();
        isAnalyzeDone = true;
        System.out.println("Finished");
     }

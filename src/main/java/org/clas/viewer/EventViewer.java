@@ -121,6 +121,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DetectorMonitor[] monitors = null;
     public JFileChooser     fc = null; 
     
+    List<Integer>     runList  = new ArrayList<Integer>();
+    
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
         
     public static void main(String[] args){
@@ -185,8 +187,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co0 = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0); co0.doClick();
         co1 = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
         co2 = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
-        co3 = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co2);
-        co4 = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co3);
+        co3 = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
+        co4 = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
         menuBar.add(menu);
         
         menu     = new JMenu("Fitting");
@@ -456,58 +458,92 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         DataBank bank = event.getBank("RUN::config");
         return (bank!=null) ? bank.getInt("event", 0): this.eventNumber;
     }
-
+    
+    private boolean isGoodRun(int run) {
+    	if( runList.isEmpty()) {runList.add(this.runNumber); return true;}
+    	if(!runList.isEmpty()) {
+    		if(runList.contains(run)) return false;
+    	}
+    	runList.add(run);
+    	return true;
+    }
+    
     @Override
     public void dataEventAction(DataEvent event) {
 
-    	DataEvent hipo = null;
-       	
-	    if(event!=null ){
-            if(event instanceof EvioDataEvent){
-             	Event    dump = clasDecoder.getDataEvent(event);    
-                Bank   header = clasDecoder.createHeaderBank(this.ccdbRunNumber, getEventNumber(event), (float) 0, (float) 0);
-                Bank  trigger = clasDecoder.createTriggerBank();
-                if(header!=null)  dump.write(header);
-                if(trigger!=null) dump.write(trigger);
-                hipo = new HipoDataEvent(dump,schemaFactory); 
-            }   
-            else {            	
-            	hipo = event; 
-            }
-            int rNum = 0; int eNum = 0;
-            
-            rNum = getRunNumber(event);
-            eNum = getEventNumber(event);
-           
-            if(rNum!=0 && this.runNumber!=rNum && clear) {  
-            	System.out.println("Processing Run "+rNum);
-                for(int k=0; k<this.monitors.length; k++) {
-                	if(autoSave&&this.runNumber!=0) this.monitors[k].saveHistosToFile();
-                    this.runNumber = rNum;
-                    this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
-                	this.monitors[k].setRunNumber(this.runNumber); 
-                   	this.monitors[k].localclear();
-                   	this.monitors[k].initCCDB(this.runNumber);
-                	this.monitors[k].createHistos(this.runNumber);
-                    this.monitors[k].initGStyle();
-                    this.monitors[k].plotHistos(this.runNumber);
-                    this.monitors[k].arBtn.setSelected(true);         
-                    if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
-                }
-                if(!clearHist) clear=false;
-            } 
-          
-            this.eventNumber = eNum;
-            
-            setTriggerPhaseConstants(this.runNumber);
+	    if(event!=null ) processEvent(filterEvent(decodeEvent(event)));
 
-            for(int k=0; k<this.monitors.length; k++) {
-            	this.monitors[k].setEventNumber(this.eventNumber);
-            	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
-                this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
-                this.monitors[k].dataEventAction(event);
-            }      
-	    }
+    }
+    
+    private DataEvent filterEvent(DataEvent event) {
+    	
+        int rNum = 0; 
+        
+        rNum = getRunNumber(event);
+       
+        if(rNum!=0 && this.runNumber!=rNum && clear) {  
+        	System.out.println("Processing Run "+rNum);
+        	this.runNumber = rNum;
+            if(!clearHist) clear=false;
+        	return isGoodRun(rNum)? initRun(rNum,event):null;
+        }
+        
+        return event;
+    }
+    
+    private DataEvent decodeEvent(DataEvent event) {
+    	
+    	DataEvent hipo = null;
+        if(event instanceof EvioDataEvent){
+         	Event    dump = clasDecoder.getDataEvent(event);    
+            Bank   header = clasDecoder.createHeaderBank(this.ccdbRunNumber, getEventNumber(event), (float) 0, (float) 0);
+            Bank  trigger = clasDecoder.createTriggerBank();
+            if(header!=null)  dump.write(header);
+            if(trigger!=null) dump.write(trigger);
+            hipo = new HipoDataEvent(dump,schemaFactory); 
+        }   
+        else {            	
+        	hipo = event; 
+        } 
+        
+        return hipo;
+    }
+    
+    private DataEvent initRun(int runno, DataEvent event) {
+    	
+        for(int k=0; k<this.monitors.length; k++) {
+        	if(autoSave && this.runNumber!=0) this.monitors[k].saveHistosToFile();
+            this.runNumber = runno; 
+            this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
+        	this.monitors[k].setRunNumber(this.runNumber); 
+           	this.monitors[k].localclear();
+           	this.monitors[k].initCCDB(this.runNumber);
+        	this.monitors[k].createHistos(this.runNumber);
+            this.monitors[k].initGStyle();
+            this.monitors[k].plotHistos(this.runNumber);
+            this.monitors[k].arBtn.setSelected(true);         
+            if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
+        } 
+        
+        return event;
+    }
+    
+    private boolean processEvent(DataEvent event) {
+    	
+    	if(event==null) return false; 
+      
+        this.eventNumber = getEventNumber(event);
+        
+        setTriggerPhaseConstants(this.runNumber);
+
+        for(int k=0; k<this.monitors.length; k++) {
+        	this.monitors[k].setEventNumber(this.eventNumber);
+        	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
+            this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
+            this.monitors[k].dataEventAction(event);
+        }  
+        
+        return true;        
     }
     
     private void readFiles() {
