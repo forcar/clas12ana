@@ -116,6 +116,7 @@ public class ECt extends DetectorMonitor {
         this.variation = "default";
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
+        engine.setPCALTrackingPlane(0);
         this.init();
         this.localinit();
         this.localclear();
@@ -637,10 +638,7 @@ public class ECt extends DetectorMonitor {
                        ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
                        ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
-//                       if (pid==22) {
-//                         if (isGoodTL) {
-//                           if (pid==11||Math.abs(pid)==211||pid==22) {
-                           if (pid==11) {
+                       if (Math.abs(pid)==TRpid) {  //Menu selection
 //                    	   System.out.println(tdc+" "+radc+" "+vcorr+" "+pcorr+" "+lcorr+" "+(tdc-vcorr-pcorr-lcorr));
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
@@ -692,8 +690,7 @@ public class ECt extends DetectorMonitor {
             c.cd(3*i+j); c.getPad(3*i+j).getAxisY().setLog(false); 
             c.draw(TDCFits.getItem(is,i,j,0).getGraph());
         }
-        }
-        
+        }        
     }  
     
     public void updateFITS(int index) {

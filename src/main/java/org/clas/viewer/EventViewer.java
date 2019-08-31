@@ -83,7 +83,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JCheckBoxMenuItem    cf,cf0,cf1,cf2,cf3 = null;   
     JCheckBoxMenuItem                   ctr = null;  
     JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem          ctr0,ctr1 = null;  
+    JRadioButtonMenuItem     ctr0,ctr1,ctr2 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -251,6 +251,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         group = new ButtonGroup();
         ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); 
         ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
+        ctr2 = new JRadioButtonMenuItem("Photon");   ctr2.addItemListener(this);       group.add(ctr2); menu.add(ctr2);
         menuBar.add(menu);
 
         menuBar.add(menu);    
@@ -303,7 +304,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
 		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?11:211; 
+		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 11:11; 
+		if (source==ctr1)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?211:11; 
+		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 22:11; 
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
