@@ -116,6 +116,7 @@ public class ECt extends DetectorMonitor {
         this.variation = "default";
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
+        engine.setPCALTrackingPlane(0);
         this.init();
         this.localinit();
         this.localclear();
@@ -212,7 +213,7 @@ public class ECt extends DetectorMonitor {
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-//    	    plotTimeLines(29);
+    	    plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
     	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
@@ -220,7 +221,7 @@ public class ECt extends DetectorMonitor {
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
     	    }
-//    	    if(!isTimeLineFitsDone) return;
+    	    if(!isTimeLineFitsDone) return;
     }
     
     public void createBETAHistos(int k) {
@@ -640,7 +641,7 @@ public class ECt extends DetectorMonitor {
 //                       if (pid==22) {
 //                         if (isGoodTL) {
 //                           if (pid==11||Math.abs(pid)==211||pid==22) {
-                           if (pid==11) {
+                           if (pid==22) {
 //                    	   System.out.println(tdc+" "+radc+" "+vcorr+" "+pcorr+" "+lcorr+" "+(tdc-vcorr-pcorr-lcorr));
                            ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
@@ -744,7 +745,7 @@ public class ECt extends DetectorMonitor {
     	   if(gdfitEnable) analyzeGTMF();
        }
        
-//       analyzeTimeLineFits();
+       analyzeTimeLineFits();
        isAnalyzeDone = true;
        System.out.println("Finished");
     }
