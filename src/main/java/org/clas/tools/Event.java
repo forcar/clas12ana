@@ -40,6 +40,8 @@ public class Event {
 	private boolean hasRECtrack = false;
 	private boolean hasECALcalib = false;
 	
+	private boolean isMC = false;
+	
 	int[]        tb = new int[32];
 	public int[] N1 = new int[6];
 	public int[] N2 = new int[6];
@@ -74,8 +76,8 @@ public class Event {
 		hasRECparticle     = ev.hasBank("REC::Particle");
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
-//		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
-		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
+		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
+//		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
 	}
 	
 	public boolean procEvent(DataEvent event) {
@@ -83,7 +85,7 @@ public class Event {
         init(); 
         if(!filter()) return false;
 	    if(hasRUNconfig)      processRUNconfig();
-	    if(!countElectronTriggers(false)) return false;
+	    if(!isMC) if(!countElectronTriggers(false)) return false;
 	    if(hasRECevent)       processRECevent();
 	    if(hasRECcalorimeter) processRECcalorimeter();
 	    if(hasECALclusters)   processECALclusters();
@@ -126,6 +128,10 @@ public class Event {
 	
 	public void setEventNumber(int val) {
 		eventNumber = val;
+	}
+	
+	public void setMC(boolean val) {
+		isMC = val;
 	}
 	
 	public void processRUNconfig() {		

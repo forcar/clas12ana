@@ -1089,10 +1089,11 @@ public class ECperf extends DetectorMonitor {
     	
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
-    	
-	    if(!ev.procEvent(event)) return;
+    	ev.setMC(event.hasBank("MC::Event"));
+
+    	if(!ev.procEvent(event)) return;
 	    
-	    this.myinit();
+ 	    this.myinit();
 	    
 	    if(!makeELEC()) return;
 
