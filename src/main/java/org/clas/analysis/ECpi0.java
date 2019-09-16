@@ -79,7 +79,7 @@ public class ECpi0 extends DetectorMonitor{
                                  "Timeline");
         
         this.usePCCheckBox(true);
-        this.useSectorButtons(true);
+        this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
         this.init();
         this.localinit();

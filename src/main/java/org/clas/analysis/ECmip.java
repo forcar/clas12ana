@@ -73,7 +73,7 @@ public class ECmip extends DetectorMonitor {
                                  "MIPvP");
         
         this.usePCCheckBox(true);
-        this.useSectorButtons(true);
+        this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
         this.init();
         this.localinit();

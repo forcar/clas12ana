@@ -89,6 +89,7 @@ public class DetectorMonitor implements ActionListener {
     private ButtonGroup                          bG1 = null;
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
+    private ButtonGroup                          bG4 = null;
     private int                       numberOfEvents = 0;
     public  Boolean                    sectorButtons = false;
     private Boolean                       sliderPane = false;
@@ -97,12 +98,15 @@ public class DetectorMonitor implements ActionListener {
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
     private int                    detectorActivePID = 0;
+    private int                    detectorActive123 = 1;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
     private Boolean                           usePID = false;
     private Boolean                           useUVW = false;
     private Boolean                           use123 = false;
+    private Boolean                           useCAL = false;
+    private Boolean                           useSEC = false;
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
     
@@ -473,8 +477,7 @@ public class DetectorMonitor implements ActionListener {
     public void plotTimeLine(int index) {
     	
     }
-    
-    
+     
     public int getDet(int layer) {
         int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
         return il[layer-1];
@@ -500,12 +503,26 @@ public class DetectorMonitor implements ActionListener {
         return detectorView;
     }
     
-    public void useSubTabButtons(boolean flag) {
+    public void use123Buttons(boolean flag) {
     	use123 = flag;
     }
     
-    public void useSectorButtons(boolean flag) {
+    public void useSECButtons(boolean flag) {
+    	useSEC = flag;
+    }
+    
+    public void useCALUVWSECButtons(boolean flag) {
+    	useCAL = flag;    	
     	useUVW = flag;
+    	useSEC = flag;
+    }
+    
+    public void useUVWButtons(boolean flag) {
+    	useUVW = flag;
+    }
+    
+    public void useCALButtons(boolean flag) {
+    	useCAL = flag;
     }
     
     public void useSliderPane(boolean flag) {
@@ -535,6 +552,10 @@ public class DetectorMonitor implements ActionListener {
     public int getActiveView() {
 	    return detectorActiveView;
     }
+    
+    public int getActive123() {
+	    return detectorActive123;
+    }   
     
     public int getNumberOfEvents() {
         return numberOfEvents;
@@ -579,20 +600,36 @@ public class DetectorMonitor implements ActionListener {
         }   
        
         if(use123) {
-            bS0 = new JRadioButton("0"); buttonPane.add(bS0); bS0.setActionCommand("0"); bS0.addActionListener(this);
-            bS1 = new JRadioButton("1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this); 
-            bS2 = new JRadioButton("2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
-            bS3 = new JRadioButton("3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
-            bS4 = new JRadioButton("4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this);  
-            bS5 = new JRadioButton("5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this); 
-            bS6 = new JRadioButton("6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
-            bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
-   	        bG1 = new ButtonGroup(); bG1.add(bS0);bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);
-   	                                 bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);bG1.add(bS7);
-            bS0.setSelected(true);         	
+        bS0 = new JRadioButton("0"); buttonPane.add(bS0); bS0.setActionCommand("0"); bS0.addActionListener(this);
+        bS1 = new JRadioButton("1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this); 
+        bS2 = new JRadioButton("2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
+        bS3 = new JRadioButton("3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
+        bS4 = new JRadioButton("4"); buttonPane.add(bS4); bS4.setActionCommand("4"); bS4.addActionListener(this);  
+        bS5 = new JRadioButton("5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this); 
+        bS6 = new JRadioButton("6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
+        bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
+   	    bG4 = new ButtonGroup(); bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
+   	                             bG4.add(bS4);bG4.add(bS5);bG4.add(bS6);bG4.add(bS7);
+        bS0.setSelected(true);         	
+        }
+        
+        if(useCAL) {
+        bpcal = new JRadioButton("PC");  buttonPane.add(bpcal); bpcal.setActionCommand("0"); bpcal.addActionListener(this);
+        becin = new JRadioButton("ECi"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
+        becou = new JRadioButton("ECo"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
+        bG2 = new ButtonGroup(); bG2.add(bpcal); bG2.add(becin); bG2.add(becou);
+        bpcal.setSelected(true);
         }
         
         if(useUVW) {
+        bu = new JRadioButton("U"); buttonPane.add(bu); bu.setActionCommand("0"); bu.addActionListener(this);
+        bv = new JRadioButton("V"); buttonPane.add(bv); bv.setActionCommand("1"); bv.addActionListener(this); 
+        bw = new JRadioButton("W"); buttonPane.add(bw); bw.setActionCommand("2"); bw.addActionListener(this); 
+        bG3 = new ButtonGroup(); bG3.add(bu); bG3.add(bv); bG3.add(bw);
+        bu.setSelected(true); 
+        }
+        
+        if(useSEC) {
         bS1 = new JRadioButton("S1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this);
         bS2 = new JRadioButton("S2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
         bS3 = new JRadioButton("S3"); buttonPane.add(bS3); bS3.setActionCommand("3"); bS3.addActionListener(this); 
@@ -600,18 +637,9 @@ public class DetectorMonitor implements ActionListener {
         bS5 = new JRadioButton("S5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this);  
         bS6 = new JRadioButton("S6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
 	    bG1 = new ButtonGroup(); bG1.add(bS1);bG1.add(bS2);bG1.add(bS3);bG1.add(bS4);bG1.add(bS5);bG1.add(bS6);
-        bS2.setSelected(true);        
-        bpcal = new JRadioButton("PC");  buttonPane.add(bpcal); bpcal.setActionCommand("0"); bpcal.addActionListener(this);
-        becin = new JRadioButton("ECi"); buttonPane.add(becin); becin.setActionCommand("1"); becin.addActionListener(this); 
-        becou = new JRadioButton("ECo"); buttonPane.add(becou); becou.setActionCommand("2"); becou.addActionListener(this); 
-        bG2 = new ButtonGroup(); bG2.add(bpcal); bG2.add(becin); bG2.add(becou);
-        bpcal.setSelected(true);
-        bu = new JRadioButton("U"); buttonPane.add(bu); bu.setActionCommand("0"); bu.addActionListener(this);
-        bv = new JRadioButton("V"); buttonPane.add(bv); bv.setActionCommand("1"); bv.addActionListener(this); 
-        bw = new JRadioButton("W"); buttonPane.add(bw); bw.setActionCommand("2"); bw.addActionListener(this); 
-        bG3 = new ButtonGroup(); bG3.add(bu); bG3.add(bv); bG3.add(bw);
-        bu.setSelected(true); 
-        }
+        bS2.setSelected(true);  
+        }   
+        
         return buttonPane;
     } 
     
@@ -682,9 +710,10 @@ public class DetectorMonitor implements ActionListener {
     	if(e.getActionCommand().compareTo("Blink Run")==0)  BlinkRunAction();
     	if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         if(bT0!=null) detectorActivePID    = Integer.parseInt(bT0.getSelection().getActionCommand()); 
-        detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
+        if(bG1!=null) detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
         if(bG2!=null) detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         if(bG3!=null) detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
+        if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
         plotHistos(getRunNumber());
     } 
     
