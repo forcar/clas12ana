@@ -55,7 +55,7 @@ public class ECperf extends DetectorMonitor {
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, Vpim, VG1, VG2, VPI0;
 	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
 	public int   e_part_ind, e_sect, e_FTOF_pad1a, e_FTOF_pad1b, e_HTCC_bin_phi, e_HTCC_bin_theta;
-	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz;
+	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz, e_cz;
 	public float e_xB, e_Q2, e_W;
 	public float e_HTCC_tX, e_HTCC_tY, e_HTCC_tZ, e_LTCC_tX, e_LTCC_tY, e_FTOF_tX, e_FTOF_tY, e_PCAL_tX, e_PCAL_tY;
 	public float e_DCSL1_tX, e_DCSL1_tY, e_DCSL2_tX, e_DCSL2_tY, e_DCSL3_tX, e_DCSL3_tY, e_DCSL4_tX, e_DCSL4_tY, e_DCSL5_tX, e_DCSL5_tY, e_DCSL6_tX, e_DCSL6_tY;
@@ -320,6 +320,7 @@ public class ECperf extends DetectorMonitor {
         case 1:        
 //		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",5,35); //angle
 		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0,9.5);  //momentum
+//		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0.8,1.0);  //cz
 		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
 		for(int i=0;i<3;i++) { //pcal,ecin,ecou
 //			float ylim = (i==0)?5:10;
@@ -330,8 +331,11 @@ public class ECperf extends DetectorMonitor {
 					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
 //					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,5,35,40,-ylim,ylim); //angle
 					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,0,9.5,40,-ylim1,ylim2); //momentum
-//					h2.setTitleX("S"+is+" #theta_e"); h2.setTitleY("DC"+xyz[n]+"-"+det[i]);
-					h2.setTitleX("S"+is+" p_e"); h2.setTitleY("DC"+xyz[n]+"-"+det[i]);
+//					h2 = new H2F("H_e_EC_resid_"+tag,"H_e_EC_resid_"+tag,60,0.8,1.0,40,-ylim1,ylim2); //cz
+//					h2.setTitleX("S"+is+" #theta_e");  
+					h2.setTitleX("S"+is+" p_e"); 
+//					h2.setTitleX("S"+is+" cz_e"); 
+					h2.setTitleY("DC"+xyz[n]+"-"+det[i]);
 					dg.addDataSet(h2, inn); dg.addDataSet(f1, inn); inn++; 
 				}
 			}
@@ -788,6 +792,7 @@ public class ECperf extends DetectorMonitor {
             e_phi  = (float) Math.toDegrees(epart.phi());
             e_vx   = (float) epart.vx(); 
             e_vy   = (float) epart.vy();
+            e_cz   = (float) epart.getProperty("cz");
             Ve     =         epart.vector();
             VGS = new LorentzVector(0,0,0,0);                	     
             VGS.add(VB);               	         
@@ -1147,6 +1152,7 @@ public class ECperf extends DetectorMonitor {
 			if(ic<3) {
 //			((H2F)dg1.getData(is-1+ic*6+il*12).get(0)).fill(e_the,entry.getValue());
 			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_mom,entry.getValue());
+//			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_cz,entry.getValue());
 			}
 		}
 		counter[e_sect-1][0]++;
@@ -1626,9 +1632,9 @@ public class ECperf extends DetectorMonitor {
  //       float  dx = ((float)p.getProperty("hx")-(float)p.getProperty("x"));
  //       float  dy = ((float)p.getProperty("hy")-(float)p.getProperty("y"));
  //       float  dz = ((float)p.getProperty("hz")-(float)p.getProperty("z"));
-        float  dx = ((float)p.getProperty("hx")-(float)p.getProperty("x"));
-        float  dy = ((float)p.getProperty("hy")-(float)p.getProperty("y"));
-        float  dz = ((float)p.getProperty("hz")-(float)p.getProperty("z"));
+        float  dx = ((float)p.getProperty("tx")-(float)p.getProperty("x"));
+        float  dy = ((float)p.getProperty("ty")-(float)p.getProperty("y"));
+        float  dz = ((float)p.getProperty("tz")-(float)p.getProperty("z"));
         Point3D xyz = new Point3D(dx,dy,dz);
         xyz.rotateZ(Math.toRadians(-60*(p.getProperty("sector")-1)));
         xyz.rotateY(Math.toRadians(-25)); 	

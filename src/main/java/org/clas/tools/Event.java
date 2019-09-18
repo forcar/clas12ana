@@ -328,7 +328,8 @@ public class Event {
 					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer")+1)) {
 							p.setProperty("tx",     trajBank.getFloat("x",tmap));
 							p.setProperty("ty",     trajBank.getFloat("y",tmap));
-							p.setProperty("tz",     trajBank.getFloat("z",tmap));	
+							p.setProperty("tz",     trajBank.getFloat("z",tmap));
+							p.setProperty("cz",     trajBank.getFloat("cz",tmap));
 //							System.out.println(p.getProperty("x")+" "+p.getProperty("y")+" "+p.getProperty("z"));
 //							System.out.println(p.getProperty("hx")+" "+p.getProperty("hy")+" "+p.getProperty("hz"));
 //							System.out.println(p.getProperty("tx")+" "+p.getProperty("ty")+" "+p.getProperty("tz"));
