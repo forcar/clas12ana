@@ -23,6 +23,7 @@ public class Event {
 	private DataBank caloBank = null;
 	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
+	private DataBank trajBank = null;
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
 	
@@ -30,6 +31,7 @@ public class Event {
 	Map<Integer,List<Integer>>      caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>      ftofMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>      partMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>      trajMap = new HashMap<Integer,List<Integer>>();
 	
 	private boolean hasRUNconfig = false;
 	private boolean hasRECevent  = false;
@@ -39,6 +41,7 @@ public class Event {
 	private boolean hasRECparticle = false;
 	private boolean hasRECtrack = false;
 	private boolean hasECALcalib = false;
+	private boolean hasRECtraj = false;
 	
 	private boolean isMC = false;
 	
@@ -76,6 +79,7 @@ public class Event {
 		hasRECparticle     = ev.hasBank("REC::Particle");
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
+		hasRECtraj         = ev.hasBank("REC::Traj");
 		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
 //		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
 	}
@@ -91,6 +95,7 @@ public class Event {
 	    if(hasECALclusters)   processECALclusters();
 	    if(hasRECcalorimeter) processRECscintillator();
 	    if(hasRECtrack)       processRECtrack();
+	    if(hasRECtraj)        processRECtraj();
 	    if(hasECALcalib)      processECALcalib();		
 	    if(hasRECparticle)    processRECparticle();
 		if(starttime > -100) {
@@ -158,6 +163,10 @@ public class Event {
 		storeRECtrack(ev.getBank("REC::Track"));		
 	}
 	
+	public void processRECtraj() {		
+		storeRECtraj(ev.getBank("REC::Traj"));		
+	}	
+	
 	public void processECALclusters() {
 		storeECALclusters(ev.getBank("ECAL::clusters"));		
 	}	
@@ -198,6 +207,11 @@ public class Event {
 	public void storeRECtrack(DataBank bank) {	
 		
 	}
+	
+	public void storeRECtraj(DataBank bank) {	
+		trajBank = bank;
+		trajMap  = loadMapByIndex(trajBank,"pindex");		
+	}	
 	
 	public void storeECALclusters(DataBank bank) {	
 		clusBank = bank;
@@ -242,6 +256,7 @@ public class Event {
 	
 	
 	public void getRECparticle(int tpid) {
+//		if(tpid==11) System.out.println(" ");
 		if (!partMap.containsKey(tpid)) return;
 		for(int ipart : partMap.get(tpid)){  
 			int      pid = partBank.getInt("pid",  ipart);              
@@ -279,6 +294,7 @@ public class Event {
 				    part.getItem(ip,1).add(p);
 			}
 			}
+			
 			if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) {				
 				Particle p = new Particle();                         
@@ -297,7 +313,7 @@ public class Event {
 				p.setProperty("z",      caloBank.getFloat("z",imap)); 
 				p.setProperty("hx",     caloBank.getFloat("hx",imap));
 				p.setProperty("hy",     caloBank.getFloat("hy",imap));
-				p.setProperty("hz",     caloBank.getFloat("hz",imap));
+				p.setProperty("hz",     caloBank.getFloat("hz",imap));				
 
 				int ical = (int) p.getProperty("index");
 				if(clusBank!=null) {
@@ -306,6 +322,20 @@ public class Event {
 					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
 				}
 				p.setProperty("beta", (pid==2112||pid==22)?newBeta(p):beta);
+				
+				if(trajMap.containsKey(ipart)) {
+					for(int tmap : trajMap.get(ipart)) {
+					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer")+1)) {
+							p.setProperty("tx",     trajBank.getFloat("x",tmap));
+							p.setProperty("ty",     trajBank.getFloat("y",tmap));
+							p.setProperty("tz",     trajBank.getFloat("z",tmap));
+							p.setProperty("cz",     trajBank.getFloat("cz",tmap));
+//							System.out.println(p.getProperty("x")+" "+p.getProperty("y")+" "+p.getProperty("z"));
+//							System.out.println(p.getProperty("hx")+" "+p.getProperty("hy")+" "+p.getProperty("hz"));
+//							System.out.println(p.getProperty("tx")+" "+p.getProperty("ty")+" "+p.getProperty("tz"));
+					   }
+					}
+				}				
 				
 				int ip = pid<0?Math.abs(pid)+1:pid;				
 				if(!part.hasItem(ip,0)) {part.add(new ArrayList<Particle>(),ip,0);}

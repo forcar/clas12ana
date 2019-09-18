@@ -111,7 +111,7 @@ public class ECt extends DetectorMonitor {
         
 
         
-        this.useSectorButtons(true);
+        this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
         this.variation = "default";
         engine.setVeff(18.1f);

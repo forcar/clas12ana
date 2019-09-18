@@ -98,7 +98,7 @@ public class ECa extends DetectorMonitor {
                                  "Fits Sig 3",
                                  "Timeline");
         this.usePCCheckBox(true);
-        this.useSectorButtons(true);
+        this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
         this.init();
         this.localinit();

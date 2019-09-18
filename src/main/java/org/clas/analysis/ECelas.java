@@ -27,7 +27,7 @@ public class ECelas extends DetectorMonitor {
         super(name);
         this.setDetectorTabNames("WvTh",
         		                 "W");
-        this.useSectorButtons(true);
+        this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
         this.init();
         this.localinit();
