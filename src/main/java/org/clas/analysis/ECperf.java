@@ -754,9 +754,9 @@ public class ECperf extends DetectorMonitor {
     	for (Particle p : ec) {    		
     		float en = (float) p.getProperty("energy");   		
     		int  ind = getDet((int) p.getProperty("layer"));
-    		      iU = (int)p.getProperty("iu");
-    		      iV = (int)p.getProperty("iv");
-    		      iW = (int)p.getProperty("iw"); 
+    		      iU = p.hasProperty("iu")?(int)p.getProperty("iu"):0;
+    		      iV = p.hasProperty("iv")?(int)p.getProperty("iv"):0;
+    		      iW = p.hasProperty("iw")?(int)p.getProperty("iw"):0; 
     		int   iS = (int)p.getProperty("sector");
     		if(ind==0) {
     			for (Particle psc : sc) {
@@ -1632,9 +1632,9 @@ public class ECperf extends DetectorMonitor {
  //       float  dx = ((float)p.getProperty("hx")-(float)p.getProperty("x"));
  //       float  dy = ((float)p.getProperty("hy")-(float)p.getProperty("y"));
  //       float  dz = ((float)p.getProperty("hz")-(float)p.getProperty("z"));
-        float  dx = ((float)p.getProperty("tx")-(float)p.getProperty("x"));
-        float  dy = ((float)p.getProperty("ty")-(float)p.getProperty("y"));
-        float  dz = ((float)p.getProperty("tz")-(float)p.getProperty("z"));
+        float  dx = p.hasProperty("tx")?((float)p.getProperty("tx")-(float)p.getProperty("x")):0;
+        float  dy = p.hasProperty("ty")?((float)p.getProperty("ty")-(float)p.getProperty("y")):0;
+        float  dz = p.hasProperty("tz")?((float)p.getProperty("tz")-(float)p.getProperty("z")):0;
         Point3D xyz = new Point3D(dx,dy,dz);
         xyz.rotateZ(Math.toRadians(-60*(p.getProperty("sector")-1)));
         xyz.rotateY(Math.toRadians(-25)); 	

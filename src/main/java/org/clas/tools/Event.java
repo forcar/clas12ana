@@ -80,7 +80,7 @@ public class Event {
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
 		hasRECtraj         = ev.hasBank("REC::Traj");
-		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasECALclusters;
+		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter;
 //		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
 	}
 	
