@@ -92,6 +92,7 @@ public class ECpi0 extends DetectorMonitor{
         engine.setNewTimeCal(true);
         engine.setLogWeight(true);
         engine.setLogParam(2.0);
+        engine.setPCALTrackingPlane(0);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);   
@@ -320,7 +321,7 @@ public class ECpi0 extends DetectorMonitor{
     	   }
            h2 = new H2F("pi0_mc85_"+det[idet]+"_"+tag, 50, -1.5, 1.5,3, 1., 4.);  
            dg.addDataSet(h2, 5);
-           h2 = new H2F("pi0_mc86_"+det[idet]+"_"+tag, 100, -1, 1, 200, ymin,ymax);  
+           h2 = new H2F("pi0_mc86_"+det[idet]+"_"+tag, 100, -0.5, 0.5, 200, ymin,ymax);  
            dg.addDataSet(h2, 6);
            h2 = new H2F("pi0_mc87_"+det[idet]+"_"+tag, 50, 0., 3.5, 40, 0.15, 0.35);  
            dg.addDataSet(h2, 7);
