@@ -168,13 +168,13 @@ public class ECPart  {
             return responseList;
     }   
     
-    public List<DetectorResponse>  readEC(DataEvent event){
+    public List<DetectorResponse>  readEC(DataEvent event, String bank){
         eb   = new EventBuilder(ccdb);    	
         rf   = new EBRadioFrequency(ccdb);
         eb.initEvent();
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(event)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
         List<DetectorResponse> rEC = new ArrayList<DetectorResponse>();
-        rEC = readEvent(event, "ECAL::clusters", DetectorType.ECAL);
+        rEC = readEvent(event,bank,DetectorType.ECAL);
         eb.addDetectorResponses(rEC); 
         eb.getPindexMap().put(0, 0); eb.getPindexMap().put(1, 0);
         return rEC;
@@ -709,7 +709,7 @@ public class ECPart  {
         while(reader.hasEvent()){
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);   
-            part.readMC(event); part.readEC(event);
+            part.readMC(event); part.readEC(event,"ECAL::clusters");
             np.clear();
             np= part.getNeutralPart();
        		int n=0;
