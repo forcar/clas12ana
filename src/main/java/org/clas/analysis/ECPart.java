@@ -12,6 +12,7 @@ import org.jlab.clas.detector.DetectorParticle;
 import org.jlab.clas.detector.DetectorResponse;
 import org.jlab.clas.physics.EventFilter;
 import org.jlab.clas.physics.GenericKinematicFitter;
+import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
@@ -55,6 +56,7 @@ public class ECPart  {
     public double X,tpi2,cpi0,refE,refP,refTH;
     public double x1,y1,x2,y2;
     public double epc,eec1,eec2;
+    public LorentzVector VG1,VG2;
 //    public static int[] ip1,ip2,is1,is2;
     public int[]    iis = new int[2];
     public int[][]  iip = new int[2][3];
@@ -145,7 +147,7 @@ public class ECPart  {
                     float x = bank.getFloat("x", row);
                     float y = bank.getFloat("y", row);
                     float z = bank.getFloat("z", row);
-                    response.setHitIndex(row);
+                    response.setHitIndex(bankName.equals("ECAL::clusters")?row:bank.getInt("index",row));
                     response.setPosition(x, y, z);
                     response.setEnergy(bank.getFloat("energy", row));
                     response.setTime(bank.getFloat("time", row));
@@ -155,12 +157,12 @@ public class ECPart  {
             return responseList;
     }   
     
-    public List<DetectorResponse>  readEC(DataEvent event){
+    public List<DetectorResponse>  readEC(DataEvent event, String bank){
         eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	
         List<DetectorResponse> rEC = new ArrayList<DetectorResponse>();
         Boolean isEvio = event instanceof EvioDataEvent;                  
         eb.initEvent();
-        if(!isEvio) rEC = readEvent(event, "ECAL::clusters", DetectorType.ECAL);
+        if(!isEvio) rEC = readEvent(event, bank, DetectorType.ECAL);
         eb.addDetectorResponses(rEC); 
         return rEC;
     } 
@@ -348,12 +350,14 @@ public class ECPart  {
         
         double SF1db = SamplingFractions.getMean(22, p1, eb.ccdb);
         e1c = e1/SF1db;
-        Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);
+        Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);        
+        VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
         
         double SF2db = SamplingFractions.getMean(22, p2, eb.ccdb);
         e2c = e2/SF2db;
         Particle g2 = new Particle(22,n2.x()*e2c,n2.y()*e2c,n2.z()*e2c);
-        
+        VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
+       
         cth1 = Math.cos(g1.theta());
         cth2 = Math.cos(g2.theta());
          cth = g1.cosTheta(g2);         
@@ -526,7 +530,7 @@ public class ECPart  {
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);   
             part.readMC(event);
-            part.getMIPResponses(part.readEC(event));
+            part.getMIPResponses(part.readEC(event,"ECAL::clusters"));
             double energy = part.getEcalEnergy(5);
 //          Boolean trig1 = good_pcal &&  good_ecal && part.epc>0.04 && energy>0.12;
 //          Boolean trig2 = good_pcal && !good_ecal && part.epc>0.04;
@@ -691,7 +695,7 @@ public class ECPart  {
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);   
             part.readMC(event);
-            part.getNeutralResponses(part.readEC(event));
+            part.getNeutralResponses(part.readEC(event,"ECAL::clusters"));
             double invmass = 1e3*Math.sqrt(part.getTwoPhotonInvMass(sec));
             
             boolean goodmass = invmass>0 && invmass<200;

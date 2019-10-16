@@ -77,13 +77,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     JTabbedPane                  tabbedpane = null;
     JPanel                        mainPanel = null;
-    JMenuBar                        menuBar = null;
+    JMenuBar                        menuBar = null;    
     DataSourceProcessorPane   processorPane = null;
-    JCheckBoxMenuItem   co0,co1,co2,co3,co4 = null;   
-    JCheckBoxMenuItem    cf,cf0,cf1,cf2,cf3 = null;   
-    JCheckBoxMenuItem                   ctr = null;  
-    JRadioButtonMenuItem    ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem     ctr0,ctr1,ctr2 = null;  
+    
+    JCheckBoxMenuItem         co0,co1,co2,co3,co4 = null;   
+    JCheckBoxMenuItem          cf,cf0,cf1,cf2,cf3 = null;   
+    JCheckBoxMenuItem                         ctr = null;  
+    JRadioButtonMenuItem          ct0,ct1,ct2,ct3 = null;  
+    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -162,7 +163,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECperf("ECperf"); 
+    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -254,6 +255,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); 
         ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
         ctr2 = new JRadioButtonMenuItem("Photon");   ctr2.addItemListener(this);       group.add(ctr2); menu.add(ctr2);
+        ctr3 = new JRadioButtonMenuItem("Muon");     ctr3.addItemListener(this);       group.add(ctr3); menu.add(ctr3);
+        ctr4 = new JRadioButtonMenuItem("PC Muon");  ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         menuBar.add(menu);
 
         menuBar.add(menu);    
@@ -309,6 +312,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 11:11; 
 		if (source==ctr1)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?211:11; 
 		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 22:11; 
+		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  0:11; 
+		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? -1:11; 
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;

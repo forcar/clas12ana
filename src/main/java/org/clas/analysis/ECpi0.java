@@ -473,7 +473,8 @@ public class ECpi0 extends DetectorMonitor{
         
         if (dropBanks) dropBanks(event);
         
-        ecClusters = part.readEC(event);  
+//        ecClusters = part.readEC(event,"ECAL::clusters");  
+        ecClusters = part.readEC(event,"REC::Calorimeter");  
         
         if (ecClusters.size()==0) return;
         
