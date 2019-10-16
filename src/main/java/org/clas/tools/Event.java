@@ -24,10 +24,11 @@ public class Event {
 	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
 	private DataBank trajBank = null;
+	
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
 	
-	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(2);
+	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(1);
 	Map<Integer,List<Integer>>      caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>      ftofMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>      partMap = new HashMap<Integer,List<Integer>>();
@@ -53,6 +54,8 @@ public class Event {
 	private int eventNumber=0;
 	private int nelec=0;
 	
+	private float timeshift = 0f;
+	
 	public Event() {
 		
 	}
@@ -64,6 +67,7 @@ public class Event {
 		partMap.clear();
 		ftofMap.clear();
 		caloMap.clear();
+		trajMap.clear();
 		partBank = null;
 		caloBank = null;
 		ftofBank = null;
@@ -102,19 +106,19 @@ public class Event {
 			getRECparticle(11);
 			getRECparticle(22);
 			getRECparticle(2112);
+			getRECparticle(2212);
 			getRECparticle(211);
 			getRECparticle(-211);
 		}
 	    return true;
 	}
 	
-	public List<Particle> getParticle(int ipid, int idet) {		
+	public List<Particle> getParticle(int ipid) {		
 		List<Particle> pout = new ArrayList<Particle>();
 	    IndexGenerator ig = new IndexGenerator();                
 	    for (Map.Entry<Long,List<Particle>>  entry : part.getMap().entrySet()){
 	           int pid = ig.getIndex(entry.getKey(), 0);   
-	           int det = ig.getIndex(entry.getKey(), 1);  	           
-	           if(ipid==pid && idet==det) {for (Particle pp : entry.getValue()) pout.add(pp);} 
+	           if(ipid==pid) {for (Particle p : entry.getValue()) pout.add(p);} 
 	    }	
 	    return pout;
 	}
@@ -137,6 +141,10 @@ public class Event {
 	
 	public void setMC(boolean val) {
 		isMC = val;
+	}
+	
+	public void setTimeShift(float val) {
+		timeshift = val;
 	}
 	
 	public void processRUNconfig() {		
@@ -228,7 +236,7 @@ public class Event {
 	public float newBeta(Particle p) {
 		double path= p.getProperty("path");
 		double time= p.getProperty("time");
-		return (float) (path/(time-starttime)/29.97f);
+		return (float) (path/(time-starttime-timeshift)/29.97f);
 	}	
 	
     public int     getFDTrigger()            {return (int)(trigger)&0x000000000ffffffff;}
@@ -254,8 +262,98 @@ public class Event {
 		return true;			
 	}
 	
+	public void getRECparticle(int tpid) {		
+		if(partMap.containsKey(tpid)) {		
+			for(int ipart : partMap.get(tpid)){  
+				int      pid = partBank.getInt("pid",  ipart);              
+				float     px = partBank.getFloat("px", ipart);
+				float     py = partBank.getFloat("py", ipart);
+				float     pz = partBank.getFloat("pz", ipart);
+				float     vx = partBank.getFloat("vx", ipart);
+				float     vy = partBank.getFloat("vy", ipart);
+				float     vz = partBank.getFloat("vz", ipart);
+				float   beta = partBank.getFloat("beta", ipart);
+				short status = (short) Math.abs(partBank.getShort("status", ipart));
+			
+				Particle p = new Particle(pid, px, py, pz, vx, vy, vz);                         			
+				p.setProperty("status", status);
+				p.setProperty("pindex", ipart);
+				p.setProperty("beta", beta);
+				int ip = pid<0?Math.abs(pid)+1:pid;				
+				if(!part.hasItem(ip)) {part.add(new ArrayList<Particle>(),ip);}
+				    part.getItem(ip).add(p);
+
+			}		
+		}
+	}
 	
-	public void getRECparticle(int tpid) {
+	public List<Particle> getFTOF(int ipart) {
+		List<Particle> ftofpart = new ArrayList<Particle>();
+		if(ftofMap.containsKey(ipart)) {
+			for(int imap : ftofMap.get(ipart)) {				
+				Particle p = new Particle();                         
+				p.setProperty("sector", ftofBank.getByte("sector",imap)); 
+				p.setProperty("layer",  ftofBank.getByte("layer",imap));
+				p.setProperty("index",  ftofBank.getShort("index",imap));
+				p.setProperty("energy", ftofBank.getFloat("energy",imap));
+				p.setProperty("time",   ftofBank.getFloat("time",imap));
+				p.setProperty("path",   ftofBank.getFloat("path",imap));                   		                    
+				p.setProperty("x",      ftofBank.getFloat("x",imap));
+				p.setProperty("y",      ftofBank.getFloat("y",imap)); 
+				p.setProperty("z",      ftofBank.getFloat("z",imap)); 
+				p.setProperty("hx",     ftofBank.getFloat("hx",imap));
+				p.setProperty("hy",     ftofBank.getFloat("hy",imap));
+				p.setProperty("hz",     ftofBank.getFloat("hz",imap));
+				ftofpart.add(p);
+			}
+		}
+		return ftofpart;
+	}
+	
+	public List<Particle> getECAL(int ipart) {
+		List<Particle> ecalpart = new ArrayList<Particle>();
+		if(caloMap.containsKey(ipart)) {
+			for(int imap : caloMap.get(ipart)) {				
+				Particle p = new Particle();                         
+				p.setProperty("sector", caloBank.getByte("sector",imap)); 
+				p.setProperty("layer",  caloBank.getByte("layer",imap));
+				p.setProperty("index",  caloBank.getShort("index",imap));
+				p.setProperty("energy", caloBank.getFloat("energy",imap)*1e3);
+				p.setProperty("time",   caloBank.getFloat("time",imap));
+				p.setProperty("path",   caloBank.getFloat("path",imap));                   		                    
+				p.setProperty("x",      caloBank.getFloat("x",imap));
+				p.setProperty("y",      caloBank.getFloat("y",imap)); 
+				p.setProperty("z",      caloBank.getFloat("z",imap)); 
+				p.setProperty("hx",     caloBank.getFloat("hx",imap));
+				p.setProperty("hy",     caloBank.getFloat("hy",imap));
+				p.setProperty("hz",     caloBank.getFloat("hz",imap));
+				
+				if(clusBank!=null) {
+					int ical = (int) p.getProperty("index");
+					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
+					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
+					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
+				}
+				
+				p.setProperty("beta", newBeta(p));
+				
+				if(trajMap.containsKey(ipart)) {
+					for(int tmap : trajMap.get(ipart)) {
+					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer")+1)) {
+							p.setProperty("tx",     trajBank.getFloat("x",tmap));
+							p.setProperty("ty",     trajBank.getFloat("y",tmap));
+							p.setProperty("tz",     trajBank.getFloat("z",tmap));
+							p.setProperty("cz",     trajBank.getFloat("cz",tmap));
+					   }
+					}
+				}
+				ecalpart.add(p);
+			}
+		}
+		return ecalpart;
+	}	
+	
+	public void getRECparticleOLD(int tpid) {
 //		if(tpid==11) System.out.println(" ");
 		if (!partMap.containsKey(tpid)) return;
 		for(int ipart : partMap.get(tpid)){  

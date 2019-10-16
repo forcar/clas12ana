@@ -1171,17 +1171,15 @@ public class DetectorMonitor implements ActionListener {
     	if(group==null) return;
         int nrows = group.getRows();
         int ncols = group.getColumns();
-        c.divide(ncols, nrows); 	    
+        c.clear(); c.divide(ncols, nrows); 	    
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
             List<IDataSet> dsList = group.getData(i);
-            //System.out.println(" pad = " + i + " size = " + dsList.size());
             c.cd(i);  String opt = " ";c.getPad().getAxisY().setAutoScale(true);
             c.getPad().getAxisZ().setLog(getLogZ());
             if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
             if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
             for (IDataSet ds : dsList) {
-//                System.out.println("\t --> " + ds.getName());
             	   c.draw(ds,opt); opt="same";
             }
         } 	       	

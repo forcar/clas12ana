@@ -533,7 +533,6 @@ public class ECmip extends DetectorMonitor {
        if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = recCalo;}
        
        if (goodEvt) {
-    	   
            bank2 = ecalClus; 
            bank3 = ecalCali;
            
@@ -560,7 +559,7 @@ public class ECmip extends DetectorMonitor {
         	   int ic=0, is=0, il=0;
 	           if (!isMuon) {ic = bank1.getShort("index",  loop); is = bank1.getByte("sector",loop); il = bank1.getByte("layer",loop);}
 	           if ( isMuon) {ic = loop;                           is = bank2.getByte("sector",loop); il = bank2.getByte("layer",loop);}          
-	           float   en = bank2.getFloat("energy",ic)*1000;
+	           float   en = bank2.getFloat("energy",ic)*1000;	    	   
                float   ti = bank2.getFloat("time",ic)*1000;
                float    x = bank2.getFloat("x", ic);
                float    y = bank2.getFloat("y", ic);
@@ -636,8 +635,8 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+1;
 //                if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
-                if(trigger==trig && n1[is]==1 && n4[is]==1 && n7[is]==1) { //Only one cluster in each layer to reject vertical cosmics
-
+               Boolean mtest = trig==-1?n1[is]==1:n1[is]==1 && n4[is]==1 && n7[is]==1;
+               if(trigger==(trig==-1?0:trig) && mtest) { //Only one cluster in each layer to reject vertical cosmics
 //                    Boolean goodU = Math.abs(cU[is][1][n4[is]]-cU[is][2][n7[is]])<=1;
 //                    Boolean goodV = Math.abs(cV[is][1][n4[is]]-cV[is][2][n7[is]])<=1;
 //                    Boolean goodW = Math.abs(cW[is][1][n4[is]]-cW[is][2][n7[is]])<=1;
@@ -652,7 +651,12 @@ public class ECmip extends DetectorMonitor {
 // PCAL-ECin: 325.5 mm
 // ECin-ECou: 14*2.2+15*10.0 = 180.8 mm
 // PCAL-ECou: 325.5+180.8= 506.3 mm
-                     
+            	   
+                float v12mag = 0;
+                float v13mag = 0;
+                float v23mag = 0;
+            	               	   
+            	if(trig>-1) {
                 Vector3  v1 = new Vector3(rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),rl.getItem(iis,0).z());
                 Vector3  v2 = new Vector3(rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),rl.getItem(iis,1).z());
                 Vector3  v3 = new Vector3(rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),rl.getItem(iis,2).z());
@@ -660,12 +664,12 @@ public class ECmip extends DetectorMonitor {
         
                 v2.sub(v1); v23.sub(v3); v3.sub(v1);  
                 
-                float v12mag = (float) v2.mag();
-                float v13mag = (float) v3.mag();
-                float v23mag = (float) v23.mag();
-                    
+                v12mag = (float) v2.mag();
+                v13mag = (float) v3.mag();
+                v23mag = (float) v23.mag();
+            	}
+            	
                 H2F h;
-                
                 double ectot = e4c[is][0]+e7c[is][0] ; double etot = e1c[is][0]+ectot ;
 /*                
                 h = (H2F) this.getDataGroup().getItem(0,0,5,run).getData(3).get(0); h.fill(e1c[is][0],ectot);
@@ -707,7 +711,6 @@ public class ECmip extends DetectorMonitor {
 
                 //Muon pixel cut too restrictive for PCAL due to target/Bfield constrained tracks
                 Boolean pcaltest = (isMuon)?v12mag<35&&w1[is][0]==3:v13mag<56&&(w1[is][0]==3||w1[is][0]==4);
-               
                 if(pcaltest) { 
                 for(int n=0; n<n1[is]; n++) {
                 	int u = (int) cU[is][0][n]; int v = (int) cV[is][0][n]; int w = (int) cW[is][0][n]; 
