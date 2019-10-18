@@ -846,7 +846,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=3995&&run<=4326) return getTorusColor("-1.00");  
     	if (run>=4624&&run<=5419) return getTorusColor("-1.00");  
     	if (run>=5420&&run<=5995) return getTorusColor("+1.00");  
-    	if (run>=5996&&run<=6000) return getTorusColor("+0.50");  
+    	if (run>=5996&&run<=6000) return getTorusColor("+0.50"); 
+    	if (run>=6001&&run<=6141) return 1;
     	if (run>=6142&&run<=6783) return getTorusColor("-1.00");  
     	return getTorusColor("0");
     }
@@ -863,6 +864,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=4624&&run<=5419) return -1.00f;  
     	if (run>=5420&&run<=5995) return +1.00f;  
     	if (run>=5996&&run<=6000) return +0.50f;  
+    	if (run>=6001&&run<=6141) return  0f;
     	if (run>=6142&&run<=6783) return -1.00f;  
     	return 0.00f;
     } 
