@@ -80,7 +80,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     DataSourceProcessorPane   processorPane = null;
     
-    JCheckBoxMenuItem         co0,co1,co2,co3,co4 = null;   
+    JCheckBoxMenuItem     co0,co1,co2,co3,co4,co5 = null;   
     JCheckBoxMenuItem          cf,cf0,cf1,cf2,cf3 = null;   
     JCheckBoxMenuItem                         ctr = null;  
     JRadioButtonMenuItem          ct0,ct1,ct2,ct3 = null;  
@@ -110,6 +110,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   dropBanks = false;
     public Boolean dropSummary = false;
     public Boolean  dumpGraphs = false;
+    public Boolean defaultGain = false;
     public Boolean  cfitEnable = false;
     public Boolean  sfitEnable = false;
     public Boolean  dfitEnable = false;
@@ -190,6 +191,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co2 = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
         co3 = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
         co4 = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
+        co5 = new JCheckBoxMenuItem("DefaultGains");  co5.addItemListener(this);       menu.add(co5);
         menuBar.add(menu);
         
         menu     = new JMenu("Fitting");
@@ -300,6 +302,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co3)  dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co5)  defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==cf )   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf0)   cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf1)   sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
@@ -317,6 +320,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
+		                                           this.monitors[k].defaultGain = defaultGain;
 		                                           this.monitors[k].autoSave    = autoSave;
                                                    this.monitors[k].cfitEnable  = cfitEnable;
                                                    this.monitors[k].sfitEnable  = sfitEnable;

@@ -81,7 +81,7 @@ public class ECmip extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECmip.localinit()");
-        configEngine("muon"); 
+        configEngine("muon");
     	tl.setFitData(Fits);    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
@@ -95,6 +95,7 @@ public class ECmip extends DetectorMonitor {
     	Fits.clear();
     	tl.Timeline.clear();
     	slider.setValue(0);
+        engine.setCCDBGain(!defaultGain);
     }
     
      @Override    
