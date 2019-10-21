@@ -492,7 +492,9 @@ public class ECperf extends DetectorMonitor {
     	
     	String tab = "ECneut", tag = null;   	
     	int run = getRunNumber(), in=0, k=getDetectorTabNames().indexOf(tab);
-    	
+        F1D f1 = new F1D("neut","1/(1+[a]^2/x^2)^0.5", 0.21,2.5); 
+        f1.setParameter(0,0.93957); f1.setLineColor(0); f1.setLineStyle(1); f1.setLineWidth(2);  
+        
     	switch (st) {
     	   
         case 1:		
@@ -504,6 +506,7 @@ public class ECperf extends DetectorMonitor {
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                "cxcut.M2cut ","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,  "no electron","p_mm (GeV)","#beta_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,            " ","p_mm (GeV)","#beta_ecal"),n);n++;
+    	dg.addDataSet(f1, n-1);
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,          "no electron","Mass^2 (GeV^2)"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,    "cx,cy cut","Mass^2 (GeV^2)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
