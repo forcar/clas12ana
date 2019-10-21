@@ -500,12 +500,12 @@ public class ECperf extends DetectorMonitor {
         tag = st+"_"+k+"_"+run;        	
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0,40,     "neutron","p_mm (GeV)","#theta_mm (^o)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                "cycut.M2cut ","cx_mm - cx_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                "cxcut.M2cut ","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,  "no electron","p_mm (GeV)","#beta_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,            " ","p_mm (GeV)","#beta_ecal"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,        "(no electron)","Mass^2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,    "(#theta,#phi cut)","Mass^2 (GeV^2)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,          "no electron","Mass^2 (GeV^2)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,    "cx,cy cut","Mass^2 (GeV^2)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n);n++;
@@ -1134,7 +1134,7 @@ public class ECperf extends DetectorMonitor {
 			((H2F) ECpip.getData(e_sect-1).get(0)).fill(epip_MM,e_W);    
 			((H1F) ECpip.getData(e_sect-1+6).get(0)).fill(epip_MM);
 			neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
-			if(epip_MM<1.1) {
+			if(epip_MM<1.2) {
 				neut_mom=(float)VmissN.p();
 				neut_the=(float)Math.toDegrees(VmissN.theta());
 				neut_phi=(float)Math.toDegrees(VmissN.phi());
@@ -1404,7 +1404,8 @@ public class ECperf extends DetectorMonitor {
             for (Particle pp : neutECAL) ecal_neut_esum[0] += pp.getProperty("energy"); 
         
             float    mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
-        
+            boolean mass2cut = mass2>0.45;
+            
             float       cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(ecal_neut_phi*3.141259f/180f));
             float       cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(ecal_neut_phi*3.141259f/180f));
    		
@@ -1416,8 +1417,8 @@ public class ECperf extends DetectorMonitor {
         
             if(ecal_neut_sec!=e_sect) {        	
             	((H2F)ECneut.getData(1).get(0)).fill(dcx,dcy);
-            	if(cxcut) ((H1F)ECneut.getData(3).get(0)).fill(dcy);
-            	if(cycut) ((H1F)ECneut.getData(2).get(0)).fill(dcx); 
+            	if(cxcut&&mass2cut) ((H1F)ECneut.getData(3).get(0)).fill(dcy);
+            	if(cycut&&mass2cut) ((H1F)ECneut.getData(2).get(0)).fill(dcx); 
         	
              	((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
              	((H2F)ECphot.getData(4).get(0)).fill(ecal_neut_the,e_the);        
@@ -1435,7 +1436,7 @@ public class ECperf extends DetectorMonitor {
             if (cxcut && cycut && good_tagged_fiduc) {
             	((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
                	((H1F)ECneut.getData(7).get(0)).fill(mass2);
-               	if(mass2>0.45) {
+               	if(mass2cut) {
             		float nphi = newPhi(ecal_neut_phi);
             		cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
             		cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
