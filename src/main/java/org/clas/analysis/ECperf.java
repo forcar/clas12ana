@@ -356,8 +356,9 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,2);
         for(int is=1;is<7;is++){ 
         	tag = is+"_"+st+"_"+k+"_"+run;        	
-        	dg.addDataSet(makeH2(tab+"_0_",tag,50,-0.2,0.8,50,0.9,2,"S"+is,"MM^2 (GeV^2)","W (GeV)"),is-1);
+        	dg.addDataSet(makeH2(tab+"_0_",tag,50,-0.2,0.8,50,0.9,3,"S"+is,"MM^2 (GeV^2)","W (GeV)"),is-1);
         	dg.addDataSet(makeH1(tab+"_1_",tag,100,-0.2,0.8," ","MM^2 (GeV^2)"),is-1+6);
+        	dg.addDataSet(makeH1(tab+"_2_",tag,100,-0.2,0.8," ","MM^2 (GeV^2)"),is-1+6);
         }
         break;
         case 1:
@@ -389,8 +390,9 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,2);
         for(int is=1;is<7;is++){ 
         	tag = is+"_"+st+"_"+k+"_"+run;        	
-        	dg.addDataSet(makeH2(tab+"_0_",tag,100,0,4,100,0,30,"S"+is,"MM^2 (GeV^2)","#theta (^o)"),is-1);
+        	dg.addDataSet(makeH2(tab+"_0_",tag,100,0,4,50,0.9,3,"S"+is,"MM^2 (GeV^2)","W (GeV)"),is-1);
         	dg.addDataSet(makeH1(tab+"_1_",tag,100,0,4," ","MM^2 (GeV^2)"),is-1+6);
+           	dg.addDataSet(makeH1(tab+"_2_",tag,100,0,4," ","MM^2 (GeV^2)"),is-1+6);
         }
         break;
         case 1:
@@ -500,10 +502,10 @@ public class ECperf extends DetectorMonitor {
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0,1,  "no electron","p_mm (GeV)","#beta_ecal"),n);n++;
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0,1,            " ","p_mm (GeV)","#beta_ecal"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.0,       "(no electron)","Mass^2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.0,   "(#theta,#phi cut)","Mass^2 (GeV^2)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,  "no electron","p_mm (GeV)","#beta_ecal"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0.1,1.1,            " ","p_mm (GeV)","#beta_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,        "(no electron)","Mass^2 (GeV^2)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.2,2.0,    "(#theta,#phi cut)","Mass^2 (GeV^2)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n);n++;
@@ -1129,6 +1131,7 @@ public class ECperf extends DetectorMonitor {
 			VmissN.sub(Ve);
 			VmissN.sub(Vpip);
 			epip_MM = (float)VmissN.mass2();
+			((H2F) ECpip.getData(e_sect-1).get(0)).fill(epip_MM,e_W);    
 			((H1F) ECpip.getData(e_sect-1+6).get(0)).fill(epip_MM);
 			neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
 			if(epip_MM<1.1) {
@@ -1269,8 +1272,6 @@ public class ECperf extends DetectorMonitor {
     
     public void fillECpip() {
 		int run = getRunNumber();
-		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
-		((H2F)dg0.getData(e_sect-1).get(0)).fill(epip_MM,e_the);    
 		DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpip"),run);
 		((H2F)dg1.getData(0).get(0)).fill(e_mom,e_the);
 		((H2F)dg1.getData(1).get(0)).fill(pim_mom,pip_the);
@@ -1304,7 +1305,8 @@ public class ECperf extends DetectorMonitor {
 	
     public void fillECpi0() {	 	    
 		int run = getRunNumber();
-		DataGroup ECpi0 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpi0"),run);
+		DataGroup ECpi0  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpi0"),run);
+		DataGroup ECprot = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECprot"),run);
 		
 		boolean good_tagged_fiduc = false;
         ((H2F)ECpi0.getData(0).get(0)).fill(pi0_mom, pi0_the);
@@ -1317,6 +1319,7 @@ public class ECperf extends DetectorMonitor {
         	float   cx = (float) (Math.sin(pi0_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
         	float   cy = (float) (Math.sin(pi0_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
         	if(neutFiduc(2,cx,cy)) {
+    			((H1F)ECprot.getData(e_sect-1+6).get(1)).fill(ep_MM);  	
                 ((H2F)ECpi0.getData(8).get(0)).fill(-cx,cy);
                 ((H1F)ECpi0.getData(10).get(0)).fill(pi0_mom);
         		good_tagged_fiduc = true;
@@ -1363,6 +1366,7 @@ public class ECperf extends DetectorMonitor {
     
     public void fillECneut() {
 		int run = getRunNumber();
+		DataGroup ECpip  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
 		DataGroup ECneut = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
 		DataGroup ECphot = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
 		
@@ -1377,6 +1381,7 @@ public class ECperf extends DetectorMonitor {
         	float   cx = (float) (Math.sin(neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
         	float   cy = (float) (Math.sin(neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
         	if(neutFiduc(1,cx,cy)) {
+    			((H1F)ECpip.getData(e_sect-1+6).get(1)).fill(epip_MM);
                 ((H2F)ECneut.getData(8).get(0)).fill(-cx,cy);
                 ((H1F)ECneut.getData(10).get(0)).fill(neut_mom);
         		good_tagged_fiduc = true;
@@ -1428,7 +1433,7 @@ public class ECperf extends DetectorMonitor {
             }
         
             if (cxcut && cycut && good_tagged_fiduc) {
-             	((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
+            	((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
                	((H1F)ECneut.getData(7).get(0)).fill(mass2);
                	if(mass2>0.45) {
             		float nphi = newPhi(ecal_neut_phi);
