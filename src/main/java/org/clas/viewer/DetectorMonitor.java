@@ -9,7 +9,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -937,6 +940,34 @@ public class DetectorMonitor implements ActionListener {
     	writer.close();    	
     }
     
+    public GraphErrors getGraph(String filename, int nlines) {   
+        
+    	GraphErrors g = new GraphErrors();
+        try{
+            FileReader       file = new FileReader(filename);
+            BufferedReader reader = new BufferedReader(file);
+            int n = 0 ;
+            while (n<nlines) {
+              String line = reader.readLine();
+              String[] col = line.trim().split("\\s+"); 
+              float i = Float.parseFloat(col[0]); float j = Float.parseFloat(col[1]);float k = Float.parseFloat(col[2]);
+              g.addPoint(i,j,0,k);
+              n++;
+            }    
+            reader.close();
+            file.close();
+         }  
+         
+         catch(FileNotFoundException ex) {
+            ex.printStackTrace();            
+         }     
+         catch(IOException ex) {
+             ex.printStackTrace();
+         }
+         System.out.println("Exiting getGraph()");
+         return g;
+
+    }    
     public void setTLflag(Boolean flag) {
     	this.TLflag = flag;
     	if (getRunNumber()>0) plotHistos(getRunNumber());
