@@ -181,6 +181,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean   dropSummary = false; 
     public Boolean    dumpGraphs = false; 
     public Boolean   defaultGain = false; 
+    public Boolean      fiduCuts = false;
     public Boolean    cfitEnable = false; 
     public Boolean    dfitEnable = false; 
     public Boolean   gdfitEnable = false; 

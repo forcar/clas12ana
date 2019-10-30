@@ -654,8 +654,8 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==2) good_fiduc3 = iU>2&&iV<36&&iW<36;   		
    	    }
              	
-//    	if (!((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
-//    	if (!(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
+//    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
+    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         if(Math.abs(e_vz+3)<12 && e_mom>0.5){
     		e_sect = (int)   elecECAL.get(0).getProperty("sector");
