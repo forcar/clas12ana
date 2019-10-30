@@ -734,6 +734,8 @@ public class ECPart  {
         H1F hrat1 = H1F.divide(h1,  part.h5); hrat1.setFillColor(2); hrat1.setTitleY("Neutron Eff");    hrat1.setTitleX("Neutron Momentum (GeV)");
         canvas.cd(0);  canvas.draw(part.h5);  canvas.draw(h1,"same");       
         canvas.cd(1);  canvas.draw(hrat1); 
+        dumpGraph("/Users/colesmith/neuteff.vec",hrat1.getGraph());
+
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);  
