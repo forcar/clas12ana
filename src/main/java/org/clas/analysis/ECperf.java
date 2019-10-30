@@ -51,7 +51,7 @@ public class ECperf extends DetectorMonitor {
 	public long TriggerWord;
 	public float rfPeriod;
 	public int rf_large_integer;
-	public int iU,iV,iW;
+	public int iU,iV,iW,cZ;
 	
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, Vpim;
 	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
@@ -923,7 +923,7 @@ public class ECperf extends DetectorMonitor {
 				G1_part_ind = n;
 			}
 			if( G1_part_ind>-1 && n!=G1_part_ind && p.p()>0.2 && Math.toDegrees(p.theta())>6 && G2_mom < p.p() && p.p() < G1_mom){
-				G2_mom = (float)p.p();
+				G2_mom = (float) p.p();
 				G2_part_ind = n;
 			}
 			n++;			
@@ -1407,7 +1407,7 @@ public class ECperf extends DetectorMonitor {
             for (Particle pp : neutECAL) ecal_neut_esum[0] += pp.getProperty("energy"); 
         
             float    mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
-            boolean mass2cut = mass2>0.45;
+            boolean mass2cut = neut_mom<1.2?mass2>0.45:true;
             
             float       cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(ecal_neut_phi*3.141259f/180f));
             float       cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(ecal_neut_phi*3.141259f/180f));
