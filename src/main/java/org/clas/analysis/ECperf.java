@@ -100,6 +100,7 @@ public class ECperf extends DetectorMonitor {
     public float[][]  counter = new float[6][3];
    
 	public IndexedTable rfTable;	
+	GraphErrors neuteff = null;
 	
     public ECperf(String name) {
         super(name);
@@ -128,6 +129,7 @@ public class ECperf extends DetectorMonitor {
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);    	
+        neuteff = getGraph("/Users/colesmith/neuteff.vec",50);
     }  
     
     public void localclear() {
@@ -1837,7 +1839,7 @@ public class ECperf extends DetectorMonitor {
     public void showNeutronEff() {
 		int index = getDetectorTabNames().indexOf("ECneut");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-		c.cd(11);c.getPad().getAxisX().setRange(0., 2.5); c.getPad().getAxisY().setRange(0., 1.); c.draw(getEff(index));
+		c.cd(11);c.getPad().getAxisX().setRange(0., 2.5); c.getPad().getAxisY().setRange(0., 1.); c.draw(getEff(index)); c.draw(neuteff,"same");
     }
     
     public void showPi0Eff() {
