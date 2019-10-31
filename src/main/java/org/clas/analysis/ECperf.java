@@ -129,7 +129,7 @@ public class ECperf extends DetectorMonitor {
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);    	
-        neuteff = getGraph("/Users/colesmith/neuteff.vec",50);
+        neuteff = getGraph(outPath+"files/neuteff.vec",50);
     }  
     
     public void localclear() {
@@ -606,7 +606,7 @@ public class ECperf extends DetectorMonitor {
         
         if(ec.size()==0 || ec.size()>3) return false;
 		         
-    	boolean good_fiduc1 = false, good_fiduc2 = false, good_fiduc3 = false;
+    	boolean good_fiduc1 = false, good_fiduc2 = false, good_fiduc3 = false; 
         e_ecal_esum = 0f;e_ecal_pcsum=0; e_ecal_ecsum=0;
         elec_ecal_resid.clear();
         elec_ftof_resid.clear();  
@@ -653,9 +653,11 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==1) good_fiduc2 = iU>2&&iV<36&&iW<36;
     	    if (ind==2) good_fiduc3 = iU>2&&iV<36&&iW<36;   		
    	    }
-             	
-//    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
-    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
+          
+    	if (e_mom>2) return false;
+    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
+   	
+//    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         if(Math.abs(e_vz+3)<12 && e_mom>0.5){
     		e_sect = (int)   elecECAL.get(0).getProperty("sector");
