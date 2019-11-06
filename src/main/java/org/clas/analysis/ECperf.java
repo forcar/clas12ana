@@ -654,7 +654,6 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==2) good_fiduc3 = iU>2&&iV<36&&iW<36;   		
    	    }
           
-    	if (e_mom>2) return false;
     	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
    	
 //    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
