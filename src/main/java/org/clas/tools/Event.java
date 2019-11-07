@@ -327,6 +327,9 @@ public class Event {
 				p.setProperty("hx",     caloBank.getFloat("hx",imap));
 				p.setProperty("hy",     caloBank.getFloat("hy",imap));
 				p.setProperty("hz",     caloBank.getFloat("hz",imap));
+				p.setProperty("lu",     caloBank.getFloat("lu",imap));
+				p.setProperty("lv",     caloBank.getFloat("lv",imap));
+				p.setProperty("lw",     caloBank.getFloat("lw",imap));
 				
 				if(clusBank!=null) {
 					int ical = (int) p.getProperty("index");

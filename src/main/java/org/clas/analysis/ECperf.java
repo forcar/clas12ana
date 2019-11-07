@@ -51,7 +51,8 @@ public class ECperf extends DetectorMonitor {
 	public long TriggerWord;
 	public float rfPeriod;
 	public int rf_large_integer;
-	public int iU,iV,iW,cZ;
+	public float lU,lV,lW,cZ;
+	public int iU,iV,iW;
 	
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, Vpim;
 	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
@@ -181,7 +182,18 @@ public class ECperf extends DetectorMonitor {
 	        dg.addDataSet(makeH2(tab+"_2_",tag,60,0.6,1.2,60,EB-1,EB,"","W (GeV)","p (GeV)"),is-1+6);
 	        dg.addDataSet(makeH2(tab+"_3_",tag,60,0.6,1.2,60,5,12,   "","W (GeV)","#theta (^o)"),is-1+12);
 	        dg.addDataSet(makeH2(tab+"_4_",tag,60,0.6,1.2,60,-20,30, "","W (GeV)","#phi (^o"),is-1+18);
-		}		
+		}
+		break;
+		
+        case 1:
+        dg = new DataGroup(6,3);
+        for(int is=1; is<7; is++) {
+	        tag = is+"_"+st+"_"+k+"_"+run;
+	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450,"Sector "+is,"LU (cm)"),is-1);
+	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LV (cm)"),is-1+6);
+	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LW (cm)"),is-1+12);
+        	
+        }
     	}
     	
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -551,6 +563,7 @@ public class ECperf extends DetectorMonitor {
     	dstinit(run);
     	
     	createECkin(0);
+    	createECkin(1);
     	createECelec(0);
     	createECelec(1);
     	createECelec(2);
@@ -633,6 +646,9 @@ public class ECperf extends DetectorMonitor {
     		      iW = p.hasProperty("iw")?(int)p.getProperty("iw"):0; 
     		int   iS = (int)p.getProperty("sector");
     		if(ind==0) {
+    			lU = p.hasProperty("lu")?(int)p.getProperty("lu"):0;
+  		      	lV = p.hasProperty("lv")?(int)p.getProperty("lv"):0;
+  		      	lW = p.hasProperty("lw")?(int)p.getProperty("lw"):0; 
     			for (Particle psc : elecFTOF) {
     	    		int scind = (int) psc.getProperty("layer");
     		        Point3D xyz = getResidual(psc);
@@ -1200,6 +1216,10 @@ public class ECperf extends DetectorMonitor {
 		((H2F) ECkin.getData(e_sect-1+6).get(0)).fill(e_W,e_mom);
 		((H2F) ECkin.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
 		if (e_the>6) ((H2F) ECkin.getData(e_sect-1+18).get(0)).fill(e_W,(e_phi>-30?e_phi:360+e_phi)-(e_sect-1)*60);
+		ECkin = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECkin"),run);				
+		((H1F) ECkin.getData(e_sect-1).get(0)).fill(lU);
+		((H1F) ECkin.getData(e_sect-1+6).get(0)).fill(lV);
+		((H1F) ECkin.getData(e_sect-1+12).get(0)).fill(lW);
 	}
 	
 	public void fillECelec() {
