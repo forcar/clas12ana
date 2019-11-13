@@ -36,7 +36,7 @@ public class ECperf extends DetectorMonitor {
 	DataGroup dg = null;
 	int nc=0;
 	
-	public boolean goodPROT,goodPIP,goodPIM,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
+	public boolean goodPROT,goodPBAR,goodPIP,goodPIM,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
 	String[]   det = new String[]{"PCAL ","ECIN ","ECOU "};
 	String[] scdet = new String[]{"P1A ","P1B ","P2 "};
 	String[]   xyz = new String[]{"X","Y","Z"}; 
@@ -54,8 +54,7 @@ public class ECperf extends DetectorMonitor {
 	public float lU,lV,lW,cZ;
 	public int iU,iV,iW;
 	
-	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpip, Vpim;
-	public boolean found_eTraj, found_eECAL, found_eFTOF1a, found_eFTOF1b, found_eLTCC, found_eHTCC;
+	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpbar, Vpip, Vpim;
 	public int   e_part_ind, e_sect, e_FTOF_pad1a, e_FTOF_pad1b, e_HTCC_bin_phi, e_HTCC_bin_theta;
 	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz, e_cz;
 	public float e_xB, e_Q2, e_W;
@@ -64,6 +63,7 @@ public class ECperf extends DetectorMonitor {
         
 	public int   prot_part_ind;
 	public float prot_mom, prot_the, prot_phi, prot_vx, prot_vy, prot_vz, prot_beta;
+	public float pbar_mom, pbar_the, pbar_phi, pbar_vx, pbar_vy, pbar_vz, pbar_beta;
 
 	public int   pim_part_ind, pip_part_ind, pip_FTOF_pad1b;
 	public float pip_mom, pip_the, pip_phi, pip_vx, pip_vy, pip_vz, pip_beta;
@@ -76,7 +76,7 @@ public class ECperf extends DetectorMonitor {
 	public float G1_mom, G1_e, G1_the, G1_phi, G2_mom, G2_e, G2_the, G2_phi;
 
 	public float elast_dPhi, elast_EB;
-	public float epip_dPhi, epip_MM, ep_dPhi, ep_MM;
+	public float epip_dPhi, epip_MM, ep_dPhi, epbar_dPhi, ep_MM, epbar_MM;
 	public float pi0_mass, pi0_mom, pi0_e, pi0_the, pi0_phi, pi0_open, pi0_cx, pi0_cy;
 	
 	public float ecal_pi0_mass, ecal_pi0_mom, ecal_pi0_e, ecal_pi0_the, ecal_pi0_phi;
@@ -92,6 +92,7 @@ public class ECperf extends DetectorMonitor {
 	public List<Particle> pim_ecal  = new ArrayList<Particle>();
 	public List<Particle> pip_ecal  = new ArrayList<Particle>();
 	public List<Particle> prot_ecal = new ArrayList<Particle>();
+	public List<Particle> pbar_ecal = new ArrayList<Particle>();
 	public List<Particle> phot_ecal = new ArrayList<Particle>();
 	public List<Particle> neut_ecal = new ArrayList<Particle>();
 	public List<NeutralMeson> pi0_ecal = new ArrayList<NeutralMeson>();
@@ -109,6 +110,7 @@ public class ECperf extends DetectorMonitor {
         						 "ECelec",
                 				 "SCelec",
                 				 "ECprot",
+                				 "ECpbar",
         		                 "ECpip",
               				     "ECpim",
         		                 "ECpi0",
@@ -393,6 +395,40 @@ public class ECperf extends DetectorMonitor {
    	
     }
     
+    public void createECpbar(int st) {
+    	
+    	String tab = "ECpbar", tag = null;   	
+    	int run = getRunNumber(), in=0, k=getDetectorTabNames().indexOf(tab);
+    	
+    	switch (st) {
+    	   
+        case 0:
+        dg = new DataGroup(6,2);
+        for(int is=1;is<7;is++){ 
+        	tag = is+"_"+st+"_"+k+"_"+run;        	
+        	dg.addDataSet(makeH2(tab+"_0_",tag,50,-0.2,0.8,50,0.9,3,"S"+is,"MM^2 (GeV^2)","W (GeV)"),is-1);
+        	dg.addDataSet(makeH1(tab+"_1_",tag,100,-0.2,0.8," ","MM^2 (GeV^2)"),is-1+6);
+        	dg.addDataSet(makeH1(tab+"_2_",tag,100,-0.2,0.8," ","MM^2 (GeV^2)"),is-1+6);
+        }
+        break;
+        case 1:
+        dg = new DataGroup(4,3); int n=0;
+    	tag = st+"_"+k+"_"+run;        	
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,0,EB,100,0,40,        "","e- p (GeV)","e- #theta (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,0,4,100,0,50,         "","pbar p (GeV)","pbar #theta (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,-15,15,100,-15,15,    "","e vz (cm)","pbar vz (cm)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,-180,180,100,-15,15,  "","#phi (^o)","#Delta vz (cm)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,   0, 80,100,-15,15,  "","#theta (^o)","#Delta vz (cm)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,-15,15,100,-15,15,    "","vz (cm)","#Delta vz (cm)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,-180,180,100,-180,180,"","#phi (^o)","#Delta#phi (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,   0, 80,100,-180,180,"","#theta (^o)","#Delta#phi (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,-15,15,100,-180,180,  "","vz (cm)","#Delta#phi (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,100,0,7,100,0.2,1.05,     "","p (GeV)","#beta"),n);n++;
+    	}    	
+    	this.getDataGroup().add(dg,0,st,k,run);      
+   	
+    } 
+    
     public void createECpip(int st) {
     	
     	String tab = "ECpip", tag = null;   	
@@ -574,6 +610,8 @@ public class ECperf extends DetectorMonitor {
     	createSCelec(5);
     	createECprot(0);
     	createECprot(1);
+    	createECpbar(0);
+    	createECpbar(1);
     	createECpim(1);
     	createECpim(5);
     	createECpip(0);
@@ -584,7 +622,7 @@ public class ECperf extends DetectorMonitor {
     }
     
 	public void myinit(){
-		goodPIP  = false; goodNEUT = false; goodPHOT = false; goodPI0=false; goodPROT = false;  
+		goodPROT = false; goodPBAR = false; goodPIP  = false; goodNEUT = false; goodPHOT = false; goodPI0=false;  
 		G1_part_ind=G2_part_ind = -1; G1_mom=G2_mom=G1_sec=G2_sec=G1_lay=G2_lay=0;
     }
 
@@ -602,6 +640,7 @@ public class ECperf extends DetectorMonitor {
 	    if(!makeELEC()) return;
 
 	    goodPROT  = makePROT();
+	    goodPBAR  = makePBAR();
 	    goodPIP   = makePIP();
 	    goodPIM   = makePIM();
 	    goodNEUT  = makeNEUTRAL();
@@ -763,6 +802,21 @@ public class ECperf extends DetectorMonitor {
         	if(inDC && p.p()>0.5) prot_ecal.add(p);        	
         }        
         return prot_ecal.size()>0;
+    }
+    
+    public boolean makePBAR() {
+    	
+        List<Particle> nlist = ev.getParticle(2213);
+        if(nlist.size()==0) return false;
+        
+        pbar_ecal.clear();        
+        
+        for (Particle p : nlist) {
+            short status = (short) p.getProperty("status");
+            boolean inDC = (status>=2000 && status<3000);
+        	if(inDC && p.p()>0.5) pbar_ecal.add(p);        	
+        }        
+        return pbar_ecal.size()>0;
     }
     
     public boolean makePHOT() {
@@ -1134,6 +1188,35 @@ public class ECperf extends DetectorMonitor {
 		return false;
 	}	
 	
+	public boolean select_epbar(){
+		int run = getRunNumber();
+		DataGroup ECpbar = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpbar"),run);
+		if(prot_ecal.size()>0 && pbar_ecal.size()>0) {			
+			pbar_mom  = (float) pbar_ecal.get(0).p();
+            pbar_the  = (float) Math.toDegrees(pbar_ecal.get(0).theta());
+            pbar_phi  = (float) Math.toDegrees(pbar_ecal.get(0).phi());
+            pbar_vz   = (float) pbar_ecal.get(0).vz();
+        	pbar_beta = (float) pbar_ecal.get(0).getProperty("beta");
+         	Vpbar     =         pbar_ecal.get(0).vector();	
+			epbar_dPhi = pbar_phi - e_phi + 180f;
+			while(epbar_dPhi> 180f)epbar_dPhi -= 360f;
+			while(epbar_dPhi<-180f)epbar_dPhi += 360f;
+			LorentzVector VmissN = new LorentzVector(0,0,0,0);
+			VmissN.add(VT);
+			VmissN.add(VB);
+			VmissN.sub(Ve);
+			VmissN.sub(Vprot);
+			VmissN.sub(Vpbar);
+			epbar_MM = (float)VmissN.mass2();
+			((H2F) ECpbar.getData(e_sect-1).get(0)).fill(epbar_MM,e_W);
+			((H1F) ECpbar.getData(e_sect-1+6).get(0)).fill(epbar_MM);  	
+			if(epbar_MM<4.2) {
+				return true;
+			}
+		}		
+		return false;
+	}
+	
 	public boolean select_epip(){
 		int run = getRunNumber();
 		DataGroup ECpip = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
@@ -1205,6 +1288,9 @@ public class ECperf extends DetectorMonitor {
 	    		fillECprot();
 	    		fillECpi0();
 //	    		System.out.println(" ");
+	    	}
+	    	if(select_epbar()) {
+	    		fillECpbar();
 	    	}
 	    }
 	}
@@ -1294,6 +1380,21 @@ public class ECperf extends DetectorMonitor {
 		((H2F)dg1.getData(7).get(0)).fill(prot_the,ep_dPhi);
 		((H2F)dg1.getData(8).get(0)).fill(prot_vz,ep_dPhi);
 		((H2F)dg1.getData(9).get(0)).fill(prot_mom,prot_beta);  	
+    } 
+    
+    public void fillECpbar() {
+		int run = getRunNumber();   
+		DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpbar"),run);
+		((H2F)dg1.getData(0).get(0)).fill(e_mom,e_the);
+		((H2F)dg1.getData(1).get(0)).fill(pbar_mom,pbar_the);
+		((H2F)dg1.getData(2).get(0)).fill(e_vz,pbar_vz);
+		((H2F)dg1.getData(3).get(0)).fill(pbar_phi,pbar_vz-e_vz);
+		((H2F)dg1.getData(4).get(0)).fill(pbar_the,pbar_vz-e_vz);
+		((H2F)dg1.getData(5).get(0)).fill(pbar_vz, pbar_vz-e_vz);
+		((H2F)dg1.getData(6).get(0)).fill(pbar_phi,epbar_dPhi);
+		((H2F)dg1.getData(7).get(0)).fill(pbar_the,epbar_dPhi);
+		((H2F)dg1.getData(8).get(0)).fill(pbar_vz, epbar_dPhi);
+		((H2F)dg1.getData(9).get(0)).fill(pbar_mom,pbar_beta);  	
     } 
     
     public void fillECpip() {
@@ -1512,6 +1613,7 @@ public class ECperf extends DetectorMonitor {
     	ECelecPlot("ECelec"); 
         SCelecPlot("SCelec");
         ECprotPlot("ECprot");
+        ECpbarPlot("ECpbar");
         ECpipPlot("ECpip");
         ECpimPlot("ECpim");
         ECpi0Plot("ECpi0");
@@ -1540,6 +1642,11 @@ public class ECperf extends DetectorMonitor {
     }
 	
 	public void ECprotPlot(String tabname) {
+		int index = getDetectorTabNames().indexOf(tabname);
+		if(getActive123()<2) plot123(index);		
+	}
+	
+	public void ECpbarPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
 		if(getActive123()<2) plot123(index);		
 	}
@@ -1687,6 +1794,7 @@ public class ECperf extends DetectorMonitor {
         }
 
 	} 	
+	
     public void getECelecSummary(int is1, int is2, int il1, int il2, int ic1, int ic2) {
     	
     	float p1=0,p2=0,f1=0,f2=0;

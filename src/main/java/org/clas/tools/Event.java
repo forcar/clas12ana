@@ -107,6 +107,7 @@ public class Event {
 			getRECparticle(22);
 			getRECparticle(2112);
 			getRECparticle(2212);
+			getRECparticle(-2212);
 			getRECparticle(211);
 			getRECparticle(-211);
 		}
