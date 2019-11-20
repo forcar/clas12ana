@@ -71,6 +71,7 @@ import org.jlab.utils.system.ClasUtilsFile;
         
 /*
  * @author lcsmith
+ * Adapted from KPP-plots framework developed by R. DeVita, V. Ziegler, G. Gavalian
  */
 
 public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ItemListener, ChangeListener {
@@ -320,6 +321,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 22:11; 
 		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  0:11; 
 		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? -1:11; 
+		
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
@@ -488,6 +490,24 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
     }
     
+    private boolean processEvent(DataEvent event) {
+    	
+    	if(event==null) return false; 
+      
+        this.eventNumber = getEventNumber(event);
+        
+        setTriggerPhaseConstants(this.runNumber);
+
+        for(int k=0; k<this.monitors.length; k++) {
+        	this.monitors[k].setEventNumber(this.eventNumber);
+        	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
+            this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
+            this.monitors[k].dataEventAction(event);
+        }  
+        
+        return true;        
+    }
+    
     private DataEvent filterEvent(DataEvent event) {
     	
         int rNum = 0; 
@@ -539,24 +559,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         
         return event;
-    }
-    
-    private boolean processEvent(DataEvent event) {
-    	
-    	if(event==null) return false; 
-      
-        this.eventNumber = getEventNumber(event);
-        
-        setTriggerPhaseConstants(this.runNumber);
-
-        for(int k=0; k<this.monitors.length; k++) {
-        	this.monitors[k].setEventNumber(this.eventNumber);
-        	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
-            this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
-            this.monitors[k].dataEventAction(event);
-        }  
-        
-        return true;        
     }
     
     private void readFiles() {

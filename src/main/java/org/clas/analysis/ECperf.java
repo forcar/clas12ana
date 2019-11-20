@@ -56,7 +56,7 @@ public class ECperf extends DetectorMonitor {
 	
 	public LorentzVector VB, VT, Ve, VGS, Vprot, Vpbar, Vpip, Vpim;
 	public int   e_part_ind, e_sect, e_FTOF_pad1a, e_FTOF_pad1b, e_HTCC_bin_phi, e_HTCC_bin_theta;
-	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz, e_cz;
+	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz, e_cz, e_x, e_y;
 	public float e_xB, e_Q2, e_W;
 
     public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum;
@@ -196,6 +196,16 @@ public class ECperf extends DetectorMonitor {
 	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LW (cm)"),is-1+12);
         	
         }
+        break;
+        
+        case 2:
+        dg = new DataGroup(3,2);
+        for(int iv=0; iv<1; iv++) {
+	        tag = iv+"_"+st+"_"+k+"_"+run;
+	        dg.addDataSet(makeH2(tab+"_1_",tag,200,-400,400,200,-400,400,det[iv],"X (CM)","Y(CM)"),iv);        	
+        }
+        
+        
     	}
     	
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -600,6 +610,7 @@ public class ECperf extends DetectorMonitor {
     	
     	createECkin(0);
     	createECkin(1);
+    	createECkin(2);
     	createECelec(0);
     	createECelec(1);
     	createECelec(2);
@@ -715,6 +726,8 @@ public class ECperf extends DetectorMonitor {
     	
         if(Math.abs(e_vz+3)<12 && e_mom>0.5){
     		e_sect = (int)   elecECAL.get(0).getProperty("sector");
+    		e_x    = (float) elecECAL.get(0).getProperty("x");
+    		e_y    = (float) elecECAL.get(0).getProperty("y");
             e_the  = (float) Math.toDegrees(epart.theta());
             e_phi  = (float) Math.toDegrees(epart.phi());
             e_vx   = (float) epart.vx(); 
@@ -1306,6 +1319,8 @@ public class ECperf extends DetectorMonitor {
 		((H1F) ECkin.getData(e_sect-1).get(0)).fill(lU);
 		((H1F) ECkin.getData(e_sect-1+6).get(0)).fill(lV);
 		((H1F) ECkin.getData(e_sect-1+12).get(0)).fill(lW);
+		ECkin = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECkin"),run);				
+		((H2F) ECkin.getData(0).get(0)).fill(-e_x,e_y);
 	}
 	
 	public void fillECelec() {
