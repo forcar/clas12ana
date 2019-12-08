@@ -830,12 +830,13 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getBeamEnergy(int run) {    	
-    	if (run<=5699) return 10.6041f;
-    	if (run<=5875) return 7.54626f;
-    	if (run<=5957) return 6.53536f;
-    	if (run<=6399) return 10.5986f;
-    	if (run<=6399) return 10.5986f;
-    	if (run<=6783) return 10.1998f;
+    	if (run<=5699)  return 10.6041f;
+    	if (run<=5875)  return 7.54626f;
+    	if (run<=5957)  return 6.53536f;
+    	if (run<=6399)  return 10.5986f;
+    	if (run<=6399)  return 10.5986f;
+    	if (run<=6783)  return 10.1998f;
+    	if (run<=12000) return 10.4096f;
     	return 0.0f;
     }
     
@@ -853,6 +854,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5996&&run<=6000) return getTorusColor("+0.50"); 
     	if (run>=6001&&run<=6141) return 1;
     	if (run>=6142&&run<=6783) return getTorusColor("-1.00");  
+    	if (run>=11000)           return getTorusColor("+1.00");  
     	return getTorusColor("0");
     }
     
@@ -870,12 +872,14 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5996&&run<=6000) return +0.50f;  
     	if (run>=6001&&run<=6141) return  0f;
     	if (run>=6142&&run<=6783) return -1.00f;  
+    	if (run>=11000)           return +1.00f;  
     	return 0.00f;
     } 
     
     public int getRunGroup(int run) {
     	if (run>=5674&&run<=6000) return getRGIndex("rgk");
     	if (run>=6132&&run<=6604) return getRGIndex("rgb");
+    	if (run>=11000)           return getRGIndex("rgb");
     	return getRGIndex("rga");
     }
     
