@@ -83,16 +83,16 @@ public class ECsf extends DetectorMonitor {
 	    System.out.println("ECa:createHistos("+run+")");
         setRunNumber(run);
         runlist.add(run);
-        this.setNumberOfEvents(0);        
-        createEOPHistos(7,0,50,0.,2.5,"ep_em", " Measured Energy (GeV)", " E/P");
+        this.setNumberOfEvents(0);       
+        createEOPHistos(7,0,50,0.0, 2.5,50,0.1,0.4,"ep_em", " Measured Energy (GeV)", " E/P");
         if(dropSummary) return;
-        createEOPHistos(0,0,50,0.5,10.5,"ep_p", " Momentum (GeV)",      " E/P");
-        createEOPHistos(0,1,50,0.5,10.5,"ep_pnf",  " Momentum (GeV)",   " E/P");
-        createEOPHistos(1,0,30,  6.,36.,"ep_thv"," VertexTheta (deg)",   " E/P");
-        createEOPHistos(2,0,48,  3.,37.,"ep_thd"," Detector Theta (deg)"," E/P");
-        createEOPHistos(3,0,48,  3.,27.,"ep_th0"," PC Theta (deg)",      "EPC / P");
-        createEOPHistos(4,0,48,  3.,27.,"ep_th1"," ECIN Theta (deg)",    "EECi / P");
-        createEOPHistos(5,0,48,  3.,27.,"ep_th2"," ECOU Theta (deg)",    "EECo / P");
+        createEOPHistos(0,0,50,0.5,10.5,50,0.1,0.4,"ep_p",  " Momentum (GeV)",   " E/P");
+        createEOPHistos(0,1,50,0.5,10.5,50,0.1,0.4,"ep_pnf"," Momentum (GeV)",   " E/P");
+        createEOPHistos(1,0,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P");
+        createEOPHistos(2,0,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P");
+        createEOPHistos(3,0,48,  3.,32.,50,0,0.35,"ep_th0"," PC Theta (deg)",      "EPC / P");
+        createEOPHistos(4,0,48,  3.,32.,50,0,0.25,"ep_th1"," ECIN Theta (deg)",    "EECi / P");
+        createEOPHistos(5,0,48,  3.,32.,50,0,0.15,"ep_th2"," ECOU Theta (deg)",    "EECo / P");
         createXYZHistos(6);
         createADCHistos(9,0,25,0.,0.5,0.3,0.1,"PARTIAL SF");
         createADCHistos(9,1,25,0.05,0.4,0.4,0.4,"TOTAL SF");
@@ -128,14 +128,14 @@ public class ECsf extends DetectorMonitor {
     	plotTimeLines(12);
     }
     
-    public void createEOPHistos(int k, int pc, int xb, double x1, double x2, String txt1, String txt2, String txt3) {
+    public void createEOPHistos(int k, int pc, int xb, double x1, double x2, int yb, double y1, double y2, String txt1, String txt2, String txt3) {
     	
         int run = getRunNumber();
         H2F h;  
         DataGroup dg = new DataGroup(3,2);
     
         for (int is=1; is<7; is++) {
-            h = new H2F(txt1+"_"+is+"_"+k+"_"+run, xb, x1, x2, 50, 0., 0.5);
+            h = new H2F(txt1+"_"+is+"_"+k+"_"+run, xb, x1, x2, yb, y1, y2);
             h.setTitleX("Sector "+is+txt2);
             h.setTitleY(txt3);
             dg.addDataSet(h,is-1);
@@ -267,7 +267,7 @@ public class ECsf extends DetectorMonitor {
             boolean inDC = (status>=2000 && status<3000);
             e_mom    = ep;
             e_theta  = th;
-           if(inDC && ep>0.01*Ebeam && ep<EB && th>6 && Math.abs(vz)<200 ){
+           if(inDC && ep>0.01*Ebeam && ep<EB && th>4 && Math.abs(vz)<200 ){
                for (int icalo : caloMap.get(ipart)) {
 				    int  det = reccal.getInt("layer", icalo);
 	                short ic = reccal.getShort("index",icalo);
