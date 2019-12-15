@@ -533,7 +533,7 @@ public class ECperf extends DetectorMonitor {
         case 1:		
         dg = new DataGroup(4,3); int n=0;
         tag = st+"_"+k+"_"+run;        	
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0.5,5,50,0,40,      "pizero","p_mm (GeV)","#theta_mm (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0.0,5.5,50,0,100,   "pizero","p_mm (GeV)","#theta_mm (^o)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
@@ -561,18 +561,18 @@ public class ECperf extends DetectorMonitor {
         case 1:		
         dg = new DataGroup(4,3); int n=0;
         tag = st+"_"+k+"_"+run;        	
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0.5,5,50,0,40,      "pizero","p_mm (GeV)","#theta_mm (^o)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0.0,5.5,50,0,100,      "eta","p_mm (GeV)","#theta_mm (^o)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,35,50,0,4,             " ","Opening Angle (^o)","E1*E2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,2.5,50,0,2.5,          " ","p_mm (GeV)","p_ecal (GeV)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,45,50,0,4,             " ","Opening Angle (^o)","E1*E2 (GeV^2)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,5.5,50,0,5.5,          " ","p_mm (GeV)","p_ecal (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,60,0,0.8,                   " ","IVM (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,60,0,0.8,                   " ","IVM (GeV)"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n);n++;
-    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n-1);n++;  
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,5.5,                   " ","p_mm (GeV)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,5.5,                   " ","p_mm (GeV)"),n-1);n++;  
     	((H1F)dg.getData(10).get(1)).setFillColor(4);
     	}
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -844,6 +844,7 @@ public class ECperf extends DetectorMonitor {
         for (Particle p : nlist) {
             short status = (short) p.getProperty("status");
             boolean inDC = (status>=2000 && status<3000);
+            inDC = true;
         	if(inDC && p.p()>0.5) prot_ecal.add(p);        	
         }        
         return prot_ecal.size()>0;
@@ -1510,7 +1511,7 @@ public class ECperf extends DetectorMonitor {
 	    float cxmm = (float) (Math.sin(nm_the*3.14159f/180f)*Math.cos(nm_phi*3.141259f/180f));
 	    float cymm = (float) (Math.sin(nm_the*3.14159f/180f)*Math.sin(nm_phi*3.141259f/180f));  
 	    
-        if(nm_mom>0.4) {
+        if(nm_mom>0.2) {
         	float nphi = newPhi(nm_phi);
         	float   cx = (float) (Math.sin(nm_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
         	float   cy = (float) (Math.sin(nm_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
@@ -1547,7 +1548,7 @@ public class ECperf extends DetectorMonitor {
         	if (cxcut && cycut && good_tagged_fiduc) {        	
         		((H2F)ECnm.getData(5).get(0)).fill(nm_mom, nm.mom);	    	
         		((H1F)ECnm.getData(7).get(0)).fill(nm.mass);
-        		if(nm.mom>0.4) {
+        		if(nm.mom>0.2) {
         			((H2F)ECnm.getData(4).get(0)).fill(nm.opa,nm.VG1.e()*nm.VG2.e());
         			float nphi = newPhi(nm.phi);
         			cx = (float) (Math.sin(nm.the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
@@ -2046,7 +2047,7 @@ public class ECperf extends DetectorMonitor {
     public void showPi0Eff() {
 		int index = getDetectorTabNames().indexOf("ECpi0");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 1.); c.draw(getEff(index));   	
+		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 0.3); c.draw(getEff(index));   	
     }
     
     @Override
