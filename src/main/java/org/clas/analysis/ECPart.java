@@ -31,7 +31,7 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
-import org.jlab.io.hipo3.Hipo3DataSource;
+//import org.jlab.io.hipo3.Hipo3DataSource;
 import org.jlab.service.eb.EBAnalyzer;
 //import org.jlab.service.eb.EBConstants;
 import org.jlab.service.eb.EBEngine;
@@ -99,13 +99,15 @@ public class ECPart  {
 	    ebe.init();
     }
     
-    public void readMC(DataEvent event) {
+    public boolean readMC(DataEvent event) {
         int pid1=0; int pid2=0;
         double ppx1=0,ppy1=0,ppz1=0;
         double ppx2=0,ppy2=0,ppz2=0;
         double rm = 0.;
         
         Boolean isEvio = event instanceof EvioDataEvent;      
+        
+        if (!isEvio && !event.hasBank("MC::Particle")) return false;
         
         if(isEvio&&event.hasBank("GenPart::true")) {
             EvioDataBank bank = (EvioDataBank) event.getBank("GenPart::true");
@@ -143,6 +145,8 @@ public class ECPart  {
         refTH = Math.acos(ppz/refP)*180/Math.PI; 
         
         h5.fill(refP);
+        
+        return true;
     }
     
     public static List<DetectorResponse>  readEvent(DataEvent event, String bankName, DetectorType type){        
@@ -203,6 +207,7 @@ public class ECPart  {
     public void getNeutralResponses(List<DetectorResponse> response) {        
         getUnmatchedResponses(response);
        	getSingleNeutralResponses();
+       	/*
        	System.out.println(" ");
        	for(List<DetectorResponse> lresp : unmatchedResponses) {
        		int n=0;
@@ -211,6 +216,7 @@ public class ECPart  {
        		    n++;
        		}
        	}
+       	*/
     }
     
     public void getMIPResponses(List<DetectorResponse> response) {        
@@ -743,7 +749,7 @@ public class ECPart  {
     
     public void pizeroDemo(String[] args) {
     	
-        Hipo3DataSource reader = new Hipo3DataSource();
+        HipoDataSource reader = new HipoDataSource();
         ECEngine        engine = new ECEngine();
         ECPart            part = new ECPart();  
         
@@ -755,7 +761,9 @@ public class ECPart  {
         
         String evioPath = "/Users/colesmith/clas12/sim/pizero/hipo/";
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
-        String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo"; int sec=2;
+//      String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo4"; int sec=2;
+//    String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35-r5716.hipo"; int sec=2;
+        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35-r5716.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
         
         // GEMC file: 10k 2.0 GeV pizeros thrown at 25 deg into Sector 2 using GEMC 2.4 geometry
@@ -816,7 +824,7 @@ public class ECPart  {
         while(reader.hasEvent()){
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);   
-            part.readMC(event);
+            if(part.readMC(event)) {
             part.getNeutralResponses(part.readEC(event,"ECAL::clusters"));
             double invmass = 1e3*Math.sqrt(part.getTwoPhotonInvMass(sec));
             
@@ -825,7 +833,6 @@ public class ECPart  {
             boolean pcec1 = goodPhotons(121,part.p1,part.p2);
             boolean pcec2 = goodPhotons(122,part.p1,part.p2);
            
-            
             h9.fill(part.p1.getBeta(DetectorType.ECAL,1,0.),part.p1.getHit(DetectorType.ECAL).getPosition().z());  
             h10.fill(part.p2.getBeta(DetectorType.ECAL,1,0.),part.p2.getHit(DetectorType.ECAL).getPosition().z());
 
@@ -843,6 +850,7 @@ public class ECPart  {
                     h2d.fill(part.refE,Math.acos(part.cpi0)*180/Math.PI-part.refTH); //Pizero theta angle error
                     nimcut++; h8.fill(part.refE);
                 }
+            }
             }
         }
         
@@ -902,8 +910,8 @@ public class ECPart  {
     public static void main(String[] args){
         ECPart part = new ECPart();  
         part.initGraphics();
-//     	part.pizeroDemo(args);
-     	part.neutronDemo(args);
+     	part.pizeroDemo(args);
+//     	part.neutronDemo(args);
 //        part.electronDemo(args);
     }
     
