@@ -463,12 +463,9 @@ public class ECmip extends DetectorMonitor {
        int trigger = 0;
        int trig = TRpid;
        
-//       System.out.println("New Event");
-       part.clear();
-//       System.out.println("I am here 1");
+        part.clear();
       
        if (recPart!=null && recEven!=null) {
-//    	   System.out.println("Inside PID loop");   	   
     	    isMuon = false;  
     	    startTime = (isHipo3Event) ? recEven.getFloat("STTime", 0):
                                          recEven.getFloat("startTime", 0);
