@@ -1349,7 +1349,7 @@ public class ECperf extends DetectorMonitor {
 	    	}	
 	    }
 
-	    if(goodPROT) { // FC proton
+	    if(goodPROT && !goodPIP && !goodPIM) { 
 	    	if(select_ep()) { // (e'p) tagged neutral meson nm
 	    		fillECprot();
 	    		if(taggedPI0) fillECnm("ECpi0");
@@ -1538,14 +1538,16 @@ public class ECperf extends DetectorMonitor {
         	boolean  cxcut = Math.abs(dcx)<0.06;	
         	boolean  cycut = Math.abs(dcy)<0.06;
         
-        	if(nm.getPhotonSector(0)!=e_sect && nm.getPhotonSector(1)!=e_sect) {         		
+        	boolean goodSector = nm.getPhotonSector(0)!=e_sect && nm.getPhotonSector(1)!=e_sect;
+        	
+        	if(goodSector) {         		
             	((H2F)ECnm.getData(1).get(0)).fill(dcx,dcy);
             	if(cxcut) ((H1F)ECnm.getData(3).get(0)).fill(dcy);
             	if(cycut) ((H1F)ECnm.getData(2).get(0)).fill(dcx);                
             	((H1F)ECnm.getData(6).get(0)).fill(nm.mass);            	
         	}
         
-        	if (cxcut && cycut && good_tagged_fiduc) {        	
+        	if (goodSector && cxcut && cycut && good_tagged_fiduc) {        	
         		((H2F)ECnm.getData(5).get(0)).fill(nm_mom, nm.mom);	    	
         		((H1F)ECnm.getData(7).get(0)).fill(nm.mass);
         		if(nm.mom>0.2) {
