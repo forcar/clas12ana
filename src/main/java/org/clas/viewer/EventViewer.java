@@ -166,7 +166,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECperf("ECperf"); 
+    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -225,17 +225,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ct2 = new JRadioButtonMenuItem("HV Slot");    ct2.addItemListener(this);       group.add(ct2); menu.add(ct2);
         ct3 = new JRadioButtonMenuItem("Sectors");    ct3.addItemListener(this);       group.add(ct3); menu.add(ct3);
         menuBar.add(menu);
-        
 
+        String TriggerDef[] = { "Electron OR",
+		        "e Sector 1","e Sector 2","e Sector 3","e Sector 4","e Sector 5","e Sector 6",
+		        "Muons S1+ S4-","Muons S2+ S5-","Muons S3+ S6-",
+		        "Muons S4+ S1-","Muons S5+ S2-","Muons S6+ S3-","","","","","","","","","","","","","","","","","","",
+		        "1K Pulser"};   
         
-        String TriggerDef[] = { "Electron",
-        		        "Electron S1","Electron S2","Electron S3","Electron S4","Electron S5","Electron S6",
-        		        "HTCC S1","HTCC S2","HTCC S3","HTCC S4","HTCC S5","HTCC S6",
-        		        "PCAL S1","PCAL S2","PCAL S3","PCAL S4","PCAL S5","PCAL S6",
-        		        "ECAL S1","ECAL S2","ECAL S3","ECAL S4","ECAL S5","ECAL S6",
-        		        "HT.PC","HT.EC","PC.EC","FTOF.PC","Unused","Unused",
-        		        "1K Pulser"};
-        		        
         menu = new JMenu("TriggerBits");
         
         for (int i=0; i<32; i++) {
@@ -254,6 +250,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             });         
             menu.add(ctr);         	        	 
         }
+        
+        menuBar.add(menu);
         
         menu     = new JMenu("MIP Trigger");
         group = new ButtonGroup();
