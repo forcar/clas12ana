@@ -45,7 +45,6 @@ public class ECpi0 extends DetectorMonitor{
 	ECPart                         part = new ECPart();
     List<TOFPaddle>          paddleList = null;
     List<List<DetectorResponse>>    res = new ArrayList<List<DetectorResponse>>();   
-    List<DetectorResponse>  ecClusters  = null;
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
        
     TreeFile                       tree = null; 
@@ -410,7 +409,7 @@ public class ECpi0 extends DetectorMonitor{
         double shift = 9.0;
         
         for (int idet=0; idet<3; idet++) {
-            res.add(part.eb.getUnmatchedResponses(ecClusters, DetectorType.ECAL,iidet[idet]));
+            res.add(part.eb.getUnmatchedResponses(null, DetectorType.ECAL,iidet[idet]));
             for(int i = 0; i < res.get(idet).size(); i++){
                 int        is = res.get(idet).get(i).getDescriptor().getSector();
                 double energy = res.get(idet).get(i).getEnergy();
@@ -473,10 +472,8 @@ public class ECpi0 extends DetectorMonitor{
         
         if (dropBanks) dropBanks(event);
         
-//        ecClusters = part.readEC(event,"ECAL::clusters");  
-        ecClusters = part.readEC(event,"REC::Calorimeter");  
-        
-        if (ecClusters.size()==0) return;
+//      part.readEC(event,"ECAL::clusters");  
+        part.readEC(event,"REC::Calorimeter");  
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
@@ -489,7 +486,7 @@ public class ECpi0 extends DetectorMonitor{
         res.clear();
         
         for (int idet=0; idet<3; idet++) {
-            res.add(part.eb.getUnmatchedResponses(ecClusters, DetectorType.ECAL,iidet[idet])); 
+            res.add(part.eb.getUnmatchedResponses(null, DetectorType.ECAL,iidet[idet])); 
             for(int i = 0; i < res.get(idet).size(); i++){
                 int        is = res.get(idet).get(i).getDescriptor().getSector();
                 double energy = res.get(idet).get(i).getEnergy();
@@ -537,7 +534,7 @@ public class ECpi0 extends DetectorMonitor{
             }      
         } 
         
-        part.getNeutralResponses(ecClusters);
+        part.getNeutralResponses();
         
         for (int is=1; is<7; is++) {
            
