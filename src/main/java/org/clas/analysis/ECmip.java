@@ -72,6 +72,7 @@ public class ECmip extends DetectorMonitor {
                                  "ATT",
                                  "MIPvP");
         
+        this.useRDIFButtons(true);
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
@@ -138,9 +139,14 @@ public class ECmip extends DetectorMonitor {
      public void plotAnalysis(int run) {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
-//    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMeanSummary(3);plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
-    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
+    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMean(); plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
+//    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
     	 updateUVW(1); plotTimeLines(11);    	    
+     }
+     
+     public void plotMean() {
+    	 if(getActiveRDIF()==0 && runlist.size()==2) {plotMeanTL(3); return;}
+    	 if(getActiveRDIF()==1) plotMeanSummary(3);
      }
      
      public void createXYHistos(int k, int nb, int bmx) {
@@ -427,11 +433,10 @@ public class ECmip extends DetectorMonitor {
     	
        IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(2);
        IndexedList<Vector3>            rl = new IndexedList<Vector3>(2);  
-	   Boolean                     isMuon = true;
-       Boolean goodPC,goodECi,goodECo;       
-       int nrows = 0;
+       
+	   Boolean isMuon = true, goodEvt = false, goodRows = false, goodPC,goodECi,goodECo;       
+       int nrows = 0, trigger = 0, trig = TRpid, run = getRunNumber();
        double startTime = -1000;
-       Boolean goodEvt  = false, goodRows = false;	   
 
        DataBank bank1    = null;
        DataBank bank2    = null;
@@ -457,19 +462,13 @@ public class ECmip extends DetectorMonitor {
        if(event.hasBank("ECAL::calib"))            ecalCali = event.getBank("ECAL::calib");
 
        if(runConf == null) return;
-    	   
-	   int run = getRunNumber();
-	   
-       int trigger = 0;
-       int trig = TRpid;
        
-        part.clear();
+       part.clear();
       
-       if (recPart!=null && recEven!=null) {
+       if (recPart!=null && recEven!=null) { //physics run data
     	    isMuon = false;  
     	    startTime = (isHipo3Event) ? recEven.getFloat("STTime", 0):
-                                         recEven.getFloat("startTime", 0);
-            
+                                         recEven.getFloat("startTime", 0);           
             if(startTime > -100) { 
             	
                 for(int i = 0; i < recPart.rows(); i++){
@@ -500,11 +499,8 @@ public class ECmip extends DetectorMonitor {
                         }                        
                     }
                     part.add(i,p);     //Lists do not support sparse indices !!!!!            
-                }
-                
-            }
-            
-            
+                }                
+            }                       
        }
        
 //       System.out.println("I am here 2");
@@ -531,6 +527,7 @@ public class ECmip extends DetectorMonitor {
        if(!isMuon&&goodREC&&goodECAL) {goodEvt = true; bank1 = recCalo;}
        
        if (goodEvt) {
+    	   
            bank2 = ecalClus; 
            bank3 = ecalCali;
            
@@ -649,23 +646,23 @@ public class ECmip extends DetectorMonitor {
 // PCAL-ECin: 325.5 mm
 // ECin-ECou: 14*2.2+15*10.0 = 180.8 mm
 // PCAL-ECou: 325.5+180.8= 506.3 mm
-            	   
+
                 float v12mag = 0;
                 float v13mag = 0;
                 float v23mag = 0;
-            	               	   
-            	if(trig>-1) {
-                Vector3  v1 = new Vector3(rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),rl.getItem(iis,0).z());
-                Vector3  v2 = new Vector3(rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),rl.getItem(iis,1).z());
-                Vector3  v3 = new Vector3(rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),rl.getItem(iis,2).z());
-                Vector3 v23 = new Vector3(v2.x(),v2.y(),v2.z());
-        
-                v2.sub(v1); v23.sub(v3); v3.sub(v1);  
-                
-                v12mag = (float) v2.mag();
-                v13mag = (float) v3.mag();
-                v23mag = (float) v23.mag();
-            	}
+               	               	   
+               	if(trig>-1) {
+                   Vector3  v1 = new Vector3(rl.getItem(iis,0).x(),rl.getItem(iis,0).y(),rl.getItem(iis,0).z());
+                   Vector3  v2 = new Vector3(rl.getItem(iis,1).x(),rl.getItem(iis,1).y(),rl.getItem(iis,1).z());
+                   Vector3  v3 = new Vector3(rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),rl.getItem(iis,2).z());
+                   Vector3 v23 = new Vector3(v2.x(),v2.y(),v2.z());
+           
+                   v2.sub(v1); v23.sub(v3); v3.sub(v1);  
+                   
+                   v12mag = (float) v2.mag();
+                   v13mag = (float) v3.mag();
+                   v23mag = (float) v23.mag();
+               	}            	   
             	
                 H2F h;
                 double ectot = e4c[is][0]+e7c[is][0] ; double etot = e1c[is][0]+ectot ;
@@ -807,6 +804,7 @@ public class ECmip extends DetectorMonitor {
 //                	((H2F) this.getDataGroup().getItem(iis,2,13,run).getData(2).get(0)).fill(p7c[is][n],ec/mipc[2]); 
 //                	((H2F) this.getDataGroup().getItem(iis,1,13,run).getData(2).get(0)).fill(p7p[is][0][n],ec/mipc[2]); 
                     
+            		
                 	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?mipc[2]:0);
                 	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(2).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),ec<mxc[2]?ec:0); 
                 	((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(6).get(0)).fill(-rl.getItem(iis,2).x(),rl.getItem(iis,2).y(),epu<mxp[2]?mipp[2]:0);
@@ -852,6 +850,8 @@ public class ECmip extends DetectorMonitor {
         int    is = getActiveSector(); 
         int     i = getActiveLayer();
         int     j = getActiveView();
+        
+        if (pc==2) pc=1;
         
         int    np = npmt[i*3+j];
         
@@ -936,7 +936,7 @@ public class ECmip extends DetectorMonitor {
         FitSummary.add(rms,  is,id+10*(pc+1)*(pc+1)*(il+1),2,run);                    
         FitSummary.add(Mean, is,id+10*(pc+1)*(pc+1)*(il+1),5,run);        	        
     }
-
+        
     public void plotMeanSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -958,7 +958,7 @@ public class ECmip extends DetectorMonitor {
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("MEAN / MIP");
-            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
+            plot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
             n++; c.draw(plot1); c.draw(plot2,"same");
             f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         }
@@ -985,7 +985,7 @@ public class ECmip extends DetectorMonitor {
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("RMS / MEAN");
-            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
+            plot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
             n++; c.draw(plot1);
         }
         }
@@ -1022,7 +1022,7 @@ public class ECmip extends DetectorMonitor {
         c.cd(n); c.getPad(n).getAxisY().setRange((pc==0)?0.1:0.18, (pc==0)?0.3:0.5); 
         c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
         if(n==0||n==3||n==6||n==9||n==12||n==15) hwplot1.getAttributes().setTitleY("RMS / MEAN");
-        hwplot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" PMT");
+        hwplot1.getAttributes().setTitleX("S"+is+" "+det[id]+" PMT");
         n++; c.draw(hwplot1); for(DataLine line: lines) c.draw(line);
         F1D f1 = new F1D("p0","[a]",0.,m); f1.setParameter(0,1);
         f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
@@ -1066,13 +1066,49 @@ public class ECmip extends DetectorMonitor {
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==3||n==6||n==9||n==12||n==15) hwplot1.getAttributes().setTitleY("MEAN / MIP");
-            hwplot1.getAttributes().setTitleX("SECTOR "+is+" "+det[id]+" PMT");
+            hwplot1.getAttributes().setTitleX("S"+is+" "+det[id]+" PMT");
             n++; c.draw(hwplot1); c.draw(hwplot2,"same"); for(DataLine line: lines) c.draw(line);
             F1D f1 = new F1D("p0","[a]",0.,m); f1.setParameter(0,1);
             f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         }
         }        
     }   
+    
+    public void plotMeanTL(int index) {
+       
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        int           pc = getActivePC();
+        int            n = 0;
+        
+        double ymin=-0.5f, ymax=0.3f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
+        
+        for (int is=1; is<7; is++) {
+        for (int id=0; id<3; id++) {
+        for (int il=0; il<3; il++) {           	
+        	GraphErrors hwplot1 = new GraphErrors();
+            F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,0);
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(0));
+            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(1));
+            int m=0;
+            for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
+            	double  y1 = plot1.getDataY(ip)-plot2.getDataY(ip);
+                double y1e = Math.sqrt(plot1.getDataEY(ip)*plot1.getDataEY(ip)+plot2.getDataEY(ip)*plot2.getDataEY(ip));
+	        	hwplot1.addPoint(m, y1, plot1.getDataEX(ip), y1e);
+            }            
+            hwplot1.setMarkerColor(1);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==9||n==18||n==27||n==36||n==45) hwplot1.getAttributes().setTitleY("#Delta MEAN / MIP");
+            hwplot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
+            n++; c.draw(hwplot1); 
+            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        }
+        }
+        }        
+    }
     
     public void plotXYSummary(int index) {        
     	
