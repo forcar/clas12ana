@@ -1106,10 +1106,6 @@ public class ECperf extends DetectorMonitor {
     		plist.add(p);
     	}
     	
-    	public void setESECTOR(int val) {
-    		this.e_sect=val;
-    	}
-    	
     	public Particle getPhoton(int n) {
     		return plist.get(n);    		
     	}
