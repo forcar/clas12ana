@@ -166,7 +166,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECsf("ECsf"); 
         }
     }
     
@@ -463,7 +463,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private int getRunNumber(DataEvent event) {
-        DataBank bank = event.getBank("RUN::config");       
+        DataBank bank = event.getBank("RUN::config"); 
+        if(this.ccdbRunNumber >0) return this.ccdbRunNumber;
         return (bank!=null) ? bank.getInt("run",0):this.runNumber;
     }
     

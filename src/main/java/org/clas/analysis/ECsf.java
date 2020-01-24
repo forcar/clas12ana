@@ -28,7 +28,8 @@ public class ECsf extends DetectorMonitor {
 
     String[]  det = {"pcal","ecin","ecou"};
     int[]    npmt = {68,62,62,36,36,36,36,36,36};    
-    String[]    v = new String[]{"u","v","w"};    
+    String[]    v = new String[]{"u","v","w"};
+    float     EB = 0;
     int nelec=0;
     
     public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
@@ -52,6 +53,7 @@ public class ECsf extends DetectorMonitor {
                                  "Fits Sig 2",
                                  "Fits Sig 3",
                                  "Timing");
+
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
@@ -80,14 +82,17 @@ public class ECsf extends DetectorMonitor {
     
     @Override
     public void createHistos(int run) {        
-	    System.out.println("ECa:createHistos("+run+")");
+	    System.out.println("ECsf:createHistos("+run+")");
+        EB = getBeamEnergy(run);
+        System.out.println("ECsf: EB="+EB);
+	    
         setRunNumber(run);
         runlist.add(run);
         this.setNumberOfEvents(0);       
-        createEOPHistos(7,0,50,0.0, 2.5,50,0.1,0.4,"ep_em", " Measured Energy (GeV)", " E/P");
+        createEOPHistos(7,0,50,0.0, EB*0.25,50,0.1,0.4,"ep_em", " Measured Energy (GeV)", " E/P");
         if(dropSummary) return;
-        createEOPHistos(0,0,50,0.5,10.5,50,0.1,0.4,"ep_p",  " Momentum (GeV)",   " E/P");
-        createEOPHistos(0,1,50,0.5,10.5,50,0.1,0.4,"ep_pnf"," Momentum (GeV)",   " E/P");
+        createEOPHistos(0,0,50,0.5,EB,50,0.1,0.4,"ep_p",  " Momentum (GeV)",   " E/P");
+        createEOPHistos(0,1,50,0.5,EB,50,0.1,0.4,"ep_pnf"," Momentum (GeV)",   " E/P");
         createEOPHistos(1,0,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P");
         createEOPHistos(2,0,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P");
         createEOPHistos(3,0,48,  3.,32.,50,0,0.35,"ep_th0"," PC Theta (deg)",      "EPC / P");
@@ -214,7 +219,7 @@ public class ECsf extends DetectorMonitor {
     	int run = getRunNumber();
     	DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
     	
-    	float Ebeam=10.6f, EB=10.6f, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0; 
+    	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0; 
     	float[]    x_ecal = new float[3];
         float[]    y_ecal = new float[3];
     	float[] e_ecal_TH = new float[3];
@@ -232,7 +237,7 @@ public class ECsf extends DetectorMonitor {
 
         int trigger_sect = 0;
         
-        boolean goodEvent = event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter");
+        boolean goodEvent = event.hasBank("REC::Particle")&& event.hasBank("REC::Calorimeter");
         
         if (!goodEvent) return;
         
@@ -248,14 +253,9 @@ public class ECsf extends DetectorMonitor {
       	
       	trigger_sect = getElecTriggerSector(); 
         int tpid = 11;
+
+        if (!(trigger_sect>0) || !partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return;      	
         
-      	if (!(trigger_sect>0)) return;
-      	
-      	if(!partMap.containsKey(tpid)) return;
-      	if(partMap.get(tpid).size()!=1) return;
-      	
-//	    nelec++;System.out.println("Evnt "+getEventNumber()+" Nelec "+nelec);
-      	    
         for (int ipart : partMap.get(tpid)) {			
             float px = recpar.getFloat("px", ipart);
             float py = recpar.getFloat("py", ipart);
@@ -267,7 +267,7 @@ public class ECsf extends DetectorMonitor {
             boolean inDC = (status>=2000 && status<3000);
             e_mom    = ep;
             e_theta  = th;
-           if(inDC && ep>0.01*Ebeam && ep<EB && th>4 && Math.abs(vz)<200 ){
+            if(inDC && ep>0.01*EB && ep<EB && th>4 && Math.abs(vz)<200 ){
                for (int icalo : caloMap.get(ipart)) {
 				    int  det = reccal.getInt("layer", icalo);
 	                short ic = reccal.getShort("index",icalo);
@@ -282,7 +282,7 @@ public class ECsf extends DetectorMonitor {
                     Point3D xyz = new Point3D(x,y,z);
                     xyz.rotateZ(Math.toRadians(-60*(e_sect-1)));
                     xyz.rotateY(Math.toRadians(-25.));
-                    xyz.translateXYZ(-60,0,0);
+                    xyz.translateXYZ(-(det==1?40:50),0,0);
                     xyz.rotateY(Math.toRadians(25.));
                     xyz.rotateZ(Math.toRadians(60*(e_sect-1)));
                     x_ecal[ind]     = (float) xyz.x();
@@ -325,7 +325,7 @@ public class ECsf extends DetectorMonitor {
         boolean     good_e = e_sect>0&&e_sect<7;         
         boolean good_fiduc = iU[0]>2&&iV[0]<63&&iW[0]<63&&iU[1]>2&&iV[1]<36&&iW[1]<36&&iU[2]>2&&iV[2]<36&&iW[2]<36;
         
-        if(e_mom>Ebeam*0.02 && sff[3] > 0.02){			
+        if(e_mom>EB*0.02 && sff[3] > 0.02){			
            if(good_e){	
               if(good_fiduc) {
                  ((H2F) this.getDataGroup().getItem(0,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);

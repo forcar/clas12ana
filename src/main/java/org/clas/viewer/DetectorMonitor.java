@@ -93,6 +93,7 @@ public class DetectorMonitor implements ActionListener {
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
     private ButtonGroup                          bG4 = null;
+    private ButtonGroup                          bRO = null;
     private int                       numberOfEvents = 0;
     public  Boolean                    sectorButtons = false;
     private Boolean                       sliderPane = false;
@@ -102,6 +103,7 @@ public class DetectorMonitor implements ActionListener {
     private int                  detectorActiveLayer = 0;
     private int                    detectorActivePID = 0;
     private int                    detectorActive123 = 1;
+    private int                   detectorActiveRDIF = 0;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
@@ -110,10 +112,11 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                           use123 = false;
     private Boolean                           useCAL = false;
     private Boolean                           useSEC = false;
+    private Boolean                          useRDIF = false;
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
     
-    public JRadioButton bEL,bPI,bPH,bP,bC,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bEL,bPI,bPH,bP,bC,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
     private JCheckBox tbBtn;
     public  JCheckBox arBtn;
     
@@ -526,6 +529,10 @@ public class DetectorMonitor implements ActionListener {
     	useUVW = flag;
     }
     
+    public void useRDIFButtons(boolean flag) {
+    	useRDIF = flag;
+    } 
+    
     public void useCALButtons(boolean flag) {
     	useCAL = flag;
     }
@@ -560,7 +567,11 @@ public class DetectorMonitor implements ActionListener {
     
     public int getActive123() {
 	    return detectorActive123;
-    }   
+    }
+    
+    public int getActiveRDIF() {
+    	return detectorActiveRDIF;
+    }
     
     public int getNumberOfEvents() {
         return numberOfEvents;
@@ -588,11 +599,18 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getButtonPane() {
         JPanel buttonPane = new JPanel();
+        
+        if(useRDIF) {
+        b0 = new JRadioButton("RDIF"); buttonPane.add(b0); b0.setActionCommand("0"); b0.addActionListener(this); 
+        b1 = new JRadioButton("MEAN"); buttonPane.add(b1); b1.setActionCommand("1"); b1.addActionListener(this); 
+        bRO = new ButtonGroup(); bRO.add(b0); bRO.add(b1); 
+        b1.setSelected(true);        	
+        }
                 
         if(usePC) {
         bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("1"); bP.addActionListener(this);
         bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("0"); bC.addActionListener(this); 
-        bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC);
+        bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC); 
         bP.setSelected(true);
         }
         
@@ -719,6 +737,7 @@ public class DetectorMonitor implements ActionListener {
         if(bG2!=null) detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         if(bG3!=null) detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
+        if(bRO!=null) detectorActiveRDIF   = Integer.parseInt(bRO.getSelection().getActionCommand());
         plotHistos(getRunNumber());
     } 
     
@@ -831,12 +850,13 @@ public class DetectorMonitor implements ActionListener {
     
     public float getBeamEnergy(int run) {    	
     	if (run<=5699)  return 10.6041f;
-    	if (run<=5875)  return 7.54626f;
-    	if (run<=5957)  return 6.53536f;
-    	if (run<=6399)  return 10.5986f;
+    	if (run<=5875)  return  7.54626f;
+    	if (run<=5957)  return  6.53536f;
     	if (run<=6399)  return 10.5986f;
     	if (run<=6783)  return 10.1998f;
-    	if (run<=12000) return 10.4096f;
+    	if (run<=11285) return 10.4096f;
+    	if (run<=11323) return  4.17179f;
+    	if (run<=50000) return 10.2129f;
     	return 0.0f;
     }
     
@@ -854,7 +874,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5996&&run<=6000) return getTorusColor("+0.50"); 
     	if (run>=6001&&run<=6141) return 1;
     	if (run>=6142&&run<=6783) return getTorusColor("-1.00");  
-    	if (run>=11000)           return getTorusColor("+1.00");  
+    	if (run>=11285&&run<=11285) return getTorusColor("+1.00");  
+    	if (run>=11286)           return getTorusColor("-1.00");  
     	return getTorusColor("0");
     }
     
@@ -872,7 +893,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5996&&run<=6000) return +0.50f;  
     	if (run>=6001&&run<=6141) return  0f;
     	if (run>=6142&&run<=6783) return -1.00f;  
-    	if (run>=11000)           return +1.00f;  
+    	if (run>=11285&&run<=11285) return +1.00f;  
+    	if (run>=11286)           return -1.00f;  
     	return 0.00f;
     } 
     
