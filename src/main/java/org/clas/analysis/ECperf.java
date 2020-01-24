@@ -115,6 +115,7 @@ public class ECperf extends DetectorMonitor {
                 				 "ECpbar",
         		                 "ECpip",
               				     "ECpim",
+              				     "ECmip",
         		                 "ECpi0",
         		                 "ECeta",
         		                 "ECneut",
@@ -673,7 +674,7 @@ public class ECperf extends DetectorMonitor {
     	
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
-    	ev.setMC(event.hasBank("MC::Event"));
+    	ev.requireOneElectron(!event.hasBank("MC::Event"));
         if(getRunNumber()==5700) ev.setTimeShift(2f);
         
     	if(!ev.procEvent(event)) return;
@@ -752,9 +753,9 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==2) good_fiduc3 = iU>2&&iV<36&&iW<36;   		
    	    }
           
-    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
+//    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
    	
-//    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
+    	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         if(Math.abs(e_vz+3)<12 && e_mom>0.5){
     		e_sect = (int)   elecECAL.get(0).getProperty("sector");
@@ -1319,11 +1320,11 @@ public class ECperf extends DetectorMonitor {
 	
 	public void debug() {
 	    IndexGenerator ig = new IndexGenerator();
-	    for (Map.Entry<Long,List<Particle>>  entry : ev.part.getMap().entrySet()){
+	    for (Map.Entry<Long,List<Particle>>  entry : ev.partmap.getMap().entrySet()){
 	           long hash = entry.getKey();
 	           int pid = ig.getIndex(hash, 0);
 	           int sec = ig.getIndex(hash, 1);
-	           for (Particle pp : ev.part.getItem(pid,sec)) {	        	   
+	           for (Particle pp : ev.partmap.getItem(pid,sec)) {	        	   
 	               System.out.println(pid+" "+sec+" "+(int)pp.getProperty("layer")
 	                                             +" "+(int)pp.getProperty("status")
 	                                             +" "+     pp.getProperty("energy"));

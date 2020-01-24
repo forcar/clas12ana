@@ -23,16 +23,19 @@ public class Event {
 	private DataBank caloBank = null;
 	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
+	private DataBank caliBank = null;
 	private DataBank trajBank = null;
 	
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
 	
-	public IndexedList<List<Particle>> part = new IndexedList<List<Particle>>(1);
-	Map<Integer,List<Integer>>      caloMap = new HashMap<Integer,List<Integer>>();
-	Map<Integer,List<Integer>>      ftofMap = new HashMap<Integer,List<Integer>>();
-	Map<Integer,List<Integer>>      partMap = new HashMap<Integer,List<Integer>>();
-	Map<Integer,List<Integer>>      trajMap = new HashMap<Integer,List<Integer>>();
+	public List<Particle>  part = new ArrayList<Particle>();
+	
+	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);    
+	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>         trajMap = new HashMap<Integer,List<Integer>>();
 	
 	private boolean hasRUNconfig = false;
 	private boolean hasRECevent  = false;
@@ -44,7 +47,7 @@ public class Event {
 	private boolean hasECALcalib = false;
 	private boolean hasRECtraj = false;
 	
-	private boolean isMC = false;
+	private boolean requireOneElectron = false;
 	
 	int[]        tb = new int[32];
 	public int[] N1 = new int[6];
@@ -64,6 +67,7 @@ public class Event {
 		trigger=0;
 		starttime = -100;
 		part.clear();
+		partmap.clear();
 		partMap.clear();
 		ftofMap.clear();
 		caloMap.clear();
@@ -93,8 +97,9 @@ public class Event {
         init(); 
         if(!filter()) return false;
 	    if(hasRUNconfig)      processRUNconfig();
-	    if(!isMC) if(!countElectronTriggers(false)) return false;
+	    if(requireOneElectron)   if(!countElectronTriggers(false)) return false;
 	    if(hasRECevent)       processRECevent();
+	    if(starttime > -100) {
 	    if(hasRECcalorimeter) processRECcalorimeter();
 	    if(hasECALclusters)   processECALclusters();
 	    if(hasRECcalorimeter) processRECscintillator();
@@ -102,7 +107,6 @@ public class Event {
 	    if(hasRECtraj)        processRECtraj();
 	    if(hasECALcalib)      processECALcalib();		
 	    if(hasRECparticle)    processRECparticle();
-		if(starttime > -100) {
 			getRECparticle(11);
 			getRECparticle(22);
 			getRECparticle(2112);
@@ -110,14 +114,15 @@ public class Event {
 			getRECparticle(-2212);
 			getRECparticle(211);
 			getRECparticle(-211);
+			return true;
 		}
-	    return true;
+	    return false;
 	}
 	
 	public List<Particle> getParticle(int ipid) {		
 		List<Particle> pout = new ArrayList<Particle>();
 	    IndexGenerator ig = new IndexGenerator();                
-	    for (Map.Entry<Long,List<Particle>>  entry : part.getMap().entrySet()){
+	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
 	           int pid = ig.getIndex(entry.getKey(), 0);   
 	           if(ipid==pid) {for (Particle p : entry.getValue()) pout.add(p);} 
 	    }	
@@ -140,8 +145,8 @@ public class Event {
 		eventNumber = val;
 	}
 	
-	public void setMC(boolean val) {
-		isMC = val;
+	public void requireOneElectron(boolean val) {
+		requireOneElectron = val;
 	}
 	
 	public void setTimeShift(float val) {
@@ -199,6 +204,7 @@ public class Event {
 	
 	public void storeRECparticle(DataBank bank) {
 		partBank = bank;
+		getPART();
 		partMap  = loadMapByIndex(partBank,"pid");	
 	}
 
@@ -227,7 +233,7 @@ public class Event {
 	}
 	
 	public void storeECALcalib(DataBank bank) {	
-		
+		caliBank = bank;		
 	}		
 	
 	public void reportElectrons(String tag) {
@@ -281,11 +287,35 @@ public class Event {
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
 				int ip = pid<0?Math.abs(pid)+1:pid;				
-				if(!part.hasItem(ip)) {part.add(new ArrayList<Particle>(),ip);}
-				    part.getItem(ip).add(p);
+				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);}
+				    partmap.getItem(ip).add(p);
 
 			}		
 		}
+	}
+	
+	public void getPART() {
+        for(int i = 0; i < partBank.rows(); i++){           	
+            int      pid = partBank.getInt("pid", i);              
+            float     px = partBank.getFloat("px", i);
+            float     py = partBank.getFloat("py", i);
+            float     pz = partBank.getFloat("pz", i);
+            float     vx = partBank.getFloat("vx", i);
+            float     vy = partBank.getFloat("vy", i);
+            float     vz = partBank.getFloat("vz", i);
+            float   beta = partBank.getFloat("beta", i);
+            short status = (short) Math.abs(partBank.getShort("status", i));
+            Particle p = new Particle(); 
+            if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0);}             
+            if (pid!=0) {
+            	p.initParticle(pid, px, py, pz, vx, vy, vz);            	   
+            	p.setProperty("ppid", pid);
+                p.setProperty("status", status);
+                p.setProperty("beta", beta);
+                p.setProperty("index",i);                        
+            }
+            part.add(i,p);     //Lists do not support sparse indices !!!!!            
+        }                		
 	}
 	
 	public List<Particle> getFTOF(int ipart) {
@@ -318,6 +348,7 @@ public class Event {
 				Particle p = new Particle();                         
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
 				p.setProperty("layer",  caloBank.getByte("layer",imap));
+				p.setProperty("pindex", caloBank.getShort("pindex",imap));
 				p.setProperty("index",  caloBank.getShort("index",imap));
 				p.setProperty("energy", caloBank.getFloat("energy",imap)*1e3);
 				p.setProperty("time",   caloBank.getFloat("time",imap));
@@ -331,12 +362,22 @@ public class Event {
 				p.setProperty("lu",     caloBank.getFloat("lu",imap));
 				p.setProperty("lv",     caloBank.getFloat("lv",imap));
 				p.setProperty("lw",     caloBank.getFloat("lw",imap));
+				p.setProperty("du",     caloBank.getFloat("du",imap));
+				p.setProperty("dv",     caloBank.getFloat("dv",imap));
+				p.setProperty("dw",     caloBank.getFloat("dw",imap));
 				
 				if(clusBank!=null) {
 					int ical = (int) p.getProperty("index");
 					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
 					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
 					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
+				}
+				
+				if(caliBank!=null) {					
+					int ical = (int) p.getProperty("index");
+					p.setProperty("receu",    caliBank.getFloat("recEU", ical)*1e3);
+					p.setProperty("recev",    caliBank.getFloat("recEV", ical)*1e3);
+					p.setProperty("recew",    caliBank.getFloat("recEW", ical)*1e3);
 				}
 				
 				p.setProperty("beta", newBeta(p));
@@ -356,7 +397,7 @@ public class Event {
 		}
 		return ecalpart;
 	}	
-	
+/*	
 	public void getRECparticleOLD(int tpid) {
 //		if(tpid==11) System.out.println(" ");
 		if (!partMap.containsKey(tpid)) return;
@@ -446,7 +487,7 @@ public class Event {
 			}			
 		}		
 	}	
-	
+*/	
     /**
      * @param fromBank the bank containing the index variable
      * @param idxVarName the name of the index variable
