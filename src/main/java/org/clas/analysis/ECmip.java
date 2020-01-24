@@ -445,7 +445,7 @@ public class ECmip extends DetectorMonitor {
        DataBank recPart  = null;
        DataBank recScin  = null;
        DataBank recCalo  = null;
-       DataBank recTrac  = null;
+       DataBank recTraj  = null;
        DataBank recEven  = null;
        DataBank ecalClus = null;
        DataBank ecalCali = null;
@@ -456,7 +456,7 @@ public class ECmip extends DetectorMonitor {
        if(event.hasBank("REC::Particle"))          recPart  = event.getBank("REC::Particle");
        if(event.hasBank("REC::Scintillator"))      recScin  = event.getBank("REC::Scintillator");
        if(event.hasBank("REC::Calorimeter"))       recCalo  = event.getBank("REC::Calorimeter");
-       if(event.hasBank("REC::Track"))             recTrac  = event.getBank("REC::Track");
+       if(event.hasBank("REC::Traj"))              recTraj  = event.getBank("REC::Traj");
        if(event.hasBank("REC::Event"))             recEven  = event.getBank("REC::Event");
        if(event.hasBank("ECAL::clusters"))         ecalClus = event.getBank("ECAL::clusters");
        if(event.hasBank("ECAL::calib"))            ecalCali = event.getBank("ECAL::calib");
@@ -509,7 +509,8 @@ public class ECmip extends DetectorMonitor {
 //       if(true) return;
     		   
        if (!part.isEmpty()) {
-           for (Particle p: part) {
+       	  System.out.println("Event number "+getEventNumber());
+          for (Particle p: part) {
         	   if(p.getProperty("ppid")!=0) {
         	   if (trigger==trig && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
 //        		   System.out.println("i2="+p.getProperty("index")+" "+p.getProperty("beta"));
@@ -518,7 +519,6 @@ public class ECmip extends DetectorMonitor {
         	   }
            }
        }
-       
 //       if(true) return;
        
        Boolean goodREC  = recCalo!=null, goodECAL = ecalClus!=null && ecalCali!=null;
