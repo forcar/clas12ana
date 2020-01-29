@@ -469,10 +469,8 @@ public class ECmip extends DetectorMonitor {
     	    isMuon = false;  
     	    startTime = (isHipo3Event) ? recEven.getFloat("STTime", 0):
                                          recEven.getFloat("startTime", 0);           
-            if(startTime > -100) { 
-            	
-                for(int i = 0; i < recPart.rows(); i++){
-               	
+            if(startTime > -100) {             	
+                for(int i = 0; i < recPart.rows(); i++){              	
                     int      pid = recPart.getInt("pid", i);              
                     float     px = recPart.getFloat("px", i);
                     float     py = recPart.getFloat("py", i);
@@ -486,40 +484,24 @@ public class ECmip extends DetectorMonitor {
                     Particle p = new Particle(); 
                     if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0);}             
                     if (pid!=0) {
-                    	p.initParticle(pid, px, py, pz, vx, vy, vz);
-                    	   
+                    	p.initParticle(pid, px, py, pz, vx, vy, vz);                    	   
                     	p.setProperty("ppid", pid);
                         p.setProperty("status", status);
                         p.setProperty("beta", beta);
                         p.setProperty("index",i);                        
-//                        System.out.println("i1="+i+" "+trigger+" "+p.charge()+" "+p.getProperty("status")+" "+p.getProperty("beta"));                       
-                        if(trigger==trig && i>0 && p.charge()!=0 && p.getProperty("status")>=2000) {                        	
-//                            System.out.println("i1="+i+" "+p.getProperty("beta"));                      
-//                            ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));                       	
-                        }                        
                     }
                     part.add(i,p);     //Lists do not support sparse indices !!!!!            
                 }                
             }                       
        }
-       
-//       System.out.println("I am here 2");
-       
-//       System.out.println(part.isEmpty()+" "+part.size());
-//       if(true) return;
     		   
-       if (!part.isEmpty()) {
-       	  System.out.println("Event number "+getEventNumber());
-          for (Particle p: part) {
-        	   if(p.getProperty("ppid")!=0) {
-        	   if (trigger==trig && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
-//        		   System.out.println("i2="+p.getProperty("index")+" "+p.getProperty("beta"));
-        		   ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));   
-        	   }
+       if (!part.isEmpty() && trigger==trig) {
+           for (Particle p: part) {
+        	   if (p.getProperty("ppid")!=0 && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+        		   ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta")); 
         	   }
            }
        }
-//       if(true) return;
        
        Boolean goodREC  = recCalo!=null, goodECAL = ecalClus!=null && ecalCali!=null;
        

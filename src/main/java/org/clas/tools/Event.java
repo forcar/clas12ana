@@ -88,7 +88,7 @@ public class Event {
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
 		hasRECtraj         = ev.hasBank("REC::Traj");
-		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter;
+		return hasRUNconfig&&hasRECevent&&hasRECparticle;
 //		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
 	}
 	
@@ -100,13 +100,13 @@ public class Event {
 	    if(requireOneElectron)   if(!countElectronTriggers(false)) return false;
 	    if(hasRECevent)       processRECevent();
 	    if(starttime > -100) {
-	    if(hasRECcalorimeter) processRECcalorimeter();
-	    if(hasECALclusters)   processECALclusters();
-	    if(hasRECcalorimeter) processRECscintillator();
-	    if(hasRECtrack)       processRECtrack();
-	    if(hasRECtraj)        processRECtraj();
-	    if(hasECALcalib)      processECALcalib();		
-	    if(hasRECparticle)    processRECparticle();
+	    	if(hasRECcalorimeter) processRECcalorimeter();
+	    	if(hasECALclusters)   processECALclusters();
+	    	if(hasRECcalorimeter) processRECscintillator();
+	    	if(hasRECtrack)       processRECtrack();
+	    	if(hasRECtraj)        processRECtraj();
+	    	if(hasECALcalib)      processECALcalib();		
+	    	if(hasRECparticle)    processRECparticle();
 			getRECparticle(11);
 			getRECparticle(22);
 			getRECparticle(2112);
@@ -270,7 +270,7 @@ public class Event {
 	}
 	
 	public void getRECparticle(int tpid) {		
-		if(partMap.containsKey(tpid)) {		
+		if(partMap.containsKey(tpid)) {
 			for(int ipart : partMap.get(tpid)){  
 				int      pid = partBank.getInt("pid",  ipart);              
 				float     px = partBank.getFloat("px", ipart);

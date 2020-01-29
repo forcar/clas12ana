@@ -453,11 +453,10 @@ public class ECcalib extends DetectorMonitor {
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
-    	ev.requireOneElectron(!event.hasBank("MC::Event"));
+//    	ev.requireOneElectron(!event.hasBank("MC::Event"));
         
     	if(!ev.procEvent(event)) return;
     	
-    	System.out.println("Event number "+getEventNumber());
  	    this.myinit();
 	    
 	    elec_ecal = makeELEC(); //if (elec_ecal.size()==0) return;	    
@@ -568,11 +567,11 @@ public class ECcalib extends DetectorMonitor {
         trigger = (int) ev.part.get(0).getProperty("ppid");
         
         if (!ev.part.isEmpty() && trigger==trig) {
-    	for (Particle p : ev.part) {
-    		if(p.getProperty("ppid")!=0 && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {    		
-    			((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
-    		}
-    	}
+            for (Particle p : ev.part) {
+            	if(p.getProperty("ppid")!=0 && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) { 
+            		((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:1).get(0)).fill(p.p(),p.getProperty("beta"));
+            	}
+            }
         }
     	
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){
