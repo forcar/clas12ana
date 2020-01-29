@@ -213,7 +213,7 @@ public class ECt extends DetectorMonitor {
     
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
-    	    plotTimeLines(29);
+    	    if(!isMC) plotTimeLines(29);
     	    if(!isAnalyzeDone) return;
     	    if(!dropSummary) {
     	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
@@ -503,7 +503,9 @@ public class ECt extends DetectorMonitor {
            }    
        }
        
-       if(!(STT>0)) return;
+       if(isMC && STT<0) STT=0;
+       
+       if(!(STT>-1)) return;
        
        int run = getRunNumber(); 
         
@@ -566,7 +568,7 @@ public class ECt extends DetectorMonitor {
        for(int loop = 0; loop < bank1.rows(); loop++){
            int is = bank1.getByte("sector", loop);
 //           if (true||is==trigger_sect||isMC){
-             if (good_trig) {
+             if (good_trig||isMC) {
                int     il = bank1.getByte("layer", loop);
                float ener = bank1.getFloat("energy",loop)*1000;
                float    t = bank1.getFloat("time",loop);
@@ -743,7 +745,7 @@ public class ECt extends DetectorMonitor {
        
        analyzeTimeLineFits();
        isAnalyzeDone = true;
-       System.out.println("Finished");
+       System.out.println(getDetectorName()+".Analyze() Finished");
     }
     
     public void analyzeTimeLineFits() {
