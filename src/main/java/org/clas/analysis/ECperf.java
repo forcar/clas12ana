@@ -132,7 +132,8 @@ public class ECperf extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECperf.localinit()");
-        configEngine("muon"); 
+    	config="phot";
+    	configEngine("phot");
     	tl.setFitData(Fits);  
         part.setGeom("2.5");  
         part.setConfig("pi0");  
@@ -705,6 +706,8 @@ public class ECperf extends DetectorMonitor {
     	ev.requireOneElectron(!event.hasBank("MC::Event"));
         if(getRunNumber()==5700) ev.setTimeShift(2f);
         
+        if(dropBanks) dropBanks(event);
+        
     	if(!ev.procEvent(event)) return;
     	
  	    this.myinit();
@@ -1131,10 +1134,6 @@ public class ECperf extends DetectorMonitor {
     	
     	public void addPhoton(Particle p) {
     		plist.add(p);
-    	}
-    	
-    	public void setESECTOR(int val) {
-    		this.e_sect=val;
     	}
     	
     	public Particle getPhoton(int n) {
@@ -1644,11 +1643,12 @@ public class ECperf extends DetectorMonitor {
             ecal_neut_cx   = (float) (p.px()/p.p());
             ecal_neut_cy   = (float) (p.py()/p.p());  
             
-           float      mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
-           boolean mass2cut = neut_mom<1.2?mass2>0.45:true;   
+            float      mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
+            boolean mass2cut = neut_mom<1.2?mass2>0.45:true;   
            
             ecal_neut_esum[0] = 0; 
             float ecal_neut_x=0f,ecal_neut_y=0f,ecal_neut_z=0f,ecal_neut_r=-1000f;
+
             for (Particle pp : neutECAL) {
             	ecal_neut_esum[0] += pp.getProperty("energy");  int layer = (int)pp.getProperty("layer");
             	ecal_neut_x = (float)pp.getProperty("x");ecal_neut_y = (float)pp.getProperty("y");ecal_neut_z = (float)pp.getProperty("z");
@@ -1681,7 +1681,17 @@ public class ECperf extends DetectorMonitor {
             	((H2F)ECneut.getData(1).get(0)).fill(dcx,dcy);
             	if(cxcut&&mass2cut) ((H1F)ECneut.getData(3).get(0)).fill(dcy);
             	if(cycut&&mass2cut) ((H1F)ECneut.getData(2).get(0)).fill(dcx); 
-        	
+            	
+                for (Particle pp : neutECAL) {
+                if(pp.getProperty("cstat")>0) {
+                System.out.println("Event:"+getEventNumber());
+           	    System.out.println("cstat: "+(byte)pp.getProperty("cstat"));
+            	System.out.println("ustat: "+(byte)pp.getProperty("ustat")+" vstat: "+(byte)pp.getProperty("vstat")+" wstat: "+(byte)pp.getProperty("wstat"));            			
+				System.out.println("beta0: "+ecal_neut_beta+" beta: "+pp.getProperty("beta")+" time: "+pp.getProperty("time")+" newtime: "+pp.getProperty("newtime"));
+				System.out.println("sector: "+pp.getProperty("sector")+" layer: "+pp.getProperty("layer")+" u: "+pp.getProperty("iu")+" v: "+pp.getProperty("iv")+" w: "+pp.getProperty("iw"));
+                }
+                }
+       	
              	((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
              	if(p.pid()==2112) ((H2F)ECphot.getData(5).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
              	((H2F)ECphot.getData(4).get(0)).fill(ecal_neut_the,e_the);        

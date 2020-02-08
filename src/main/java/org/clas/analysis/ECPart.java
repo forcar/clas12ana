@@ -814,7 +814,7 @@ public class ECPart  {
             DataEvent event = reader.getNextEvent();
             dropBanks(event);
             if (engine.processDataEvent(event)) {   
-            int iview = engine.getSharedView();
+//            int iview = engine.getSharedView();
             
             if(part.readMC(event)) {  
             	part.readEC(event,"ECAL::clusters");
@@ -834,7 +834,7 @@ public class ECPart  {
                   if(pcec1&&pcec2) {n2rec2++; h7b.fill(part.refE);}
           
                   if (pcec1&&pcec2) {
-                	  if( engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
+//                	  if( engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
                 	  if(true) {
                 	  h2a.fill(part.refE, invmass);                                    			  //Two-photon invariant mass                
                 	  h2b.fill(part.refE, part.X);                                     			  //Pizero energy asymmetry

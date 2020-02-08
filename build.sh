@@ -12,7 +12,7 @@ endif
 
 # clas12ana
 echo "Building clas12ana..."
-    mvn install
+    mvn clean install
     cp target/clas12ana-3.0-jar-with-dependencies.jar lib/
     cd ..
 
