@@ -935,7 +935,7 @@ public class ECperf extends DetectorMonitor {
         for (Particle p : nlist) {
             short status = (short) p.getProperty("status");
             boolean inDC = (status>=2000 && status<3000);
-            if(inDC && p.e()>0.01) neut_ecal.add(p); 
+            if(inDC) neut_ecal.add(p); 
         } 
         
         nlist = ev.getParticle(2112);
@@ -1314,7 +1314,7 @@ public class ECperf extends DetectorMonitor {
 		int run = getRunNumber();
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
 		DataGroup dg2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECpip"),run);
-		if(pip_ecal.size()>0) {			
+		if(pip_ecal.size()==1) {			
 			pip_mom  = (float) pip_ecal.get(0).p();
             pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
             pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
@@ -1333,10 +1333,10 @@ public class ECperf extends DetectorMonitor {
 			((H2F) dg0.getData(e_sect-1).get(0)).fill(epip_MM,e_W);    
 			((H1F) dg0.getData(e_sect-1+6).get(0)).fill(epip_MM);
 			
-	        List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));	        
-			
 			neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
-			if(epip_MM<1.2 && pip_ecal.size()==1) {
+			
+			if(epip_MM<1.2) {
+		        List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));	        
 				for(Particle p : pipECAL) {
 					int   pip_sec = (int)   p.getProperty("sector");
 					float pip_nrg = (float) p.getProperty("energy");
@@ -1349,8 +1349,6 @@ public class ECperf extends DetectorMonitor {
 				neut_mom=(float)VmissN.p();
 				neut_the=(float)Math.toDegrees(VmissN.theta());
 				neut_phi=(float)Math.toDegrees(VmissN.phi());
-				neut_cx =(float)VmissN.px()/neut_mom;
-				neut_cy =(float)VmissN.py()/neut_mom;
 				return true;
 			}
 		}
@@ -1605,14 +1603,13 @@ public class ECperf extends DetectorMonitor {
     
     public void fillECneut() {
     	
-		int run = getRunNumber();
+		int run = getRunNumber(),taggedSector = -1;
         boolean good_tagged_fiduc = false;
-        int taggedSector = -1;
         
-		DataGroup ECpip  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
+		DataGroup ECpip   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
 		DataGroup ECneut0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECneut"),run);
-		DataGroup ECneut = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
-		DataGroup ECphot = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
+		DataGroup ECneut  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
+		DataGroup ECphot  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
 		
         ((H2F)ECneut.getData(0).get(0)).fill(neut_mom, neut_the);
         
@@ -1656,9 +1653,10 @@ public class ECperf extends DetectorMonitor {
             	ecal_neut_esum[0] += pp.getProperty("energy");  int layer = (int)pp.getProperty("layer");
             	ecal_neut_x = (float)pp.getProperty("x");ecal_neut_y = (float)pp.getProperty("y");ecal_neut_z = (float)pp.getProperty("z");
             	ecal_neut_r = (float) Math.sqrt(Math.pow(ecal_neut_x-pip_x, 2)+Math.pow(ecal_neut_y-pip_y, 2)+Math.pow(ecal_neut_z-pip_z, 2));
+            	
             	if (layer==1) ((H2F)ECneut0.getData(ecal_neut_sec-1).get(0)).fill(neut_mom,ecal_neut_r);
-            	if (layer==4) ((H2F)ECneut0.getData(ecal_neut_sec-1+6).get(0)).fill(neut_mom,ecal_neut_r);
-            	if (layer==7) ((H2F)ECneut0.getData(ecal_neut_sec-1+12).get(0)).fill(neut_mom,ecal_neut_r);
+            	if (layer==4) ((H2F)ECneut0.getData(ecal_neut_sec-1+6).get(0)).fill(neut_mom,ecal_neut_r-32);
+            	if (layer==7) ((H2F)ECneut0.getData(ecal_neut_sec-1+12).get(0)).fill(neut_mom,ecal_neut_r-50);
             }
             
             float       cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(ecal_neut_phi*3.141259f/180f));
