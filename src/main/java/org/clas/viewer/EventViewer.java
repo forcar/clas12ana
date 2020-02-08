@@ -46,6 +46,7 @@ import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
+import org.clas.analysis.ECcalib;
 
 import org.jlab.detector.decode.CLASDecoder4;
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -166,7 +167,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECperf("ECperf"); 
+//    		monitors[n] = new ECt("ECt"); 
+//    		monitors[n] = new ECcalib("ECcalib"); 
+//    		monitors[n] = new ECmip("ECmip"); 
         }
     }
     
@@ -255,11 +259,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         menu     = new JMenu("MIP Trigger");
         group = new ButtonGroup();
-        ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); 
+        ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); ctr0.doClick();
         ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
         ctr2 = new JRadioButtonMenuItem("Photon");   ctr2.addItemListener(this);       group.add(ctr2); menu.add(ctr2);
         ctr3 = new JRadioButtonMenuItem("Muon");     ctr3.addItemListener(this);       group.add(ctr3); menu.add(ctr3);
         ctr4 = new JRadioButtonMenuItem("PC Muon");  ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
+        
         menuBar.add(menu);
 
         menuBar.add(menu);    
