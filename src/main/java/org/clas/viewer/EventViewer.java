@@ -46,6 +46,7 @@ import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
+import org.clas.analysis.ECcalib;
 
 import org.jlab.detector.decode.CLASDecoder4;
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -166,7 +167,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECperf("ECperf"); 
         }
     }
     

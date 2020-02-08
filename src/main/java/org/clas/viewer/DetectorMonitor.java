@@ -151,7 +151,7 @@ public class DetectorMonitor implements ActionListener {
 
     public String variation = "default";
     public String      geom = "2.5";
-    public String    config = "muon";   
+    public String    config = null;   
 	public EventBuilder  eb = null;
 	
 	public Boolean  isHipo3Event = true;
@@ -325,22 +325,23 @@ public class DetectorMonitor implements ActionListener {
 //        getDetectorPanel().add(packRunIndexPanel(),BorderLayout.SOUTH); 
     }
     
-    public void configEngine(String config) {
-    	System.out.println("DetectorMonitor:configEngine("+config+")");
+    public void configEngine(String val) {
+    	System.out.println("DetectorMonitor:configEngine("+val+")");
     	engine.isSingleThreaded=true;
         engine.setVariation(variation);
         engine.init();
         engine.isMC = false;
+        engine.setLogParam(0.);
        
-        engine.setStripThresholds(getStripThr(config, 0, 1),
-                                  getStripThr(config, 1, 1),
-                                  getStripThr(config, 2, 1));  
-        engine.setPeakThresholds(getPeakThr(config, 0, 1),
-                                 getPeakThr(config, 1, 1),
-                                 getPeakThr(config, 2, 1));  
-        engine.setClusterCuts(getClusterErr(config,0),
-                              getClusterErr(config,1),
-                              getClusterErr(config,2));   
+        engine.setStripThresholds(getStripThr(val, 0, 1),
+                                  getStripThr(val, 1, 1),
+                                  getStripThr(val, 2, 1));  
+        engine.setPeakThresholds(getPeakThr(val, 0, 1),
+                                 getPeakThr(val, 1, 1),
+                                 getPeakThr(val, 2, 1));  
+        engine.setClusterCuts(getClusterErr(val,0),
+                              getClusterErr(val,1),
+                              getClusterErr(val,2));   
     }
     
     public void configEventBuilder() {
@@ -348,8 +349,8 @@ public class DetectorMonitor implements ActionListener {
         eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	    	
     }
     
-    public int getStripThr(String config, int idet, int layer) {
-        switch (config) {
+    public int getStripThr(String val, int idet, int layer) {
+        switch (val) {
         case     "pi0": return sthrPhot[idet][layer-1] ;  
         case    "phot": return sthrPhot[idet][layer-1] ; 
         case    "muon": return sthrMuon[idet][layer-1] ;  
@@ -359,8 +360,8 @@ public class DetectorMonitor implements ActionListener {
         return 0;
      }
     
-    public int getPeakThr(String config, int idet, int layer) {
-        switch (config) {
+    public int getPeakThr(String val, int idet, int layer) {
+        switch (val) {
         case     "pi0": return pthrPhot[idet][layer-1] ;  
         case    "phot": return pthrPhot[idet][layer-1] ;  
         case    "muon": return pthrMuon[idet][layer-1] ; 
@@ -370,8 +371,8 @@ public class DetectorMonitor implements ActionListener {
         return 0;
      }
     
-    public float getClusterErr(String config, int idet) {
-        switch (config) {
+    public float getClusterErr(String val, int idet) {
+        switch (val) {
         case     "pi0": return (float) cerrPhot[idet] ;  
         case    "phot": return (float) cerrPhot[idet] ;  
         case    "muon": return (float) cerrMuon[idet] ; 
@@ -383,7 +384,7 @@ public class DetectorMonitor implements ActionListener {
     
     public void dropBanks(DataEvent event) {
     	
-    	if(!isEngineReady) {configEngine("muon"); isEngineReady = true;}
+    	if(!isEngineReady) {configEngine(config); isEngineReady = true;}
     	
 //    	System.out.println(" ");
 //    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));
