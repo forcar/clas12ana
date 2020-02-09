@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import org.clas.tools.Event;
 import org.clas.tools.ParallelSliceFitter;
@@ -30,7 +31,7 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 public class ECperf extends DetectorMonitor {
 	
-	Event    ev = new Event();
+    Event    ev = new Event();
     ECPart part = new ECPart();  
 	
 	DataGroup dg = null;
@@ -45,6 +46,7 @@ public class ECperf extends DetectorMonitor {
 	public int Nevts, Nelecs, Ntrigs, runNum;
 	public int[] Ntrigs_sect = new int[6];
     public int[] Nelecs_sect = new int[6];
+    
 	float n_neut_ecal = 0, n_neut_mm = 0, n_neut_mm_save=0;
 
 	public float EB, Eb, Mp;
@@ -60,7 +62,7 @@ public class ECperf extends DetectorMonitor {
 	public float e_mom, e_the, e_phi, e_vx, e_vy, e_vz, e_cz, e_x, e_y;
 	public float e_xB, e_Q2, e_W;
 
-    public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum;
+	public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum;
         
 	public int   prot_part_ind;
 	public float prot_mom, prot_the, prot_phi, prot_vx, prot_vy, prot_vz, prot_beta;
@@ -102,21 +104,21 @@ public class ECperf extends DetectorMonitor {
 	public IndexedList<Float> ecal_rad   = new IndexedList<Float>(3);
 	public IndexedList<Float> elec_ftof_resid = new IndexedList<Float>(3);
 	
-    public float[][]  counter = new float[6][3];
+	public float[][]  counter = new float[6][3];
    
 	public IndexedTable rfTable;	
 	GraphErrors neuteff = null;
 	
-    public ECperf(String name) {
+	public ECperf(String name) {
         super(name);
         this.setDetectorTabNames("ECkin",
-        						 "ECelec",
-                				 "SCelec",
-                				 "ECprot",
-                				 "ECpbar",
+        		                 "ECelec",
+        		                 "SCelec",
+        		                 "ECprot",
+        		                 "ECpbar",
         		                 "ECpip",
-              				     "ECpim",
-              				     "ECmip",
+        		                 "ECpim",
+        		                 "ECmip",
         		                 "ECpi0",
         		                 "ECeta",
         		                 "ECneut",
@@ -153,8 +155,8 @@ public class ECperf extends DetectorMonitor {
     } 
     
     public void dstinit(int run) {
-	    System.out.println("ECperf:dstinit("+run+")");
-		runNum = run;
+    	System.out.println("ECperf:dstinit("+run+")");
+	    runNum = run;
 		Nevts=0;Nelecs=0;Ntrigs=0;
 		Ntrigs_sect = new int[6];
 		Nelecs_sect = new int[6];
@@ -180,19 +182,17 @@ public class ECperf extends DetectorMonitor {
     	String tab = "ECkin", tag = null;
     	int run = getRunNumber(), in=0, k=getDetectorTabNames().indexOf(tab);
 		
-    	switch (st) {
-        
+    	switch (st) {        
         case 0: 
         dg = new DataGroup(6,4);
-		for(int is=1;is<7;is++){    	
+        for(int is=1;is<7;is++){    	
 	        tag = is+"_"+st+"_"+k+"_"+run;
 	        dg.addDataSet(makeH2(tab+"_1_",tag,60,5,12,60,EB-1,EB,   "","#theta (^o)","p (GeV)"),is-1);
 	        dg.addDataSet(makeH2(tab+"_2_",tag,60,0.6,1.2,60,EB-1,EB,"","W (GeV)","p (GeV)"),is-1+6);
 	        dg.addDataSet(makeH2(tab+"_3_",tag,60,0.6,1.2,60,5,12,   "","W (GeV)","#theta (^o)"),is-1+12);
 	        dg.addDataSet(makeH2(tab+"_4_",tag,60,0.6,1.2,60,-20,30, "","W (GeV)","#phi (^o"),is-1+18);
-		}
-		break;
-		
+        }
+		break;		
         case 1:
         dg = new DataGroup(6,3);
         for(int is=1; is<7; is++) {
@@ -202,18 +202,14 @@ public class ECperf extends DetectorMonitor {
 	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LW (cm)"),is-1+12);
         	
         }
-        break;
-        
+        break;        
         case 2:
         dg = new DataGroup(3,2);
         for(int iv=0; iv<1; iv++) {
 	        tag = iv+"_"+st+"_"+k+"_"+run;
 	        dg.addDataSet(makeH2(tab+"_1_",tag,200,-400,400,200,-400,400,det[iv],"X (CM)","Y(CM)"),iv);        	
-        }
-        
-        
-    	}
-    	
+        }                
+    	}    	
     	this.getDataGroup().add(dg,0,st,k,run);      
     	
     }
@@ -223,27 +219,24 @@ public class ECperf extends DetectorMonitor {
     	String tab = "ECelec", tag = null;
     	int run = getRunNumber(), in=0, k=getDetectorTabNames().indexOf(tab);
     	 
-		F1D     f1 = null;
+        F1D     f1 = null;
 		
     	switch (st) {
-        
         case 0: 
         dg = new DataGroup(6,3);
-		for(int is=1;is<7;is++){
+        for(int is=1;is<7;is++){
 	        tag = is+"_"+st+"_"+k+"_"+run;
 			dg.addDataSet(makeH2(tab+"_1_",tag,60,0,EB,60,0.15,0.35,"","p (GeV)","E/P"),is-1);
 			dg.addDataSet(makeH2(tab+"_2_",tag,68,1,69,50,0.15,0.35,"","PCAL U STRIP","E/P"),is-1+6);
 			dg.addDataSet(makeH2(tab+"_3_",tag,70,0,EB/6,70,0,EB/5, "","PC (GeV)","EC (GeV)"),is-1+12);	
-		}
-		
+        }		
 		break;
-		
         case 1:        
 //		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",5,35); //angle
-		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0,EB);  //momentum
+        f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0,EB);  //momentum
 //		f1 = new F1D("H_e_EC_resid_f+"+run,"[a]",0.8,1.0);  //cz
-		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
-		for(int i=0;i<3;i++) { //pcal,ecin,ecou
+        f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
+        for(int i=0;i<3;i++) { //pcal,ecin,ecou
 //			float ylim = (i==0)?5:10;
 			int inn=0; dg = new DataGroup(6,3);        			 
 			for(int n=0; n<3; n++) { //x,y,z
@@ -932,15 +925,7 @@ public class ECperf extends DetectorMonitor {
     	List<Particle> nlist = null;
     	
         neut_ecal.clear();
-        
-        nlist = ev.getParticle(22);
-        
-        for (Particle p : nlist) {
-            short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-            if(inDC) neut_ecal.add(p); 
-        } 
-        
+       
         nlist = ev.getParticle(2112);
         
         for (Particle p : nlist) {
@@ -948,6 +933,14 @@ public class ECperf extends DetectorMonitor {
             boolean inDC = (status>=2000 && status<3000);            
         	if(inDC) neut_ecal.add(p);
         }   
+        
+        nlist = ev.getParticle(22);
+        
+        for (Particle p : nlist) {
+            short status = (short) p.getProperty("status");
+            boolean inDC = (status>=2000 && status<3000);
+            if(inDC && p.e()>0.01) neut_ecal.add(p); 
+        } 
         
         return neut_ecal.size()>0;    	
     }
@@ -1312,8 +1305,7 @@ public class ECperf extends DetectorMonitor {
 	public boolean select_epip(){
 		int run = getRunNumber();
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
-		DataGroup dg2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECpip"),run);
-		if(pip_ecal.size()==1) {			
+		if(pip_ecal.size()>0) {			
 			pip_mom  = (float) pip_ecal.get(0).p();
             pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
             pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
@@ -1334,17 +1326,7 @@ public class ECperf extends DetectorMonitor {
 			
 			neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
 			
-			if(epip_MM<1.2) {
-		        List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));	        
-				for(Particle p : pipECAL) {
-					int   pip_sec = (int)   p.getProperty("sector");
-					float pip_nrg = (float) p.getProperty("energy");
-					int   pip_lay = (int)   p.getProperty("layer");
-					if(pip_lay==1) {pip_x=(float)p.getProperty("x"); pip_y=(float)p.getProperty("y") ; pip_z=(float)p.getProperty("z");}
-					if(pip_lay==1) ((H1F) dg2.getData(pip_sec-1).get(0)).fill(pip_nrg);
-					if(pip_lay==4) ((H1F) dg2.getData(pip_sec-1+6).get(0)).fill(pip_nrg);
-					if(pip_lay==7) ((H1F) dg2.getData(pip_sec-1+12).get(0)).fill(pip_nrg);				
-				}
+			if(epip_MM<1.2 && pip_ecal.size()==1) {
 				neut_mom=(float)VmissN.p();
 				neut_the=(float)Math.toDegrees(VmissN.theta());
 				neut_phi=(float)Math.toDegrees(VmissN.phi());
@@ -1602,86 +1584,93 @@ public class ECperf extends DetectorMonitor {
     
     public void fillECneut() {
     	
-		int run = getRunNumber(),taggedSector = -1;
+        int run = getRunNumber(),taggedSector = -1;
         boolean good_tagged_fiduc = false;
         
-		DataGroup ECpip   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
-		DataGroup ECneut0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECneut"),run);
-		DataGroup ECneut  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
-		DataGroup ECphot  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
+        DataGroup ECpip   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
+        DataGroup ECpip2  = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECpip"),run);
+        DataGroup ECneut0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECneut"),run);
+        DataGroup ECneut  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
+        DataGroup ECphot  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
 		
         ((H2F)ECneut.getData(0).get(0)).fill(neut_mom, neut_the);
         
-	    float cxmm = (float) (Math.sin(neut_the*3.14159f/180f)*Math.cos(neut_phi*3.141259f/180f));
-	    float cymm = (float) (Math.sin(neut_the*3.14159f/180f)*Math.sin(neut_phi*3.141259f/180f));
+        float cxmm = (float) (Math.sin(neut_the*3.14159f/180f)*Math.cos(neut_phi*3.141259f/180f));
+        float cymm = (float) (Math.sin(neut_the*3.14159f/180f)*Math.sin(neut_phi*3.141259f/180f));
        
         if(neut_mom>0.4) {
-        	float nphi = newPhi(neut_phi); taggedSector = newPhiSector;
-        	float   cx = (float) (Math.sin(neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
-        	float   cy = (float) (Math.sin(neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
-        	if(neutFiduc(1,cx,cy)) {
-                if(taggedSector!=e_sect) {
-            		((H1F)ECpip.getData(e_sect-1+6).get(1)).fill(epip_MM);
-                    ((H2F)ECneut.getData(8).get(0)).fill(-cx,cy);
-                	((H1F)ECneut.getData(10).get(0)).fill(neut_mom);
-                	good_tagged_fiduc = true; 
-                }
-        	}
+          float nphi = newPhi(neut_phi); taggedSector = newPhiSector;
+          float   cx = (float) (Math.sin(neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
+          float   cy = (float) (Math.sin(neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
+          if(neutFiduc(1,cx,cy)) {
+            if(taggedSector!=e_sect) {
+              ((H1F)ECpip.getData(e_sect-1+6).get(1)).fill(epip_MM);
+              ((H2F)ECneut.getData(8).get(0)).fill(-cx,cy);
+              ((H1F)ECneut.getData(10).get(0)).fill(neut_mom);
+              good_tagged_fiduc = true; 
+            }
+          }
         }        
-		
+        
         if(!goodNEUT) return;
         
+        Vector3 pvec[] = new Vector3[3]; 
+        
+        List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));	        
+        for(Particle p : pipECAL) {
+          int   pip_sec = (int)   p.getProperty("sector");
+          float pip_nrg = (float) p.getProperty("energy");
+          int   pip_lay = (int)   p.getProperty("layer");
+          float x = (float)p.getProperty("x");float y = (float)p.getProperty("y");float z = (float)p.getProperty("z");
+          if(pip_lay==1) {((H1F) ECpip2.getData(pip_sec-1   ).get(0)).fill(pip_nrg); pvec[0]=new Vector3(x,y,z);}
+          if(pip_lay==4) {((H1F) ECpip2.getData(pip_sec-1+ 6).get(0)).fill(pip_nrg); pvec[1]=new Vector3(x,y,z);}
+          if(pip_lay==7) {((H1F) ECpip2.getData(pip_sec-1+12).get(0)).fill(pip_nrg); pvec[2]=new Vector3(x,y,z);}		  
+        }
+		
         float[] mult = new float[4];
 
         for (Particle p: neut_ecal) {
-        	
-    		List<Particle> neutECAL = ev.getECAL((int)p.getProperty("pindex"));            
-            ecal_neut_sec  = (int)   neutECAL.get(0).getProperty("sector");
-            ecal_neut_beta = (float) neutECAL.get(0).getProperty("beta");            
-            ecal_neut_the  = (float) Math.toDegrees(p.theta());
-            ecal_neut_phi  = (float) Math.toDegrees(p.phi());
-            ecal_neut_cx   = (float) (p.px()/p.p());
-            ecal_neut_cy   = (float) (p.py()/p.p());  
-            
-            float      mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
-            boolean mass2cut = neut_mom<1.2?mass2>0.45:true;   
-           
-            ecal_neut_esum[0] = 0; 
-            float ecal_neut_x=0f,ecal_neut_y=0f,ecal_neut_z=0f,ecal_neut_r=-1000f;
+          List<Particle> neutECAL = ev.getECAL((int)p.getProperty("pindex"));            
+          ecal_neut_sec  = (int)   neutECAL.get(0).getProperty("sector");
+          ecal_neut_beta = (float) neutECAL.get(0).getProperty("beta");            
+          ecal_neut_the  = (float) Math.toDegrees(p.theta());
+          ecal_neut_phi  = (float) Math.toDegrees(p.phi());
 
-            for (Particle pp : neutECAL) {
-            	ecal_neut_esum[0] += pp.getProperty("energy");  int layer = (int)pp.getProperty("layer");
-            	ecal_neut_x = (float)pp.getProperty("x");ecal_neut_y = (float)pp.getProperty("y");ecal_neut_z = (float)pp.getProperty("z");
-            	ecal_neut_r = (float) Math.sqrt(Math.pow(ecal_neut_x-pip_x, 2)+Math.pow(ecal_neut_y-pip_y, 2)+Math.pow(ecal_neut_z-pip_z, 2));
-            	
-            	if (layer==1) ((H2F)ECneut0.getData(ecal_neut_sec-1).get(0)).fill(neut_mom,ecal_neut_r);
-            	if (layer==4) ((H2F)ECneut0.getData(ecal_neut_sec-1+6).get(0)).fill(neut_mom,ecal_neut_r-32);
-            	if (layer==7) ((H2F)ECneut0.getData(ecal_neut_sec-1+12).get(0)).fill(neut_mom,ecal_neut_r-50);
-            }
+          float      mass2 = neut_mom*neut_mom*(1f/(ecal_neut_beta*ecal_neut_beta)-1);
+          boolean mass2cut = neut_mom<1.2?mass2>0.45:true;   
+           
+          ecal_neut_esum[0] = 0;  
+
+          for (Particle pp : neutECAL) {
+            ecal_neut_esum[0] += pp.getProperty("energy");  int layer = (int)pp.getProperty("layer");
+            Vector3 nvec = new Vector3(pp.getProperty("x"),pp.getProperty("y"),pp.getProperty("z"));            	
+            if (pvec[0]!=null && layer==1) {nvec.sub(pvec[0]);((H2F)ECneut0.getData(ecal_neut_sec-1   ).get(0)).fill(neut_mom,nvec.mag());}
+            if (pvec[1]!=null && layer==4) {nvec.sub(pvec[1]);((H2F)ECneut0.getData(ecal_neut_sec-1+ 6).get(0)).fill(neut_mom,nvec.mag());}
+            if (pvec[2]!=null && layer==7) {nvec.sub(pvec[2]);((H2F)ECneut0.getData(ecal_neut_sec-1+12).get(0)).fill(neut_mom,nvec.mag());};
+          }
             
-            float       cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(ecal_neut_phi*3.141259f/180f));
-            float       cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(ecal_neut_phi*3.141259f/180f));
-   		
-            float      dcx = cxmm-cx;
-            float      dcy = cymm-cy;
-   		
-            boolean  cxcut = Math.abs(dcx)<0.1;	
-            boolean  cycut = Math.abs(dcy)<0.1;
+          float       cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(ecal_neut_phi*3.141259f/180f));
+          float       cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(ecal_neut_phi*3.141259f/180f));  		
+          float      dcx = cxmm-cx;
+          float      dcy = cymm-cy;
+          
+          boolean  cxcut = Math.abs(dcx)<0.1;	
+          boolean  cycut = Math.abs(dcy)<0.1;
     		
-            if(ecal_neut_sec==e_sect) {
-             	((H2F)ECphot.getData(1).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-             	((H2F)ECphot.getData(3).get(0)).fill(ecal_neut_the,e_the);        
-             	((H2F)ECphot.getData(11).get(0)).fill(ecal_neut_phi,ecal_neut_the);        
-             	((H2F)ECphot.getData(12).get(0)).fill(e_phi,        ecal_neut_the);   
-             	mult[0]++;
-            }
+          if(ecal_neut_sec==e_sect) {
+            ((H2F)ECphot.getData(1).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+            ((H2F)ECphot.getData(3).get(0)).fill(ecal_neut_the,e_the);        
+            ((H2F)ECphot.getData(11).get(0)).fill(ecal_neut_phi,ecal_neut_the);        
+            ((H2F)ECphot.getData(12).get(0)).fill(e_phi,        ecal_neut_the);   
+            mult[0]++;
+          }
             
-            if(good_tagged_fiduc && ecal_neut_sec==taggedSector) {        	
-            	((H2F)ECneut0.getData(ecal_neut_sec-1+18).get(0)).fill(mass2,dcx);
-            	((H2F)ECneut.getData(1).get(0)).fill(dcx,dcy);
-            	if(cxcut&&mass2cut) ((H1F)ECneut.getData(3).get(0)).fill(dcy);
-            	if(cycut&&mass2cut) ((H1F)ECneut.getData(2).get(0)).fill(dcx); 
-            	
+          if(good_tagged_fiduc && ecal_neut_sec==taggedSector) {        	
+            ((H2F)ECneut0.getData(ecal_neut_sec-1+18).get(0)).fill(mass2,dcx);
+            ((H2F)ECneut.getData(1).get(0)).fill(dcx,dcy);
+            if(cxcut&&mass2cut) ((H1F)ECneut.getData(3).get(0)).fill(dcy);
+            if(cycut&&mass2cut) ((H1F)ECneut.getData(2).get(0)).fill(dcx); 
+ /*           	
                 for (Particle pp : neutECAL) {
                 if(pp.getProperty("cstat")>0) {
                 System.out.println("Event:"+getEventNumber());
@@ -1689,34 +1678,34 @@ public class ECperf extends DetectorMonitor {
             	System.out.println("ustat: "+(byte)pp.getProperty("ustat")+" vstat: "+(byte)pp.getProperty("vstat")+" wstat: "+(byte)pp.getProperty("wstat"));            			
 				System.out.println("beta0: "+ecal_neut_beta+" beta: "+pp.getProperty("beta")+" time: "+pp.getProperty("time")+" newtime: "+pp.getProperty("newtime"));
 				System.out.println("sector: "+pp.getProperty("sector")+" layer: "+pp.getProperty("layer")+" u: "+pp.getProperty("iu")+" v: "+pp.getProperty("iv")+" w: "+pp.getProperty("iw"));
+                }                
                 }
-                }
-       	
-             	((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-             	if(p.pid()==2112) ((H2F)ECphot.getData(5).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-             	((H2F)ECphot.getData(4).get(0)).fill(ecal_neut_the,e_the);        
-             	((H2F)ECneut.getData(4).get(0)).fill(neut_mom, ecal_neut_beta);        
-            	((H1F)ECneut.getData(6).get(0)).fill(mass2);
-             	mult[1]++;
-            }
+*/
+            
+            ((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+            if(p.pid()==2112) ((H2F)ECphot.getData(5).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+            ((H2F)ECphot.getData(4).get(0)).fill(ecal_neut_the,e_the);        
+            ((H2F)ECneut.getData(4).get(0)).fill(neut_mom, ecal_neut_beta);        
+            ((H1F)ECneut.getData(6).get(0)).fill(mass2);
+            mult[1]++;
+          }
         
-            if (cxcut && cycut && good_tagged_fiduc && ecal_neut_esum[0]>0) {
-            	((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
-               	((H1F)ECneut.getData(7).get(0)).fill(mass2);
-               	if(mass2cut) {
-            		float nphi = newPhi(ecal_neut_phi); 
-            		cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
-            		cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
-            		((H2F)ECneut.getData(9).get(0)).fill(-cx,cy);
-           			((H1F)ECneut.getData(10).get(1)).fill(neut_mom);
-                 	((H2F)ECphot.getData(6).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-                 	mult[2]++;
-                 	if(neut_mom<1.2) mult[3]++;
+          if (cxcut && cycut && good_tagged_fiduc && ecal_neut_esum[0]>0) {
+            ((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
+            ((H1F)ECneut.getData(7).get(0)).fill(mass2);
+            if(mass2cut) {
+              float nphi = newPhi(ecal_neut_phi); 
+              cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
+              cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
+              ((H2F)ECneut.getData(9).get(0)).fill(-cx,cy);
+              ((H1F)ECneut.getData(10).get(1)).fill(neut_mom);
+              ((H2F)ECphot.getData(6).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+              mult[2]++;
+              if(neut_mom<1.2) mult[3]++;
            	}
-            }            
+          }            
         }
-     	for (int i=0; i<4&&mult[i]>0; i++) ((H1F)ECphot.getData(i+7).get(0)).fill(mult[i]);           
-		
+     	for (int i=0; i<4&&mult[i]>0; i++) ((H1F)ECphot.getData(i+7).get(0)).fill(mult[i]);
     }
        
     public void fillECphot() {
