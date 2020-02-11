@@ -140,7 +140,7 @@ public class ECperf extends DetectorMonitor {
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);    	
-        neuteff = getGraph(outPath+"files/neuteff.vec",50);
+        neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
     public void localclear() {
@@ -601,7 +601,7 @@ public class ECperf extends DetectorMonitor {
         	dg.addDataSet(makeH2(tab+"_1_",tag,50,0,2.5,50,0.,100,"",    "p_mm (GeV)","ECIN #pi^+-n (cm)"),is-1+6); 
         	dg.addDataSet(makeH2(tab+"_2_",tag,50,0,2.5,50,0.,100,"",    "p_mm (GeV)","ECOU #pi^+-n (cm)"),is-1+12); 
         	dg.addDataSet(makeH2(tab+"_3_",tag,50,-0.5,2.0,50,-0.5,0.5,"",    "Mass^2 (GeV^2)","cx_mm - cx_ecal"),is-1+18); 
-       }
+        }
         break;
         case 1:		
         dg = new DataGroup(4,3); int n=0;
@@ -619,7 +619,9 @@ public class ECperf extends DetectorMonitor {
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n-1);n++;  
+    	dg.addDataSet(makeH1(tab+"_"+n+"_",tag,50,0,2.5,                   " ","p_mm (GeV)"),n-2);n++;  
     	((H1F)dg.getData(10).get(1)).setFillColor(4);
+    	((H1F)dg.getData(10).get(2)).setFillColor(2);
     	}
     	this.getDataGroup().add(dg,0,st,k,run);      
     	
@@ -1687,6 +1689,7 @@ public class ECperf extends DetectorMonitor {
             ((H2F)ECphot.getData(4).get(0)).fill(ecal_neut_the,e_the);        
             ((H2F)ECneut.getData(4).get(0)).fill(neut_mom, ecal_neut_beta);        
             ((H1F)ECneut.getData(6).get(0)).fill(mass2);
+            ((H1F)ECneut.getData(10).get(2)).fill(neut_mom);            
             mult[1]++;
           }
         
@@ -2032,13 +2035,13 @@ public class ECperf extends DetectorMonitor {
     	return false;    
     }
     
-    public GraphErrors getEff(int index) {
+    public GraphErrors getEff(int index, int i2, int icol) {
 		DataGroup dg = this.getDataGroup().getItem(0,1,index,getRunNumber());    	
-    	GraphErrors geff = new GraphErrors();
+    	GraphErrors geff = new GraphErrors(); geff.setMarkerColor(icol); geff.setLineColor(icol);
     	geff.getAttributes().setTitleX("p_mm (GeV)");
     	geff.getAttributes().setTitleY("Efficiency");
     	GraphErrors g1 = ((H1F)dg.getData(10).get(0)).getGraph();
-    	GraphErrors g2 = ((H1F)dg.getData(10).get(1)).getGraph();
+    	GraphErrors g2 = ((H1F)dg.getData(10).get(i2)).getGraph();
     	for (int ix=0; ix<g1.getDataSize(0); ix++) {
     		float x1 = (float) g1.getDataX(ix); float y1 = (float) g1.getDataY(ix);
     		if(y1>0) {
@@ -2112,14 +2115,15 @@ public class ECperf extends DetectorMonitor {
 		int index = getDetectorTabNames().indexOf("ECneut");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
 		if(getActive123()==1) {
-		c.cd(11);c.getPad().getAxisX().setRange(0., 2.5); c.getPad().getAxisY().setRange(0., 1.); c.draw(getEff(index)); c.draw(neuteff,"same");
+		c.cd(11);c.getPad().getAxisX().setRange(0., 2.5); c.getPad().getAxisY().setRange(0., 1.); 
+		c.draw(getEff(index,1,4)); c.draw(getEff(index,2,2),"same"); c.draw(neuteff,"same");
 		}
     }
     
     public void showPi0Eff() {
 		int index = getDetectorTabNames().indexOf("ECpi0");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 0.3); c.draw(getEff(index));   	
+		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 0.3); c.draw(getEff(index,1,2));   	
     }
     
     @Override
