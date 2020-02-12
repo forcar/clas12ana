@@ -151,7 +151,7 @@ public class DetectorMonitor implements ActionListener {
 
     public String variation = "default";
     public String      geom = "2.5";
-    public String    config = null;   
+    public String    config = "phot";  //For re-running ECEngine this should always be "phot" to match original cooking
 	public EventBuilder  eb = null;
 	
 	public Boolean  isHipo3Event = true;
@@ -332,7 +332,10 @@ public class DetectorMonitor implements ActionListener {
         engine.init();
         engine.isMC = false;
         engine.setLogParam(0.);
-       
+        setEngineThresholds(config);
+    }
+    
+    public void setEngineThresholds(String val) {
         engine.setStripThresholds(getStripThr(val, 0, 1),
                                   getStripThr(val, 1, 1),
                                   getStripThr(val, 2, 1));  
@@ -341,12 +344,19 @@ public class DetectorMonitor implements ActionListener {
                                  getPeakThr(val, 2, 1));  
         engine.setClusterCuts(getClusterErr(val,0),
                               getClusterErr(val,1),
-                              getClusterErr(val,2));   
+                              getClusterErr(val,2));    	
     }
     
     public void configEventBuilder() {
     	ebe.init();
         eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	    	
+    }
+    
+    public String getConfig(int val) {
+    	if(val==11)  return "elec";
+    	if(val==211) return "muon";
+    	if(val==22)  return "phot";
+    	return "phot";    	
     }
     
     public int getStripThr(String val, int idet, int layer) {
@@ -384,7 +394,7 @@ public class DetectorMonitor implements ActionListener {
     
     public void dropBanks(DataEvent event) {
     	
-    	if(!isEngineReady) {configEngine(config); isEngineReady = true;}
+    	if(!isEngineReady) {configEngine("phot"); isEngineReady = true;}
     	
 //    	System.out.println(" ");
 //    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));

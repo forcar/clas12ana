@@ -97,7 +97,6 @@ public class ECcalib extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECmip.localinit()");
-        configEngine("muon");
     	tl.setFitData(Fits);    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  

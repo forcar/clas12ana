@@ -86,7 +86,6 @@ public class ECpi0 extends DetectorMonitor{
     
     public void localinit() {
     	System.out.println("ECpi0.localinit()");
-        configEngine("pi0");
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
         engine.setLogWeight(true);
