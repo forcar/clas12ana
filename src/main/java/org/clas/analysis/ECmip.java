@@ -11,7 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.clas.tools.FitData;
@@ -20,7 +19,6 @@ import org.clas.viewer.DetectorMonitor;
 
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
-import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H2F;
@@ -58,8 +56,6 @@ public class ECmip extends DetectorMonitor {
     List<Float>             pmap = new ArrayList<Float>();	
     IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
     List<Particle>           part = new ArrayList<Particle>();
-    
-    ConstantsManager         ccdb = new ConstantsManager();
     
     public ECmip(String name) {
         super(name);
@@ -936,7 +932,7 @@ public class ECmip extends DetectorMonitor {
         FitSummary.add(Mean,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run);        	        
         FitSummary.add(meanc, is,id+10*(pc+1)*(pc+1)*(il+1),6,run);        	        
         FitSummary.add(Meanc, is,id+10*(pc+1)*(pc+1)*(il+1),7,run);        	        
-   }
+    }
         
     public void plotMeanSummary(int index) {
         
@@ -1101,6 +1097,7 @@ public class ECmip extends DetectorMonitor {
         }
     	
     }
+    
     public void plotMeanRDIF(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));

@@ -26,7 +26,6 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
-import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
@@ -48,8 +47,9 @@ public class ECcalib extends DetectorMonitor {
 	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
 	public List<Particle>  part_ecal = new ArrayList<Particle>();
 	
-    IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(2);    
-	
+    IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
+    List<IndexedList<List<Float>>> RDIFmap = new ArrayList<IndexedList<List<Float>>>();
+    
     int is,la,ic,idet,nstr;
     
     float[][][][] ecmean = new float[6][3][3][68];
@@ -67,7 +67,7 @@ public class ECcalib extends DetectorMonitor {
    
     IndexedList<Float> PixLength = new IndexedList<Float>(3);    
     List<Float>             pmap = new ArrayList<Float>();	
-    IndexedTable time=null, offset=null, goffset=null, gain=null, veff=null;
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
     List<Particle>           part = new ArrayList<Particle>();
     
     public ECcalib(String name) {
@@ -97,6 +97,7 @@ public class ECcalib extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECmip.localinit()");
+    	configEngine("muon");
     	tl.setFitData(Fits);    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
@@ -159,9 +160,14 @@ public class ECcalib extends DetectorMonitor {
      }
      
      public void plotMean() {
-    	 if(getActiveRDIF()==0 && runlist.size()==2) {plotMeanTL(3); return;}
-    	 if(getActiveRDIF()==1) plotMeanSummary(3);
+    	 if(getActiveRDIF()==1 && runlist.size()==2) {getMeanRDIF(); dumpGraphs("rdif");     plotMeanRDIF(3);    return;} //plot RDIF if two runs present and dump RDIF
+    	 if(getActiveRDIF()==0 && runlist.size()==1) {               dumpGraphs("gain");     plotMeanSummary(3); return;} //dump PMT gains based on current analyzed run
+    	 if(getActiveRDIF()==1 && runlist.size()==1) {               dumpGraphs("rdifgain"); plotMeanSummary(3);}         //plot effect of RDIF correction and dump RDIF corrected CCDB gains
      }
+
+     public void dumpGraphs(String val) {
+    	 if(dumpGraphs) writeFile(val,1,7,0,3,0,3);
+     }		      
      
      public void createXYHistos(int k, int nb, int bmx) {
     	 
@@ -1078,7 +1084,9 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
-        
+    	
+        shift = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/torus_gain_shift");
+    	        
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
         int ipc=0,iipc=0, run=getRunNumber();
         double min=1,max=20,mip=10;
@@ -1115,7 +1123,7 @@ public class ECcalib extends DetectorMonitor {
     	int np = npmt[id*3+il];
         double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
         double[]     xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
-        double[]  yMean = new double[np]; 
+        double[]  yMean = new double[np]; double[] yMeanc = new double[np]; double[]  ymeanc = new double[np];
         for (int i=0; i<np; i++) {
             x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0; 
             FitData fd = tl.fitData.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); 
@@ -1123,18 +1131,24 @@ public class ECcalib extends DetectorMonitor {
             fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
             double mean = fd.mean;                        
             if(mean>0) yrms[i] = fd.sigma/mean; 
+            	     yMeanc[i] = (fd.getMean()/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):0);
+                     ymeanc[i] =         (mean/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):0);
                       yMean[i] = fd.getMean()/nrm;
-                      ymean[i] = mean/nrm;
+                      ymean[i] =         mean/nrm;
                      ymeane[i] = fd.meane/nrm;
         }
         GraphErrors mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymean,xe,ymeane);                   
         GraphErrors Mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMean,xe,ymeane);                   
+        GraphErrors meanc = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymeanc,xe,ymeane);                   
+        GraphErrors Meanc = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMeanc,xe,ymeane);                   
         GraphErrors  rms = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yrms,xe,ye);                  
-        FitSummary.add(mean, is,id+10*(pc+1)*(pc+1)*(il+1),1,run);
-        FitSummary.add(rms,  is,id+10*(pc+1)*(pc+1)*(il+1),2,run);                    
-        FitSummary.add(Mean, is,id+10*(pc+1)*(pc+1)*(il+1),5,run);        	        
+        FitSummary.add(mean,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run);
+        FitSummary.add(rms,   is,id+10*(pc+1)*(pc+1)*(il+1),2,run);                    
+        FitSummary.add(Mean,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run);        	        
+        FitSummary.add(meanc, is,id+10*(pc+1)*(pc+1)*(il+1),6,run);        	        
+        FitSummary.add(Meanc, is,id+10*(pc+1)*(pc+1)*(il+1),7,run);        	        
     }
-        
+    
     public void plotMeanSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -1150,8 +1164,8 @@ public class ECcalib extends DetectorMonitor {
         for (int id=0; id<3; id++) {
         for (int il=0; il<3; il++) {           	
             F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,1);
-            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),1,getRunNumber());
-            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,getRunNumber());
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber());
+            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?5:7,getRunNumber());
             plot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
@@ -1162,7 +1176,7 @@ public class ECcalib extends DetectorMonitor {
         }
         }
         }        
-    }
+    }        
     
     public void plotRmsSummary(int index) {
     	
@@ -1271,42 +1285,67 @@ public class ECcalib extends DetectorMonitor {
         }
         }        
     }   
+
+    public void getMeanRDIF() {
+        RDIFmap.clear();
+        for (int pc=0; pc<2; pc++) {
+        	RDIFmap.add(new IndexedList<List<Float>>(4));
+        for (int is=1; is<7; is++) {
+        for (int id=0; id<3; id++) {
+        for (int il=0; il<3; il++) {           	
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(0));
+            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(1));
+            int m=0;
+            for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
+                double x1=plot1.getDataY(ip) ; double x2=plot2.getDataY(ip); double x1e=plot1.getDataEY(ip); double x2e=plot2.getDataEY(ip);
+        		double  y1 = x1>0&&x2>0 ? x1/x2:1.0;
+        		double y1e = x1>0&&x2>0 ? y1*Math.sqrt(Math.pow(x1e/x1,2)+Math.pow(x2e/x2,2)):ip>5?0.09:0;
+                RDIFmap.get(pc).add(new ArrayList<Float>(), is,id,il,ip); 
+                RDIFmap.get(pc).getItem(is,id,il,ip).add((float)m);
+                RDIFmap.get(pc).getItem(is,id,il,ip).add((float)(y1e>0&&y1e<(ip>5?1:0.1)?y1:1));
+                RDIFmap.get(pc).getItem(is,id,il,ip).add((float)plot1.getDataEX(ip));
+                RDIFmap.get(pc).getItem(is,id,il,ip).add((float)(y1e>0&&y1e<(ip>5?1:0.1)?y1e:0));
+            }            
+        }
+        }
+        }    
+        }
+    	
+    }
     
-    public void plotMeanTL(int index) {
-       
+    public void plotMeanRDIF(int index) {
+        
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         int           pc = getActivePC();
         int            n = 0;
         
-        double ymin=-0.5f, ymax=0.3f;
-        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
-         
+        double ymin=0.99f, ymax=1.01f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;   
+        
         c.clear(); c.divide(9, 6);
         
         for (int is=1; is<7; is++) {
         for (int id=0; id<3; id++) {
         for (int il=0; il<3; il++) {           	
         	GraphErrors hwplot1 = new GraphErrors();
-            F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,0);
-            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(0));
-            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),5,runlist.get(1));
-            int m=0;
-            for (int ip=0; ip<npmt[id*3+il]; ip++) {m++;
-            	double  y1 = plot1.getDataY(ip)-plot2.getDataY(ip);
-                double y1e = Math.sqrt(plot1.getDataEY(ip)*plot1.getDataEY(ip)+plot2.getDataEY(ip)*plot2.getDataEY(ip));
-	        	hwplot1.addPoint(m, y1, plot1.getDataEX(ip), y1e);
+            F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,1);
+            for (int ip=0; ip<npmt[id*3+il]; ip++) {
+            	hwplot1.addPoint(RDIFmap.get(pc).getItem(is,id,il,ip).get(0),
+                                 RDIFmap.get(pc).getItem(is,id,il,ip).get(1),
+                                 RDIFmap.get(pc).getItem(is,id,il,ip).get(2),
+                                 RDIFmap.get(pc).getItem(is,id,il,ip).get(3));
             }            
             hwplot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
-            if(n==0||n==9||n==18||n==27||n==36||n==45) hwplot1.getAttributes().setTitleY("#Delta MEAN / MIP");
+            if(n==0||n==9||n==18||n==27||n==36||n==45) hwplot1.getAttributes().setTitleY("#Delta MEAN / MEAN");
             hwplot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
             n++; c.draw(hwplot1); 
             f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         }
         }
         }        
-    }
+    } 
     
     public void plotXYSummary(int index) {        
     	
@@ -1497,7 +1536,9 @@ public class ECcalib extends DetectorMonitor {
     @Override
 	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
 		
-		String path = "/Users/colesmith/CLAS12ANA/";
+    	if(!dumpGraphs) return;
+    	
+		String path = "/Users/colesmith/CLAS12ANA/ECmip/ccdb/";
 		String line = new String();
 		
 		try { 
@@ -1512,7 +1553,9 @@ public class ECcalib extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "gain": line =  getGAIN(is,il,iv,ip,getRunNumber()); break;
+							case "gain": line = getGAIN(is,il,iv,ip,getRunNumber()); break;
+							case "rdif": line = getRDIF(is,il,iv,ip,getRunNumber()); break;
+							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip,getRunNumber()); 
 							}
 						    System.out.println(line);
 						    outputBw.write(line);
@@ -1530,8 +1573,8 @@ public class ECcalib extends DetectorMonitor {
 			ex.printStackTrace();
 		}
 
-	}
-	
+	}    
+    
 	public String getGAIN(int is, int il, int iv, int ip, int run) {
 		int pc = 1; 
 		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
@@ -1539,15 +1582,37 @@ public class ECcalib extends DetectorMonitor {
 			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
 			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
-				+ge;
+				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
+				  +ge;
 		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "+gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)+" 0.0";
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
+			      +" 0.0";			
 		}
 		
 	}
 	
-  
+	public String getRDIF(int is, int il, int iv, int ip, int run) {	
+		int pc = 1;
+		if(RDIFmap.get(pc).hasItem(is,il,iv,ip) && il>0) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(1)+" "
+				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(3);
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+		        + "1.0"
+		        +" 0.0";
+		}	    
+	}
+	
+	public String getRDIFGAIN(int is, int il, int iv, int ip, int run) {	
+		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
+		shift   = engine.getConstantsManager().getConstants(run, "/calibration/ec/torus_gain_shift");
+		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gain",   is, 3*il+iv+1, ip+1)+" "
+				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gainErr",is, 3*il+iv+1, ip+1);    
+	}
+
 /*  
  * 
  *       
