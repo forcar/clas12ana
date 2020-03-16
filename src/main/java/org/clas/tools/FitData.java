@@ -22,7 +22,7 @@ public class FitData {
 	public double meane;
 	public double sigma;
 	public double sigmae;
-	public double p0,p1,p0e,p1e,p2,p2e;
+	public double p0,p1,p2,p3,p0e,p1e,p2e,p3e;
 	public double sig1=2.5;
 	public double sig2=1.7;
 	public int func;
@@ -37,11 +37,12 @@ public class FitData {
 			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]", "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
 			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x",
 			"[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x", "[a]*exp(x,[b])", "[a]+[b]*cos(x*[c])",
-			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5"};
+			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5",
+			"[sf1]*(0.985+[sf3]/x+[sf4]/x/x)"};
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
-	};
+	}
 
 	public void setGraph(GraphErrors graph) {
 	    this.graph = graph;
@@ -80,13 +81,24 @@ public class FitData {
 		this.sig1 = sig1;
 		this.sig2 = sig2;
 	}
+	
+	public void simpleFit(double pmin, double pmax, double fmin, double fmax) {
+	    hist.setFunction(new F1D("f",predefFunctionsF1D[0], fmin, fmax)); 
+	    hist.getFunction().setLineWidth(1);
+	    amp   = getMaxYIDataSet(graph,pmin,pmax,true);
+	    mean  = getMaxYIDataSet(graph,pmin,pmax,false);
+	    sigma = getRMSIDataSet(graph,pmin,pmax);
+	    hist.getFunction().setParameter(0, 30); hist.getFunction().setParameter(1, 1); hist.getFunction().setParameter(2, 0.1);
+//	    hist.getFunction().setRange(mean-2*sigma, mean+2*sigma);
+	    DataFitter.fit(hist.getFunction(), hist, "Q");
+	}
 
 	public void initFit(int func, double pmin, double pmax, double fmin, double fmax) {
 		this.func = func;
 	    this.pmin = pmin; this.fmin=fmin;
-	    this.pmax = pmax; this.fmax=fmax;
+	    this.pmax = pmax; this.fmax=fmax;	    
 	    graph.setFunction(new F1D("f",predefFunctionsF1D[func], fmin, fmax)); 
-	    graph.getFunction().setLineWidth(1);
+	    graph.getFunction().setLineWidth(1); 
 	    if(func<5) {
 	      amp   = getMaxYIDataSet(graph,pmin,pmax,true);
 	      mean  = getMaxYIDataSet(graph,pmin,pmax,false);
@@ -100,7 +112,9 @@ public class FitData {
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
 	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ; graph.getFunction().setRange(fmin, fmax);}
-	    if (func==13) {initFunc(0,0.5); initFunc(1,0.001); initFunc(2,100); graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
+	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3) ; graph.getFunction().setRange(fmin, fmax);}
+	    if (func==13) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ; graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
+	    if (func==14) {initFunc(0,0.263); initFunc(1,-0.036); initFunc(2,0.002); graph.getFunction().setRange(fmin, fmax);}
 	}
 	
 	public void initFunc(int par, double val) {
@@ -113,12 +127,14 @@ public class FitData {
 	}
 
 	public void fitGraph(String opt, Boolean fitEnable, Boolean fitVerbose) {
-	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, (fitVerbose)?"VE":"Q");
-	    if (func==6)  {p0  = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); 
-	                   p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error();}
-	    if (func==13) { p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
-                       p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
-	    
+	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, "Q");
+	    if (func==6)  {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); 
+                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error();}
+	    if (func==7)  {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
+                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
+	    if (func==13) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
+                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
+	                  
 	    if (func<5) {
 	       amp   = graph.getFunction().getParameter(0);
 	       mean  = graph.getFunction().parameter(1).value();
