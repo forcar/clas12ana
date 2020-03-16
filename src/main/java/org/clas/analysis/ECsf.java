@@ -131,6 +131,7 @@ public class ECsf extends DetectorMonitor {
     	plotFitSummary8(8);
     	if(!dropSummary) {updateFits(10);plotMeanHWSummary(11); plotFitSummary2(13); plotFitSummary3(14); plotFitSummary4(15);}
     	plotTimeLines(12);
+    	if (dumpGraphs) dumpGraphs();
     }
     
     public void createEOPHistos(int k, int pc, int xb, double x1, double x2, int yb, double y1, double y2, String txt1, String txt2, String txt3) {
@@ -417,12 +418,18 @@ public class ECsf extends DetectorMonitor {
             fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(0,0,7,run).getData(is-1).get(0));
             fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX(); 
             FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); // E/P vs. measured energy
-            
+          
+    	    GraphErrors MeanGraph = fitter.getMeanSlices();
+    	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,2.5,0.3,2.5),is,0,5,run); 
+    	    
     		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    FitSummary.add(fitter.getMeanSlices(), is, 0, 1, run);  // E/P vs. tracking momentum
     	    
-    	    GraphErrors meanGraph = fitter.getMeanSlices();  
+    	    GraphErrors meanGraph = fitter.getMeanSlices(); 
+    	    tl.fitData.add(fitEngine(meanGraph,14,1.6,9.4,1.6,9.4),is,0,6,run); 
+    	    
+    	    
     	    GraphErrors  sigGraph = fitter.getSigmaSlices(); 
    	    
             int npts = meanGraph.getDataSize(0)  ;
@@ -570,18 +577,34 @@ public class ECsf extends DetectorMonitor {
     
     public void plotFitSummary8(int index) {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        c.setGridX(false); c.setGridY(false); c.divide(3, 4);
-        int col[] = {1,2,3,4,5,7};
+        c.setGridX(false); c.setGridY(false); c.divide(6, 3);
+        String txt;
+        
         int run = getRunNumber();    
 	   
-	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); 
+	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
 
     	for (int is=1; is<7; is++) {  
-    		String txt = "Sector "+is+" Measured Energy (GeV)";
+    		txt = "Sector "+is+" Measured Energy (GeV)";
             if (FitSummary.hasItem(is,0,7,run)) {
-            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.18f,0.300f,col[is-1],4,1,txt," E/P",""); c.draw(sf,"same");
+            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.22f,0.28f,2,4,1,txt," E/P",""); c.draw(sf,"same");
+            	tl.fitData.getItem(is,0,5,run).graph.setMarkerColor(1);
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineColor(8); 
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineWidth(2);
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setOptStat("1110");
+            	c.draw(tl.fitData.getItem(is,0,5,run).graph.getFunction(),"same");             	
             }
-            c.cd(is-1+6);c.getPad(is-1+6).getAxisX().setRange(0.1, 0.4); 
+    		txt = "Sector "+is+" Track Momentum (GeV)";
+            if (FitSummary.hasItem(is,0,1,run)) {
+            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,1,run),c,is-1+6,0.0f,10.0f,0.22f,0.28f,2,4,1,txt," E/P",""); 
+            	tl.fitData.getItem(is,0,6,run).graph.setMarkerColor(1); 
+            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setLineColor(8); 
+            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setLineWidth(2);
+            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setOptStat("1110");
+            	c.draw(tl.fitData.getItem(is,0,6,run).graph.getFunction(),"same");             	
+            }
+
+            c.cd(is-1+12);c.getPad(is-1+12).getAxisX().setRange(0.1, 0.4); 
             c.draw(Fits.getItem(is,0,7,getRunNumber()).getHist());
             c.draw(Fits.getItem(is,0,7,getRunNumber()).getGraph(),"same");     	
      	}
