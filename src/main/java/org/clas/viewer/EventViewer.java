@@ -82,11 +82,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     DataSourceProcessorPane   processorPane = null;
     
-    JCheckBoxMenuItem co0,co1,co2,co3,co4,co5,co6 = null;   
-    JCheckBoxMenuItem          cf,cf0,cf1,cf2,cf3 = null;   
-    JCheckBoxMenuItem                         ctr = null;  
-    JRadioButtonMenuItem          ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4 = null;  
+    JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6 = null;   
+    JCheckBoxMenuItem               cf,cf0,cf1,cf2,cf3 = null;   
+    JCheckBoxMenuItem                              ctr = null;  
+    JRadioButtonMenuItem               ct0,ct1,ct2,ct3 = null;  
+    JRadioButtonMenuItem      ctr0,ctr1,ctr2,ctr3,ctr4 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -112,6 +112,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   dropBanks = false;
     public Boolean dropSummary = false;
     public Boolean  dumpGraphs = false;
+    public Boolean   dumpFiles = false;
     public Boolean defaultGain = false;
     public Boolean    fiduCuts = false;
     public Boolean  cfitEnable = false;
@@ -157,20 +158,23 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-      	         case   "ECa":  monitors[n++]=new ECa(s);    break; 
-    	         case   "ECsf": monitors[n++]=new ECsf(s);   break; 
-        	     case    "ECt": monitors[n++]=new ECt(s);    break;
-        	     case  "ECmip": monitors[n++]=new ECmip(s);  break; 
-        	     case  "ECpi0": monitors[n++]=new ECpi0(s);  break;
-        	     case  "ECperf":monitors[n++]=new ECperf(s); break;
-        	     case "ECelas": monitors[n++]=new ECelas(s); 
+      	         case    "ECa":  monitors[n++]=new ECa(s);    break; 
+    	         case    "ECsf": monitors[n++]=new ECsf(s);   break; 
+        	     case     "ECt": monitors[n++]=new ECt(s);    break;
+        	     case   "ECmip": monitors[n++]=new ECmip(s);  break; 
+        	     case "ECcalib": monitors[n++]=new ECcalib(s);break; 
+        	     case   "ECpi0": monitors[n++]=new ECpi0(s);  break;
+        	     case  "ECperf": monitors[n++]=new ECperf(s); break;
+        	     case  "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
     	} else {
     		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
+//  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
+//    		monitors[n] = new ECpi0("ECpi0");
 
         }
     }
@@ -184,7 +188,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                
         menu     = new JMenu("File");
         menuItem = new JMenuItem("Load Run");                menuItem.addActionListener(this); menu.add(menuItem);
-        menuItem = new JMenuItem("Load Summary");            menuItem.addActionListener(this); menu.add(menuItem);
+        menuItem = new JMenuItem("Analyze Runs");            menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Analyze Histos");          menuItem.addActionListener(this); menu.add(menuItem); menu.addSeparator();
         menuItem = new JMenuItem("Open histograms file");    menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Save histograms to file"); menuItem.addActionListener(this); menu.add(menuItem);
@@ -193,13 +197,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
 
         menu     = new JMenu("Options");  
-        co0 = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0); co0.doClick();
-        co1 = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
-        co2 = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
-        co3 = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
-        co4 = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
-        co5 = new JCheckBoxMenuItem("DefaultGains");  co5.addItemListener(this);       menu.add(co5);
-        co6 = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
+        co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0); co0.doClick();
+        co1  = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
+        co2  = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
+        co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
+        co4  = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
+        co4b = new JCheckBoxMenuItem("DumpGraphs");   co4b.addItemListener(this);       menu.add(co4b);
+        co5  = new JCheckBoxMenuItem("DefaultGains");  co5.addItemListener(this);       menu.add(co5);
+        co6  = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
         menuBar.add(menu);
         
         menu     = new JMenu("Fitting");
@@ -258,7 +263,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         menuBar.add(menu);
         
-        menu     = new JMenu("MIP Trigger");
+        menu     = new JMenu("Trigger PID");
         group = new ButtonGroup();
         ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); ctr0.doClick();
         ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
@@ -309,6 +314,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co3)  dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co4b)   dumpFiles = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co5)  defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co6)     fiduCuts = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==cf )   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
@@ -329,6 +335,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
+		                                           this.monitors[k].dumpFiles   = dumpFiles;
 		                                           this.monitors[k].defaultGain = defaultGain;
 		                                           this.monitors[k].fiduCuts    = fiduCuts;
 		                                           this.monitors[k].autoSave    = autoSave;
@@ -347,7 +354,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         switch (e.getActionCommand()) {
           case("Load Run"):                    this.loadHistoFromRunIndex(); break;
 //          case("Load Summary"):                this.readHistosFromSummary(); break;
-          case("Analyze Data"):                this.readFiles(); break;
+          case("Analyze Runs"):                this.readFiles(); break;
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
           case("Set TVOffset"):                this.chooseTVOffset(); break;
@@ -567,8 +574,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private void readFiles() {
-        EvioSource     evioReader = new EvioSource();
-        Hipo3DataSource hipo3Reader = new Hipo3DataSource();
         HipoDataSource   hipoReader = new HipoDataSource();
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setDialogTitle("Choose input files directory...");
@@ -578,60 +583,26 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             int nf = 0;
             for (File fd : fc.getSelectedFiles()) {
                 if (fd.isFile()) {
-                    if (fd.getName().contains(".evio") || fd.getName().contains(".hipo")) {
+                    if (fd.getName().contains(".hipo")) {
                         Integer current = 0;
                         Integer nevents = 0;
                         DataEvent event = null;
-                        if(fd.getName().contains(".hipo3")) {
-                            hipo3Reader.open(fd);
-                            current = hipo3Reader.getCurrentIndex();
-                            nevents = hipo3Reader.getSize();                            
-                        }
-                        else if(fd.getName().contains(".hipo")) {
-                            hipoReader.open(fd);
-                            current = hipoReader.getCurrentIndex();
-                            nevents = hipoReader.getSize();
-                        }                        
-                        else if(fd.getName().contains(".evio")) {
-                            evioReader.open(fd);
-                            current = evioReader.getCurrentIndex();
-                            nevents = evioReader.getSize();
-                        }
-
+                        hipoReader.open(fd);
+                        current = hipoReader.getCurrentIndex();
+                        nevents = hipoReader.getSize();
                         System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());                        
-
                         for (int k = 0; k < nevents; k++) {
-                            if(fd.getName().contains(".hipo3")) {
-                                if (hipo3Reader.hasEvent()) {
-                                    event = hipo3Reader.getNextEvent();                          
-                                }
-                            }
-                            else if(fd.getName().contains(".hipo")) {
-                                if (evioReader.hasEvent()) {
-                                    event = evioReader.getNextEvent();
-                                }
-                            }
-                            else if(fd.getName().contains(".evio")) {
-                                if (evioReader.hasEvent()) {
-                                    event = evioReader.getNextEvent();
-                                }
-                            }
+                        	event = hipoReader.getNextEvent();                
                             if(event != null) {
                                 this.dataEventAction(event);
                                 if(k % 10000 == 0) System.out.println("Read " + k + " events");
                             }
                         }
-                        for(int k=0; k<this.monitors.length; k++) {
-                            this.monitors[k].analyze();
-                            this.monitors[k].fillSummary();
-                            this.monitors[k].initGStyle();
-                            this.monitors[k].plotHistos(this.getRunNumber(event));
-                        }
+                        hipoReader.close();
                         nf++;
                     }
                 }
             }
-//            this.updateTable();
             System.out.println("Task completed");
         }
     }    
