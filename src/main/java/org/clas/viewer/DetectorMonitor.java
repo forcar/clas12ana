@@ -183,6 +183,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean     dropBanks = false;
     public Boolean   dropSummary = false; 
     public Boolean    dumpGraphs = false; 
+    public Boolean     dumpFiles = false; 
     public Boolean   defaultGain = false; 
     public Boolean      fiduCuts = false;
     public Boolean    cfitEnable = false; 
@@ -220,12 +221,14 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/fadc_global_offset",
             "/calibration/ec/tdc_global_offset",
             "/calibration/ec/global_gain_shift",
+            "/calibration/ec/torus_gain_shift",
             "/calibration/ec/global_time_walk",
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
             "/calibration/eb/rf/config"
     };
+    
     
     public DetectorMonitor(String name){
         initGStyle();
@@ -612,8 +615,8 @@ public class DetectorMonitor implements ActionListener {
         JPanel buttonPane = new JPanel();
         
         if(useRDIF) {
-        b0 = new JRadioButton("RDIF"); buttonPane.add(b0); b0.setActionCommand("0"); b0.addActionListener(this); 
-        b1 = new JRadioButton("MEAN"); buttonPane.add(b1); b1.setActionCommand("1"); b1.addActionListener(this); 
+        b0 = new JRadioButton("RDIF"); buttonPane.add(b0); b0.setActionCommand("1"); b0.addActionListener(this); 
+        b1 = new JRadioButton("MEAN"); buttonPane.add(b1); b1.setActionCommand("0"); b1.addActionListener(this); 
         bRO = new ButtonGroup(); bRO.add(b0); bRO.add(b1); 
         b1.setSelected(true);        	
         }
@@ -1137,6 +1140,13 @@ public class DetectorMonitor implements ActionListener {
        fd.initFit(ff,pmin,pmax,fmin,fmax); 
        fd.fitGraph("",cfitEnable,fitVerbose); 
        return fd;
+    }
+    
+    public FitData fitEngine(H1F h, double pmin, double pmax, double fmin, double fmax) {
+        FitData fd = new FitData(h.getGraph()); 
+        fd.setHist(h);
+        fd.simpleFit(pmin,pmax,fmin,fmax);
+        return fd;
     }
     
     public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax, double sig1, double sig2) {
