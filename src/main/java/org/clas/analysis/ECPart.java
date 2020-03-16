@@ -833,7 +833,7 @@ public class ECPart  {
                   if(pcec1||pcec2) {n2rec1++; h7a.fill(part.refE);}
                   if(pcec1&&pcec2) {n2rec2++; h7b.fill(part.refE);}
           
-                  if (pcec1&&pcec2) {
+                  if (pcec1||pcec2) {
 //                	  if( engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
                 	  if(true) {
                 	  h2a.fill(part.refE, invmass);                                    			  //Two-photon invariant mass                
