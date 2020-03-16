@@ -298,15 +298,17 @@ public class Event {
             float     vy = partBank.getFloat("vy", i);
             float     vz = partBank.getFloat("vz", i);
             float   beta = partBank.getFloat("beta", i);
+            float   chi2 = Math.abs(partBank.getFloat("chi2pid", i));
             short status = (short) Math.abs(partBank.getShort("status", i));
             Particle p = new Particle(); 
-            if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0);}             
+            if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("chi2pid", 0);}             
             if (pid!=0) {
             	p.initParticle(pid, px, py, pz, vx, vy, vz);            	   
             	p.setProperty("ppid", pid);
                 p.setProperty("status", status);
                 p.setProperty("beta", beta);
                 p.setProperty("index",i);                        
+                p.setProperty("chi2pid",chi2);                        
             }
             part.add(i,p);     //Lists do not support sparse indices !!!!!            
         }                		
@@ -323,12 +325,14 @@ public class Event {
 				float     vy = partBank.getFloat("vy", ipart);
 				float     vz = partBank.getFloat("vz", ipart);
 				float   beta = partBank.getFloat("beta", ipart);
+	            float   chi2 = partBank.getFloat("chi2pid", ipart);
 				short status = (short) Math.abs(partBank.getShort("status", ipart));
 			
 				Particle p = new Particle(pid, px, py, pz, vx, vy, vz);                         			
 				p.setProperty("status", status);
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
+				p.setProperty("chi2pid", chi2);
 				int ip = pid<0?Math.abs(pid)+1:pid;				
 				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);}
 				    partmap.getItem(ip).add(p);
@@ -358,6 +362,14 @@ public class Event {
 			}
 		}
 		return ftofpart;
+	}
+	
+	public int getECALMULT(int is, int layer) {
+		int n=0;
+		for(int i = 0; i < caloBank.rows(); i++){  
+			 if(is==caloBank.getByte("sector",i) && layer==caloBank.getByte("layer", i)) n++;
+		}
+		return n;
 	}
 	
 	public List<Particle> getECAL(int ipart) {
@@ -409,10 +421,10 @@ public class Event {
 				}
 				
 				p.setProperty("beta", newBeta(p));
-				
+								
 				if(trajMap.containsKey(ipart)) {
 					for(int tmap : trajMap.get(ipart)) {
-					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer")+1)) {
+					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer"))) {
 							p.setProperty("tx",     trajBank.getFloat("x",tmap));
 							p.setProperty("ty",     trajBank.getFloat("y",tmap));
 							p.setProperty("tz",     trajBank.getFloat("z",tmap));
