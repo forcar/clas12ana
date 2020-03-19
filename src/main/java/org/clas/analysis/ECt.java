@@ -672,10 +672,12 @@ public class ECt extends DetectorMonitor {
                        float dt = 0;
                        if(recRunRF!=null) dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
                        
-                       if (Math.abs(pid)==TRpid) ((H1F) this.getDataGroup().getItem(is,0,28,run).getData(il+i-1).get(0)).fill(resid); //timelines
+                       boolean goodSector = dropEsect?is!=trigger_sect:true;
+                       
+                       if (Math.abs(pid)==TRpid&&goodSector) ((H1F) this.getDataGroup().getItem(is,0,28,run).getData(il+i-1).get(0)).fill(resid); //timelines
                        
 //                       ((H2F) this.getDataGroup().getItem(is,   0,10,run).getData(il+i-1).get(0)).fill(tdifp, ip);
-                       if (Math.abs(pid)==TRpid && !dropSummary) {  //Menu selection
+                       if (Math.abs(pid)==TRpid && !dropSummary && goodSector) {  //Menu selection
                            ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET, ip); //peak times
                            ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET,  ip); //cluster times
                            ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
