@@ -82,7 +82,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     DataSourceProcessorPane   processorPane = null;
     
-    JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6 = null;   
+    JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
     JCheckBoxMenuItem               cf,cf0,cf1,cf2,cf3 = null;   
     JCheckBoxMenuItem                              ctr = null;  
     JRadioButtonMenuItem               ct0,ct1,ct2,ct3 = null;  
@@ -115,6 +115,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   dumpFiles = false;
     public Boolean defaultGain = false;
     public Boolean    fiduCuts = false;
+    public Boolean   dropEsect = false;
     public Boolean  cfitEnable = false;
     public Boolean  sfitEnable = false;
     public Boolean  dfitEnable = false;
@@ -169,8 +170,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECperf("ECperf"); 
-//    		monitors[n] = new ECt("ECt"); 
+//    		monitors[n] = new ECperf("ECperf"); 
+    		monitors[n] = new ECt("ECt"); 
 //  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -202,9 +203,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co2  = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
         co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
         co4  = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
-        co4b = new JCheckBoxMenuItem("DumpGraphs");   co4b.addItemListener(this);       menu.add(co4b);
+        co4b = new JCheckBoxMenuItem("DumpFiles");    co4b.addItemListener(this);       menu.add(co4b);
         co5  = new JCheckBoxMenuItem("DefaultGains");  co5.addItemListener(this);       menu.add(co5);
         co6  = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
+        co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
         menuBar.add(menu);
         
         menu     = new JMenu("Fitting");
@@ -317,6 +319,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==co4b)   dumpFiles = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co5)  defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==co6)     fiduCuts = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co7)    dropEsect = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
 		if (source==cf )   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf0)   cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf1)   sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
@@ -338,6 +341,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		                                           this.monitors[k].dumpFiles   = dumpFiles;
 		                                           this.monitors[k].defaultGain = defaultGain;
 		                                           this.monitors[k].fiduCuts    = fiduCuts;
+		                                           this.monitors[k].dropEsect   = dropEsect;
 		                                           this.monitors[k].autoSave    = autoSave;
                                                    this.monitors[k].cfitEnable  = cfitEnable;
                                                    this.monitors[k].sfitEnable  = sfitEnable;
