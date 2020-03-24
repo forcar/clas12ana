@@ -251,7 +251,6 @@ public class Event {
 	}
 	
 	public boolean isGoodRows() {
-//		System.out.println(caloBank.rows()+" "+clusBank.rows());
 		return caloBank.rows()==clusBank.rows();
 	}
 	
@@ -287,7 +286,8 @@ public class Event {
 		if(tbsum==0||tbsum>1) return false;
 		return true;			
 	}
-	
+
+	//Recreate particle class from partBank and store in List<Particle> part with original pindex
 	public void getPART() {
         for(int i = 0; i < partBank.rows(); i++){           	
             int      pid = partBank.getInt("pid", i);              
@@ -300,10 +300,11 @@ public class Event {
             float   beta = partBank.getFloat("beta", i);
             float   chi2 = Math.abs(partBank.getFloat("chi2pid", i));
             short status = (short) Math.abs(partBank.getShort("status", i));
+            
             Particle p = new Particle(); 
             if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("chi2pid", 0);}             
             if (pid!=0) {
-            	p.initParticle(pid, px, py, pz, vx, vy, vz);            	   
+            	p.initParticle(pid, px, py, pz, vx, vy, vz);         	   
             	p.setProperty("ppid", pid);
                 p.setProperty("status", status);
                 p.setProperty("beta", beta);
@@ -314,6 +315,7 @@ public class Event {
         }                		
 	}
 	
+	//Recreate particle class for tpid from partMap and partBank and store in IndexedList<List<Particle>> partmap with ip index	
 	public void getRECparticle(int tpid) {		
 		if(partMap.containsKey(tpid)) {
 			for(int ipart : partMap.get(tpid)){  
@@ -376,7 +378,8 @@ public class Event {
 		List<Particle> ecalpart = new ArrayList<Particle>();
 		if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) {				
-				Particle p = new Particle();                         
+				Particle p = new Particle(); 
+				p.copy(part.get(caloBank.getShort("pindex",imap)));
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
 				p.setProperty("layer",  caloBank.getByte("layer",imap));
 				p.setProperty("pindex", caloBank.getShort("pindex",imap));
@@ -396,6 +399,8 @@ public class Event {
 				p.setProperty("du",     caloBank.getFloat("du",imap));
 				p.setProperty("dv",     caloBank.getFloat("dv",imap));
 				p.setProperty("dw",     caloBank.getFloat("dw",imap));
+				
+				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());			
 				
 				if(clusBank!=null) {
 					int ical = (int) p.getProperty("index");

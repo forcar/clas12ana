@@ -572,7 +572,7 @@ public class ECcalib extends DetectorMonitor {
     
     public IndexedList<List<Particle>> getECALClusters(List<Particle> list) {
     	
-        IndexedList<List<Particle>>     olist = new IndexedList<List<Particle>>(2);       
+        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(2);       
     	for (Particle p : list) {
     		int ip = (int)p.getProperty("pindex");
     		for (Particle ec : ev.getECAL(ip)) {
@@ -588,7 +588,7 @@ public class ECcalib extends DetectorMonitor {
     
     public IndexedList<List<Particle>> filterECALClusters(IndexedList<List<Particle>> list) {
     	
-        IndexedList<List<Particle>>     olist = new IndexedList<List<Particle>>(1);       
+        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);       
 		IndexGenerator ig = new IndexGenerator();
 		
     	for (Map.Entry<Long,List<Particle>>  entry : list.getMap().entrySet()){
