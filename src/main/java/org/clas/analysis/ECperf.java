@@ -439,12 +439,18 @@ public class ECperf extends DetectorMonitor {
     	switch (st) {
     	
         case 0:
-        dg = new DataGroup(2,2);
+        dg = new DataGroup(2,5);
         for(int i=0; i<2; i++) {
-	        tag = i+"_"+st+"_"+k+"_"+run;
+	        tag = in+"_"+st+"_"+k+"_"+run;
 	        dg.addDataSet(makeH2(tab+"_1_",tag,200,-200,200,200,-200,200,det[i],"X (CM)","Y (CM)"),in); in++;         	
-	        dg.addDataSet(makeH2(tab+"_1_",tag,200,-200,200,200,-200,200,det[i],"X (CM)","Y (CM)"),in); in++;  	
         } 
+        for(int i=0; i<2; i++) {
+	        tag = in+"_"+st+"_"+k+"_"+run;
+	        dg.addDataSet(makeH2(tab+"_2_",tag,200,-200,200,200,-200,200,"","X (CM)","Y (CM)"),in); in++;  	
+	        dg.addDataSet(makeH2(tab+"_3_",tag,200,-200,200,200,-200,200,"","X (CM)","Y (CM)"),in); in++;  	
+	        dg.addDataSet(makeH2(tab+"_4_",tag,200,-200,200,200,-200,200,"","X (CM)","Y (CM)"),in); in++;  	
+	        dg.addDataSet(makeH2(tab+"_5_",tag,200,-200,200,200,-200,200,"","X (CM)","Y (CM)"),in); in++;  	
+	    }        
         break;
     	
     	case 2:
@@ -493,8 +499,8 @@ public class ECperf extends DetectorMonitor {
         
     	}
     	
-    	this.getDataGroup().add(dg,0,st,k,run);      
-	
+    	this.getDataGroup().add(dg,0,st,k,run);    
+    	
     } 
         
     public void createSCelec(int st) {
@@ -1584,7 +1590,9 @@ public class ECperf extends DetectorMonitor {
             		if(Math.abs(thdif*sgn)>0.3) ((H2F)dg3.getData(is-1+0+il*6).get(0)).fill(tdif,nrg/1e3);
             		if(Math.abs(e_mom-6.5)<0.5) ((H2F)dg4.getData(is-1+0+il*12).get(0)).fill(tdif,thdif*sgn);
             		if(Math.abs(e_mom-6.5)<0.5) ((H2F)dg4.getData(is-1+6+il*12).get(0)).fill(tdif,phdif);
-            		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il).get(0)).fill(-x,y);            		
+            		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il  ).get(0)).fill(-x,y);            		
+            		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il+2).get(0)).fill(-x,y,tdif);            		
+               		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il+4).get(0)).fill(-x,y,nrg/1e3);            		
             	}
 			}
 		}
@@ -1930,7 +1938,13 @@ public class ECperf extends DetectorMonitor {
         if(getActive123()<6)        plot123(index);
         if(getActive123()>5) ECelecPlotFits(index);
     }
-    
+	
+	public void ECtimePlot(String tabname) {
+		int index = getDetectorTabNames().indexOf(tabname);
+        if(getActive123()<6) plot123(index);    
+        if(getActive123()==0) plotECtimeXY(index);
+	}	
+	
     public void SCelecPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
         if(getActive123()<6)        plot123(index);
@@ -1970,13 +1984,8 @@ public class ECperf extends DetectorMonitor {
 	
 	public void ECphotPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
-        if(getActive123()<6) plot123(index);    
-	}	
-	
-	public void ECtimePlot(String tabname) {
-		int index = getDetectorTabNames().indexOf(tabname);
-        if(getActive123()<6) plot123(index);    
-	}	
+        if(getActive123()>0 && getActive123()<6) plot123(index);
+ 	}	
 	
     @Override
     public void plotEvent(DataEvent de) {
@@ -2265,7 +2274,50 @@ public class ECperf extends DetectorMonitor {
     
     public void plotUVW(int index) {  
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,getActive123()-1,index,getRunNumber()));
-    }  
+    }
+    
+    public void plotECtimeXY(int index) {        
+    	
+      	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));        
+        int          run = getRunNumber();
+        
+        c.clear(); c.divide(3,2);
+        
+        H2F np = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(0).get(0); 
+        H2F ne = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(1).get(0); 
+        H2F tp = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(2).get(0); 
+        H2F te = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(3).get(0);  
+        H2F ep = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(4).get(0); 
+        H2F ee = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(5).get(0);  
+        H2F rpt = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(6).get(0); 
+        H2F ret = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(7).get(0); 
+        H2F rpe = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(8).get(0); 
+        H2F ree = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(9).get(0); 
+                
+        c.cd(0); c.getPad(0).getAxisZ().setLog(true); c.draw(np);
+        c.cd(3); c.getPad(3).getAxisZ().setLog(true); c.draw(ne);
+        
+        for(int loop = 0; loop < np.getDataBufferSize(); loop++) {
+        	float nep = np.getDataBufferBin(loop);
+            if (nep>0) {rpe.setDataBufferBin(loop,ep.getDataBufferBin(loop)/nep);}
+        	float nee = ne.getDataBufferBin(loop);
+            if (nee>0) {ree.setDataBufferBin(loop,ee.getDataBufferBin(loop)/nee);}
+        }            
+        
+        c.cd(1); c.getPad(1).getAxisZ().setLog(true); c.getPad(1).getAxisZ().setRange(0.01,0.3); c.draw(rpe);        
+        c.cd(4); c.getPad(4).getAxisZ().setLog(true); c.getPad(4).getAxisZ().setRange(0.01,0.3); c.draw(ree);         
+        
+        for(int loop = 0; loop < np.getDataBufferSize(); loop++) {
+        	float nep = np.getDataBufferBin(loop);
+            if (nep>0) {rpt.setDataBufferBin(loop,tp.getDataBufferBin(loop)/nep);}
+        	float nee = ne.getDataBufferBin(loop);
+            if (nee>0) {ret.setDataBufferBin(loop,te.getDataBufferBin(loop)/nee);}
+        }            
+        
+        c.cd(2); c.getPad(2).getAxisZ().setLog(false); c.getPad(2).getAxisZ().setRange(-6,6); c.draw(rpt);        
+        c.cd(5); c.getPad(5).getAxisZ().setLog(false); c.getPad(5).getAxisZ().setRange(-6,6); c.draw(ret);
+           
+    }    
     
     public void showNeutronEff() {
 		int index = getDetectorTabNames().indexOf("ECneut");
