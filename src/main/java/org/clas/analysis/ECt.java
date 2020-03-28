@@ -428,7 +428,7 @@ public class ECt extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {   
        isMC         = (getRunNumber()<100) ? true:false;
-       trigger_sect = getElecTriggerSector(); 
+       trigger_sect = isMC?event.hasBank("ECAL::adc")?event.getBank("ECAL::adc").getByte("sector",0):5:getElecTriggerSector(); 
        phase        = getTriggerPhase(); 
        STT          = event.hasBank("REC::Event") ? 
     		          (isHipo3Event ? 
@@ -439,7 +439,7 @@ public class ECt extends DetectorMonitor {
     		          event.hasBank("REC::Particle")&&
     		          event.hasBank("REC::Calorimeter")&&
     		          STT>0 && trigger_sect>0 && trigger_sect<7;
-
+    		     	   
        if(isGoodTL)     processTL(event); 
        if(!dropSummary) processRaw(event);
        processRec(event);             
@@ -448,7 +448,7 @@ public class ECt extends DetectorMonitor {
     public void processTL(DataEvent event) {
     	
   	   int  run = getRunNumber();
-       ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT);
+  	   ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT);
        
        if(event.hasBank("ECAL::clusters")){       
        DataBank  bank1 = event.getBank("ECAL::clusters");
@@ -692,7 +692,7 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,18,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr-lcorr, adc);
                            ((H2F) this.getDataGroup().getItem(is,il+i,19,run).getData(ip-1).get(0)).fill(tdc- vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr, leff);
-                           ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET,leff);  	
+                           ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET+(isMC?50:0),leff);  	
                        } 
                        if(pid==11)                     ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)).get(is-1)).fill(mybet);  
                        if(Math.abs(pid)==211)          ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
