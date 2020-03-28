@@ -863,7 +863,8 @@ public class DetectorMonitor implements ActionListener {
     	return runIndexSlider;
     }
     
-    public float getBeamEnergy(int run) {    	
+    public float getBeamEnergy(int run) { 
+    	if (run<=10)    return  7.54626f;
     	if (run<=5699)  return 10.6041f;
     	if (run<=5875)  return  7.54626f;
     	if (run<=5957)  return  6.53536f;
@@ -895,6 +896,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getTorusCurrent(int run) {
+    	if (run<100) return 1.00f;
     	if (run>=3029&&run<=3065) return -1.00f;
     	if (run>=3072&&run<=3087) return -0.75f;
     	if (run>=3097&&run<=3105) return +0.75f;

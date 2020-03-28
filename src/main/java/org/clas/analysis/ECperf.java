@@ -1541,16 +1541,16 @@ public class ECperf extends DetectorMonitor {
             		float   x =      (float) ec.getProperty("x");
             		float   y =      (float) ec.getProperty("y");
 //            		System.out.println("pec iS,ind,the,phi "+is+" "+il+" "+Math.toDegrees(ec.theta())+" "+Math.toDegrees(ec.phi()));
-            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()));
-            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()));
+            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*sgn;
+            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*sgn;
 
             		if(il==0 && thdif>-1 && thdif<1)   counter[e_sect-1][1]++;
             		if(il==0 && phdif>-2 && phdif<1.5) counter[e_sect-1][2]++;
-    				((H2F)dg2.getData(is-1+   0+il*12).get(0)).fill(e_the,thdif*sgn); 
+    				((H2F)dg2.getData(is-1+   0+il*12).get(0)).fill(e_the,thdif); 
     				((H2F)dg2.getData(is-1+   6+il*12).get(0)).fill(e_the,phdif);
-    				((H2F)dg4.getData(is-1+   0+il*12).get(0)).fill(e_mom,thdif*sgn); 
+    				((H2F)dg4.getData(is-1+   0+il*12).get(0)).fill(e_mom,thdif); 
     				((H2F)dg4.getData(is-1+   6+il*12).get(0)).fill(e_mom,phdif);
-    				((H2F)dg3.getData(is-1+   0+il*12).get(0)).fill(nrg/1e3,thdif*sgn);           		
+    				((H2F)dg3.getData(is-1+   0+il*12).get(0)).fill(nrg/1e3,thdif);           		
     				((H2F)dg3.getData(is-1+   6+il*12).get(0)).fill(nrg/1e3,phdif);     
             	}
     		}
@@ -1582,13 +1582,13 @@ public class ECperf extends DetectorMonitor {
             		float   x =      (float) ec.getProperty("x");
             		float   y =      (float) ec.getProperty("y");
             		
-            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()));
-            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()));
+            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*sgn;
+            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*sgn;
             		float  tdif = (float)(t-ev.starttime-pat/29.97);
             		float  udif = iu-iU;			
             		
-            		if(Math.abs(thdif*sgn)>0.3) ((H2F)dg3.getData(is-1+0+il*6).get(0)).fill(tdif,nrg/1e3);
-            		if(Math.abs(e_mom-6.5)<0.5) ((H2F)dg4.getData(is-1+0+il*12).get(0)).fill(tdif,thdif*sgn);
+            		if(Math.abs(thdif)>0.3)     ((H2F)dg3.getData(is-1+0+il*6).get(0)).fill(tdif,nrg/1e3);
+            		if(Math.abs(e_mom-6.5)<0.5) ((H2F)dg4.getData(is-1+0+il*12).get(0)).fill(tdif,thdif);
             		if(Math.abs(e_mom-6.5)<0.5) ((H2F)dg4.getData(is-1+6+il*12).get(0)).fill(tdif,phdif);
             		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il  ).get(0)).fill(-x,y);            		
             		if(il<2 && Math.abs(e_mom-6.5)<0.5) ((H2F)dg0.getData(il+2).get(0)).fill(-x,y,tdif);            		
