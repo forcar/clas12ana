@@ -1442,7 +1442,7 @@ public class ECperf extends DetectorMonitor {
 			epip_dPhi = pip_phi - e_phi + 180f;
 			while(epip_dPhi> 180f)epip_dPhi -= 360f;
 			while(epip_dPhi<-180f)epip_dPhi += 360f;
-			LorentzVector VmissN = new LorentzVector(0,0,0,0);
+			LorentzVector VmissN = new LorentzVector(0,0,0,0); 
 			VmissN.add(VT);
 			VmissN.add(VB);
 			VmissN.sub(Ve);
@@ -1527,7 +1527,6 @@ public class ECperf extends DetectorMonitor {
 		counter[e_sect-1][0]++;
 		
 		// Radiative photon residuals
-		int sgn = getTorusCurrent(run)<0?1:-1; 
 		
     	for (Map.Entry<Long,List<Particle>>  entry : ecphot.getMap().entrySet()){
 			int is = ig.getIndex(entry.getKey(), 0);
@@ -1541,8 +1540,8 @@ public class ECperf extends DetectorMonitor {
             		float   x =      (float) ec.getProperty("x");
             		float   y =      (float) ec.getProperty("y");
 //            		System.out.println("pec iS,ind,the,phi "+is+" "+il+" "+Math.toDegrees(ec.theta())+" "+Math.toDegrees(ec.phi()));
-            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*sgn;
-            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*sgn;
+            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*ev.tpol;
+            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*ev.spol;
 
             		if(il==0 && thdif>-1 && thdif<1)   counter[e_sect-1][1]++;
             		if(il==0 && phdif>-2 && phdif<1.5) counter[e_sect-1][2]++;
@@ -1562,7 +1561,6 @@ public class ECperf extends DetectorMonitor {
 		
 		int run = getRunNumber();
 		int   k = getDetectorTabNames().indexOf("ECtime");
-		int sgn = getTorusCurrent(run)<0?1:-1;
 		
 		IndexGenerator ig = new IndexGenerator();
 		
@@ -1582,8 +1580,8 @@ public class ECperf extends DetectorMonitor {
             		float   x =      (float) ec.getProperty("x");
             		float   y =      (float) ec.getProperty("y");
             		
-            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*sgn;
-            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*sgn;
+            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*ev.tpol;
+            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*ev.spol;
             		float  tdif = (float)(t-ev.starttime-pat/29.97);
             		float  udif = iu-iU;			
             		

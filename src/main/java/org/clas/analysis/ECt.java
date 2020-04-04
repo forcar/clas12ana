@@ -672,7 +672,7 @@ public class ECt extends DetectorMonitor {
                        float dt = 0;
                        if(recRunRF!=null) dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
                        
-                       boolean goodSector = dropEsect?is!=trigger_sect:true;
+                       boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;
                        
                        if (Math.abs(pid)==TRpid&&goodSector) ((H1F) this.getDataGroup().getItem(is,0,28,run).getData(il+i-1).get(0)).fill(resid); //timelines
                        
@@ -696,7 +696,7 @@ public class ECt extends DetectorMonitor {
                        } 
                        if(pid==11)                     ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)).get(is-1)).fill(mybet);  
                        if(Math.abs(pid)==211)          ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
-                       if(Math.abs(pid)!=211&&pid!=11) ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+6).get(is-1)).fill(beta);                         
+                       if(Math.abs(pid)!=211&&pid!=11) ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet);                         
                    } 
                }
            }

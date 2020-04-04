@@ -60,13 +60,16 @@ public class Event {
 	
 	private float timeshift = 0f;
 	
+	public int tpol = 0;
+	public int spol = 0;
+	
 	public Event() {
 		
 	}
 	
 	public void init() {	 
 		trigger=0;
-		starttime = -100;
+		starttime = -100; 
 		part.clear();
 		partmap.clear();
 		partMap.clear();
@@ -204,7 +207,9 @@ public class Event {
 		this.event     = bank.getInt("event",0);
 		this.unixtime  = bank.getInt("unixtime",0);
 		this.trigger   = bank.getLong("trigger",0);
-		this.timestamp = bank.getLong("timestamp",0);		
+		this.timestamp = bank.getLong("timestamp",0);	
+		this.tpol      = -(int) bank.getFloat("torus",0);
+		this.spol      = -(int) bank.getFloat("solenoid",0);
 	}
 	
 	public void storeRECevent(DataBank bank) {
