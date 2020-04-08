@@ -214,7 +214,7 @@ public class ECperf extends DetectorMonitor {
     	createECpip(2);
     	createECneut(0);
     	createECneut(1);
-    	createECphot(0);
+    	createECphot(1);
     	createECpi0(1);
     	createECeta(1);
     }
@@ -816,7 +816,7 @@ public class ECperf extends DetectorMonitor {
     	
     	switch (st) {
     	   
-        case 0:    	
+        case 1:    	
         dg = new DataGroup(5,3); int n=0;
         tag = st+"_"+k+"_"+run;        	
     	dg.addDataSet(makeH2(tab+"_"+n+"_",tag,50,0,500,60,5,25,   "electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
@@ -1748,7 +1748,7 @@ public class ECperf extends DetectorMonitor {
         DataGroup ECpip2  = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECpip"),run);
         DataGroup ECneut0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECneut"),run);
         DataGroup ECneut  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECneut"),run);
-        DataGroup ECphot  = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
+        DataGroup ECphot  = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECphot"),run);
 		
         ((H2F)ECneut.getData(0).get(0)).fill(neut_mom, neut_the);
         
@@ -1771,6 +1771,7 @@ public class ECperf extends DetectorMonitor {
         
         if(!goodNEUT) return;
         
+        boolean h12_neutron_found = false, h11_neutron_found=false;
         Vector3 pvec[] = new Vector3[3]; 
         
         List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));	        
@@ -1815,10 +1816,10 @@ public class ECperf extends DetectorMonitor {
           boolean  cycut = Math.abs(dcy)<0.1;
     		
           if(ecal_neut_sec==e_sect) {
-            ((H2F)ECphot.getData(1).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-            ((H2F)ECphot.getData(3).get(0)).fill(e_the,ecal_neut_the);        
-            ((H2F)ECphot.getData(11).get(0)).fill(ecal_neut_phi,ecal_neut_the);        
-            ((H2F)ECphot.getData(12).get(0)).fill(e_phi,        ecal_neut_the);   
+            ((H2F)ECphot.getData( 1).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+            ((H2F)ECphot.getData( 3).get(0)).fill(e_the,            ecal_neut_the);        
+            ((H2F)ECphot.getData(11).get(0)).fill(ecal_neut_phi,    ecal_neut_the);        
+            ((H2F)ECphot.getData(12).get(0)).fill(e_phi,            ecal_neut_the);   
             mult[0]++;
           }
             
@@ -1839,16 +1840,17 @@ public class ECperf extends DetectorMonitor {
                 }
 */
             
-            ((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+            ((H2F)ECphot.getData(2).get(0)).fill(ecal_neut_esum[0],                  ecal_neut_the);        
             if(p.pid()==2112) ((H2F)ECphot.getData(5).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
-            ((H2F)ECphot.getData(4).get(0)).fill(e_the,ecal_neut_the);        
-            ((H2F)ECneut.getData(4).get(0)).fill(neut_mom, ecal_neut_beta);        
+            ((H2F)ECphot.getData(4).get(0)).fill(e_the,                              ecal_neut_the);        
+            ((H2F)ECneut.getData(4).get(0)).fill(neut_mom,                           ecal_neut_beta);        
             ((H1F)ECneut.getData(6).get(0)).fill(mass2);
-            ((H1F)ECneut.getData(10).get(2)).fill(neut_mom);            
+            if(!h12_neutron_found) ((H1F)ECneut.getData(10).get(2)).fill(neut_mom); 
+            h12_neutron_found = true;
             mult[1]++;
           }
         
-          if (cxcut && cycut && good_tagged_fiduc && ecal_neut_esum[0]>0) {
+          if (cxcut && cycut && good_tagged_fiduc && ecal_neut_esum[0]>0.01) {
             ((H2F)ECneut.getData(5).get(0)).fill(neut_mom, ecal_neut_beta);        
             ((H1F)ECneut.getData(7).get(0)).fill(mass2);
             if(mass2cut) {
@@ -1856,8 +1858,9 @@ public class ECperf extends DetectorMonitor {
               cx = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.cos(nphi*3.141259f/180f));
               cy = (float) (Math.sin(ecal_neut_the*3.14159f/180f)*Math.sin(nphi*3.141259f/180f));
               ((H2F)ECneut.getData(9).get(0)).fill(-cx,cy);
-              ((H1F)ECneut.getData(10).get(1)).fill(neut_mom);
-              ((H2F)ECphot.getData(6).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);        
+              if(!h11_neutron_found) ((H1F)ECneut.getData(10).get(1)).fill(neut_mom);
+              ((H2F)ECphot.getData(6).get(0)).fill(ecal_neut_esum[0],ecal_neut_the);  
+              h11_neutron_found = true;
               mult[2]++;
               if(neut_mom<1.2) mult[3]++;
            	}
@@ -1869,7 +1872,7 @@ public class ECperf extends DetectorMonitor {
     public void fillECphot() {
     	
 		int run = getRunNumber();
-		DataGroup ECphot = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECphot"),run);
+		DataGroup ECphot = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECphot"),run);
 		
     	int pin = -1;
     	
@@ -1909,6 +1912,7 @@ public class ECperf extends DetectorMonitor {
     @Override       
     public void plotHistos(int run) {
     	setRunNumber(run); 
+    	
     	ECkinPlot("ECkin");
     	ECelecPlot("ECelec"); 
         ECtimePlot("ECtime");
@@ -1919,7 +1923,7 @@ public class ECperf extends DetectorMonitor {
         ECpimPlot("ECpim");
         ECpi0Plot("ECpi0");
         ECpi0Plot("ECeta");
-        ECneutPlot("ECneut");
+        ECneutPlot("ECneut"); 
         ECphotPlot("ECphot");
         if(!isAnalyzeDone) return;
         showNeutronEff();
@@ -2322,7 +2326,9 @@ public class ECperf extends DetectorMonitor {
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
 		if(getActive123()==1) {
 		c.cd(11);c.getPad().getAxisX().setRange(0., 4.0); c.getPad().getAxisY().setRange(0., 1.); 
-		c.draw(getEff(index,1,4)); c.draw(getEff(index,2,2),"same"); c.draw(neuteff,"same");
+		c.draw(getEff(index,1,4)); 
+		c.draw(getEff(index,2,2),"same"); 
+		c.draw(neuteff,"same");
 		}
     }
     
