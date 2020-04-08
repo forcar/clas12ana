@@ -263,9 +263,9 @@ public class Event {
 		nelec++;System.out.println("Evnt "+eventNumber+" Nelec "+nelec+" "+tag);
 	}
 	
-	public float newBeta(Particle p) {
-		double path= p.getProperty("path");
-		double time= p.getProperty("time");
+	public float newBeta(Particle p, boolean newtime) {
+		double path = p.getProperty("path");
+		double time = newtime?p.getProperty("newtime"):p.getProperty("time");
 		return (float) (path/(time-starttime-timeshift)/29.97f);
 	}	
 	
@@ -430,7 +430,7 @@ public class Event {
 					p.setProperty("wstat", peakBank.getInt("status", clusBank.getInt("idW",ical)-1));					
 				}
 				
-				p.setProperty("beta", newBeta(p));
+				p.setProperty("beta", newBeta(p,clusBank!=null?true:false)); //override caloBank with clusBank if it exists
 								
 				if(trajMap.containsKey(ipart)) {
 					for(int tmap : trajMap.get(ipart)) {
