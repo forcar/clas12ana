@@ -95,6 +95,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
        
     private int   canvasUpdateTime = 2000;
     private int           TVOffset = 0;
+    private float         logParam = 0;
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 0;
     private int        eventNumber = 0;
@@ -159,7 +160,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-      	         case    "ECa":  monitors[n++]=new ECa(s);    break; 
+      	         case    "ECa":  monitors[n++]=new ECa(s);    break;  
     	         case    "ECsf": monitors[n++]=new ECsf(s);   break; 
         	     case     "ECt": monitors[n++]=new ECt(s);    break;
         	     case   "ECmip": monitors[n++]=new ECmip(s);  break; 
@@ -170,12 +171,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-    		monitors[n] = new ECperf("ECperf"); 
+//    		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
 //  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
-//    		monitors[n] = new ECpi0("ECpi0");
+    		monitors[n] = new ECpi0("ECpi0");
 
         }
     }
@@ -218,7 +219,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
               
         menu     = new JMenu("Settings");       
-        menuItem = new JMenuItem("Set TVOffset");                menuItem.addActionListener(this); menu.add(menuItem);   
+        menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Set global z-axis log scale"); menuItem.addActionListener(this); menu.add(menuItem);
         menuItem = new JMenuItem("Set global z-axis lin scale"); menuItem.addActionListener(this); menu.add(menuItem);
@@ -274,8 +275,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr4 = new JRadioButtonMenuItem("PC Muon");  ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         
         menuBar.add(menu);
-
-        menuBar.add(menu);    
+    
     }
     
     public void createPanels() {
@@ -361,7 +361,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Analyze Runs"):                this.readFiles(); break;
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
-          case("Set TVOffset"):                this.chooseTVOffset(); break;
+          case("Set logParam"):                this.chooseLogParam(); break;
           case("Set global z-axis log scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true); break;
           case("Set global z-axis lin scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
@@ -405,39 +405,41 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                     null,
                     "1000");
         if(s!=null){
-            int time = 1000;
+            int val = 1000;
             try { 
-                time= Integer.parseInt(s);
+                val= Integer.parseInt(s);
             } catch(NumberFormatException e) { 
                 JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
             }
-            if(time>0) {
-                this.setCanvasUpdate(time);
+            if(val>0) {
+                this.setCanvasUpdate(val);
             }
             else {
                 JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
             }
         }
     }
-    public void chooseTVOffset() {
+    
+    public void chooseLogParam() {
         String s = (String)JOptionPane.showInputDialog(
                     null,
-                    "Time Vertex Offset (ns)",
+                    "ECEngine logParam",
                     " ",
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     null,
                     "0");
         if(s!=null){
-            int time = 0;
+            float val = 0;
             try { 
-                time= Integer.parseInt(s);
+                val= Float.parseFloat(s);
             } catch(NumberFormatException e) { 
                 JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
             }
-            this.setTVOffset(time);
+            this.setLogParam(val);
         }
-    }        
+    } 
+      
     private JLabel getImage(String path,double scale) {
         JLabel label = null;
         Image image = null;
@@ -761,6 +763,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         this.TVOffset = time;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setTVOffset(time);
+        }
+    }
+    
+    public void setLogParam(float val) {
+        System.out.println("Setting logParam to " +val);
+        this.logParam = val;
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setLogParam(val);
         }
     }
 

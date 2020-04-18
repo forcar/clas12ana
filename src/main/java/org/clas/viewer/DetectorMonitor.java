@@ -210,6 +210,7 @@ public class DetectorMonitor implements ActionListener {
     public CalibrationConstants    calib = null;
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
+    public float                logParam = 2f;
 
     int ntimer = 0;
     
@@ -822,6 +823,10 @@ public class DetectorMonitor implements ActionListener {
     public void setTVOffset(int time) {
     	TVOffset = time;
     }
+    
+    public void setLogParam(float val) {
+    	logParam = val;
+    }   
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
         detectorCanvas = canvas;
