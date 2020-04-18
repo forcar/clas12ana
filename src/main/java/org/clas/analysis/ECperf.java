@@ -224,7 +224,6 @@ public class ECperf extends DetectorMonitor {
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(!event.hasBank("MC::Event"));
-        if(getRunNumber()==5700) ev.setTimeShift(2f);
         
         if(dropBanks) dropBanks(event);
         
@@ -234,7 +233,7 @@ public class ECperf extends DetectorMonitor {
 
 	    goodPROT  = makePROT();
 	    goodPBAR  = makePBAR();
-	    goodPIP   = makePIP();
+	    pip_ecal  = makePIP();      goodPIP = pip_ecal.size()>0;
 	    goodPIM   = makePIM();
 	    neut_ecal = makeNEUTRAL(); goodNEUT = neut_ecal.size()>0; 
 	    goodPHOT  = makePHOT();
@@ -965,19 +964,15 @@ public class ECperf extends DetectorMonitor {
         return false;
     } 
     
-    public boolean makePIP() {
+    public List<Particle> makePIP() {
     	
-        List<Particle> nlist = ev.getParticle(211);
-        if(nlist.size()==0) return false;
-        
-        pip_ecal.clear();   
-        
-        for (Particle p : nlist) {
+    	List<Particle> olist = new ArrayList<Particle>();
+
+        for (Particle p : ev.getParticle(211)) {
             short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-        	if(inDC && p.p()>0.5) pip_ecal.add(p); 
+        	if(status>=2000 && status<3000 && p.p()>0.5) olist.add(p); 
         }        
-        return pip_ecal.size()>0;
+        return olist;
     }
     
     public boolean makePROT() {
@@ -1432,34 +1427,34 @@ public class ECperf extends DetectorMonitor {
 	public boolean select_epip(){
 		int run = getRunNumber();
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
-		if(pip_ecal.size()>0) {			
-			pip_mom  = (float) pip_ecal.get(0).p();
-            pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
-            pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
-            pip_vz   = (float) pip_ecal.get(0).vz();
-        	pip_beta = (float) pip_ecal.get(0).getProperty("beta");
-         	Vpip     =         pip_ecal.get(0).vector();
-			epip_dPhi = pip_phi - e_phi + 180f;
-			while(epip_dPhi> 180f)epip_dPhi -= 360f;
-			while(epip_dPhi<-180f)epip_dPhi += 360f;
-			LorentzVector VmissN = new LorentzVector(0,0,0,0); 
-			VmissN.add(VT);
-			VmissN.add(VB);
-			VmissN.sub(Ve);
-			VmissN.sub(Vpip);
-			epip_MM = (float)VmissN.mass2();
-			((H2F) dg0.getData(e_sect-1).get(0)).fill(epip_MM,e_W);    
-			((H1F) dg0.getData(e_sect-1+6).get(0)).fill(epip_MM);
+					
+		pip_mom  = (float) pip_ecal.get(0).p();
+        pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
+        pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
+        pip_vz   = (float) pip_ecal.get(0).vz();
+        pip_beta = (float) pip_ecal.get(0).getProperty("beta");
+        Vpip     =         pip_ecal.get(0).vector();
+        epip_dPhi = pip_phi - e_phi + 180f;
+		while(epip_dPhi> 180f)epip_dPhi -= 360f;
+		while(epip_dPhi<-180f)epip_dPhi += 360f;
+		LorentzVector VmissN = new LorentzVector(0,0,0,0); 
+		VmissN.add(VT);
+		VmissN.add(VB);
+		VmissN.sub(Ve);
+		VmissN.sub(Vpip);
+		epip_MM = (float)VmissN.mass2();
+		((H2F) dg0.getData(e_sect-1).get(0)).fill(epip_MM,e_W);    
+		((H1F) dg0.getData(e_sect-1+6).get(0)).fill(epip_MM);
 			
-			neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
+		neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
 			
-			if(epip_MM<1.2 && pip_ecal.size()==1) {
-				neut_mom=(float)VmissN.p();
-				neut_the=(float)Math.toDegrees(VmissN.theta());
-				neut_phi=(float)Math.toDegrees(VmissN.phi());
-				return true;
-			}
+		if(epip_MM<1.2 && pip_ecal.size()==1) {
+			neut_mom=(float)VmissN.p();
+			neut_the=(float)Math.toDegrees(VmissN.theta());
+			neut_phi=(float)Math.toDegrees(VmissN.phi());
+			return true;
 		}
+		
 		return false;
 	}
 	
