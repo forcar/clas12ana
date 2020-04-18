@@ -48,12 +48,15 @@ public class ECcalib extends DetectorMonitor {
 	public List<Particle>  mip_ecal  = new ArrayList<Particle>();	
 	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
 	
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
+    
     IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
     List<IndexedList<List<Float>>> RDIFmap = new ArrayList<IndexedList<List<Float>>>();
     IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
-    
-    int is,la,ic,idet,nstr;
-    
+    IndexedList<Float>           PixLength = new IndexedList<Float>(3);    
+    List<Float>                       pmap = new ArrayList<Float>();	
+    List<Particle>                    part = new ArrayList<Particle>();
+           
     float[][][][] ecmean = new float[6][3][3][68];
     float[][][][]  ecrms = new float[6][3][3][68];
     String[]         det = new String[]{"pcal","ecin","ecou"};
@@ -66,12 +69,8 @@ public class ECcalib extends DetectorMonitor {
     double[]     fitLimc = {20,17,35,40,48,75};
     int[]           npmt = {68,62,62,36,36,36,36,36,36};    
     int[]          npmts = new int[]{68,36,36};
+    int is,la,ic,idet,nstr;
    
-    IndexedList<Float> PixLength = new IndexedList<Float>(3);    
-    List<Float>             pmap = new ArrayList<Float>();	
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
-    List<Particle>           part = new ArrayList<Particle>();
-    
     public ECcalib(String name) {
         super(name);
         this.setDetectorTabNames("MIP",
@@ -179,22 +178,22 @@ public class ECcalib extends DetectorMonitor {
          String[] t = {"e","w","r"};
          
          for (int i=0; i<3; i++) {
-        	     dg = new DataGroup(3,2);
-	    	     for (int d=0; d<3; d++) {
+             dg = new DataGroup(3,2);
+             for (int d=0; d<3; d++) {
                  h = new H2F("hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
-                 dg.addDataSet(h,d);  
-	    	     }
+                dg.addDataSet(h,d);  
+	         }
              this.getDataGroup().add(dg,i,2,k,run);
          }
 
          for (int i=0; i<3; i++) {
-                 dg = new DataGroup(3,3);
-        	     for (int j=0; j<3; j++) {
-        	    	     for (int d=0; d<3; d++) {
-                      h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
-                      dg.addDataSet(h,j+d*3);                      
-        	         } 
-        	     }
+             dg = new DataGroup(3,3);
+             for (int j=0; j<3; j++) {
+                 for (int d=0; d<3; d++) {
+                     h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
+                     dg.addDataSet(h,j+d*3);                      
+                 } 
+             }
              this.getDataGroup().add(dg,i,1,k,run);
          }
           
@@ -220,12 +219,12 @@ public class ECcalib extends DetectorMonitor {
                  h = new H2F("uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,68,1,69,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL V"); h.setTitleY(ytxt+"W"+ip); 
                  dg3.addDataSet(h,ip-1); dg3.addDataSet(f1,ip-1);
-      	    }
+      	     }
              this.getDataGroup().add(dg1,is,1,k,run); this.getDataGroup().add(dg2,is,2,k,run); this.getDataGroup().add(dg3,is,3,k,run);
              
              DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
              f1 = new F1D("p0"+is+2+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
-      	    for (int ip=1; ip<npmts[1]+1; ip++) {
+      	     for (int ip=1; ip<npmts[1]+1; ip++) {
                  h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN W");  h.setTitleY(ytxt+"U"+ip); 
                  dg4.addDataSet(h,ip-1); dg4.addDataSet(f1,ip-1);
@@ -234,14 +233,13 @@ public class ECcalib extends DetectorMonitor {
                  dg5.addDataSet(h,ip-1); dg5.addDataSet(f1,ip-1);
                  h = new H2F("uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN V"); h.setTitleY(ytxt+"W"+ip);
-                 dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);
-                 
-      	    }
+                 dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);                 
+      	     }
              this.getDataGroup().add(dg4,is,4,k,run); this.getDataGroup().add(dg5,is,5,k,run); this.getDataGroup().add(dg6,is,6,k,run);
       	   
              DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
              f1 = new F1D("p0"+is+3+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
-      	    for (int ip=1; ip<npmts[2]+1; ip++) {
+      	     for (int ip=1; ip<npmts[2]+1; ip++) {
                  h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU W"); h.setTitleY(ytxt+"U"+ip);
                  dg7.addDataSet(h,ip-1); dg7.addDataSet(f1,ip-1);
@@ -251,7 +249,7 @@ public class ECcalib extends DetectorMonitor {
                  h = new H2F("uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU V"); h.setTitleY(ytxt+"W"+ip);
                  dg9.addDataSet(h,ip-1); dg9.addDataSet(f1,ip-1);    
-      	    }
+      	     }
              this.getDataGroup().add(dg7,is,7,k,run); this.getDataGroup().add(dg8,is,8,k,run); this.getDataGroup().add(dg9,is,9,k,run);     	    
          }        
      }     
@@ -485,8 +483,7 @@ public class ECcalib extends DetectorMonitor {
         this.getDataGroup().add(dg,0,0,k,run); 
         
     }
-    
-    
+        
     public void initCCDB(int runno) {
         gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
         time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
