@@ -72,7 +72,8 @@ public class ECmip extends DetectorMonitor {
                                  "PIXEL",
                                  "Timeline",
                                  "ATT",
-                                 "MIPvP");
+                                 "MIPvP",
+                                 "TDIF");
         
         this.useRDIFButtons(true);
         this.usePCCheckBox(true);
@@ -115,8 +116,9 @@ public class ECmip extends DetectorMonitor {
 	     createMIPHistos(7,2,25,0,5.0," - Momentum (GeV)");
 //	     createPathHistos(9);
 	     createPixHistos(10);	
-	     createUVWHistos(12,25,0.,2.," MIP ");
+	     createUVWHistos(12,25,0.,2.," MIP ",1);
 	     createMIPvPHistos(13);
+	     createUVWHistos(14,25,-6,6," TD ",0);
      }
      
      @Override       
@@ -136,6 +138,7 @@ public class ECmip extends DetectorMonitor {
 //    	 plotPathSummary(10,0);
     	 plotUVW(12);    
     	 plotPIDSummary(13);
+    	 plotUVW(14);
      }
      
      public void plotAnalysis(int run) {
@@ -184,15 +187,14 @@ public class ECmip extends DetectorMonitor {
           
      }
      
-     public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt) {
-     	
-         F1D f1; 
-         
+     public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt, float fline) {
+     	         
+    	 F1D f1;
          int run = getRunNumber();
          
          for (int is=1; is<7; is++) {      
              DataGroup dg1 = new DataGroup(8,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
-             f1 = new F1D("p0"+is+1+k,"[a]",1,68); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f1 = new F1D("p0"+is+1+k,"[a]",1,68); f1.setParameter(0,fline); f1.setLineColor(1); f1.setLineStyle(1);
             
              for (int ip=1; ip<npmts[0]+1; ip++) {
                  h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,68,1,69,ybins,ymin,ymax);
@@ -208,7 +210,7 @@ public class ECmip extends DetectorMonitor {
              this.getDataGroup().add(dg1,is,1,k,run); this.getDataGroup().add(dg2,is,2,k,run); this.getDataGroup().add(dg3,is,3,k,run);
              
              DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
-             f1 = new F1D("p0"+is+2+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f1 = new F1D("p0"+is+2+k,"[a]",1,37); f1.setParameter(0,fline); f1.setLineColor(1); f1.setLineStyle(1);
       	    for (int ip=1; ip<npmts[1]+1; ip++) {
                  h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN W");  h.setTitleY(ytxt+"U"+ip); 
@@ -224,7 +226,7 @@ public class ECmip extends DetectorMonitor {
              this.getDataGroup().add(dg4,is,4,k,run); this.getDataGroup().add(dg5,is,5,k,run); this.getDataGroup().add(dg6,is,6,k,run);
       	   
              DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
-             f1 = new F1D("p0"+is+3+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f1 = new F1D("p0"+is+3+k,"[a]",1,37); f1.setParameter(0,fline); f1.setLineColor(1); f1.setLineStyle(1);
       	    for (int ip=1; ip<npmts[2]+1; ip++) {
                  h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU W"); h.setTitleY(ytxt+"U"+ip);
@@ -527,9 +529,9 @@ public class ECmip extends DetectorMonitor {
            float[][]   w1 = new float[6][20] ; 
            float[][]   w4 = new float[6][20] ; 
            float[][]   w7 = new float[6][20] ; 
-           float[][]  e1c = new float[6][20]; float[][][]   e1p = new float[6][3][20]; 
-           float[][]  e4c = new float[6][20]; float[][][]   e4p = new float[6][3][20]; 
-           float[][]  e7c = new float[6][20]; float[][][]   e7p = new float[6][3][20]; 
+           float[][]  e1c = new float[6][20]; float[][][]   e1p = new float[6][3][20]; float[][]  t1c = new float[6][20];
+           float[][]  e4c = new float[6][20]; float[][][]   e4p = new float[6][3][20]; float[][]  t4c = new float[6][20];
+           float[][]  e7c = new float[6][20]; float[][][]   e7p = new float[6][3][20]; float[][]  t7c = new float[6][20];
            float[][]  p1c = new float[6][20]; float[][][]   p1p = new float[6][3][20]; 
            float[][]  p4c = new float[6][20]; float[][][]   p4p = new float[6][3][20]; 
            float[][]  p7c = new float[6][20]; float[][][]   p7p = new float[6][3][20];  
@@ -544,7 +546,7 @@ public class ECmip extends DetectorMonitor {
 	           if (!isMuon) {ic = bank1.getShort("index",  loop); is = bank1.getByte("sector",loop); il = bank1.getByte("layer",loop);}
 	           if ( isMuon) {ic = loop;                           is = bank2.getByte("sector",loop); il = bank2.getByte("layer",loop);}          
 	           float   en = bank2.getFloat("energy",ic)*1000;	    	   
-               float   ti = bank2.getFloat("time",ic)*1000;
+               float   ti = bank2.getFloat("time",ic);
                float    x = bank2.getFloat("x", ic);
                float    y = bank2.getFloat("y", ic);
                float    z = bank2.getFloat("z", ic);
@@ -605,13 +607,14 @@ public class ECmip extends DetectorMonitor {
                if (goodPC)  {e1c[is-1][n1[is-1]]=en; rl.add(r,is,0); cU[is-1][0][n1[is-1]]=iU; cV[is-1][0][n1[is-1]]=iV; cW[is-1][0][n1[is-1]]=iW; p1c[is-1][n1[is-1]]=pm;}
                if (goodECi) {e4c[is-1][n4[is-1]]=en; rl.add(r,is,1); cU[is-1][1][n4[is-1]]=iU; cV[is-1][1][n4[is-1]]=iV; cW[is-1][1][n4[is-1]]=iW; p4c[is-1][n4[is-1]]=pm;}
                if (goodECo) {e7c[is-1][n7[is-1]]=en; rl.add(r,is,2); cU[is-1][2][n7[is-1]]=iU; cV[is-1][2][n7[is-1]]=iV; cW[is-1][2][n7[is-1]]=iW; p7c[is-1][n7[is-1]]=pm;}
+               if (goodPC)  {t1c[is-1][n1[is-1]]=ti;}  if (goodECi)  {t4c[is-1][n4[is-1]]=ti;}  if (goodECo)  {t7c[is-1][n7[is-1]]=ti;} 
+               
                if (goodPC)  {p1p[is-1][0][n1[is-1]]=pp;  p1p[is-1][1][n1[is-1]]=pp;  p1p[is-1][2][n1[is-1]]=pp;  w1[is-1][n1[is-1]]=wsum;}
                if (goodECi) {p4p[is-1][0][n4[is-1]]=pp;  p4p[is-1][1][n4[is-1]]=pp;  p4p[is-1][2][n4[is-1]]=pp;  w4[is-1][n4[is-1]]=wsum;}
                if (goodECo) {p7p[is-1][0][n7[is-1]]=pp;  p7p[is-1][1][n7[is-1]]=pp;  p7p[is-1][2][n7[is-1]]=pp;  w7[is-1][n7[is-1]]=wsum;}
                if (goodPC)  {e1p[is-1][0][n1[is-1]]=enu; e1p[is-1][1][n1[is-1]]=env; e1p[is-1][2][n1[is-1]]=enw; n1[is-1]++;}
                if (goodECi) {e4p[is-1][0][n4[is-1]]=enu; e4p[is-1][1][n4[is-1]]=env; e4p[is-1][2][n4[is-1]]=enw; n4[is-1]++;}
-               if (goodECo) {e7p[is-1][0][n7[is-1]]=enu; e7p[is-1][1][n7[is-1]]=env; e7p[is-1][2][n7[is-1]]=enw; n7[is-1]++;}
-               
+               if (goodECo) {e7p[is-1][0][n7[is-1]]=enu; e7p[is-1][1][n7[is-1]]=env; e7p[is-1][2][n7[is-1]]=enw; n7[is-1]++;}               
            }
            }
              
@@ -620,6 +623,7 @@ public class ECmip extends DetectorMonitor {
 //                if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
                Boolean mtest = trig==-1?n1[is]==1:(n1[is]==1 && n4[is]==1 && n7[is]==1);
+               
                if(trigger==(trig==-1?0:trig) && mtest) { //Only one cluster in each layer to reject vertical cosmics
 //                    Boolean goodU = Math.abs(cU[is][1][n4[is]]-cU[is][2][n7[is]])<=1;
 //                    Boolean goodV = Math.abs(cV[is][1][n4[is]]-cV[is][2][n7[is]])<=1;
@@ -699,6 +703,7 @@ public class ECmip extends DetectorMonitor {
                 for(int n=0; n<n1[is]; n++) {
                 	int u = (int) cU[is][0][n]; int v = (int) cV[is][0][n]; int w = (int) cW[is][0][n]; 
                 	float ec = e1c[is][n] ; float epu = e1p[is][0][n] ; float epv = e1p[is][1][n] ; float epw = e1p[is][2][n] ;
+                	float td = t1c[is][n]-t4c[is][n];
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(0).get(0)).fill(ec,u);
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(1).get(0)).fill(ec,v);
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(2).get(0)).fill(ec,w);
@@ -710,6 +715,10 @@ public class ECmip extends DetectorMonitor {
                 	((H2F) this.getDataGroup().getItem(iis,1,12,run).getData(u-1).get(0)).fill(w,epu/mipp[0]);
                 	((H2F) this.getDataGroup().getItem(iis,2,12,run).getData(v-1).get(0)).fill(u,epv/mipp[0]);
                 	((H2F) this.getDataGroup().getItem(iis,3,12,run).getData(w-1).get(0)).fill(v,epw/mipp[0]);
+                	
+                	((H2F) this.getDataGroup().getItem(iis,1,14,run).getData(u-1).get(0)).fill(w,td);
+                	((H2F) this.getDataGroup().getItem(iis,2,14,run).getData(v-1).get(0)).fill(u,td);
+                	((H2F) this.getDataGroup().getItem(iis,3,14,run).getData(w-1).get(0)).fill(v,td);
                		
                 	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(0).get(0)).fill(p1c[is][n],   u);
                 	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(1).get(0)).fill(p1c[is][n],   v);
@@ -737,6 +746,7 @@ public class ECmip extends DetectorMonitor {
                 	int u = (int) cU[is][1][n]; int v = (int) cV[is][1][n]; int w = (int) cW[is][1][n]; 
                 	float d = (PixLength.hasItem(u,v,w))? PixLength.getItem(u,v,w):1f;
                 	float ec = e4c[is][n]/d ; float epu = e4p[is][0][n]/d ; float epv = e4p[is][1][n]/d ; float epw = e4p[is][2][n]/d ;
+                	float td = t4c[is][n]-t7c[is][n];
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(3).get(0)).fill(ec,u);
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(4).get(0)).fill(ec,v);
                 	((H2F) this.getDataGroup().getItem(iis,2,0,run).getData(5).get(0)).fill(ec,w);
@@ -746,6 +756,10 @@ public class ECmip extends DetectorMonitor {
                 	((H2F) this.getDataGroup().getItem(iis,4,12,run).getData(u-1).get(0)).fill(w,epu/mipp[1]);
                 	((H2F) this.getDataGroup().getItem(iis,5,12,run).getData(v-1).get(0)).fill(u,epv/mipp[1]);
                 	((H2F) this.getDataGroup().getItem(iis,6,12,run).getData(w-1).get(0)).fill(v,epw/mipp[1]);
+                	
+                	((H2F) this.getDataGroup().getItem(iis,4,14,run).getData(u-1).get(0)).fill(w,td);
+                	((H2F) this.getDataGroup().getItem(iis,5,14,run).getData(v-1).get(0)).fill(u,td);
+                	((H2F) this.getDataGroup().getItem(iis,6,14,run).getData(w-1).get(0)).fill(v,td);
                 	
                 	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(3).get(0)).fill(p4c[is][n],   u);
                 	((H2F) this.getDataGroup().getItem(iis,2,7,run).getData(4).get(0)).fill(p4c[is][n],   v);
