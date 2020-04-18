@@ -41,8 +41,9 @@ public class ECpi0 extends DetectorMonitor{
     String[]                          v = new String[]{"u","v","w"};    
     int[]                          npmt = {68,62,62,36,36,36,36,36,36};    
     int[]                         iidet = {1,4,7};
-	
+    List<DetectorResponse>  ecClusters  = null;	
 	ECPart                         part = new ECPart();
+//	ECpartOld                      part = new ECpartOld();
     List<TOFPaddle>          paddleList = null;
     List<List<DetectorResponse>>    res = new ArrayList<List<DetectorResponse>>();   
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
@@ -89,8 +90,8 @@ public class ECpi0 extends DetectorMonitor{
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
         engine.setLogWeight(true);
-        engine.setLogParam(2.0);
-        engine.setPCALTrackingPlane(0);
+        engine.setLogParam(logParam);
+//        engine.setPCALTrackingPlane(0);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212);   
@@ -159,7 +160,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(9);
         plotXYSummary(10);
         plotPI0Summary(11);
-        plotMCPHOT(12);
+//        plotMCPHOT(12);
     }
     
     public void plotAnalysis(int run) {
@@ -471,8 +472,11 @@ public class ECpi0 extends DetectorMonitor{
         
         if (dropBanks) dropBanks(event);
         
-//      part.readEC(event,"ECAL::clusters");  
-        part.readEC(event,"REC::Calorimeter");  
+//        ecClusters = part.readEC(event);  //ECpartOld.java
+//        if (ecClusters.size()==0) return; //
+        
+        part.readEC(event,"ECAL::clusters");      // all raw clusters
+//        part.readEC(event,"REC::Calorimeter");  // matched clusters from EB
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
@@ -502,7 +506,7 @@ public class ECpi0 extends DetectorMonitor{
         
         if(event.hasBank("MIP::event")){          
             DataBank bank = event.getBank("MIP::event");
-            for(int i=0; i < bank.rows(); i++) part.mip[i]=bank.getByte("mip", i);
+            for(int i=0; i < bank.rows(); i++) part.mip[i]=bank.getByte("mip", i);   
             
         } else if (event.hasBank("FTOF::adc")) {
             paddleList = DataProvider.getPaddleList(event);          
@@ -534,6 +538,9 @@ public class ECpi0 extends DetectorMonitor{
         } 
         
         part.getNeutralResponses();
+//        part.getNeutralResponses(ecClusters);
+        
+        int trigger_sect = getElecTriggerSector();
         
         for (int is=1; is<7; is++) {
            
@@ -545,8 +552,8 @@ public class ECpi0 extends DetectorMonitor{
                 
                 boolean    ivmcut = inv3>pmin && inv3<pmax;
                 boolean badPizero = part.X>1 && opa<0;
-        
-                if(invmass>0&&part.iis[0]>0&&part.iis[1]>0&&!badPizero) {                                                    
+                boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;
+                if(invmass>0&&part.iis[0]>0&&part.iis[1]>0&&!badPizero && goodSector) {                                                    
                     if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);   
                     
                     if(part.iis[0]==part.iis[1]) { //Both photons in same sector
