@@ -428,7 +428,7 @@ public class ECt extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {   
        isMC         = (getRunNumber()<100) ? true:false;
-       trigger_sect = isMC?event.hasBank("ECAL::adc")?event.getBank("ECAL::adc").getByte("sector",0):5:getElecTriggerSector(); 
+       trigger_sect = isMC ? (event.hasBank("ECAL::adc")?event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
        phase        = getTriggerPhase(); 
        STT          = event.hasBank("REC::Event") ? 
     		          (isHipo3Event ? 
