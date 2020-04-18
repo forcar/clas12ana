@@ -224,7 +224,6 @@ public class ECperf extends DetectorMonitor {
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(!event.hasBank("MC::Event"));
-        if(getRunNumber()==5700) ev.setTimeShift(2f);
         
         if(dropBanks) dropBanks(event);
         
