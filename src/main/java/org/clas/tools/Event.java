@@ -25,7 +25,7 @@ public class Event {
 	private DataBank clusBank = null;
 	private DataBank caliBank = null;
 	private DataBank peakBank = null;
-	private DataBank trajBank = null;
+	public  DataBank trajBank = null;
 	
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
@@ -35,7 +35,8 @@ public class Event {
 	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
-	Map<Integer,List<Integer>>         trajMap = new HashMap<Integer,List<Integer>>();
+	public Map<Integer,List<Integer>>  trajMap = new HashMap<Integer,List<Integer>>();
+	public Map<Integer,List<Integer>>  trajDet = new HashMap<Integer,List<Integer>>();
 	
 	private boolean hasRUNconfig = false;
 	private boolean hasRECevent  = false;
@@ -76,6 +77,7 @@ public class Event {
 		ftofMap.clear();
 		caloMap.clear();
 		trajMap.clear();
+		trajDet.clear();
 		partBank = null;
 		caloBank = null;
 		ftofBank = null;
@@ -240,7 +242,8 @@ public class Event {
 	
 	public void storeRECtraj(DataBank bank) {	
 		trajBank = bank;
-		trajMap  = loadMapByIndex(trajBank,"pindex");		
+		trajMap  = loadMapByIndex(trajBank,"pindex");
+		trajDet  = loadMapByIndex(trajBank,"detector");
 	}	
 	
 	public void storeECALclusters(DataBank bank) {	
@@ -431,7 +434,7 @@ public class Event {
 				}
 				
 				p.setProperty("beta", newBeta(p,clusBank!=null?true:false)); //override caloBank with clusBank if it exists
-								
+
 				if(trajMap.containsKey(ipart)) {
 					for(int tmap : trajMap.get(ipart)) {
 					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer"))) {
