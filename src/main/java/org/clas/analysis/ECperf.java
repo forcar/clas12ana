@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -191,7 +192,7 @@ public class ECperf extends DetectorMonitor {
     	
     	createECkin(0);
     	createECkin(1);
-    	createECkin(2);
+//    	createECkin(2);
     	createECelec(0);
     	createECelec(1);
     	createECelec(2);
@@ -212,6 +213,7 @@ public class ECperf extends DetectorMonitor {
     	createECpip(0);
     	createECpip(1);
     	createECpip(2);
+    	createECpip(3);
     	createECneut(0);
     	createECneut(1);
     	createECphot(1);
@@ -231,10 +233,10 @@ public class ECperf extends DetectorMonitor {
 	    
 	    if(!makeELEC()) return;
 
-	    goodPROT  = makePROT();
-	    goodPBAR  = makePBAR();
+	    prot_ecal = makePROT();    goodPROT = prot_ecal.size()>0;
+	    pbar_ecal = makePBAR();    goodPBAR = pbar_ecal.size()>0;
 	    pip_ecal  = makePIP();      goodPIP = pip_ecal.size()>0;
-	    goodPIM   = makePIM();
+	    pim_ecal  = makePIM();      goodPIM = pim_ecal.size()>0;
 	    neut_ecal = makeNEUTRAL(); goodNEUT = neut_ecal.size()>0; 
 	    goodPHOT  = makePHOT();
 	    
@@ -274,6 +276,28 @@ public class ECperf extends DetectorMonitor {
 	    	}
 	    }
 	}
+	
+    
+    @Override       
+    public void plotHistos(int run) {
+    	setRunNumber(run); 
+    	
+    	ECkinPlot("ECkin");
+    	ECelecPlot("ECelec"); 
+        ECtimePlot("ECtime");
+        SCelecPlot("SCelec");
+        ECprotPlot("ECprot");
+        ECpbarPlot("ECpbar");
+        ECpipPlot("ECpip");
+        ECpimPlot("ECpim");
+        ECpi0Plot("ECpi0");
+        ECpi0Plot("ECeta");
+        ECneutPlot("ECneut"); 
+        ECphotPlot("ECphot");
+        if(!isAnalyzeDone) return;
+        showNeutronEff();
+        showPi0Eff();
+    }	
 	
 // HISTOS	   
     public void createECkin(int st) {
@@ -657,6 +681,15 @@ public class ECperf extends DetectorMonitor {
            	dg.addDataSet(makeH1(tab+"_1_",tag, 50,0,100," ","ECIN E (MeV)"),is-1+6); 
            	dg.addDataSet(makeH1(tab+"_2_",tag, 50,0,100," ","ECOU E (MeV)"),is-1+12); 
         }
+        break;
+    	case 3:
+        dg = new DataGroup(3,3);
+        for(int iv=0; iv<3; iv++) {
+	        tag = iv+"_"+st+"_"+k+"_"+run;
+	        dg.addDataSet(makeH2(tab+"_1_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv);        	
+	        dg.addDataSet(makeH2(tab+"_2_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv+3);        	
+	        dg.addDataSet(makeH2(tab+"_3_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv+6);        	
+        }         
     	}
      		
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -882,13 +915,15 @@ public class ECperf extends DetectorMonitor {
     	    		elec_ftof_resid.add((float)xyz.y(),iS,1,scind-1);
     	    		elec_ftof_resid.add((float)xyz.z(),iS,2,scind-1); 
     			}
-    		}
+    		}   		
+    		
     		Point3D xyz = getResidual(p);	        
     		elec_ecal_resid.add((float)xyz.x(),iS,0,ind);
     		elec_ecal_resid.add((float)xyz.y(),iS,1,ind);
     		elec_ecal_resid.add((float)xyz.z(),iS,2,ind);
     		elec_ecal_resid.add(p.hasProperty("iu")?(float)p.getProperty("iu"):0,iS,3,ind);
     		elec_ecal_resid.add(chipid,iS,4,ind);
+    		
     		if(ind>-1) e_ecal_esum  += en;
     		if(ind==0) e_ecal_pcsum  = en;
     		if(ind>0)  e_ecal_ecsum += en;
@@ -923,23 +958,7 @@ public class ECperf extends DetectorMonitor {
         return false;
 
     }
-    
-    public boolean makePIM() {
-    	
-        List<Particle> nlist = ev.getParticle(212);
-        if(nlist.size()==0) return false;
-        
-        pim_ecal.clear();
-        
-        for (Particle p : nlist) {
-        	short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-            if(inDC && p.p()>0.5) pim_ecal.add(p);
-        }        
-        return pim_ecal.size()>0;
-    }
-
-    
+  
     public boolean makePIPP() {
     	
         List<Particle> nlist = ev.getParticle(211);       
@@ -975,36 +994,38 @@ public class ECperf extends DetectorMonitor {
         return olist;
     }
     
-    public boolean makePROT() {
+    public List<Particle> makePIM() {
     	
-        List<Particle> nlist = ev.getParticle(2212);
-        if(nlist.size()==0) return false;
-        
-        prot_ecal.clear();        
-        
-        for (Particle p : nlist) {
+    	List<Particle> olist = new ArrayList<Particle>();
+
+        for (Particle p : ev.getParticle(212)) {
             short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-//            inDC = true;
-        	if(inDC && p.p()>0.5) prot_ecal.add(p);        	
+        	if(status>=2000 && status<3000 && p.p()>0.5) olist.add(p); 
         }        
-        return prot_ecal.size()>0;
+        return olist;
     }
     
-    public boolean makePBAR() {
+    public List<Particle> makePROT() {
     	
-        List<Particle> nlist = ev.getParticle(2213);
-        if(nlist.size()==0) return false;
-        
-        pbar_ecal.clear();        
-        
-        for (Particle p : nlist) {
+    	List<Particle> olist = new ArrayList<Particle>();
+
+        for (Particle p : ev.getParticle(2212)) {
             short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-        	if(inDC && p.p()>0.5) pbar_ecal.add(p);        	
+        	if(status>=2000 && status<3000 && p.p()>0.5) olist.add(p); 
         }        
-        return pbar_ecal.size()>0;
-    }
+        return olist;
+    }    
+    
+    public List<Particle> makePBAR() {
+    	
+    	List<Particle> olist = new ArrayList<Particle>();
+
+        for (Particle p : ev.getParticle(2213)) {
+            short status = (short) p.getProperty("status");
+        	if(status>=2000 && status<3000 && p.p()>0.5) olist.add(p); 
+        }        
+        return olist;
+    }   
     
     public boolean makePHOT() {
     	
@@ -1448,7 +1469,7 @@ public class ECperf extends DetectorMonitor {
 			
 		neut_mom=-1f;neut_the=-1f;neut_phi=-1f;
 			
-		if(epip_MM<1.2 && pip_ecal.size()==1) {
+		if(epip_MM<1.0 && pip_ecal.size()==1) {
 			neut_mom=(float)VmissN.p();
 			neut_the=(float)Math.toDegrees(VmissN.theta());
 			neut_phi=(float)Math.toDegrees(VmissN.phi());
@@ -1476,17 +1497,18 @@ public class ECperf extends DetectorMonitor {
 	
 	public void fillECkin() {
 		int run = getRunNumber();
-		DataGroup ECkin = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECkin"),run);				
+		int k = getDetectorTabNames().indexOf("ECkin");
+		DataGroup ECkin = this.getDataGroup().getItem(0,0,k,run);				
 		((H2F) ECkin.getData(e_sect-1).get(0)).fill(e_the,e_mom);
 		((H2F) ECkin.getData(e_sect-1+6).get(0)).fill(e_W,e_mom);
 		((H2F) ECkin.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
 		if (e_the>6) ((H2F) ECkin.getData(e_sect-1+18).get(0)).fill(e_W,(e_phi>-30?e_phi:360+e_phi)-(e_sect-1)*60);
-		ECkin = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECkin"),run);				
+		ECkin = this.getDataGroup().getItem(0,1,k,run);				
 		((H1F) ECkin.getData(e_sect-1).get(0)).fill(lU);
 		((H1F) ECkin.getData(e_sect-1+6).get(0)).fill(lV);
 		((H1F) ECkin.getData(e_sect-1+12).get(0)).fill(lW);
-		ECkin = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECkin"),run);				
-		((H2F) ECkin.getData(0).get(0)).fill(-e_x,e_y);
+//		ECkin = this.getDataGroup().getItem(0,2,k,run);				
+//		((H2F) ECkin.getData(0).get(0)).fill(-e_x,e_y);
 	}
 	
 	public void fillECelec() {
@@ -1603,7 +1625,8 @@ public class ECperf extends DetectorMonitor {
 			int is = ig.getIndex(hash, 0); int ic = ig.getIndex(hash, 1); int il = ig.getIndex(hash, 2);
 			DataGroup dg1 = this.getDataGroup().getItem(il,1,k,run);
 			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_the,entry.getValue());
-		}		
+		}
+		
 	}
     
     public void fillECprot() {
@@ -1638,7 +1661,8 @@ public class ECperf extends DetectorMonitor {
     
     public void fillECpip() {
 		int run = getRunNumber();
-		DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpip"),run);
+		int   k = getDetectorTabNames().indexOf("ECpip");
+		DataGroup dg1 = this.getDataGroup().getItem(0,1,k,run);
 		((H2F)dg1.getData(0).get(0)).fill(e_mom,e_the);
 		((H2F)dg1.getData(1).get(0)).fill(pip_mom,pip_the);
 		((H2F)dg1.getData(2).get(0)).fill(e_vz,pip_vz);
@@ -1649,6 +1673,48 @@ public class ECperf extends DetectorMonitor {
 		((H2F)dg1.getData(7).get(0)).fill(pip_the,epip_dPhi);
 		((H2F)dg1.getData(8).get(0)).fill(pip_vz,epip_dPhi);
 		((H2F)dg1.getData(9).get(0)).fill(pip_mom,pip_beta);  	
+		fillTrajXY();
+    }
+    
+    public void fillTrajXY() {
+		int       run = getRunNumber();
+		int         k = getDetectorTabNames().indexOf("ECpip");
+		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
+				
+		List<Particle> pipECAL = new ArrayList();
+
+		BitSet bits = new BitSet(3);
+		BitSet b000 = new BitSet(3);                                        // PCAL=0 ECIN=0 ECOU=0
+		BitSet b001 = new BitSet(3);                           b001.set(2); // PCAL=1 ECIN=0 ECOU=0
+		BitSet b010 = new BitSet(3);              b010.set(1);              // PCAL=0 ECIN=1 ECOU=0
+		BitSet b011 = new BitSet(3);              b011.set(1); b011.set(2); // PCAL=0 ECIN=1 ECOU=1
+		BitSet b100 = new BitSet(3); b100.set(0);                           // PCAL=1 ECIN=0 ECOU=0
+		BitSet b101 = new BitSet(3); b101.set(0);              b101.set(2); // PCAL=1 ECIN=0 ECOU=1
+		BitSet b110 = new BitSet(3); b110.set(0); b110.set(1);              // PCAL=1 ECIN=1 ECOU=0
+		BitSet b111 = new BitSet(3); b111.set(0); b111.set(1); b111.set(2); // PCAL=1 ECIN=1 ECIN=1
+		
+    	if(ev.trajDet.containsKey(7)) {
+			for(int tmap : ev.trajDet.get(7)) {
+				int pin = ev.trajBank.getInt("pindex",tmap);
+				pipECAL = ev.getECAL(pin); 
+				bits.clear(); for (Particle p : pipECAL) bits.set(getDet((int) p.getProperty("layer")));
+				if(ev.part.get(pin).pid()==211 && ev.part.get(pin).p()>0.8) {
+					int lay = getDet(ev.trajBank.getInt("layer",tmap));
+					float x = -ev.trajBank.getFloat("x",tmap); float y = ev.trajBank.getFloat("y",tmap);					
+					switch (lay) {
+					case 0: if(bits.equals(b011) || bits.equals(b010) || bits.equals(b001) || bits.equals(b111)) ((H2F)dg1.getData(lay  ).get(0)).fill(x,y);
+					        if(bits.equals(b111))                      ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					        break;
+					case 1: if(bits.equals(b101) || bits.equals(b100) || bits.equals(b001) || bits.equals(b111)) ((H2F)dg1.getData(lay  ).get(0)).fill(x,y);
+					        if(bits.equals(b111))                      ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					        break; 
+					case 2: if(bits.equals(b110) || bits.equals(b010) || bits.equals(b100) || bits.equals(b111)) ((H2F)dg1.getData(lay  ).get(0)).fill(x,y);
+					        if(bits.equals(b111))                      ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					}						
+				}
+			}
+		}   	
+   	
     }
 	
 	public void fillECpim() {		
@@ -1904,27 +1970,6 @@ public class ECperf extends DetectorMonitor {
     
     //PLOT
     
-    @Override       
-    public void plotHistos(int run) {
-    	setRunNumber(run); 
-    	
-    	ECkinPlot("ECkin");
-    	ECelecPlot("ECelec"); 
-        ECtimePlot("ECtime");
-        SCelecPlot("SCelec");
-        ECprotPlot("ECprot");
-        ECpbarPlot("ECpbar");
-        ECpipPlot("ECpip");
-        ECpimPlot("ECpim");
-        ECpi0Plot("ECpi0");
-        ECpi0Plot("ECeta");
-        ECneutPlot("ECneut"); 
-        ECphotPlot("ECphot");
-        if(!isAnalyzeDone) return;
-        showNeutronEff();
-        showPi0Eff();
-    }
-    
     public void ECkinPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
         if(getActive123()<6)        plot123(index);    	
@@ -1965,7 +2010,8 @@ public class ECperf extends DetectorMonitor {
 	
 	public void ECpipPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
-		if(getActive123()<3) plot123(index);	
+		if(getActive123()<3)  plot123(index);
+		if(getActive123()==3) plotECpipXY(index);
 	}
     
     public void ECpimPlot(String tabname) {
@@ -2316,6 +2362,30 @@ public class ECperf extends DetectorMonitor {
            
     }    
     
+    public void plotECpipXY(int index) {
+      	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));        
+        int          run = getRunNumber(); 
+ 	    DataGroup dg = getDataGroup().getItem(0,3,index,getRunNumber());
+        
+        c.clear();
+        c.divide(3, 3);
+        
+        H2F h2;
+        
+	    c.cd(0); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(0).get(0); c.draw(h2);
+	    c.cd(1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(1).get(0); c.draw(h2);
+	    c.cd(2); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(2).get(0); c.draw(h2);  
+	    
+	    c.cd(3); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(3).get(0); c.draw(h2);
+	    c.cd(4); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(4).get(0); c.draw(h2);
+	    c.cd(5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(5).get(0); c.draw(h2);
+	    
+	    c.cd(6); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(6).get(0); c.draw(h2);
+	    c.cd(7); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(7).get(0); c.draw(h2);
+	    c.cd(8); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(8).get(0); c.draw(h2); 	    
+	    	    
+    }
+    
     public void showNeutronEff() {
 		int index = getDetectorTabNames().indexOf("ECneut");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -2331,6 +2401,22 @@ public class ECperf extends DetectorMonitor {
 		int index = getDetectorTabNames().indexOf("ECpi0");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
 		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 0.3); c.draw(getEff(index,1,2));   	
+    }
+    
+    public void getPipEff() {    	
+		int run = getRunNumber();
+		int   k = getDetectorTabNames().indexOf("ECpip");		
+		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
+		
+        for(int i=0; i<3; i++) {
+        	H2F e  = (H2F) dg1.getData(i).get(0);
+        	H2F w  = (H2F) dg1.getData(i+3).get(0);
+        	for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
+        		float ne = e.getDataBufferBin(loop);
+        		if (ne>0) {H2F h = (H2F) dg1.getData(i+6).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
+        	}
+        }		
+		
     }
     
     public void showPhotTim() {
@@ -2390,6 +2476,7 @@ public class ECperf extends DetectorMonitor {
     	if(nc>100) {
     		showNeutronEff();
     		showPi0Eff();
+    		getPipEff();
     		nc=0;
     	}
     	nc++;
