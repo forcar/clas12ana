@@ -9,26 +9,25 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+
 
 import org.clas.tools.Event;
-import org.clas.tools.ParallelSliceFitter;
+
 import org.clas.viewer.DetectorMonitor;
-import org.jlab.clas.detector.DetectorResponse;
+
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.geom.prim.Point3D;
-import org.jlab.groot.base.GStyle;
-import org.jlab.groot.data.DataLine;
+
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-import org.jlab.groot.data.IDataSet;
+
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
-import org.jlab.io.base.DataBank;
+
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedTable;
 import org.jlab.utils.groups.IndexedList;
@@ -230,17 +229,17 @@ public class ECperf extends DetectorMonitor {
         if(dropBanks) dropBanks(event);
         
     	if(!ev.procEvent(event)) return;
-	    
 	    if(!makeELEC()) return;
-
+	   
 	    prot_ecal = makePROT();    goodPROT = prot_ecal.size()>0;
 	    pbar_ecal = makePBAR();    goodPBAR = pbar_ecal.size()>0;
 	    pip_ecal  = makePIP();      goodPIP = pip_ecal.size()>0;
 	    pim_ecal  = makePIM();      goodPIM = pim_ecal.size()>0;
 	    neut_ecal = makeNEUTRAL(); goodNEUT = neut_ecal.size()>0; 
-	    goodPHOT  = makePHOT();
+	    phot_ecal = makePHOT();    goodPHOT = phot_ecal.size()>0;
 	    
 	    filterEvent();
+	    
 	    fillHists();
     } 	
     
@@ -251,7 +250,7 @@ public class ECperf extends DetectorMonitor {
 	public void fillHists(){
 				
 		fillECkin();
-		fillECelec();
+		fillECelec(); 		
 		fillECtime();
 		fillSCelec();
 		
@@ -276,8 +275,7 @@ public class ECperf extends DetectorMonitor {
 	    	}
 	    }
 	}
-	
-    
+	    
     @Override       
     public void plotHistos(int run) {
     	setRunNumber(run); 
@@ -542,8 +540,9 @@ public class ECperf extends DetectorMonitor {
 	        int inn = 0; dg = new DataGroup(6,3);        
 			for(int n=0; n<3; n++) { //x,y,z
 				for(int is=1;is<7;is++){  //sector  	
-					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;					
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,5,35,40,-5,5,"","S"+is+" #theta_e","DC"+xyz[n]+"-"+scdet[i]), inn);
+					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;		
+					float y1 = i==0?n==0?12:5:5;
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,5,35,40,-y1,y1,"","S"+is+" #theta_e","DC"+xyz[n]+"-"+scdet[i]), inn);
 					dg.addDataSet(f1, inn); inn++;  
 				}
 			}	
@@ -876,7 +875,7 @@ public class ECperf extends DetectorMonitor {
         List<Particle> ec = ev.getParticle(11);
         
         if(ec.size()==0 || ec.size()>1) return false; // only 1 electron
-		         
+
     	boolean good_fiduc1 = false, good_fiduc2 = false, good_fiduc3 = false; 
         e_ecal_esum = 0f; e_ecal_pcsum=0; e_ecal_ecsum=0;
         elec_ecal_resid.clear();
@@ -896,33 +895,39 @@ public class ECperf extends DetectorMonitor {
         List<Particle> elecECAL = ev.getECAL((int)epart.getProperty("pindex"));
     	List<Particle> elecFTOF = ev.getFTOF((int)epart.getProperty("pindex"));
     	
+    	for (Particle p : elecFTOF) {
+            e_sect    = (int) p.getProperty("sector");   			
+	    	int scind = (int) p.getProperty("layer");
+		    Point3D xyz = getResidual(p);
+	        elec_ftof_resid.add((float)xyz.x(),e_sect,0,scind-1);
+	    	elec_ftof_resid.add((float)xyz.y(),e_sect,1,scind-1);
+	    	elec_ftof_resid.add((float)xyz.z(),e_sect,2,scind-1); 		 		
+    	}
+    	  
     	for (Particle p : elecECAL) {    		
-              e_sect =   (int) p.getProperty("sector");
+            e_sect   =   (int) p.getProperty("sector");
+    		e_x      = (float) p.getProperty("x");
+    		e_y      = (float) p.getProperty("y");
+            e_cz     = p.hasProperty("cz")?(float) p.getProperty("cz"):0;
     		float en = (float) p.getProperty("energy");   		
     		int  ind = getDet((int) p.getProperty("layer"));
-    		      iU = p.hasProperty("iu")?(int)p.getProperty("iu"):0;
-    		      iV = p.hasProperty("iv")?(int)p.getProperty("iv"):0;
-    		      iW = p.hasProperty("iw")?(int)p.getProperty("iw"):0; 
-    		int   iS = (int)p.getProperty("sector");
-    		if(ind==0) {
+    		
+    		iU = p.hasProperty("iu")?(int)p.getProperty("iu"):0;
+    		iV = p.hasProperty("iv")?(int)p.getProperty("iv"):0;
+    		iW = p.hasProperty("iw")?(int)p.getProperty("iw"):0; 
+
+    		if (ind==0) {
     			lU = p.hasProperty("lu")?(int)p.getProperty("lu"):0;
-  		      	lV = p.hasProperty("lv")?(int)p.getProperty("lv"):0;
-  		      	lW = p.hasProperty("lw")?(int)p.getProperty("lw"):0; 
-    			for (Particle psc : elecFTOF) {
-    	    		int scind = (int) psc.getProperty("layer");
-    		        Point3D xyz = getResidual(psc);
-    	            elec_ftof_resid.add((float)xyz.x(),iS,0,scind-1);
-    	    		elec_ftof_resid.add((float)xyz.y(),iS,1,scind-1);
-    	    		elec_ftof_resid.add((float)xyz.z(),iS,2,scind-1); 
-    			}
-    		}   		
+    			lV = p.hasProperty("lv")?(int)p.getProperty("lv"):0;
+    			lW = p.hasProperty("lw")?(int)p.getProperty("lw"):0; 
+    		}
     		
     		Point3D xyz = getResidual(p);	        
-    		elec_ecal_resid.add((float)xyz.x(),iS,0,ind);
-    		elec_ecal_resid.add((float)xyz.y(),iS,1,ind);
-    		elec_ecal_resid.add((float)xyz.z(),iS,2,ind);
-    		elec_ecal_resid.add(p.hasProperty("iu")?(float)p.getProperty("iu"):0,iS,3,ind);
-    		elec_ecal_resid.add(chipid,iS,4,ind);
+    		elec_ecal_resid.add((float)xyz.x(),e_sect,0,ind);
+    		elec_ecal_resid.add((float)xyz.y(),e_sect,1,ind);
+    		elec_ecal_resid.add((float)xyz.z(),e_sect,2,ind);
+    		elec_ecal_resid.add(p.hasProperty("iu")?(float)p.getProperty("iu"):0,e_sect,3,ind);
+    		elec_ecal_resid.add(chipid,e_sect,4,ind);
     		
     		if(ind>-1) e_ecal_esum  += en;
     		if(ind==0) e_ecal_pcsum  = en;
@@ -933,18 +938,14 @@ public class ECperf extends DetectorMonitor {
    	    }
           
 //    	if (fiduCuts && !((good_fiduc1)||(good_fiduc1&&good_fiduc2)||(good_fiduc1&&good_fiduc2&&good_fiduc3))) return false;
-   	
+    	
     	if (fiduCuts && !(good_fiduc1&&good_fiduc2&&good_fiduc3)) return false;
     	
         if(Math.abs(e_vz+3)<12 && e_mom>0.5){
-    		e_sect = (int)   elecECAL.get(0).getProperty("sector");
-    		e_x    = (float) elecECAL.get(0).getProperty("x");
-    		e_y    = (float) elecECAL.get(0).getProperty("y");
             e_the  = (float) Math.toDegrees(epart.theta());
             e_phi  = (float) Math.toDegrees(epart.phi());
             e_vx   = (float) epart.vx(); 
             e_vy   = (float) epart.vy();
-            e_cz   = elecECAL.get(0).hasProperty("cz")?(float) elecECAL.get(0).getProperty("cz"):0;
             Ve     = epart.vector();
             VGS = new LorentzVector(0,0,0,0);                	     
             VGS.add(VB);               	         
@@ -1027,19 +1028,15 @@ public class ECperf extends DetectorMonitor {
         return olist;
     }   
     
-    public boolean makePHOT() {
-    	
-        List<Particle> nlist = ev.getParticle(22);
-        if(nlist.size()==0) return false;
+    public List<Particle>  makePHOT() {
+
+    	List<Particle> olist = new ArrayList<Particle>();
         
-        phot_ecal.clear();
-        
-        for (Particle p : nlist) {
+        for (Particle p : ev.getParticle(22)) {
             short status = (short) p.getProperty("status");
-            boolean inDC = (status>=2000 && status<3000);
-            if(inDC && p.e()>0.05) phot_ecal.add(p); 
+            if(status>=2000 && status<3000 && p.e()>0.05) olist.add(p); 
         }        
-        return phot_ecal.size()>0;
+        return olist;
     } 
 /*    
     public boolean makeNEUT() {
