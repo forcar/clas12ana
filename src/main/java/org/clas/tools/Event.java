@@ -109,15 +109,15 @@ public class Event {
 	    if(requireOneElectron)   if(!countElectronTriggers(false)) return false;
 	    if(hasRECevent)           processRECevent();
 	    if(starttime > -100) {
-	    	if(hasRECcalorimeter) processRECcalorimeter();
-	    	if(hasECALclusters)   processECALclusters();
-	    	if(hasECALpeaks)      processECALpeaks();
-	    	if(hasECALcalib)      processECALcalib();
+	    	if(hasRECscintillator) processRECscintillator();
+	    	if(hasRECcalorimeter)  processRECcalorimeter();
+	    	if(hasECALclusters)    processECALclusters();
 	    	if(hasECALclusters && hasRECcalorimeter && !isGoodRows()) return false;
-	    	if(hasRECcalorimeter) processRECscintillator();
-	    	if(hasRECtrack)       processRECtrack();
-	    	if(hasRECtraj)        processRECtraj();
-	    	if(hasRECparticle)    processRECparticle();
+	    	if(hasECALpeaks)       processECALpeaks();
+	    	if(hasECALcalib)       processECALcalib();
+	    	if(hasRECtrack)        processRECtrack();
+	    	if(hasRECtraj)         processRECtraj();
+	    	if(hasRECparticle)     processRECparticle();
 			getRECparticle(11);
 			getRECparticle(22);
 			getRECparticle(2112);
@@ -368,6 +368,18 @@ public class Event {
 				p.setProperty("hx",     ftofBank.getFloat("hx",imap));
 				p.setProperty("hy",     ftofBank.getFloat("hy",imap));
 				p.setProperty("hz",     ftofBank.getFloat("hz",imap));
+				
+				if(trajMap.containsKey(ipart)) {
+					for(int tmap : trajMap.get(ipart)) {
+					   if(trajBank.getInt("detector",tmap)==12&&trajBank.getInt("layer",tmap)==(p.getProperty("layer"))) {
+							p.setProperty("tx",     trajBank.getFloat("x",tmap));
+							p.setProperty("ty",     trajBank.getFloat("y",tmap));
+							p.setProperty("tz",     trajBank.getFloat("z",tmap));
+							p.setProperty("cz",     trajBank.getFloat("cz",tmap));
+					   }
+					}
+				}				
+				
 				ftofpart.add(p);
 			}
 		}
