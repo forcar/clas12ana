@@ -353,7 +353,7 @@ public class ECperf extends DetectorMonitor {
 			dg.addDataSet(makeH2(tab+"_2_",tag,68,1,69,50,0.15,0.35,"","PCAL U STRIP","E/P"),is-1+6);
 			dg.addDataSet(makeH2(tab+"_3_",tag,68,1,69,50,-4,4,      "","PCAL U STRIP","#chi PID"),is-1+12); dg.addDataSet(f1,is-1+12);
 //			dg.addDataSet(makeH2(tab+"_4_",tag,70,0,EB/6,70,0,EB/5, "","PC (GeV)","EC (GeV)"),is-1+18);	
-			dg.addDataSet(makeH2(tab+"_4_",tag,60,0,EB/4,50,-4,4, "","Em (GeV)","#chi PID"),is-1+18); dg.addDataSet(f2,is-1+18);	
+			dg.addDataSet(makeH2(tab+"_4_",tag,60,0,EB/4,50,-5,5, "","Em (GeV)","#chi PID"),is-1+18); dg.addDataSet(f2,is-1+18);	
         }		
 		break;
         case 1:        
