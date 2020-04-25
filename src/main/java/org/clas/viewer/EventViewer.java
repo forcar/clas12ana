@@ -171,12 +171,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-//    		monitors[n] = new ECperf("ECperf"); 
+//   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
-//  		monitors[n] = new ECsf("ECsf"); 
+  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
-    		monitors[n] = new ECpi0("ECpi0");
+//    		monitors[n] = new ECpi0("ECpi0");
 
         }
     }
@@ -463,7 +463,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setTriggerPhaseConstants(int run) {
-		IndexedTable   jitter = this.monitors[0].ccdb.getConstants(run, "/calibration/ec/time_jitter");        
+		IndexedTable   jitter = this.monitors[0].cm.getConstants(run, "/calibration/ec/time_jitter");        
         PERIOD = jitter.getDoubleValue("period",0,0,0);
         PHASE  = jitter.getIntValue("phase",0,0,0); 
         CYCLES = jitter.getIntValue("cycles",0,0,0);
@@ -533,7 +533,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         rNum = getRunNumber(event);
        
         if(rNum!=0 && this.runNumber!=rNum && clear) {  
-        	System.out.println("Processing Run "+rNum);
+        	System.out.println("EventViewer: Processing Run "+rNum);
         	this.runNumber = rNum;
             if(!clearHist) clear=false;
         	return isGoodRun(rNum)? initRun(rNum,event):null;
@@ -568,7 +568,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
         	this.monitors[k].setRunNumber(this.runNumber); 
            	this.monitors[k].localclear();
-           	this.monitors[k].initCCDB(this.runNumber);
+           	this.monitors[k].initEBCCDB(this.runNumber);
         	this.monitors[k].createHistos(this.runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].plotHistos(this.runNumber);
@@ -732,7 +732,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(runNumber);  
-            this.monitors[k].initCCDB(runNumber);
+            this.monitors[k].initEBCCDB(runNumber);
             this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
