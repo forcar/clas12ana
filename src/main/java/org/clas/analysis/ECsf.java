@@ -63,14 +63,13 @@ public class ECsf extends DetectorMonitor {
     }
     
     public void localinit() {
-        System.out.println("ECa.localinit()");
+        System.out.println("ECsf.localinit()");
         configEngine("muon");  
-        configEventBuilder();
         tl.setFitData(Fits);
     }
     
     public void localclear() {
-    	System.out.println("ECa.localclear()");
+    	System.out.println("ECsf.localclear()");
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
@@ -582,10 +581,9 @@ public class ECsf extends DetectorMonitor {
         
         int run = getRunNumber();    
 	   
-	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
-
     	for (int is=1; is<7; is++) {  
-    		txt = "Sector "+is+" Measured Energy (GeV)";
+    	    SFFunction sf = new SFFunction("esf",11,is,ebccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
+   		    txt = "Sector "+is+" Measured Energy (GeV)";
             if (FitSummary.hasItem(is,0,7,run)) {
             	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.22f,0.28f,2,4,1,txt," E/P",""); c.draw(sf,"same");
             	tl.fitData.getItem(is,0,5,run).graph.setMarkerColor(1);
@@ -638,8 +636,8 @@ public class ECsf extends DetectorMonitor {
     } 
     
     public void plotFitSummary4(int index) {
-    	GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+    	GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
         c.setGridX(false); c.setGridY(false); c.divide(6, 2);
         int col[] = {1,2,3,4,5,7};
         int run = getRunNumber();
@@ -778,16 +776,17 @@ public class ECsf extends DetectorMonitor {
 
     public static class SFFunction extends Func1D{
     	
-        EBCCDBConstants ccdb = new EBCCDBConstants();
+        EBCCDBConstants ccdb = new EBCCDBConstants();  
    	    DetectorParticle p = new DetectorParticle(); 
         int pid;
   	    
-        public SFFunction(String name, int pid, EBCCDBConstants ccdb, double min, double max) {
+        public SFFunction(String name, int pid, int is, EBCCDBConstants ccdb, double min, double max) {
             super(name, min, max);
             this.ccdb = ccdb;
             this.pid  = pid;
             
             p.addResponse(new CalorimeterResponse(1,1,0));
+            p.getDetectorResponses().get(0).getDescriptor().setSector(is);
             p.getDetectorResponses().get(0).getDescriptor().setType(DetectorType.ECAL);
         }
         @Override

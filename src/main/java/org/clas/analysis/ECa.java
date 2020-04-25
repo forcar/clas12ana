@@ -112,7 +112,6 @@ public class ECa extends DetectorMonitor {
 	    VT = new LorentzVector(0,0,0,0.93827);
 	    tl.setFitData(Fits);
 	    configEngine("muon");  
-        configEventBuilder();
     }
     
     public void localclear() {
@@ -223,7 +222,7 @@ public class ECa extends DetectorMonitor {
         int col[] = {1,2,3,4,5,7};
 	    int run = getRunNumber();    
 	   
-	    SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); 
+	    SFFunction sf = new SFFunction("esf",-11,ebccdb,0.1,2.5); 
 
     	for (int is=1; is<7; is++) {  
     		String txt = "Sector "+is+" Measured Energy (GeV)";

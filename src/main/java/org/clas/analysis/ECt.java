@@ -410,15 +410,15 @@ public class ECt extends DetectorMonitor {
 
     } 
     public void initCCDB(int runno) {
-        gain    = ccdb.getConstants(runno, "/calibration/ec/gain");
-        time    = ccdb.getConstants(runno, "/calibration/ec/timing");
-        veff    = ccdb.getConstants(runno, "/calibration/ec/effective_velocity");
-        fo      = ccdb.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
-        fgo     = ccdb.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
-        tgo     = ccdb.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
-        gtw     = ccdb.getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
-        tmf     = ccdb.getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
-        rfT     = ccdb.getConstants(runno, "/calibration/eb/rf/config");  
+        gain    = cm.getConstants(runno, "/calibration/ec/gain");
+        time    = cm.getConstants(runno, "/calibration/ec/timing");
+        veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
+        fo      = cm.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
+        fgo     = cm.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
+        tgo     = cm.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
+        gtw     = cm.getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
+        tmf     = cm.getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
+        rfT     = cm.getConstants(runno, "/calibration/eb/rf/config");  
         
         FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0);
         TOFFSET  = (float) tgo.getDoubleValue("offset", 0,0,0); 

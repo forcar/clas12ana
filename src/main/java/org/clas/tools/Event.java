@@ -118,6 +118,7 @@ public class Event {
 	    	if(hasRECtrack)        processRECtrack();
 	    	if(hasRECtraj)         processRECtraj();
 	    	if(hasRECparticle)     processRECparticle();
+	    	getRECparticle(-11);
 			getRECparticle(11);
 			getRECparticle(22);
 			getRECparticle(2112);
@@ -284,8 +285,9 @@ public class Event {
 //		for (int i = 31; i >= 0; i--) {tb[i] = (isTrigBitSet(i))?1:0;}	
 		for (int i=1; i<7; i++) tbsum+=tb[i];
 		if(debug) {
+			System.out.println(" ");
 			System.out.print("Run "+run+" Event "+event+" Trigger Sector "+trigger_sect);
-			System.out.println("Bits "+tb[0]+" "+tb[1]+tb[2]+tb[3]+tb[4]+tb[5]+tb[6]+" "+tbsum);
+			System.out.println(" Bits "+tb[0]+" "+tb[1]+tb[2]+tb[3]+tb[4]+tb[5]+tb[6]+" "+tbsum);
 			if(tbsum==1) {for (int i=1; i<7; i++) {if(tb[i]==1) N1[i-1]++;}}
 			if(tbsum>1)  {for (int i=1; i<7; i++) {if(tb[i]==1) N2[i-1]++;}}
 			System.out.println(N1[0]+" "+N1[1]+" "+N1[2]+" "+N1[3]+" "+N1[4]+" "+N1[5]);

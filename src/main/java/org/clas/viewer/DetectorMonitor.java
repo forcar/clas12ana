@@ -147,12 +147,10 @@ public class DetectorMonitor implements ActionListener {
     public String[]  view = new String[]{"u","v","w"};    
     
     public ECEngine  engine = new ECEngine();  
-	public EBEngine     ebe = new EBEngine("CLAS12ANA");
 
     public String variation = "default";
     public String      geom = "2.5";
     public String    config = "phot";  //For re-running ECEngine this should always be "phot" to match original cooking
-	public EventBuilder  eb = null;
 	
 	public Boolean  isHipo3Event = true;
     
@@ -206,8 +204,10 @@ public class DetectorMonitor implements ActionListener {
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
-    public ConstantsManager         ccdb = new ConstantsManager();
-    public CalibrationConstants    calib = null;
+//    public CalibrationConstants    calib = null;
+    public ConstantsManager           cm = new ConstantsManager();
+    public EBCCDBConstants        ebccdb = null;
+    public ConstantsManager         ebcm = new ConstantsManager();
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
     public float                logParam = 2f;
@@ -228,7 +228,7 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
-            "/calibration/eb/rf/config"
+            "/calibration/eb/rf/config"            
     };
     
     
@@ -257,7 +257,8 @@ public class DetectorMonitor implements ActionListener {
         TimeSlice.put("UVW", 3);
         TimeSlice.put("FADC Slot", 16);
         TimeSlice.put("HV Slot", 24);
-    	ccdb.init(Arrays.asList(ccdbTables));
+        ebcm.init(EBCCDBConstants.getAllTableNames());
+    	cm.init(Arrays.asList(ccdbTables));
     }
     
     public void getEnv() {        
@@ -274,7 +275,9 @@ public class DetectorMonitor implements ActionListener {
     	if(getRunNumber()!=0) plotHistos(getRunNumber());
     }
     
-    public void initCCDB(int runNumber) {    	
+    public void initEBCCDB(int runNumber) {    
+    	System.out.println("initEBCCDB("+runNumber+")");
+    	ebccdb = new EBCCDBConstants(runNumber,ebcm);
     }
     
     public void createTimeLineHistos() {    	
@@ -350,11 +353,6 @@ public class DetectorMonitor implements ActionListener {
         engine.setClusterCuts(getClusterErr(val,0),
                               getClusterErr(val,1),
                               getClusterErr(val,2));    	
-    }
-    
-    public void configEventBuilder() {
-    	ebe.init();
-        eb = new EventBuilder(new EBCCDBConstants(10,ebe.getConstantsManager()));    	    	
     }
     
     public String getConfig(int val) {

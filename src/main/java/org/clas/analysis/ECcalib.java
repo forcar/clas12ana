@@ -485,11 +485,11 @@ public class ECcalib extends DetectorMonitor {
     }
         
     public void initCCDB(int runno) {
-        gain    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/gain");
-        time    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/timing");
-        veff    = engine.getConstantsManager().getConstants(runno, "/calibration/ec/effective_velocity");
-        offset  = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_offset");
-        goffset = engine.getConstantsManager().getConstants(runno, "/calibration/ec/fadc_global_offset");    	
+        gain    = cm.getConstants(runno, "/calibration/ec/gain");
+        time    = cm.getConstants(runno, "/calibration/ec/timing");
+        veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
+        offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
+        goffset = cm.getConstants(runno, "/calibration/ec/fadc_global_offset");    	
     }
     
 	public void myinit(){
