@@ -534,8 +534,15 @@ public class ECpi0 extends DetectorMonitor{
                   if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(energy); 
                   part.mip[isec-1] = (toflay<3&&energy>thresh[toflay-1]) ? 1:0;
                }
-            }      
-        } 
+            } 
+            
+        } else if (event.hasBank("REC::Calorimeter")) {        	
+            for (int i=0; i<6; i++) part.mip[i]=0;       
+            DataBank bank = event.getBank("REC::Calorimeter");
+            for (int i=0; i<bank.rows(); i++) {
+            }
+        }
+
         
         part.getNeutralResponses();
 //        part.getNeutralResponses(ecClusters);
