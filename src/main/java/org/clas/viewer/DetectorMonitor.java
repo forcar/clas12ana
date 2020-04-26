@@ -227,8 +227,7 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/global_time_walk",
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
-            "/calibration/ec/tmf_window",
-            "/calibration/eb/rf/config"            
+            "/calibration/ec/tmf_window"           
     };
     
     

@@ -81,7 +81,7 @@ public class ECsf extends DetectorMonitor {
     
     @Override
     public void createHistos(int run) {        
-	    System.out.println("ECsf:createHistos("+run+")");
+        System.out.println("ECsf:createHistos("+run+")");
         EB = getBeamEnergy(run);
         System.out.println("ECsf: EB="+EB);
 	    
@@ -89,6 +89,7 @@ public class ECsf extends DetectorMonitor {
         runlist.add(run);
         this.setNumberOfEvents(0);       
         createEOPHistos(7,0,50,0.0, EB*0.25,50,0.1,0.4,"ep_em", " Measured Energy (GeV)", " E/P");
+        createEOPHistos(7,1,50,0.0, EB*0.25,50,0.1,0.4,"ep_emnf", " Measured Energy (GeV)", " E/P");
         if(dropSummary) return;
         createEOPHistos(0,0,50,0.5,EB,50,0.1,0.4,"ep_p",  " Momentum (GeV)",   " E/P");
         createEOPHistos(0,1,50,0.5,EB,50,0.1,0.4,"ep_pnf"," Momentum (GeV)",   " E/P");
@@ -160,12 +161,14 @@ public class ECsf extends DetectorMonitor {
         DataGroup dg2 = new DataGroup(3,3);
         DataGroup dg3 = new DataGroup(3,3);
         
+        int nb=200, x=400, y=400;
+        
         for (int i=1; i<4; i++) {
-            h = new H2F("ep_xyc_w"+i+"_"+run,  200, -200., 200., 200, -200.,200);                        dg2.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_ww"+i+"_"+run, 200, -200., 200., 200, -200.,200);                        dg3.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_e"+i+"_"+run,  200, -200., 200., 200, -200.,200); h.setTitle(tit1[i-1]); dg1.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_sf"+i+"_"+run, 200, -200., 200., 200, -200.,200); h.setTitle(tit2[i-1]); dg1.addDataSet(h,i+2);  
-            h = new H2F("ep_xyc_sff"+i+"_"+run,200, -200., 200., 200, -200.,200); h.setTitle(tit3[i-1]); dg1.addDataSet(h,i+5);  
+            h = new H2F("ep_xyc_w"+i+"_"+run,  nb, -x, x, nb, -y,y);                        dg2.addDataSet(h,i-1); 
+            h = new H2F("ep_xyc_ww"+i+"_"+run, nb, -x, x, nb, -y,y);                        dg3.addDataSet(h,i-1); 
+            h = new H2F("ep_xyc_e"+i+"_"+run,  nb, -x, x, nb, -y,y); h.setTitle(tit1[i-1]); dg1.addDataSet(h,i-1); 
+            h = new H2F("ep_xyc_sf"+i+"_"+run, nb, -x, x, nb, -y,y); h.setTitle(tit2[i-1]); dg1.addDataSet(h,i+2);  
+            h = new H2F("ep_xyc_sff"+i+"_"+run,nb, -x, x, nb, -y,y); h.setTitle(tit3[i-1]); dg1.addDataSet(h,i+5);  
         }
         this.getDataGroup().add(dg1, 0,0,k,run);
         this.getDataGroup().add(dg2, 0,1,k,run);
@@ -332,6 +335,7 @@ public class ECsf extends DetectorMonitor {
                  ((H2F) this.getDataGroup().getItem(0,0,7,run).getData(e_sect-1).get(0)).fill(e_ecal_EL[3],sf);				
               }
               ((H2F) this.getDataGroup().getItem(1,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);
+              ((H2F) this.getDataGroup().getItem(1,0,7,run).getData(e_sect-1).get(0)).fill(e_ecal_EL[3],sf);
               ((H2F) this.getDataGroup().getItem(0,0,1,run).getData(e_sect-1).get(0)).fill(e_theta,sf);
               ((H2F) this.getDataGroup().getItem(0,0,2,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[0],sf);
            }
@@ -414,14 +418,14 @@ public class ECsf extends DetectorMonitor {
               
             if (!dropSummary) {
             	
-            fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(0,0,7,run).getData(is-1).get(0));
+            fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(getActivePC(),0,7,run).getData(is-1).get(0));
             fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX(); 
             FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); // E/P vs. measured energy
           
     	    GraphErrors MeanGraph = fitter.getMeanSlices();
     	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,2.5,0.3,2.5),is,0,5,run); 
     	    
-    		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(0,0,0,run).getData(is-1).get(0));
+    		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(getActivePC(),0,0,run).getData(is-1).get(0));
     	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
     	    FitSummary.add(fitter.getMeanSlices(), is, 0, 1, run);  // E/P vs. tracking momentum
     	    

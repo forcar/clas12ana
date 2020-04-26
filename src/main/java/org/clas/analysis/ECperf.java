@@ -36,7 +36,7 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 public class ECperf extends DetectorMonitor {
 	
     Event    ev = new Event();
-    ECPart part = new ECPart();  
+//    ECPart part = new ECPart();  
 	
 	DataGroup dg = null;
 	int nc=0;
@@ -154,9 +154,9 @@ public class ECperf extends DetectorMonitor {
     	config="phot";
     	configEngine("phot");
     	tl.setFitData(Fits);  
-        part.setGeom("2.5");  
-        part.setConfig("pi0");  
-        part.setGoodPhotons(1212);    	
+//        part.setGeom("2.5");  
+//        part.setConfig("pi0");  
+//        part.setGoodPhotons(1212);    	
         neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
@@ -165,8 +165,8 @@ public class ECperf extends DetectorMonitor {
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
-    	FitSummary.clear();
     	Fits.clear();
+    	FitSummary.clear();
     	tl.Timeline.clear();
     	slider.setValue(0);
     } 
@@ -182,9 +182,8 @@ public class ECperf extends DetectorMonitor {
 		Mp = 0.93827f;
         Eb = EB = getBeamEnergy(run);
         System.out.println("Eb="+Eb+" run="+runNum);
-		rfPeriod = 4.008f;
-        engine.getConstantsManager().init(Arrays.asList(new String[]{"/daq/tt/fthodo","/calibration/eb/rf/config"}));
-        rfTable = engine.getConstantsManager().getConstants(runNum,"/calibration/eb/rf/config");
+		rfPeriod = 4.008f;       
+        rfTable = ebcm.getConstants(run,"/calibration/eb/rf/config");
         if (rfTable.hasEntry(1, 1, 1)){
             System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
             rfPeriod = (float)rfTable.getDoubleValue("clock",1,1,1);
@@ -192,6 +191,7 @@ public class ECperf extends DetectorMonitor {
 		rf_large_integer = 1000;    	
         VB = new LorentzVector(0,0,Eb,Eb);
         VT = new LorentzVector(0,0,0,Mp);    
+    	System.out.println("ECperf:dstinit complete");
     }
     
     @Override    
@@ -456,7 +456,7 @@ public class ECperf extends DetectorMonitor {
 			for(int n=0; n<2; n++) { //thet,phi
 				for(int is=1;is<7;is++){  //sector  	
 					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,5,35,60,-5,20,"","S"+is+" #theta_e",lab2[n]+" "+det[i]), in);
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,5,35,60,n==0?-5:-15,n==0?20:40,"","S"+is+" #theta_e",lab2[n]+" "+det[i]), in);
 					dg.addDataSet(f1, in); in++; 
 			}
 		}	
@@ -465,7 +465,7 @@ public class ECperf extends DetectorMonitor {
     	break;
     	
     	case 3:
-    	dg = new DataGroup(6,4);    	
+    	dg = new DataGroup(6,6);    	
         String lab3[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};    
     	f1 = new F1D("H_e_EC_rad3_f+"+run,"[a]",0.0,0.15); 
     	f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
@@ -473,7 +473,7 @@ public class ECperf extends DetectorMonitor {
     		for(int n=0; n<2; n++) { //thet,phi
     			for(int is=1;is<7;is++){  //sector  	
     				tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,0,0.15,60,-5,10,"","S"+is+" "+det[i]+" E",lab3[n]+" "+det[i]), in);
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,0,0.15,60,n==0?-5:-15,n==0?20:40,"","S"+is+" "+det[i]+" E",lab3[n]+" "+det[i]), in);
 					dg.addDataSet(f1, in); in++; 
     			}
     		}	
@@ -482,7 +482,7 @@ public class ECperf extends DetectorMonitor {
     	break;
     	
     	case 4:
-    	dg = new DataGroup(6,4);    	
+    	dg = new DataGroup(6,6);    	
         String lab4[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};    
     	f1 = new F1D("H_e_EC_rad4_f+"+run,"[a]",0.0,EB); 
     	f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
@@ -490,7 +490,7 @@ public class ECperf extends DetectorMonitor {
     		for(int n=0; n<2; n++) { //thet,phi
     			for(int is=1;is<7;is++){  //sector  	
     				tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,0,EB,60,-5,20,"","S"+is+" p_e",lab4[n]+" "+det[i]), in);
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,0,EB,60,n==0?-5:-15,n==0?20:40,"","S"+is+" p_e",lab4[n]+" "+det[i]), in);
 					dg.addDataSet(f1, in); in++; 
     			}
     		}	
@@ -586,7 +586,7 @@ public class ECperf extends DetectorMonitor {
         
     	case 3:
     		
-        dg = new DataGroup(6,2);    	
+        dg = new DataGroup(6,3);    	
         for(int i=0;i<3;i++) { //pcal,ecin,ecou
         	for(int n=0; n<1; n++) { 
         		for(int is=1;is<7;is++){  //sector  	
@@ -599,7 +599,7 @@ public class ECperf extends DetectorMonitor {
     	break;
     	
     	case 4:
-    	dg = new DataGroup(6,4);    	
+    	dg = new DataGroup(6,6);    	
         String lab4[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};    
     	f1 = new F1D("H_e_ECt_4_f+"+run,"[a]",-6,6); 
     	f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
@@ -1928,7 +1928,7 @@ public class ECperf extends DetectorMonitor {
     public void ECposiPlot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
         if(getActive123()<6)        plot123(index);
-        if(getActive123()>5) ECelecPlotFits(index);
+        if(getActive123()>5) ECposiPlotFits(index);
     }
     
     public void ECtimePlot(String tabname) {
@@ -2024,7 +2024,7 @@ public class ECperf extends DetectorMonitor {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.clear();
         if(getActive123()==6) {c.divide(6,3); icmax=3;}
-        if(getActive123()==7) {c.divide(6,4); ilmax=2; icmax=2;}
+        if(getActive123()==7) {c.divide(6,6); ilmax=3; icmax=2;}
         
         int n=0;
         for (int il=0; il<ilmax; il++) {
@@ -2050,6 +2050,10 @@ public class ECperf extends DetectorMonitor {
         	}
         }
 
+	}
+	
+	public void ECposiPlotFits(int index) {
+	
 	}
 	
 	public void ECpimPlotFits(int index) {
