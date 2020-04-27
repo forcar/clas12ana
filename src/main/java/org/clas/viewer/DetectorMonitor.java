@@ -274,6 +274,9 @@ public class DetectorMonitor implements ActionListener {
     	if(getRunNumber()!=0) plotHistos(getRunNumber());
     }
     
+    public void initCCDB(int runNumber) {    	
+    }
+    
     public void initEBCCDB(int runNumber) {    
     	System.out.println("initEBCCDB("+runNumber+")");
     	ebccdb = new EBCCDBConstants(runNumber,ebcm);

@@ -418,7 +418,7 @@ public class ECt extends DetectorMonitor {
         tgo     = cm.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
         gtw     = cm.getConstants(runno, "/calibration/ec/global_time_walk");   //Global time walk correction using raw ADC
         tmf     = cm.getConstants(runno, "/calibration/ec/tmf_offset");         //TDC-FADC offsets
-        rfT     = cm.getConstants(runno, "/calibration/eb/rf/config");  
+        rfT     = ebcm.getConstants(runno, "/calibration/eb/rf/config");  
         
         FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0);
         TOFFSET  = (float) tgo.getDoubleValue("offset", 0,0,0); 

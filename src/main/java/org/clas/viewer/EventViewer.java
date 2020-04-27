@@ -171,9 +171,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-//   		monitors[n] = new ECperf("ECperf"); 
+   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
-  		monitors[n] = new ECsf("ECsf"); 
+//  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0");
@@ -568,6 +568,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
         	this.monitors[k].setRunNumber(this.runNumber); 
            	this.monitors[k].localclear();
+           	this.monitors[k].initCCDB(this.runNumber);
            	this.monitors[k].initEBCCDB(this.runNumber);
         	this.monitors[k].createHistos(this.runNumber);
             this.monitors[k].initGStyle();
