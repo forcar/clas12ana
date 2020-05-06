@@ -157,7 +157,7 @@ public class ECt extends DetectorMonitor {
         createTDCHistos(5,120,350,"TIME (ns)");    
         createTDCHistos(6,120,350,"TIME (ns)");    
         createTDCHistos(7,120,350,"TIME (ns)");    
-        createTDCHistos(8,-50.,50.,"TIME-FADC (ns)");    
+        createTDCHistos(8,-30.,25.,"TIME-FADC (ns)");    
         createTDCHistos(9,  0.,50.,"T-TVERT (ns)");    
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
         createUVWHistos(11,50,50,700,800,-5,5,"PATH","RESID ");
@@ -221,7 +221,7 @@ public class ECt extends DetectorMonitor {
     	    	if(isGTMFDone)     plotGTMFSummary(25);
     	    }
     	    if(!isTimeLineFitsDone) return;
-    	    if(!isMC) plotTimeLines(29);
+//    	    if(!isMC) plotTimeLines(29);
     }
     
     public void createBETAHistos(int k) {
@@ -232,7 +232,7 @@ public class ECt extends DetectorMonitor {
         for (int id=1; id<4; id++) {
     	for (int il=1; il<4; il++) {
         for (int is=1; is<7 ; is++) {
-           h = new H1F("beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,"beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,50,0,1.5);
+           h = new H1F("beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,"beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,100,0.4,1.5);
            h.setTitleX(pid[id-1]+" "+det[il-1]+" beta "); h.setTitleY("Counts"); h.setLineColor(is);
            dg.addDataSet(h,id*3+il-4);
         }
@@ -550,7 +550,7 @@ public class ECt extends DetectorMonitor {
        List<ECPeak>       peaks = engine.getPeaks();
        List<ECCluster> clusters = engine.getClusters();
        
-       if (run>=3818) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
+       if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
        
        if(event.hasBank("ECAL::hits")){
           	DataBank  bank = event.getBank("ECAL::hits");
@@ -565,7 +565,7 @@ public class ECt extends DetectorMonitor {
             }
        }
        
-       boolean goodEvent = event.hasBank("REC::Particle")&&event.hasBank("REC::Calorimeter");
+       boolean goodEvent = event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
        
        if(!goodEvent) return;
        
@@ -579,10 +579,6 @@ public class ECt extends DetectorMonitor {
        
        trigger_sect = getElecTriggerSector();
        boolean good_trig = trigger_sect>0 && trigger_sect < 7;
-       
-//       if (!(trigger_sect>0)) return;       
-//       if(!partMap.containsKey(11)) return;
-     
       
        for(int loop = 0; loop < bankc.rows(); loop++){
           int   is = bankc.getByte("sector", loop);
@@ -602,7 +598,6 @@ public class ECt extends DetectorMonitor {
        DataBank  bank3 = event.getBank("ECAL::peaks");
        for(int loop = 0; loop < bank1.rows(); loop++){
            int is = bank1.getByte("sector", loop);
-//           if (true||is==trigger_sect||isMC){
              if (good_trig||isMC) {
                int     il =  bank1.getByte("layer", loop);
                float ener =  bank1.getFloat("energy",loop)*1000;
@@ -617,7 +612,6 @@ public class ECt extends DetectorMonitor {
                Point3D  pc = new Point3D(bank1.getFloat("x",loop),
             		                     bank1.getFloat("y",loop),
             		                     bank1.getFloat("z",loop));
-//               System.out.println("Cluster "+loop+" "+pc.toString()+" "+clusters.get(loop).getHitPosition().toString());
                lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3));
                lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3));
                lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3));
@@ -655,17 +649,18 @@ public class ECt extends DetectorMonitor {
                          adc   = 10000*add[i]/(float)gain.getDoubleValue("gain", is, il+i, ip);
                 	   }
                 	   
-                	   float radc = (float) Math.sqrt(adc);
-                	   
-                       float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c);
-                	   float vcorr = STT - phase + TVOffset;  
+                       float vel=c; if(Math.abs(pid)==211) vel=Math.abs(beta*c); //use FTOF beta for calibration residuals
+                       
+                	   float vcorr = STT - phase + TVOffset;  // phose=0 unless STT is not phase corrected (early engineering runs)
                 	   float pcorr = path/vel;
-                	   float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                        float tvcor = tu  - vcorr;
                        float resid = tvcor - pcorr; 
-                       float mybet = path/tvcor/c;
                        
+                       float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots
                        
+                	   float  radc = (float) Math.sqrt(adc);                	   
+                       float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
+                                              
 //                       System.out.println((tu-pcorr)+" "+STT+" "+phase+" "+TVOffset+" "+rftime);
 //                       double dt = (time - path/(beta*29.97) - trf + 120.5*this.rfPeriod)%this.rfPeriod-this.rfPeriod/2;
                        
@@ -1004,7 +999,7 @@ public class ECt extends DetectorMonitor {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));      
         int            n = 0;
         
-        double ymin=-5f, ymax=5f;
+        double ymin=-10f, ymax=10f;
         ymin=ymin*lMin/250; ymax=ymax*lMax/250;
          
         c.clear(); c.divide(3, 2);
@@ -1081,7 +1076,8 @@ public class ECt extends DetectorMonitor {
 	public String getA0(int is, int il, int iv, int ip) {
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "
+				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
