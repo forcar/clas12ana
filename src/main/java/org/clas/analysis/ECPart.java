@@ -153,8 +153,7 @@ public class ECPart  {
             List<DetectorResponse> responseList = new ArrayList<>();
             if(event.hasBank(bankName)==true){
                 DataBank bank = event.getBank(bankName);
-                int nrows = bank.rows();
-                for(int row = 0; row < nrows; row++){
+                for(int row = 0; row < bank.rows(); row++){
                     int sector = bank.getByte("sector", row);
                     int  layer = bank.getByte("layer",  row);
                     DetectorResponse  response = new DetectorResponse(sector,layer,0);
@@ -282,8 +281,8 @@ public class ECPart  {
                 break;
         case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
                 particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
-        case 3: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
-        		particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
+//        case 3: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
+//        		particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
         }
         
        return particles;
@@ -294,7 +293,7 @@ public class ECPart  {
         int ii=0;
         for (DetectorParticle p: particles) {
             DetectorResponse rPC = p.getDetectorResponses().get(0); //get 1st PCAL responses
-                   epc = rPC.getEnergy();
+//                   epc = rPC.getEnergy();
             iip[ii][0] = rPC.getHitIndex();  
             iis[ii]    = rPC.getDescriptor().getSector();
               x[ii][0] = rPC.getPosition().x();
