@@ -30,7 +30,8 @@ public class ECsf extends DetectorMonitor {
     int[]    npmt = {68,62,62,36,36,36,36,36,36};    
     String[]    v = new String[]{"u","v","w"};
     float     EB = 0;
-    int nelec=0;
+    boolean isMC = false;
+    int nelec=0, trigger_sect=0;
     
     public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
     
@@ -81,6 +82,7 @@ public class ECsf extends DetectorMonitor {
     
     @Override
     public void createHistos(int run) {        
+        histosExist = true;
         System.out.println("ECsf:createHistos("+run+")");
         EB = getBeamEnergy(run);
         System.out.println("ECsf: EB="+EB);
@@ -106,6 +108,7 @@ public class ECsf extends DetectorMonitor {
 
     @Override       
     public void plotHistos(int run) {
+    	if(!histosExist) return;
     	plotSummary(run);
     	plotAnalysis(run);
     }
@@ -128,7 +131,7 @@ public class ECsf extends DetectorMonitor {
     public void plotAnalysis(int run) {
         setRunNumber(run);
     	if(!isAnalyzeDone) return;
-    	plotFitSummary8(8);
+//    	plotFitSummary8(8);
     	if(!dropSummary) {updateFits(10);plotMeanHWSummary(11); plotFitSummary2(13); plotFitSummary3(14); plotFitSummary4(15);}
     	plotTimeLines(12);
     	if (dumpGraphs) dumpGraphs();
@@ -219,12 +222,20 @@ public class ECsf extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {
     	
+        isMC = (getRunNumber()<100) ? true:false;
+        trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
+        
+        boolean goodSector = trigger_sect>0 && trigger_sect<7; 
+        
+        System.out.println(trigger_sect);
+        if(!goodSector) return;
+    	
     	int run = getRunNumber();
     	DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
     	
     	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0; 
-    	float[]    x_ecal = new float[3];
-        float[]    y_ecal = new float[3];
+    	float[]    x_ecal = {-1000,-1000,-1000};
+        float[]    y_ecal = {-1000,-1000,-1000};
     	float[] e_ecal_TH = new float[3];
     	float[] e_ecal_EL = new float[4];
     	float[]    t_ecal = new float[4];
@@ -236,10 +247,8 @@ public class ECsf extends DetectorMonitor {
     	
         if(dropBanks) dropBanks(event);
         
-        if (event.hasBank("MC::Particle")) return;
+//        if (event.hasBank("MC::Particle")) return;
 
-        int trigger_sect = 0;
-        
         boolean goodEvent = event.hasBank("REC::Particle")&& event.hasBank("REC::Calorimeter");
         
         if (!goodEvent) return;
@@ -254,10 +263,9 @@ public class ECsf extends DetectorMonitor {
       	Map<Integer,List<Integer>> caloMap = loadMapByIndex(reccal,"pindex");
       	Map<Integer,List<Integer>> partMap = loadMapByIndex(recpar,"pid");
       	
-      	trigger_sect = getElecTriggerSector(); 
         int tpid = 11;
 
-        if (!(trigger_sect>0) || !partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return;      	
+        if (!partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return;      	
         
         for (int ipart : partMap.get(tpid)) {			
             float px = recpar.getFloat("px", ipart);
@@ -665,18 +673,19 @@ public class ECsf extends DetectorMonitor {
  	    c.divide(3, 3);
         
 	    H2F h2 ;
+	    double[] zmin={0.1,0.025,0.002,0.22,0.22,0.22}, zmax={0.245,0.110,0.029,0.275,0.275,0.275};
 	    
-	    c.cd(0); c.getPad().getAxisZ().setLog(getLogZ());                h2 = (H2F) dg.getData(0).get(0); c.draw(h2);
-	    c.cd(1); c.getPad().getAxisZ().setLog(getLogZ());                h2 = (H2F) dg.getData(1).get(0); c.draw(h2);
-	    c.cd(2); c.getPad().getAxisZ().setLog(getLogZ());                h2 = (H2F) dg.getData(2).get(0); c.draw(h2);
+	    if(zMax<50) {
+	    	zmin[0]=0.001*zMin; zmin[1]=0.001*zMin; zmin[2]=0.001*zMin; zmin[3]=0.001*zMin; zmin[4]=0.001*zMin; zmin[5]=0.001*zMin;
+	    	zmax[0]=0.006*zMax; zmax[1]=0.004*zMax; zmax[2]=0.001*zMax; zmax[3]=0.010*zMax; zmax[4]=0.010*zMax; zmax[5]=0.010*zMax;	    	
+	    }	    
+	    
+	    c.cd(0); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(0).get(0); c.draw(h2);
+	    c.cd(1); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(1).get(0); c.draw(h2);
+	    c.cd(2); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(2).get(0); c.draw(h2);
 	   
-	    c.cd(3); c.getPad().getAxisZ().setRange(0.001*zMin, 0.006*zMax); h2 = (H2F) dg.getData(3).get(0); c.draw(h2);
-	    c.cd(4); c.getPad().getAxisZ().setRange(0.001*zMin, 0.004*zMax); h2 = (H2F) dg.getData(4).get(0); c.draw(h2);
-	    c.cd(5); c.getPad().getAxisZ().setRange(0.001*zMin, 0.001*zMax); h2 = (H2F) dg.getData(5).get(0); c.draw(h2);
-	    
-	    c.cd(6); c.getPad().getAxisZ().setRange(0.001*zMin, 0.010*zMax); h2 = (H2F) dg.getData(6).get(0); c.draw(h2);
-	    c.cd(7); c.getPad().getAxisZ().setRange(0.001*zMin, 0.010*zMax); h2 = (H2F) dg.getData(7).get(0); c.draw(h2);
-	    c.cd(8); c.getPad().getAxisZ().setRange(0.001*zMin, 0.010*zMax); h2 = (H2F) dg.getData(8).get(0); c.draw(h2);    	
+	    for (int i=0; i<6; i++) {c.cd(i+3); c.getPad().getAxisZ().setRange(zmin[i],zmax[i]); h2 = (H2F) dg.getData(i+3).get(0); c.draw(h2);}
+   	
     }    
     
     public void plotADCHistos(int index) {

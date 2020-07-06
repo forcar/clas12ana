@@ -1,4 +1,4 @@
- package org.clas.analysis;
+package org.clas.analysis;
 
 
 import java.io.BufferedReader;
@@ -35,28 +35,11 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 public class ECcalib extends DetectorMonitor {
 
-	Event     ev = new Event();
-	H1F       h1 = null;
 	H2F        h = null;
 	DataGroup dg = null;
 	
-	public boolean goodELEC,goodPROT,goodPBAR,goodPIP,goodPIM,goodMIP,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
-	
-	public List<Particle> elec_ecal  = new ArrayList<Particle>();
-	public List<Particle>  pim_ecal  = new ArrayList<Particle>();
-	public List<Particle>  pip_ecal  = new ArrayList<Particle>();	
-	public List<Particle>  mip_ecal  = new ArrayList<Particle>();	
-	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
-	
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
+    int is,la,ic,idet,nstr;
     
-    IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
-    List<IndexedList<List<Float>>> RDIFmap = new ArrayList<IndexedList<List<Float>>>();
-    IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
-    IndexedList<Float>           PixLength = new IndexedList<Float>(3);    
-    List<Float>                       pmap = new ArrayList<Float>();	
-    List<Particle>                    part = new ArrayList<Particle>();
-           
     float[][][][] ecmean = new float[6][3][3][68];
     float[][][][]  ecrms = new float[6][3][3][68];
     String[]         det = new String[]{"pcal","ecin","ecou"};
@@ -69,8 +52,30 @@ public class ECcalib extends DetectorMonitor {
     double[]     fitLimc = {20,17,35,40,48,75};
     int[]           npmt = {68,62,62,36,36,36,36,36,36};    
     int[]          npmts = new int[]{68,36,36};
-    int is,la,ic,idet,nstr;
-   
+    
+    Boolean         isMC = false;  
+        
+    List<IndexedList<List<Float>>> RDIFmap = new ArrayList<IndexedList<List<Float>>>();
+    IndexedList<Float>           PixLength = new IndexedList<Float>(3);    
+    List<Float>                       pmap = new ArrayList<Float>();	
+    List<Particle>                    part = new ArrayList<Particle>();
+    
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
+    
+    IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
+    IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
+    
+	public boolean goodELEC,goodPROT,goodPBAR,goodPIP,goodPIM,goodMIP,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
+	
+	public List<Particle> elec_ecal  = new ArrayList<Particle>();
+	public List<Particle>  pim_ecal  = new ArrayList<Particle>();
+	public List<Particle>  pip_ecal  = new ArrayList<Particle>();	
+	public List<Particle>  mip_ecal  = new ArrayList<Particle>();	
+	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
+
+    Event     ev = new Event();
+	H1F       h1 = null;
+
     public ECcalib(String name) {
         super(name);
         this.setDetectorTabNames("MIP",
@@ -99,7 +104,6 @@ public class ECcalib extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECcalib.localinit()");
-    	configEngine("muon");
     	tl.setFitData(Fits);    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
@@ -118,13 +122,14 @@ public class ECcalib extends DetectorMonitor {
     
      @Override    
      public void createHistos(int run) {
+	     histosExist = true;
 	     System.out.println("ECcalib:createHistos("+run+")");
 	     setRunNumber(run);
 	     runlist.add(run);
 	     createMIPHistos(0,1,25,0,40," Peak Energy (MeV)");
 	     createMIPHistos(0,2,50,0,100," Cluster Energy (MeV)");	     
 	     if(dropSummary) return;
-	     createXYHistos(5,130,420);    
+	     createXYHistos(5,80,-420,420,-420,420);    
 	     createPIDHistos(6);
 	     createMIPHistos(7,1,25,0,5.0," + Momentum (GeV)");
 	     createMIPHistos(7,2,25,0,5.0," - Momentum (GeV)");
@@ -136,6 +141,7 @@ public class ECcalib extends DetectorMonitor {
      
      @Override       
      public void plotHistos(int run) {
+    	 if(!histosExist) return;
     	 plotSummary(run);
     	 plotAnalysis(run);
      }
@@ -170,34 +176,33 @@ public class ECcalib extends DetectorMonitor {
      public void dumpFiles(String val) {
     	 if(dumpFiles) writeFile(val,1,7,0,3,0,3);
      }		      
-     
-     public void createXYHistos(int k, int nb, int bmx) {
+     public void createXYHistos(int k, int nb, int bx1, int bx2, int by1, int by2) {
     	 
  	     int run = getRunNumber();
  	     
          String[] t = {"e","w","r"};
          
          for (int i=0; i<3; i++) {
-             dg = new DataGroup(3,2);
-             for (int d=0; d<3; d++) {
-                 h = new H2F("hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
-                dg.addDataSet(h,d);  
-	         }
+        	 dg = new DataGroup(3,2);
+        	 for (int d=0; d<3; d++) {
+        		 h = new H2F("hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,nb,bx1,bx2,nb,by1,by2);
+                 dg.addDataSet(h,d);  
+	    	 }
              this.getDataGroup().add(dg,i,2,k,run);
          }
 
          for (int i=0; i<3; i++) {
-             dg = new DataGroup(3,3);
-             for (int j=0; j<3; j++) {
-                 for (int d=0; d<3; d++) {
-                     h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
+        	 dg = new DataGroup(3,3);
+        	 for (int j=0; j<3; j++) {
+        		 for (int d=0; d<3; d++) {
+        			 h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,bx1,bx2,nb,by1,by2);
                      dg.addDataSet(h,j+d*3);                      
-                 } 
-             }
+        	     } 
+        	 }
              this.getDataGroup().add(dg,i,1,k,run);
          }
           
-     }
+     }    
      
      public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt) {
      	
@@ -485,11 +490,13 @@ public class ECcalib extends DetectorMonitor {
     }
         
     public void initCCDB(int runno) {
+    	System.out.println("ECcalib.initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
         goffset = cm.getConstants(runno, "/calibration/ec/fadc_global_offset");    	
+        shift   = cm.getConstants(runno, "/calibration/ec/torus_gain_shift");        
     }
     
 	public void myinit(){
@@ -498,20 +505,30 @@ public class ECcalib extends DetectorMonitor {
 	
     public void processEvent(DataEvent event) {
     	
+        ev.isMC = (getRunNumber()<100) ? true:false;
+    	
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
-//    	ev.requireOneElectron(!event.hasBank("MC::Event"));
+    	
+        if(dropBanks) dropBanks(event);
         
     	if(!ev.procEvent(event)) return;
     	
  	    this.myinit();
 	    
         List<Particle>  part_ecal = new ArrayList<Particle>();
-	    part_ecal.clear(); part_ecal.addAll(makeELEC()); part_ecal.addAll(makePROT()); part_ecal.addAll(makeMIP()); 
-	    //part_ecal.addAll(makeNEUTRAL()); 
+        
+	    if(ev.isPhys) {part_ecal.addAll(makeELEC()); part_ecal.addAll(makePROT()); part_ecal.addAll(makeMIP());}
+	    if(ev.isMuon)  part_ecal.addAll(makeMUON()); 
 	    
 	    fillHists(part_ecal);    	
+    }
+    
+    public List<Particle> makeMUON() {
+    	List<Particle> olist = new ArrayList<Particle>();        
+        for (Particle p : ev.getParticle(13)) if(p.getProperty("status")>=2000 && p.getProperty("status")<3000) olist.add(p);         
+        return olist;    	   	
     }
     
     public List<Particle> makeELEC() {
@@ -575,7 +592,7 @@ public class ECcalib extends DetectorMonitor {
     		for (Particle ec : ev.getECAL(ip)) {
     			int is = (int) ec.getProperty("sector");
     			int il = (int) ec.getProperty("layer");
-    			if(il==1) fillPID(getRunNumber(),1,ip);
+    			if(ev.isPhys && il==1) fillPID(getRunNumber(),1,ip);
     			if (!olist.hasItem(is,il)) olist.add(new ArrayList<Particle>(), is,il); 
     			     olist.getItem(is,il).add(ec);
     		}
@@ -583,7 +600,7 @@ public class ECcalib extends DetectorMonitor {
     	return olist;
     }
     
-    public IndexedList<List<Particle>> filterECALClusters(IndexedList<List<Particle>> list) {
+    public IndexedList<List<Particle>> filterECALClusters(int pid, IndexedList<List<Particle>> list) {
     	
         IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);       
 		IndexGenerator ig = new IndexGenerator();
@@ -591,7 +608,7 @@ public class ECcalib extends DetectorMonitor {
     	for (Map.Entry<Long,List<Particle>>  entry : list.getMap().entrySet()){
 			int is = ig.getIndex(entry.getKey(), 0); 
 			int ip = (int) entry.getValue().get(0).getProperty("pindex");
-			if(entry.getValue().size()==1 && Math.abs(ev.part.get(ip).getProperty("ppid"))==211) {
+			if(entry.getValue().size()==1 && Math.abs(ev.part.get(ip).getProperty("ppid"))==pid) {
 				if(!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
 				    olist.getItem(is).add(entry.getValue().get(0));
 			}
@@ -608,17 +625,18 @@ public class ECcalib extends DetectorMonitor {
 		       	
        	int[]  uvw = new int[3]; int[]  wuv = new int[3]; float[] ep = new float[3];
 		int is,il,ip,trigger=0,trig=TRpid;
-		float ecl,x,y,z,d,wu,wv,ww,wsum,pmip,v12mag,v13mag,v23mag,beta,mass2;
+		float ecl,x,y,z,d,wu,wv,ww,wsum,pmip=0,v12mag,v13mag,v23mag,beta,mass2=0;
 		boolean isMuon = false;
 		
 		IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);
 		
-        trigger = (int) ev.part.get(0).getProperty("ppid");
-		if (trigger!=trig) return;
+		if (ev.isPhys) {
+	        trigger = (int) ev.part.get(0).getProperty("ppid");
+			if (trigger!=trig) return;
+			fillPID(run,0,0);
+		}
 		
-		fillPID(run,0,0);
-		
-		ecpart = filterECALClusters(getECALClusters(list));		
+		ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
 		
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){
 			is = ig.getIndex(entry.getKey(), 0);
@@ -655,23 +673,24 @@ public class ECcalib extends DetectorMonitor {
             		wv     = (float) ec.getProperty("dv");
             		ww     = (float) ec.getProperty("dw");
                     wsum   = wu+wv+ww;
-                                
             		d      = (il>0 && PixLength.hasItem(uvw[0],uvw[1],uvw[2]))? PixLength.getItem(uvw[0],uvw[1],uvw[2]):1f; 		    	
             		ecl    = (float) ec.getProperty("energy")/d;	    	   
             		ep[0]  = (float) ec.getProperty("receu")/d;
             		ep[1]  = (float) ec.getProperty("recev")/d;
             		ep[2]  = (float) ec.getProperty("recew")/d;
             		
-            	    pmip   = (float) ev.part.get(ip).p()*ev.part.get(ip).charge();
-            		beta   = (float) ev.part.get(ip).getProperty("beta");
-                    mass2  = (float) (pmip*pmip*(1f/(beta*beta)-1));
+            		if (ev.isPhys) {
+            			pmip   = (float) ev.part.get(ip).p()*ev.part.get(ip).charge();
+            			beta   = (float) ev.part.get(ip).getProperty("beta");
+            			mass2  = (float) (pmip*pmip*(1f/(beta*beta)-1));
+            		}
             		
-            		if(il==1) fillPID(run,2,ip);
+            		if(ev.isPhys && il==1) fillPID(run,2,ip);
             		if(this.getDataGroup().hasItem(0,0,9,run)) fillPATH(is,il,run,ecl,ep,wsum,v12mag,v13mag,v23mag);
             		
-            		Boolean  pid = pmip!=0 && Math.abs(mass2-0.0193)<0.03;
-            		Boolean  mip = il==1?(isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3;               	           				
-            		if (mip&&pid) fillMIP(is,il,run,uvw,wuv,ecl,ep,pmip,x,y);
+            		Boolean  pid = ev.isMuon ? true:pmip!=0 && Math.abs(mass2-0.0193)<0.03;
+            		Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3;    
+            		if (mip && pid) fillMIP(is,il,run,uvw,wuv,ecl,ep,pmip,x,y);
             	}
 			}  
     	}
@@ -784,7 +803,7 @@ public class ECcalib extends DetectorMonitor {
     }
 
     public void analyze() {    
-    	System.out.println(getDetectorName()+".Analyze() ");
+    	System.out.println(getDetectorName()+".analyze() ");
         fitGraphs(1,7,0,3,0,(dropSummary)?0:3);
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
@@ -794,8 +813,6 @@ public class ECcalib extends DetectorMonitor {
     
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
     	
-        shift = engine.getConstantsManager().getConstants(getRunNumber(), "/calibration/ec/torus_gain_shift");
-    	        
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
         int ipc=0,iipc=0, run=getRunNumber();
         double min=1,max=20,mip=10;

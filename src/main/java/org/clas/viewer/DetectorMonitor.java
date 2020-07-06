@@ -104,6 +104,7 @@ public class DetectorMonitor implements ActionListener {
     private int                    detectorActivePID = 0;
     private int                    detectorActive123 = 1;
     private int                   detectorActiveRDIF = 0;
+    private Boolean                     detectorLogY = false;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
     private Boolean                            usePC = false;
@@ -155,17 +156,19 @@ public class DetectorMonitor implements ActionListener {
 	public Boolean  isHipo3Event = true;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+//  int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+    int[][] sthrPhot = {{10,10,10},{1,9,9},{8,8,8}};
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+//  int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
     int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
         
     double[] cerrMuon = {5.5,10.,10.};
-    double[] cerrPhot = {7,15.,20.};
+    double[] cerrPhot = {7.0,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
     
     private int[] npmt = {68,62,62,36,36,36,36,36,36};    
@@ -192,6 +195,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean    fitVerbose = false; 
     public Boolean isEngineReady = false;
     public Boolean isTimeLineFitsDone = false;
+    public Boolean   histosExist = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -278,7 +282,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initEBCCDB(int runNumber) {    
-    	System.out.println("initEBCCDB("+runNumber+")");
+    	System.out.println("DetectorMonitor."+detectorName+".initEBCCDB("+runNumber+")");
     	ebccdb = new EBCCDBConstants(runNumber,ebcm);
     }
     
@@ -336,16 +340,17 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void configEngine(String val) {
-    	System.out.println("DetectorMonitor:configEngine("+val+")");
+    	System.out.println("DetectorMonitor.configEngine("+val+")");
     	engine.isSingleThreaded=true;
         engine.setVariation(variation);
         engine.init();
         engine.isMC = false;
         engine.setLogParam(0.);
         setEngineThresholds(config);
-    }
+   }
     
     public void setEngineThresholds(String val) {
+    	System.out.println("DetectorMonitor.setEngineThresholds("+val+")");
         engine.setStripThresholds(getStripThr(val, 0, 1),
                                   getStripThr(val, 1, 1),
                                   getStripThr(val, 2, 1));  
@@ -444,8 +449,7 @@ public class DetectorMonitor implements ActionListener {
 	    }
     }
 
-    public void drawDetector() {
-    
+    public void drawDetector() {    
     }
     
     public void setTriggerPhase(int phase) {
@@ -593,9 +597,18 @@ public class DetectorMonitor implements ActionListener {
         return numberOfEvents;
     }
     
+    public void setLogY(boolean flag) {
+	    detectorLogY = flag;
+	    plotHistos(getRunNumber());
+    }   
+    
     public void setLogZ(boolean flag) {
 	    detectorLogZ = flag;
 	    plotHistos(getRunNumber());
+    }
+    
+    public Boolean getLogY() {
+	    return detectorLogY;
     }
     
     public Boolean getLogZ() {
@@ -872,7 +885,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=10)    return  7.54626f;
     	if (run<=5699)  return 10.6041f;
     	if (run<=5875)  return  7.54626f;
-    	if (run<=5957)  return  6.53536f;
+    	if (run<=6000)  return  6.53536f;
     	if (run<=6399)  return 10.5986f;
     	if (run<=6783)  return 10.1998f;
     	if (run<=11285) return 10.4096f;
@@ -944,7 +957,7 @@ public class DetectorMonitor implements ActionListener {
     	case "+0.75": return 3;  
     	case "+1.00": return 2; 
     	}
-    	return 6;
+    	return 1;
     }
 
     public int getViewRun() {
@@ -1030,7 +1043,7 @@ public class DetectorMonitor implements ActionListener {
     	DataLine line = new DataLine(-0.5,norm,runIndex,norm); line.setLineColor(3); line.setLineWidth(2);
         
 		for (int ii=1; ii<gglist.size(); ii++) {    
-    		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title);
+    		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title); 
 			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);
 		}
 		
@@ -1040,21 +1053,18 @@ public class DetectorMonitor implements ActionListener {
     
     
     public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
+	    int[] col = {1,1,2,5,6,7};
 	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
-	    int[] col = {1,1,2};
 	    glist.clear();
 	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
 	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
 	    for (int i=0; i<runlist.size(); i++) {
 	    	int it = getTorusPolarity(runlist.get(i)); int im = getRunGroup(runlist.get(i));
 	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); 
-	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerStyle(im);g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
+	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerStyle(im); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
 	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
 	    }   
-	                          gglist.add(glist.getItem(0));
-	    if (glist.hasItem(1)) gglist.add(glist.getItem(1));
-	    if (glist.hasItem(2)) gglist.add(glist.getItem(2));
-	    
+	    for (int i=0; i<6; i++) if(glist.hasItem(i)) gglist.add(glist.getItem(i));	    
 	    return gglist;
     }
     

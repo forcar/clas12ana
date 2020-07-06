@@ -41,7 +41,7 @@ public class ECpi0 extends DetectorMonitor{
     String[]                          v = new String[]{"u","v","w"};    
     int[]                          npmt = {68,62,62,36,36,36,36,36,36};    
     int[]                         iidet = {1,4,7};
-    List<DetectorResponse>  ecClusters  = null;	
+//    List<DetectorResponse>  ecClusters  = null;	
 	ECPart                         part = new ECPart();
 //	ECpartOld                      part = new ECpartOld();
     List<TOFPaddle>          paddleList = null;
@@ -91,6 +91,7 @@ public class ECpi0 extends DetectorMonitor{
         engine.setNewTimeCal(true);
         engine.setLogWeight(true);
         engine.setLogParam(logParam);
+        engine.setGeomVariation("rga_fall2018");
 //        engine.setPCALTrackingPlane(0);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
@@ -116,6 +117,7 @@ public class ECpi0 extends DetectorMonitor{
     
     @Override
     public void createHistos(int run) { 
+    	histosExist = true;
 	    System.out.println("ECpi0:createHistos("+run+")");
         setRunNumber(run);
         runlist.add(run);
@@ -141,6 +143,7 @@ public class ECpi0 extends DetectorMonitor{
     
     @Override       
     public void plotHistos(int run) {
+       if(!histosExist) return;
    	   plotSummary(run);
    	   plotAnalysis(run);
     } 
@@ -160,7 +163,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(9);
         plotXYSummary(10);
         plotPI0Summary(11);
-//        plotMCPHOT(12);
+        plotMCPHOT(12);
     }
     
     public void plotAnalysis(int run) {
@@ -408,16 +411,24 @@ public class ECpi0 extends DetectorMonitor{
         res.clear();
         double shift = 9.0;
         
+        double[] pc_corrx = {-5.26,-5.03,-4.89,-5.04,-4.93,-5.31};
+        double[] pc_corry = {-1.54,-0.688,-0.624,-0.850,-0.490,-1.186};
+        
+        double[] ec_corrx = {-8.23,-9.16,-8.22,-7.75,-7.80,-7.83};
+        double[] ec_corry = {-0.752,0.044,1.172,0.252,0.666,-0.582};
+        
         for (int idet=0; idet<3; idet++) {
             res.add(part.eb.getUnmatchedResponses(null, DetectorType.ECAL,iidet[idet]));
             for(int i = 0; i < res.get(idet).size(); i++){
                 int        is = res.get(idet).get(i).getDescriptor().getSector();
                 double energy = res.get(idet).get(i).getEnergy();
-                double      X = res.get(idet).get(i).getPosition().x()+shift*0.423;
-//                double      X = res.get(idet).get(i).getPosition().x();
+                double      X = res.get(idet).get(i).getPosition().x();
                 double      Y = res.get(idet).get(i).getPosition().y();
-                double      Z = res.get(idet).get(i).getPosition().z()+shift*0.906;
-//                double      Z = res.get(idet).get(i).getPosition().z();
+                double      Z = res.get(idet).get(i).getPosition().z();
+//              double      X = res.get(idet).get(i).getPosition().x()-pc_corrx[0]-2.34;
+//              double      Y = res.get(idet).get(i).getPosition().y()-pc_corry[0];
+//              double      X = res.get(idet).get(i).getPosition().x()+shift*0.423;
+//              double      Z = res.get(idet).get(i).getPosition().z()+shift*0.906;
                 double      T = res.get(idet).get(i).getTime();
                 double    pcR = Math.sqrt(X*X+Y*Y+Z*Z);
                 double     dR = Math.sqrt((0.1*pcx-X)*(0.1*pcx-X)+(0.1*pcz-Z)*(0.1*pcz-Z));
@@ -558,9 +569,9 @@ public class ECpi0 extends DetectorMonitor{
                 double     opa = Math.acos(part.cth)*180/3.14159;
                 
                 boolean    ivmcut = inv3>pmin && inv3<pmax;
-                boolean badPizero = part.X>1 && opa<0;
+                boolean badPizero = part.X>1 || opa<0;
                 boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;
-                if(invmass>0&&part.iis[0]>0&&part.iis[1]>0&&!badPizero && goodSector) {                                                    
+                if(invmass>0 && part.iis[0]>0 && part.iis[1]>0 && !badPizero && goodSector) {                                                    
                     if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);   
                     
                     if(part.iis[0]==part.iis[1]) { //Both photons in same sector

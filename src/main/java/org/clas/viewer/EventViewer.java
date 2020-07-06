@@ -83,10 +83,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem               cf,cf0,cf1,cf2,cf3 = null;   
+    JCheckBoxMenuItem       cf,cf0,cf1,cf2,cf3,cf4,cf5 = null;   
     JCheckBoxMenuItem                              ctr = null;  
     JRadioButtonMenuItem               ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem      ctr0,ctr1,ctr2,ctr3,ctr4 = null;  
+    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -121,6 +121,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean  sfitEnable = false;
     public Boolean  dfitEnable = false;
     public Boolean gdfitEnable = false;
+    public Boolean  yLogEnable = false;
+    public Boolean  zLogEnable = true;
     public Boolean  fitVerbose = false;
     public String       TLname = "UVW";
     public Boolean      TLflag = false;
@@ -160,7 +162,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-      	         case    "ECa":  monitors[n++]=new ECa(s);    break;  
+      	         case     "ECa": monitors[n++]=new ECa(s);    break;  
     	         case    "ECsf": monitors[n++]=new ECsf(s);   break; 
         	     case     "ECt": monitors[n++]=new ECt(s);    break;
         	     case   "ECmip": monitors[n++]=new ECmip(s);  break; 
@@ -171,11 +173,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-   		monitors[n] = new ECperf("ECperf"); 
+//   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
 //  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
-//    		monitors[n] = new ECmip("ECmip"); 
+    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0");
 
         }
@@ -199,7 +201,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
 
         menu     = new JMenu("Options");  
-        co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0); co0.doClick();
+        co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0);  co0.doClick();
         co1  = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
         co2  = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
         co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
@@ -221,8 +223,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu     = new JMenu("Settings");       
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis log scale"); menuItem.addActionListener(this); menu.add(menuItem);
-        menuItem = new JMenuItem("Set global z-axis lin scale"); menuItem.addActionListener(this); menu.add(menuItem);
+        cf4      = new JCheckBoxMenuItem("log Y");                    cf4.addItemListener(this);   menu.add(cf4);  
+        cf5      = new JCheckBoxMenuItem("log Z");                    cf5.addItemListener(this);   menu.add(cf5);  cf5.doClick();
         menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
@@ -271,8 +273,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr0 = new JRadioButtonMenuItem("Electron"); ctr0.addItemListener(this);       group.add(ctr0); menu.add(ctr0); ctr0.doClick();
         ctr1 = new JRadioButtonMenuItem("Pion");     ctr1.addItemListener(this);       group.add(ctr1); menu.add(ctr1);
         ctr2 = new JRadioButtonMenuItem("Photon");   ctr2.addItemListener(this);       group.add(ctr2); menu.add(ctr2);
-        ctr3 = new JRadioButtonMenuItem("Muon");     ctr3.addItemListener(this);       group.add(ctr3); menu.add(ctr3);
-        ctr4 = new JRadioButtonMenuItem("PC Muon");  ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
+        ctr3 = new JRadioButtonMenuItem("Neutron");  ctr3.addItemListener(this);       group.add(ctr3); menu.add(ctr3);
+        ctr4 = new JRadioButtonMenuItem("Muon");     ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
+        ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
         
         menuBar.add(menu);
     
@@ -325,15 +328,18 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf1)   sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf2)   dfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf3)  gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf4)   yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf5)   zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
 		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 11:11; 
-		if (source==ctr1)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?211:11; 
-		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 22:11; 
-		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  0:11; 
-		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? -1:11; 
+		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   11:11; 
+		if (source==ctr1)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  211:11; 
+		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   22:11; 
+		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
+		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
+		if (source==ctr5)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
 		
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
@@ -347,6 +353,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].sfitEnable  = sfitEnable;
                                                    this.monitors[k].dfitEnable  = dfitEnable;
                                                    this.monitors[k].gdfitEnable = gdfitEnable;
+                                                   this.monitors[k].setLogY(yLogEnable);                                                  
+                                                   this.monitors[k].setLogZ(zLogEnable);
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].initTimeLine(TLname);
@@ -362,8 +370,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
           case("Set logParam"):                this.chooseLogParam(); break;
-          case("Set global z-axis log scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(true); break;
-          case("Set global z-axis lin scale"): for(int k=0; k<this.monitors.length; k++) this.monitors[k].setLogZ(false); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
           case("Open histograms file"):        this.histoChooser(); break;
           case("Save histograms to file"):     this.histoSaver(); break;
@@ -723,11 +729,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void loadHistosFromFile(String fileName) {
-        System.out.println("Opening file: " + fileName);
+        System.out.println("EventViwer.loadHistosFromFile("+fileName+")");
         
-        runNumber = getFileRunNumber(fileName);    
-        TDirectory dir = new TDirectory();
-        dir.readFile(fileName); dir.cd(); dir.pwd();
+        runNumber = getFileRunNumber(fileName); 
+        
+        TDirectory dir = new TDirectory(); dir.readFile(fileName); dir.cd(); dir.pwd();
         
         for(int k=0; k<this.monitors.length; k++) {  
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
@@ -748,12 +754,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	TDirectory dir = new TDirectory();
             this.monitors[k].writeDataGroup(dir);
             dir.writeFile(fileName);
-            System.out.println("Saving histograms to file " + fileName);
+            System.out.println("EventViewer.saveHistosToFile("+fileName+")");
         }
     } 
     
     public void setCanvasUpdate(int time) {
-        System.out.println("Setting " + time + " ms update interval");
+        System.out.println("EventViewer.setCanvasUpdate("+time+")");
         this.canvasUpdateTime = time;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setCanvasUpdate(time);
@@ -769,7 +775,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setLogParam(float val) {
-        System.out.println("Setting logParam to " +val);
+        System.out.println("EventViwer.setLogParam("+val+")");
         this.logParam = val;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setLogParam(val);
@@ -790,7 +796,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     private void setRunNumber(String actionCommand) {
     
-        System.out.println("Set run number for CCDB access");
+        System.out.println("EventViewer.setRunNumber("+actionCommand+")");
         String  RUN_number = (String) JOptionPane.showInputDialog(null, "Set run number to ", " ", JOptionPane.PLAIN_MESSAGE, null, null, "2284");
         
         if (RUN_number != null) { 
@@ -811,9 +817,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
 
     private void resetHistograms(String actionCommand) {
-        
+
+    	System.out.println("EventViewer.resetHistograms("+actionCommand+")");
         if (actionCommand=="Reset ECAL histograms"){
-            System.out.println("Reset ECAL histograms");
          	int resetOption = JOptionPane.showConfirmDialog(null, "Do you want to automaticaly reset ECAL plots ?", " ", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                 if (resetOption == JOptionPane.YES_OPTION) {
                     String  resetTiming = (String) JOptionPane.showInputDialog(null, "Update every (number of events)", " ", JOptionPane.PLAIN_MESSAGE, null, null, "10000");
