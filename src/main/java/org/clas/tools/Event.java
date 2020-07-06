@@ -24,15 +24,20 @@ public class Event {
 	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
 	private DataBank caliBank = null;
+	private DataBank htccBank = null;
 	private DataBank peakBank = null;
 	public  DataBank trajBank = null;
 	
 	public int TRpid = 0;
 	private boolean isHipo3Event; 
+	public boolean   isMC = false;
+	public boolean isMuon = false;
+	public boolean isPhys = false;
 	
 	public List<Particle>              part    = new ArrayList<Particle>();	
 	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);    
 	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
+	Map<Integer,List<Integer>>         htccMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
 	public Map<Integer,List<Integer>>  trajMap = new HashMap<Integer,List<Integer>>();
@@ -42,6 +47,7 @@ public class Event {
 	private boolean hasRECevent  = false;
 	private boolean hasRECscintillator = false;
 	private boolean hasRECcalorimeter = false;
+	private boolean hasRECcherenkov = false;
 	private boolean hasECALclusters = false;
 	private boolean hasECALcalib = false;
 	private boolean hasECALpeaks = false;
@@ -76,6 +82,7 @@ public class Event {
 		partMap.clear();
 		ftofMap.clear();
 		caloMap.clear();
+		htccMap.clear();
 		trajMap.clear();
 		trajDet.clear();
 		partBank = null;
@@ -84,33 +91,45 @@ public class Event {
 		clusBank = null;
 		caliBank = null;
 		peakBank = null;
+		initpartmap(13); //initialize with cosmic muon (pid=13)
 	}
 	
 	public boolean filter() {
 		hasRUNconfig       = ev.hasBank("RUN::config");
+		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
+		hasECALclusters    = ev.hasBank("ECAL::clusters");	
 		hasRECevent        = ev.hasBank("REC::Event");
 		hasRECscintillator = ev.hasBank("REC::Scintillator");
-		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
-		hasECALclusters    = ev.hasBank("ECAL::clusters");
+		hasRECcherenkov    = ev.hasBank("REC::Cherenkov");
 		hasECALpeaks       = ev.hasBank("ECAL::peaks");
 		hasECALcalib       = ev.hasBank("ECAL::calib");	
 		hasRECparticle     = ev.hasBank("REC::Particle");
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasRECtraj         = ev.hasBank("REC::Traj");
-		return hasRUNconfig&&hasRECevent&&hasRECparticle;
-//		return hasRUNconfig&&hasRECevent&&hasRECparticle&&hasRECcalorimeter&&hasRECscintillator;
+		return isGoodEvent();
+	}
+	
+	public boolean isGoodEvent() {
+		isPhys = hasRUNconfig && hasRECevent && hasRECparticle;
+		isMuon = isMuon() && hasECALpeaks && hasECALcalib;
+		return isPhys || isMuon;		
+	}
+	
+	public boolean isMuon() {
+		return hasECALclusters && !hasRECcalorimeter;
 	}
 	
 	public boolean procEvent(DataEvent event) {
 		this.ev = event;
         init(); 
         if(!filter()) return false;
-	    if(hasRUNconfig)          processRUNconfig();
-	    if(requireOneElectron)   if(!countElectronTriggers(false)) return false;
-	    if(hasRECevent)           processRECevent();
-	    if(starttime > -100) {
+	    if(hasRUNconfig)           processRUNconfig();
+	    if(hasRECevent)            processRECevent();
+	    if(requireOneElectron && !countElectronTriggers(false)) return false;
+	    if(!isMuon  && starttime > -100) {
 	    	if(hasRECscintillator) processRECscintillator();
 	    	if(hasRECcalorimeter)  processRECcalorimeter();
+	    	if(hasRECcherenkov)    processRECcherenkov();
 	    	if(hasECALclusters)    processECALclusters();
 	    	if(hasECALclusters && hasRECcalorimeter && !isGoodRows()) return false;
 	    	if(hasECALpeaks)       processECALpeaks();
@@ -128,6 +147,12 @@ public class Event {
 			getRECparticle(-211);
 			return true;
 		}
+	    if(isMuon) {
+	    	processECALclusters();
+	    	processECALpeaks();
+	    	processECALcalib();
+	    	return true;
+	    }
 	    return false;
 	}
 	
@@ -136,9 +161,21 @@ public class Event {
 	    IndexGenerator ig = new IndexGenerator();                
 	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
 	           int pid = ig.getIndex(entry.getKey(), 0);   
-	           if(ipid==pid) {for (Particle p : entry.getValue()) pout.add(p);} 
+	           if(ipid==pid) for (Particle p : entry.getValue()) pout.add(p);
 	    }	
 	    return pout;
+	}
+	
+	public void initpartmap(int pid) {
+		partmap.add(new ArrayList<Particle>(),pid);
+		Particle p = new Particle(pid, 0,0,0,0,0,0);                         			
+		p.setProperty("status", 2000);
+		p.setProperty("pindex", 0);
+		p.setProperty("beta",0);
+		p.setProperty("chi2pid", 0);
+		p.setProperty("ppid", pid);
+		partmap.getItem(pid).add(p);
+		part.add(p);
 	}
 	
 	public void setHipoEvent(boolean val) {
@@ -183,6 +220,10 @@ public class Event {
 	
 	public void processRECcalorimeter() {		
 		storeRECcalorimeter(ev.getBank("REC::Calorimeter"));  		
+	}
+	
+	public void processRECcherenkov() {		
+		storeRECcherenkov(ev.getBank("REC::Cherenkov"));  		
 	}
 	
 	public void processRECtrack() {		
@@ -230,6 +271,11 @@ public class Event {
 	public void storeRECcalorimeter(DataBank bank) {
 		caloBank = bank;
 		caloMap  = loadMapByIndex(caloBank,"pindex");
+	}
+	
+	public void storeRECcherenkov(DataBank bank) {
+		htccBank = bank;
+		htccMap  = loadMapByIndex(htccBank,"pindex");
 	}
 	
 	public void storeRECscintillator(DataBank bank) {	
@@ -388,6 +434,36 @@ public class Event {
 		return ftofpart;
 	}
 	
+	public List<Particle> getHTCC(int ipart) {
+		List<Particle> htccpart = new ArrayList<Particle>();
+		if(htccMap.containsKey(ipart)) {
+			for(int imap : htccMap.get(ipart)) {				
+				Particle p = new Particle();                         
+				p.setProperty("sector", htccBank.getByte("sector",imap)); 
+				p.setProperty("index",  htccBank.getShort("index",imap));
+				p.setProperty("det",    htccBank.getInt("detector",imap));
+				p.setProperty("nphe",   htccBank.getFloat("nphe",imap));
+				p.setProperty("time",   htccBank.getFloat("time",imap));
+				p.setProperty("path",   htccBank.getFloat("path",imap));                   		                    
+				p.setProperty("x",      htccBank.getFloat("x",imap));
+				p.setProperty("y",      htccBank.getFloat("y",imap)); 
+				p.setProperty("z",      htccBank.getFloat("z",imap)); 
+			
+			    if(trajMap.containsKey(ipart)) {
+			    	for(int tmap : trajMap.get(ipart)) {
+			    		if(trajBank.getInt("detector",tmap)==15) {
+			    			p.setProperty("tx",     trajBank.getFloat("x",tmap));
+			    			p.setProperty("ty",     trajBank.getFloat("y",tmap));
+			    			p.setProperty("tz",     trajBank.getFloat("z",tmap));
+			    		}
+			    	}
+			    }
+				htccpart.add(p);
+			}			    
+		}
+		return htccpart;
+	}
+	
 	public int getECALMULT(int is, int layer) {
 		int n=0;
 		for(int i = 0; i < caloBank.rows(); i++){  
@@ -397,6 +473,49 @@ public class Event {
 	}
 	
 	public List<Particle> getECAL(int ipart) {
+		return isMuon ? getECALMUON():getECALPHYS(ipart);		
+	}
+	
+	public List<Particle> getECALMUON() { //for cosmic muon runs
+		List<Particle> ecalpart = new ArrayList<Particle>();		
+		for (int i = 0; i<clusBank.rows(); i++) {
+			Particle p = new Particle(); 
+			p.copy(part.get(0));
+			p.setProperty("sector", clusBank.getByte("sector",i)); 
+			p.setProperty("layer",  clusBank.getByte("layer",i));
+			p.setProperty("pindex", 0);
+			p.setProperty("index",  i);
+			p.setProperty("energy", clusBank.getFloat("energy",i)*1e3);
+			p.setProperty("time",   clusBank.getFloat("time",i));
+			p.setProperty("path",   0);                   		                    
+			p.setProperty("x",      clusBank.getFloat("x",i));
+			p.setProperty("y",      clusBank.getFloat("y",i)); 
+			p.setProperty("z",      clusBank.getFloat("z",i)); 
+			p.setProperty("hx",     0);
+			p.setProperty("hy",     0);
+			p.setProperty("hz",     0);
+			p.setProperty("lu",     0);
+			p.setProperty("lv",     0);
+			p.setProperty("lw",     0);
+			p.setProperty("du",     clusBank.getFloat("widthU",i));
+			p.setProperty("dv",     clusBank.getFloat("widthV",i));
+			p.setProperty("dw",     clusBank.getFloat("widthW",i));
+			p.setProperty("iu",    (clusBank.getInt("coordU", i)-4)/8+1);
+			p.setProperty("iv",    (clusBank.getInt("coordV", i)-4)/8+1);
+			p.setProperty("iw",    (clusBank.getInt("coordW", i)-4)/8+1);	
+			
+			if(caliBank!=null) {					
+				int ical = (int) p.getProperty("index");
+				p.setProperty("receu",    caliBank.getFloat("recEU", ical)*1e3);
+				p.setProperty("recev",    caliBank.getFloat("recEV", ical)*1e3);
+				p.setProperty("recew",    caliBank.getFloat("recEW", ical)*1e3);
+			}
+			ecalpart.add(p);
+		}
+		return ecalpart;
+	}
+		
+	public List<Particle> getECALPHYS(int ipart) {
 		List<Particle> ecalpart = new ArrayList<Particle>();
 		if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) {				
@@ -451,7 +570,9 @@ public class Event {
 
 				if(trajMap.containsKey(ipart)) {
 					for(int tmap : trajMap.get(ipart)) {
-					   if(trajBank.getInt("detector",tmap)==7&&trajBank.getInt("layer",tmap)==(p.getProperty("layer"))) {
+					   if(trajBank.getInt("detector",tmap)==7 &&
+					     (trajBank.getInt("layer",tmap)==p.getProperty("layer") ||
+					      trajBank.getInt("layer",tmap)==p.getProperty("layer")+1) ) {
 							p.setProperty("tx",     trajBank.getFloat("x",tmap));
 							p.setProperty("ty",     trajBank.getFloat("y",tmap));
 							p.setProperty("tz",     trajBank.getFloat("z",tmap));
