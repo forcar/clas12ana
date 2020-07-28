@@ -200,7 +200,7 @@ public class ECperf extends DetectorMonitor {
     	
     	createECkin(0);
     	createECkin(1);
-//    	createECkin(2);
+    	createECkin(2);
     	createECelec(0);
     	createECelec(1);
     	createECelec(2);
@@ -242,7 +242,7 @@ public class ECperf extends DetectorMonitor {
         if(dropBanks) dropBanks(event);
         
     	if(!ev.procEvent(event)) return;
-    	
+    	   	
     	e_ecal = getPART(0.1, 11);      nE = e_ecal.size();
     	p_ecal = getPART(0.1, 12);      nP = p_ecal.size();
     	
@@ -392,10 +392,15 @@ public class ECperf extends DetectorMonitor {
         }
         break;        
         case 2:
-        dg = new DataGroup(3,2);
-        for(int iv=0; iv<1; iv++) {
-	        tag = iv+"_"+st+"_"+k+"_"+run;
-	        dg.addDataSet(makeH2(tab+"_1_",tag,200,-400,400,200,-400,400,det[iv],"X (CM)","Y(CM)"),iv);        	
+        dg = new DataGroup(12,6);
+        int n=0;
+        for(int is=1; is<7; is++) {
+        	for(int id=0; id<4; id++) {
+                for(int il=0; il<3; il++) {
+                	tag = is+"_"+id+"+"+il+"_"+st+"_"+k+"_"+run;
+                	dg.addDataSet(makeH1(tab+"_1_",tag,15,1,16,"Sector "+is," "),n); n++;  
+                }
+            }
         }                
     	}    	
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -1440,6 +1445,7 @@ public class ECperf extends DetectorMonitor {
 		int k = getDetectorTabNames().indexOf("ECkin");
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,k,run);				
 		DataGroup dg1 = this.getDataGroup().getItem(0,1,k,run);				
+		DataGroup dg2 = this.getDataGroup().getItem(0,2,k,run);				
 		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_the,e_mom);
 		((H2F) dg0.getData(e_sect-1+6).get(0)).fill(e_W,e_mom);
 		((H2F) dg0.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
@@ -1447,6 +1453,18 @@ public class ECperf extends DetectorMonitor {
 		((H1F) dg1.getData(e_sect-1).get(0)).fill(lU);
 		((H1F) dg1.getData(e_sect-1+6).get(0)).fill(lV);
 		((H1F) dg1.getData(e_sect-1+12).get(0)).fill(lW);
+		
+		int [][][] pid = new int[4][3][6];
+		pid = ev.getECALPID(e_sect);
+		
+		for (int is=0; is<6; is++) {
+			for (int id=0; id<4; id++) {
+				for (int il=0; il<3; il++) {
+					((H1F) dg2.getData(il+id*3+is*12).get(0)).fill(pid[id][il][is]);
+				}
+			}
+		}
+		
 //		ECkin = this.getDataGroup().getItem(0,2,k,run);				
 //		((H2F) ECkin.getData(0).get(0)).fill(-e_x,e_y);
 	}
