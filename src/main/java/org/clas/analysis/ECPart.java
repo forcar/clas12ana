@@ -174,19 +174,19 @@ public class ECPart  {
             return responseList;
     } 
     
-	//readEC: Copies relevant parts of EBEngine.processDataEvent    
-    public void  readEC(DataEvent event, String bank){
-    	
+	// readEC: Copies relevant parts of EBEngine.processDataEvent    
+    public void  readEC(DataEvent event, String bank){    	
         rf = new EBRadioFrequency(ccdb);    	
         eb = new EventBuilder(ccdb);    	
         eb.initEvent(); //don't bother with event header
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(event)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));        
         eb.addDetectorResponses(getResponses(event, bank, DetectorType.ECAL)); 
         eb.getPindexMap().put(0, 0); 
-        eb.getPindexMap().put(1, 0); 
-        
+        eb.getPindexMap().put(1, 0);         
     } 
     
+	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent 
+    // Note for MC w/o charged trigger particles EBAnalyzer.foundTriggerTime will be false and SF not applied to PID=22
     public List<DetectorParticle> getNeutralPart() {
     	eb.processNeutralTracks();    	
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
@@ -267,7 +267,7 @@ public class ECPart  {
 //        return processTwoPhotons(getNeutralPart());
     }   
     
-    //getNeutralParticles: Similar to EBMatching.findNeutrals(1)
+    // getNeutralParticles: Similar to EBMatching.findNeutrals(1)
     public List<DetectorParticle> getNeutralParticles(int sector) {
               
         List<DetectorResponse>      rEC  = new ArrayList<>();        
@@ -311,7 +311,7 @@ public class ECPart  {
         return particles;
     }  
     
-    //doPCECMatch: Similar to EBMatching.addResponsesECAL
+    // doPCECMatch: Similar to EBMatching.addResponsesECAL
     public double doPCECMatch(DetectorParticle p, int ii, String io) {
         
         int index = 0;
@@ -380,9 +380,9 @@ public class ECPart  {
     
     public boolean goodPhotons(int test, DetectorParticle pp1, DetectorParticle pp2) {
     	
-        //Require two photons in PCAL  
-        boolean pc12 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0  &&
-                       DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0;
+       // Require two photons in PCAL  
+       boolean pc12 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0  &&
+                      DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0;
         
        // Require photon 1 cluster in PCAL and ECin
        boolean pcec1 = DetectorResponse.getListByLayer(pp1.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&           
@@ -668,7 +668,7 @@ public class ECPart  {
         histofile.writeHipoFile(hipoFileName);     
         */   
     }
-    
+      
     public void neutronDemo(String[] args) {
     	
         HipoDataSource reader = new HipoDataSource();
@@ -729,6 +729,143 @@ public class ECPart  {
         canvas.cd(0);  canvas.draw(h5);  canvas.draw(h1,"same");       
         canvas.cd(1);  canvas.draw(hrat1); 
         dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/neuteff_r"+run+".vec",hrat1.getGraph());
+
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);  
+    }
+    
+    public void photonDemo(String[] args) {
+    	
+        HipoDataSource reader = new HipoDataSource();
+        ECEngine       engine = new ECEngine();
+        List<DetectorParticle> np = new ArrayList<DetectorParticle>();
+        int run = this.runNumber;
+        
+        String evioPath = "/Users/colesmith/clas12/sim/photon/hipo/";
+        String evioFile = "fc-phot-20k-25deg-r2-0.2-3.8-newgeom-gemc2.6.hipo"; int sec=2;
+        
+        if (args.length == 0) { 
+            reader.open(evioPath+evioFile);
+        } else {
+            String inputFile = args[0];
+            reader.open(inputFile);
+        } 
+        
+        h5 = new H1F("Thrown",50,0.,3.5); h5.setTitleX("MC Photon E (MeV)");
+        
+        H1F  h11 = new H1F("n>0 any layer",  50,0.,3.5); h11.setTitleX("MC Photon E (MeV)"); 
+        H1F  h12 = new H1F("n=1 any layer",  50,0.,3.5); h12.setTitleX("MC Photon E (MeV)");  
+        H1F  h13 = new H1F("n=1 layer 1",    50,0.,3.5); h13.setTitleX("MC Photon E (MeV)");
+        H1F  h14 = new H1F("n=1 layer 1,4",  50,0.,3.5); h14.setTitleX("MC Photon E (MeV)");
+        H1F  h15 = new H1F("n=1 layer 1,4,7",50,0.,3.5); h15.setTitleX("MC Photon E (MeV)");
+        
+        H1F  h21  = new H1F("ndist21",50,0.,3.5);  h21.setTitleX("MC Photon E (MeV)");  
+        H1F  h22  = new H1F("ndist22",50,0.,3.5);  h22.setTitleX("MC Photon E (MeV)");  
+        H1F  h23  = new H1F("ndist23",50,0.,3.5);  h23.setTitleX("MC Photon E (MeV)");  
+        H1F  h210 = new H1F("ndist210",50,0.,3.5); h210.setTitleX("MC Photon E (MeV)");  
+        H1F  h220 = new H1F("ndist220",50,0.,3.5); h220.setTitleX("MC Photon E (MeV)");  
+        H1F  h230 = new H1F("ndist230",50,0.,3.5); h230.setTitleX("MC Photon E (MeV)"); 
+        H1F  h211 = new H1F("nmult211",5,1,6);     h211.setTitleX("PCAL Clusters");  
+        H1F  h221 = new H1F("nmult221",5,1,6);     h221.setTitleX("ECIN Clusters");  
+        H1F  h231 = new H1F("nmult231",5,1,6);     h231.setTitleX("ECOU Clusters"); 
+        H1F  h212 = new H1F("nmult212",50,0.,1);   h212.setTitleX("PCAL Energy Fraction");  
+        H1F  h222 = new H1F("nmult222",50,0.,1);   h222.setTitleX("ECIN Energy Fraction");  
+        H1F  h232 = new H1F("nmult232",50,0.,1);   h232.setTitleX("ECOU Energy Fraction"); 
+      
+        engine.init();
+        engine.isMC = true;
+        engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
+        engine.setPCALTrackingPlane(9);
+        engine.setCalRun(2);
+        
+        getCCDB(2);
+        setThresholds("Pizero",engine);
+        setGeom("2.5");
+        setGoodPhotons(12);
+      
+        while(reader.hasEvent()){
+            DataEvent event = reader.getNextEvent();
+            engine.processDataEvent(event);
+            run = getRunNumber(event);
+            if (readMC(event)) {
+            	readEC(event,"ECAL::clusters");
+            	np.clear(); np = getNeutralPart();
+            	h5.fill(refP);
+            	
+            	if(np.size()>0) {
+            		h11.fill(refP);
+        	    	int n1=0,n4=0,n7=0,sum=0;
+        	    	double e1=0, e4=0, e7=0, e1p=0, e4p=0, e7p=0;
+            	    for (DetectorParticle phot : np) {
+            	    	for (DetectorResponse dr : phot.getDetectorResponses()) {
+            	    		int lay = dr.getDescriptor().getLayer();
+            	    		double e = dr.getEnergy();
+            	    		if(lay==1) {n1++; e1p+=e; h211.fill(n1); if(n1==1) {e1=e; h210.fill(refP);}}
+            	    		if(lay==4) {n4++; e4p+=e; h221.fill(n4); if(n4==1) {e4=e; h220.fill(refP);}}
+            	    		if(lay==7) {n7++; e7p+=e; h231.fill(n7); if(n7==1) {e7=e; h230.fill(refP);}}
+            	    	}
+            	    }
+            	    h21.fill(refP,n1); h22.fill(refP,n4); h23.fill(refP,n7);
+                    if(n1>1) h212.fill(e1/e1p);
+                    if(n4>1) h222.fill(e4/e4p);
+                    if(n7>1) h232.fill(e7/e7p);
+            	}
+            	if(np.size()==1) {
+            		h12.fill(refP);
+            	    for (DetectorParticle phot : np) {
+            	    	int sum=0;
+            	    	for (DetectorResponse dr : phot.getDetectorResponses()) {
+            	    		int lay = dr.getDescriptor().getLayer();
+            	    		if(lay==1) sum+= 100;
+            	    		if(lay==4) sum+=  40;
+            	    		if(lay==7) sum+=   7;
+            	    	}
+            	    	if(sum>=100) h13.fill(refP);
+            	    	if(sum>=140) h14.fill(refP);
+            	    	if(sum==147) h15.fill(refP);
+            		}
+            	}
+            }
+        }
+        
+        JFrame frame = new JFrame("Photon Reconstruction");
+        frame.setSize(800,800);
+        EmbeddedCanvas canvas = new EmbeddedCanvas(); canvas.divide(4,3);
+        
+        H1F hr11 = H1F.divide(h11,  h5); hr11.setFillColor(3); hr11.setTitleY("Photon Efficiency n>0"); hr11.setTitleX("Photon Momentum (GeV)");
+        H1F hr12 = H1F.divide(h12,  h5); hr12.setFillColor(1); hr12.setTitleY("Photon Efficiency n=1"); hr12.setTitleX("Photon Momentum (GeV)");
+        H1F hr13 = H1F.divide(h13,  h5); hr13.setFillColor(2); hr13.setTitleY("Photon Eff 1");   hr13.setTitleX("Photon Momentum (GeV)");
+        H1F hr14 = H1F.divide(h14,  h5); hr14.setFillColor(5); hr14.setTitleY("Photon Eff 14");  hr14.setTitleX("Photon Momentum (GeV)");
+        H1F hr15 = H1F.divide(h15,  h5); hr15.setFillColor(4); hr15.setTitleY("Photon Eff 147"); hr15.setTitleX("Photon Momentum (GeV)");
+        canvas.cd(4);  
+        canvas.draw(hr11); canvas.draw(hr12,"same"); canvas.draw(hr13,"same"); canvas.draw(hr14,"same"); canvas.draw(hr15,"same");
+        
+        H1F hr21 = H1F.divide(h21,  h210); hr21.setFillColor(2); hr21.setTitleY("Avg. No. PCAL Clusters"); hr21.setTitleX("Photon Momentum (GeV)");
+        H1F hr22 = H1F.divide(h22,  h220); hr22.setFillColor(5); hr22.setTitleY("Avg. No. ECIN Clusters"); hr22.setTitleX("Photon Momentum (GeV)");
+        H1F hr23 = H1F.divide(h23,  h230); hr23.setFillColor(4); hr23.setTitleY("Avg. No. ECOU Clusters"); hr23.setTitleX("Photon Momentum (GeV)");
+        canvas.cd(5); canvas.getPad().getAxisY().setRange(1, 1.25); canvas.draw(hr21); 
+        canvas.cd(6); canvas.getPad().getAxisY().setRange(1, 1.25); canvas.draw(hr22); 
+        canvas.cd(7); canvas.getPad().getAxisY().setRange(1, 1.25); canvas.draw(hr23);
+        
+        H1F hr210 = H1F.divide(h210,  h5); hr210.setFillColor(2); hr210.setTitleY("Photon Eff 1");   hr210.setTitleX("Photon Momentum (GeV)");
+        H1F hr220 = H1F.divide(h220,  h5); hr220.setFillColor(5); hr220.setTitleY("Photon Eff 14");  hr220.setTitleX("Photon Momentum (GeV)");
+        H1F hr230 = H1F.divide(h230,  h5); hr230.setFillColor(4); hr230.setTitleY("Photon Eff 147"); hr230.setTitleX("Photon Momentum (GeV)");
+        canvas.cd(0); canvas.draw(hr11); canvas.draw(hr210,"same"); canvas.draw(hr220,"same"); canvas.draw(hr230,"same");
+        canvas.cd(1); canvas.getPad().getAxisY().setLog(true); h211.setFillColor(2); canvas.draw(h211);
+        canvas.cd(2); canvas.getPad().getAxisY().setLog(true); h221.setFillColor(5); canvas.draw(h221);
+        canvas.cd(3); canvas.getPad().getAxisY().setLog(true); h231.setFillColor(4); canvas.draw(h231);
+
+        canvas.cd(9);  h212.setFillColor(2); canvas.draw(h212);
+        canvas.cd(10); h222.setFillColor(5); canvas.draw(h222);
+        canvas.cd(11); h232.setFillColor(4); canvas.draw(h232);      
+  
+        System.out.println("Done");
+        
+//        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/photeff_r"+run+".vec",hrat1.getGraph());
+//        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/photeff_r"+run+".vec",hrat2.getGraph());
+//        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/photeff_r"+run+".vec",hrat3.getGraph());
+//        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/photeff_r"+run+".vec",hrat4.getGraph());
 
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
@@ -843,7 +980,7 @@ public class ECPart  {
                   if(pcec1||pcec2) {n2rec1++; h7a.fill(refE);}
                   if(pcec1&&pcec2) {n2rec2++; h7b.fill(refE);}
           
-                  if (pcec1||pcec2) {
+                  if (pcec1&&pcec2) {
 //                	  if( engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
                 	  if(true) {
                 	  h2a.fill(refE, invmass);                                    			  //Two-photon invariant mass                
@@ -922,7 +1059,8 @@ public class ECPart  {
         ECPart part = new ECPart();  
         part.initGraphics();
 //     	part.pizeroDemo(args);
-     	part.neutronDemo(args);
+     	part.photonDemo(args);
+//     	part.neutronDemo(args);
 //        part.electronDemo(args);
     }
     
