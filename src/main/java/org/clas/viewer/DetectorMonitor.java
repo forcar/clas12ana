@@ -1276,6 +1276,7 @@ public class DetectorMonitor implements ActionListener {
         for (int i = 0; i < nds; i++) {
             List<IDataSet> dsList = group.getData(i);
             c.cd(i);  String opt = " ";c.getPad().getAxisY().setAutoScale(true);
+            c.getPad().getAxisY().setLog(getLogY());
             c.getPad().getAxisZ().setLog(getLogZ());
             if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
             if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
