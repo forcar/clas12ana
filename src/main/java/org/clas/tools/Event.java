@@ -472,6 +472,29 @@ public class Event {
 		return n;
 	}
 	
+    public int getDet(int layer) {
+	    int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
+	    return il[layer-1];
+	}
+	
+	public int[][][] getECALPID(int e_sect) {
+		int[][][] out = new int[4][3][6];
+		for(int i = 0; i < caloBank.rows(); i++){
+			 int is  = caloBank.getByte("sector",i);
+			 int il  = getDet(caloBank.getByte("layer",i));
+			 int pid = partBank.getInt("pid", caloBank.getShort("pindex",i));
+			 boolean good_neut = pid==22 || pid==2112;
+			 boolean good_char = pid!=0 && !good_neut;
+		     int ipid=0;
+			 if(good_char&&is==e_sect) ipid=0;
+			 if(good_neut&&is==e_sect) ipid=1;
+			 if(good_char&&is!=e_sect) ipid=2;
+			 if(good_neut&&is!=e_sect) ipid=3;
+			 out[ipid][il][is-1]++;
+		}
+		return out;		
+	}
+	
 	public List<Particle> getECAL(int ipart) {
 		return isMuon ? getECALMUON():getECALPHYS(ipart);		
 	}
