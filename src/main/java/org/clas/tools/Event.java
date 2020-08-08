@@ -338,7 +338,7 @@ public class Event {
 			if(tbsum>1)  {for (int i=1; i<7; i++) {if(tb[i]==1) N2[i-1]++;}}
 			System.out.println(N1[0]+" "+N1[1]+" "+N1[2]+" "+N1[3]+" "+N1[4]+" "+N1[5]);
 			System.out.println(N2[0]+" "+N2[1]+" "+N2[2]+" "+N2[3]+" "+N2[4]+" "+N2[5]);
-		}
+		}		
 		if(tbsum==0||tbsum>1) return false;
 		return true;			
 	}
@@ -478,18 +478,22 @@ public class Event {
 	}
 	
 	public int[][][] getECALPID(int e_sect) {
-		int[][][] out = new int[4][3][6];
+		int[][][] out = new int[6][3][6];
 		for(int i = 0; i < caloBank.rows(); i++){
 			 int is  = caloBank.getByte("sector",i);
 			 int il  = getDet(caloBank.getByte("layer",i));
 			 int pid = partBank.getInt("pid", caloBank.getShort("pindex",i));
-			 boolean good_neut = pid==22 || pid==2112;
+			 boolean good_n = pid==2112;
+			 boolean good_g = pid==22;
+			 boolean good_neut = good_n || good_g;
 			 boolean good_char = pid!=0 && !good_neut;
 		     int ipid=0;
-			 if(good_char&&is==e_sect) ipid=0;
-			 if(good_neut&&is==e_sect) ipid=1;
-			 if(good_char&&is!=e_sect) ipid=2;
-			 if(good_neut&&is!=e_sect) ipid=3;
+			 if(good_char&&is==e_sect) ipid=4;
+			 if(good_n   &&is==e_sect) ipid=0;
+			 if(good_g   &&is==e_sect) ipid=1;
+			 if(good_char&&is!=e_sect) ipid=5;
+			 if(good_n   &&is!=e_sect) ipid=2;
+			 if(good_g   &&is!=e_sect) ipid=3;
 			 out[ipid][il][is-1]++;
 		}
 		return out;		
