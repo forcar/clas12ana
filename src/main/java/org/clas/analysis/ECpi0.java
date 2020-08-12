@@ -163,7 +163,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(9);
         plotXYSummary(10);
         plotPI0Summary(11);
-        plotMCPHOT(12);
+//        plotMCPHOT(12);
     }
     
     public void plotAnalysis(int run) {
