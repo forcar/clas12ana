@@ -176,11 +176,12 @@ public class ECPart  {
     
 	// readEC: Copies relevant parts of EBEngine.processDataEvent    
     public void  readEC(DataEvent event, String bank){    	
+    	
         rf = new EBRadioFrequency(ccdb);    	
-        eb = new EventBuilder(ccdb);    	
-        eb.initEvent(); //don't bother with event header
-        eb.getEvent().getEventHeader().setRfTime(rf.getTime(event)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));        
-        eb.addDetectorResponses(getResponses(event, bank, DetectorType.ECAL)); 
+        eb = new EventBuilder(ccdb);    	   	
+        eb.initEvent(); //don't bother with event header    	
+        eb.getEvent().getEventHeader().setRfTime(rf.getTime(event)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));            	
+        eb.addDetectorResponses(getResponses(event, bank, DetectorType.ECAL));    	
         eb.getPindexMap().put(0, 0); 
         eb.getPindexMap().put(1, 0);         
     } 
