@@ -483,11 +483,8 @@ public class ECpi0 extends DetectorMonitor{
         
         if (dropBanks) dropBanks(event);
         
-//        ecClusters = part.readEC(event);  //ECpartOld.java
-//        if (ecClusters.size()==0) return; //
-        
+        part.getCCDB(run);
         part.readEC(event,"ECAL::clusters");      // all raw clusters
-//        part.readEC(event,"REC::Calorimeter");  // matched clusters from EB
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
@@ -555,8 +552,8 @@ public class ECpi0 extends DetectorMonitor{
         }
 
         
+//        part.setGoodPhotons(120);
         part.getNeutralResponses();
-//        part.getNeutralResponses(ecClusters);
         
         int trigger_sect = getElecTriggerSector();
         
