@@ -54,6 +54,8 @@ public class Event {
 	private boolean hasRECparticle = false;
 	private boolean hasRECtrack = false;
 	private boolean hasRECtraj = false;
+	private boolean hasHTCC = false;
+	private boolean hasHTCCrec = false;
 	
 	private boolean requireOneElectron = false;
 	
@@ -62,7 +64,7 @@ public class Event {
 	public int[] N2 = new int[6];
 	
 	private int trigger_sect=0;
-	private int eventNumber=0;
+	public  int eventNumber=0;
 	private int nelec=0;
 	
 	private float timeshift = 0f;
@@ -106,6 +108,9 @@ public class Event {
 		hasRECparticle     = ev.hasBank("REC::Particle");
 		hasRECtrack        = ev.hasBank("REC::Track");
 		hasRECtraj         = ev.hasBank("REC::Traj");
+		hasHTCC            = ev.hasBank("HTCC::adc");
+		hasHTCCrec         = ev.hasBank("HTCC::rec");
+//		if(hasHTCC||hasHTCCrec) System.out.println("HTCC: "+hasHTCC+" "+hasHTCCrec+" "+hasRECcherenkov);
 		return isGoodEvent();
 	}
 	
@@ -324,6 +329,15 @@ public class Event {
     public boolean isGoodFD()                {return  getFDTrigger()>0;}    
     public boolean isTrigBitSet(int bit)     {int mask=0; mask |= 1<<bit; return isTrigMaskSet(mask);}
     public boolean isTrigMaskSet(int mask)   {return (getFDTrigger()&mask)!=0;}	
+    
+    public int getElecTriggerSector() {
+    	int tbsum=0, ts=0;
+    	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
+    	for (int i=1; i<7; i++) {
+    		tbsum+=tb[i]; if(tb[i]>0) ts=i;
+    	}
+    	return (tbsum==0||tbsum>1) ? 0:ts;
+    }
 	
 	public boolean countElectronTriggers(boolean debug) {
 		int tbsum=0;
@@ -394,7 +408,6 @@ public class Event {
 				int ip = pid<0?Math.abs(pid)+1:pid;				
 				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);}
 				    partmap.getItem(ip).add(p);
-
 			}		
 		}
 	}
