@@ -95,7 +95,8 @@ public class ECpi0 extends DetectorMonitor{
 //        engine.setPCALTrackingPlane(0);
         part.setGeom("2.5");  
         part.setConfig("pi0");  
-        part.setGoodPhotons(1212);   
+        part.setGoodPhotons(1212); 
+        part.getCCDB(getRunNumber());
     	tl.setFitData(Fits);
     }
     
@@ -482,8 +483,7 @@ public class ECpi0 extends DetectorMonitor{
         int run = getRunNumber();
         
         if (dropBanks) dropBanks(event);
-        
-        part.getCCDB(run);
+                
         part.readEC(event,"ECAL::clusters");      // all raw clusters
         
         DataBank ecBank = event.getBank("ECAL::clusters");
