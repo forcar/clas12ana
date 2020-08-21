@@ -227,7 +227,6 @@ public class ECsf extends DetectorMonitor {
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
         
-        System.out.println(trigger_sect);
         if(!goodSector) return;
     	
     	int run = getRunNumber();
