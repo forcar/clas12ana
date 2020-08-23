@@ -229,24 +229,32 @@ public class ECperf extends DetectorMonitor {
     	createECphot(1);
     	createECpi0(1);
     	createECeta(1);
+    	createECtrig(0);
     }
     
     public void processEvent(DataEvent event) {
     	
+        if(dropBanks) dropBanks(event);
+            	
+    	ev.init(event);
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
 //    	ev.requireOneElectron(!event.hasBank("MC::Event"));
     	ev.requireOneElectron(false);
    	    ev.setElecTriggerSector(ev.getElecTriggerSector());
          
-        if(dropBanks) dropBanks(event);
-        
+        fillECtrig(0);        
     	if(!ev.procEvent(event)) return;
-    	    	   	
-    	e_ecal = getPART(0.1, 11);      nE = e_ecal.size();
-    	p_ecal = getPART(0.1, 12);      nP = p_ecal.size();    	
-	    pim_ecal  = getPART(0.5, 212);  nPIM = pim_ecal.size(); 
-	    if(nPIM>0 && nE==0) fillECpim();
+	    fillECtrig(1);
+   	    	   	
+    	e_ecal    = getPART(0.1, 11);      nE = e_ecal.size();
+    	p_ecal    = getPART(0.1, 12);      nP = p_ecal.size();    	
+	    pim_ecal  = getPART(0.5, 212);   nPIM = pim_ecal.size(); 
+	    
+	    if (nE==1)           fillECtrig(2);
+	    if (nE==0)           fillECtrig(3);
+	    if (nPIM>0)          fillECtrig(4);
+	    if(nPIM>0 && nE==0) {fillECtrig(5); fillECpim();}
 	    
 	    if (!makeELEC()) return;
         
@@ -371,6 +379,7 @@ public class ECperf extends DetectorMonitor {
         ECpi0Plot("ECeta");
         ECneutPlot("ECneut"); 
         ECphotPlot("ECphot");
+        ECtrigPlot("ECtrig");
         if(!isAnalyzeDone) return;
         showNeutronEff();
         showPi0Eff();
@@ -1032,12 +1041,14 @@ public class ECperf extends DetectorMonitor {
     	switch (st) {
     	   
         case 0:
-        dg = new DataGroup(2,2); int n=0;
+        dg = new DataGroup(3,2); int n=0;
         tag = st+"_"+k+"_"+run;
         dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"All Events","Trigger Bits"),n);n++;
-        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"1 Electron from EB","Trigger Bits"),n);n++;
-        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"No Electron from EB","Trigger Bits"),n);n++;
-        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"#pi- from EB","Trigger Bits"),n);n++;
+        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"REC::event,particle","Trigger Bits"),n);n++;
+        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"1 Electron","Trigger Bits"),n);n++;
+        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"No Electron","Trigger Bits"),n);n++;
+        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"#pi-","Trigger Bits"),n);n++;
+        dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"#pi- No Electron","Trigger Bits"),n);n++;
     	}
     	this.getDataGroup().add(dg, 0,st,k,run);
     }
@@ -1478,6 +1489,15 @@ public class ECperf extends DetectorMonitor {
 	} 
 
 	// FILL
+	
+	public void fillECtrig(int i) {
+		int run = getRunNumber();
+		int k = getDetectorTabNames().indexOf("ECtrig");
+		DataGroup dg0 = this.getDataGroup().getItem(0,0,k,run);
+		for (int j=0; j<32; j++) {
+			if(isTrigBitSet(j)) ((H1F) dg0.getData(i).get(0)).fill(j);
+		}
+	}
 	
 	public void fillECkin() {
 		int run = getRunNumber();
@@ -2162,6 +2182,11 @@ public class ECperf extends DetectorMonitor {
 		int index = getDetectorTabNames().indexOf(tabname);
         if(getActive123()>0 && getActive123()<6) plot123(index);
  	}	
+	
+	public void ECtrigPlot(String tabname) {
+		int index = getDetectorTabNames().indexOf(tabname);
+		if(getActive123()<6) plot123(index);    	       
+ 	}
 	
     @Override
     public void plotEvent(DataEvent de) {
