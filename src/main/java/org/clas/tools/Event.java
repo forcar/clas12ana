@@ -76,8 +76,9 @@ public class Event {
 		
 	}
 	
-	public void init() {	 
-		trigger=0;
+	public void init(DataEvent event) {	 
+		this.ev = event;
+		trigger = 0;
 		starttime = -100; 
 		part.clear();
 		partmap.clear();
@@ -94,9 +95,6 @@ public class Event {
 		caliBank = null;
 		peakBank = null;
 		initpartmap(13); //initialize with cosmic muon (pid=13)
-	}
-	
-	public boolean filter() {
 		hasRUNconfig       = ev.hasBank("RUN::config");
 		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
 		hasECALclusters    = ev.hasBank("ECAL::clusters");	
@@ -110,8 +108,7 @@ public class Event {
 		hasRECtraj         = ev.hasBank("REC::Traj");
 		hasHTCC            = ev.hasBank("HTCC::adc");
 		hasHTCCrec         = ev.hasBank("HTCC::rec");
-//		if(hasHTCC||hasHTCCrec) System.out.println("HTCC: "+hasHTCC+" "+hasHTCCrec+" "+hasRECcherenkov);
-		return isGoodEvent();
+		if(hasRUNconfig) processRUNconfig();		
 	}
 	
 	public boolean isGoodEvent() {
@@ -125,10 +122,8 @@ public class Event {
 	}
 	
 	public boolean procEvent(DataEvent event) {
-		this.ev = event;
-        init(); 
-        if(!filter()) return false;
-	    if(hasRUNconfig)           processRUNconfig();
+        if(!isGoodEvent()) return false;
+	    
 	    if(hasRECevent)            processRECevent();
 	    if(requireOneElectron && !countElectronTriggers(false)) return false;
 	    if(!isMuon  && starttime > -100) {
