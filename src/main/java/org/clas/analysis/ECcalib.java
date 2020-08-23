@@ -505,13 +505,14 @@ public class ECcalib extends DetectorMonitor {
 	
     public void processEvent(DataEvent event) {
     	
-        ev.isMC = (getRunNumber()<100) ? true:false;
-    	
+    	if(dropBanks) dropBanks(event);
+    	 
+    	ev.init(event);
+        ev.isMC = (getRunNumber()<100) ? true:false;    	
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
-    	
-        if(dropBanks) dropBanks(event);
+    	ev.setElecTriggerSector(ev.getElecTriggerSector());
         
     	if(!ev.procEvent(event)) return;
     	
