@@ -75,7 +75,7 @@ public class ECperf extends DetectorMonitor {
 	public int   p_sect;
 	public float p_mom, p_the, p_phi, p_vx, p_vy, p_vz, p_cz, p_x, p_y;
 	
-	public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum;
+	public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum,e_ecal_sf;
 	public float p_ecal_esum,p_ecal_pcsum,p_ecal_ecsum;
         
 	public int   prot_part_ind;
@@ -245,16 +245,16 @@ public class ECperf extends DetectorMonitor {
          
         fillECtrig(0);        
     	if(!ev.procEvent(event)) return;
-	    fillECtrig(1);
-   	    	   	
+        fillECtrig(1); 
+        
     	e_ecal    = getPART(0.1, 11);      nE = e_ecal.size();
     	p_ecal    = getPART(0.1, 12);      nP = p_ecal.size();    	
 	    pim_ecal  = getPART(0.5, 212);   nPIM = pim_ecal.size(); 
 	    
-	    if (nE==1)           fillECtrig(2);
-	    if (nE==0)           fillECtrig(3);
-	    if (nPIM>0)          fillECtrig(4);
-	    if(nPIM>0 && nE==0) {fillECtrig(5); fillECpim();}
+	    if (nE==1)            fillECtrig(2);
+	    if (nE==0)            fillECtrig(3);
+	    if (nPIM>0)           fillECtrig(4);
+	    if (nPIM>0 && nE==0) {fillECtrig(5); fillECpim();}
 	    
 	    if (!makeELEC()) return;
         
@@ -406,9 +406,9 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,3);
         for(int is=1; is<7; is++) {
 	        tag = is+"_"+st+"_"+k+"_"+run;
-	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450,"Sector "+is,"LU (cm)"),is-1);
-	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LV (cm)"),is-1+6);
-	        dg.addDataSet(makeH1(tab+"_1_",tag,100,0,450," ","LW (cm)"),is-1+12);
+	        dg.addDataSet(makeH2(tab+"_1_",tag,50,0,100,30,0.15,0.3,"Sector "+is,"LU (cm)","E/P"),is-1);
+	        dg.addDataSet(makeH2(tab+"_1_",tag,50,0,100,30,0.15,0.3," ",         "LV (cm)","E/P"),is-1+6);
+	        dg.addDataSet(makeH2(tab+"_1_",tag,50,0,100,30,0.15,0.3," ",         "LW (cm)","E/P"),is-1+12);
         	
         }
         break;        
@@ -1041,7 +1041,7 @@ public class ECperf extends DetectorMonitor {
     	switch (st) {
     	   
         case 0:
-        dg = new DataGroup(3,2); int n=0;
+        dg = new DataGroup(3,3); int n=0;
         tag = st+"_"+k+"_"+run;
         dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"All Events","Trigger Bits"),n);n++;
         dg.addDataSet(makeH1(tab+"_"+n+"_",tag,32,-0.5,31.5,"REC::event,particle","Trigger Bits"),n);n++;
@@ -1123,6 +1123,8 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==1) good_fiduc2 = iU>2 && iV<36 && iW<36; //ECIN
     	    if (ind==2) good_fiduc3 = iU>2 && iV<36 && iW<36; //ECOU	
    	    }
+    	
+    	e_ecal_sf = e_ecal_esum/e_mom/1000f;
     	
     	for (Particle p : elecHTCC) {
             htcc_sect   =   (int) p.getProperty("sector");
@@ -1505,13 +1507,13 @@ public class ECperf extends DetectorMonitor {
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,k,run);				
 		DataGroup dg1 = this.getDataGroup().getItem(0,1,k,run);				
 		DataGroup dg2 = this.getDataGroup().getItem(0,2,k,run);				
-		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_the,e_mom);
-		((H2F) dg0.getData(e_sect-1+6).get(0)).fill(e_W,e_mom);
+		((H2F) dg0.getData(e_sect-1   ).get(0)).fill(e_the,e_mom);
+		((H2F) dg0.getData(e_sect-1+ 6).get(0)).fill(e_W,e_mom);
 		((H2F) dg0.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
 		if (e_the>6) ((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_W,(e_phi>-30?e_phi:360+e_phi)-(e_sect-1)*60);
-		((H1F) dg1.getData(e_sect-1).get(0)).fill(lU);
-		((H1F) dg1.getData(e_sect-1+6).get(0)).fill(lV);
-		((H1F) dg1.getData(e_sect-1+12).get(0)).fill(lW);
+		if(lV>19 && lW>19) ((H2F) dg1.getData(e_sect-1   ).get(0)).fill(lU,e_ecal_sf);
+		if(lU>60)((H2F) dg1.getData(e_sect-1+ 6).get(0)).fill(lV,e_ecal_sf);
+		if(lU>60)((H2F) dg1.getData(e_sect-1+12).get(0)).fill(lW,e_ecal_sf);
 		
 		int [][][] pid = new int[6][3][6];
 		pid = ev.getECALPID(e_sect);
@@ -1544,7 +1546,7 @@ public class ECperf extends DetectorMonitor {
 		
 		// Forward tracking residuals
 		
-		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_mom,e_ecal_esum/1000f/e_mom);
+		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_mom,e_ecal_sf);
 //		((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_ecal_pcsum/1000f,e_ecal_ecsum/1000f);
 		((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_ecal_esum/1000f,elec_ecal_resid.getItem(e_sect,4,0));
 
@@ -1552,7 +1554,7 @@ public class ECperf extends DetectorMonitor {
 			long hash = entry.getKey();
 			int is = ig.getIndex(hash, 0); int ic = ig.getIndex(hash, 1); int il = ig.getIndex(hash, 2);
 			DataGroup dg1 = this.getDataGroup().getItem(il,1,k,run);				
-			if(ic==3) ((H2F) dg0.getData(e_sect-1+ 6).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_esum/1000f/e_mom);
+			if(ic==3) ((H2F) dg0.getData(e_sect-1+ 6).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_sf);
 			if(ic==3) ((H2F) dg0.getData(e_sect-1+12).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),elec_ecal_resid.getItem(e_sect,4,0));
 			if(ic<3) {
 //			((H2F)dg1.getData(is-1+ic*6+il*12).get(0)).fill(e_the,entry.getValue());
