@@ -1,5 +1,12 @@
 package org.clas.analysis;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +20,7 @@ import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 //import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
@@ -23,9 +31,14 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.rec.eb.SamplingFractions;
+import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedTable;
 
 public class ECsf extends DetectorMonitor {
 
+	IndexedTable electron_sf = null;
+	float[][] sfpar = new float[7][2];
+	
     String[]  det = {"pcal","ecin","ecou"};
     int[]    npmt = {68,62,62,36,36,36,36,36,36};    
     String[]    v = new String[]{"u","v","w"};
@@ -37,23 +50,14 @@ public class ECsf extends DetectorMonitor {
     
     public ECsf(String name) {
         super(name);
-        this.setDetectorTabNames("E/P v P",
-                                 "E/P v ThV",
-                                 "E/P v ThD",
-                                 "EPC/P v ThD", 
-                                 "EECi/P v ThD",
-                                 "EECo/P v ThD",
-                                 "E/P v XY",
-                                 "E/P v Em",
-                                 "Sector Fits",
-                                 "UVW",
-                                 "Fits",
+        this.setDetectorTabNames("E/P",
+                				 "UVW",
+                				 "Timing",
+                                 "XY",
+                                 "PMT Fits",
                                  "Summary",
-                                 "Timeline",
-                                 "Fits Sig 1",
-                                 "Fits Sig 2",
-                                 "Fits Sig 3",
-                                 "Timing");
+                                 "PID Fits",
+                                 "Timeline");
 
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
@@ -83,27 +87,36 @@ public class ECsf extends DetectorMonitor {
     @Override
     public void createHistos(int run) {        
         histosExist = true;
-        System.out.println("ECsf:createHistos("+run+")");
+        System.out.println("ECsf.createHistos("+run+")");
+        readSF(outPath+"electron_sf_"+run);
         EB = getBeamEnergy(run);
         System.out.println("ECsf: EB="+EB);
+	    DataGroup dg = null;
 	    
         setRunNumber(run);
         runlist.add(run);
-        this.setNumberOfEvents(0);       
-        createEOPHistos(7,0,50,0.0, EB*0.25,50,0.1,0.4,"ep_em", " Measured Energy (GeV)", " E/P");
-        createEOPHistos(7,1,50,0.0, EB*0.25,50,0.1,0.4,"ep_emnf", " Measured Energy (GeV)", " E/P");
-        if(dropSummary) return;
-        createEOPHistos(0,0,50,0.5,EB,50,0.1,0.4,"ep_p",  " Momentum (GeV)",   " E/P");
-        createEOPHistos(0,1,50,0.5,EB,50,0.1,0.4,"ep_pnf"," Momentum (GeV)",   " E/P");
-        createEOPHistos(1,0,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P");
-        createEOPHistos(2,0,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P");
-        createEOPHistos(3,0,48,  3.,32.,50,0,0.35,"ep_th0"," PC Theta (deg)",      "EPC / P");
-        createEOPHistos(4,0,48,  3.,32.,50,0,0.25,"ep_th1"," ECIN Theta (deg)",    "EECi / P");
-        createEOPHistos(5,0,48,  3.,32.,50,0,0.15,"ep_th2"," ECOU Theta (deg)",    "EECo / P");
-        createXYZHistos(6);
-        createADCHistos(9,0,25,0.,0.5,0.3,0.1,"PARTIAL SF");
-        createADCHistos(9,1,25,0.05,0.4,0.4,0.4,"TOTAL SF");
-        createADCHistos(16,0,100,-10.,10.,10.,10.," T-TVERT-PATH/c (ns)");
+        this.setNumberOfEvents(0);
+        dg = new DataGroup(6,4);
+        createSecHistos("E/P",0,0,50,0.0, EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",0,1,50,0.5,EB,50,0.1,0.4,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
+        createSecHistos("E/P",0,2,30,  3.,35.,50,0.1,0.4,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,3,48,  3.,35.,50,0.1,0.4,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
+        dg = new DataGroup(6,4);
+        createSecHistos("E/P",1,0,50,0.0, EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",1,1,50,0.5,EB,50,0.1,0.4,"ep_p"," Momentum (GeV)",   " E/P",dg);
+        createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
+        createXYZHistos("XY");
+        createUVWHistos("UVW",1,0,25,0.,0.5,"PARTIAL SF");
+        createUVWHistos("UVW",1,1,25,0.,0.3,"PARTIAL SF");
+        createUVWHistos("UVW",1,2,25,0.,0.1,"PARTIAL SF");
+        createUVWHistos("UVW",0,0,25,0.05,0.4,"TOTAL SF");
+        createUVWHistos("UVW",0,1,25,0.05,0.4,"TOTAL SF");
+        createUVWHistos("UVW",0,2,25,0.05,0.4,"TOTAL SF");
+        createUVWHistos("Timing",0,0,100,-10.,10.," T-TVERT-PATH/c (ns)");
+        createUVWHistos("Timing",0,1,100,-10.,10.," T-TVERT-PATH/c (ns)");
+        createUVWHistos("Timing",0,2,100,-10.,10.," T-TVERT-PATH/c (ns)");
+        createPIDFitHistos("PID Fits",50,0.1,0.4," "," Corrected E/P");
     }
 
     @Override       
@@ -115,54 +128,69 @@ public class ECsf extends DetectorMonitor {
       
     public void plotSummary(int run) {
     	setRunNumber(run);
-    	plotEOPHistos(7);
     	if(dropSummary) return;
-    	plotEOPHistos(0);
-    	plotEOPHistos(1);
-    	plotEOPHistos(2);
-    	plotEOPHistos(3);
-    	plotEOPHistos(4);
-    	plotEOPHistos(5);
-    	plotXYZHistos(6);
-    	plotADCHistos(9);
-    	plotADCHistos(16);
+    	plotSECHistos("E/P"); 
+    	plotUVWHistos("UVW");
+    	if(!dropSummary) plotXYZHistos("XY");
+    	plotUVWHistos("Timing");
     }
     
     public void plotAnalysis(int run) {
         setRunNumber(run);
     	if(!isAnalyzeDone) return;
-//    	plotFitSummary8(8);
-    	if(!dropSummary) {updateFits(10);plotMeanHWSummary(11); plotFitSummary2(13); plotFitSummary3(14); plotFitSummary4(15);}
-    	plotTimeLines(12);
+    	plotPIDFits("PID Fits");
+    	if(!dropSummary) {updateFits("PMT Fits");plotMeanHWSummary("Summary");}
+    	plotTimeLines("Timeline");
     	if (dumpGraphs) dumpGraphs();
     }
     
-    public void createEOPHistos(int k, int pc, int xb, double x1, double x2, int yb, double y1, double y2, String txt1, String txt2, String txt3) {
-    	
-        int run = getRunNumber();
-        H2F h;  
-        DataGroup dg = new DataGroup(3,2);
+    public void createPIDFitHistos(String tab,int xb, double x1, double x2, String txt1, String txt2) {
+    	 int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
+    	 H1F h;
+    	 
+    	 int n=0;
+    	 DataGroup dg = new DataGroup(6,1);
+    	 
+    	 for (int is=1; is<7; is++) {
+           h = new H1F(txt1+"_"+n+"_"+k+"_"+run, xb, x1, x2);
+           h.setTitleX("Sector "+is+txt2);
+           dg.addDataSet(h,n);n++;
+         }     		 
+         this.getDataGroup().add(dg,0,0,k,run);
+
+    }
     
+    public void createSecHistos(String tab, int pc, int st, int xb, double x1, double x2, int yb, double y1, double y2, String txt1, String txt2, String txt3, DataGroup dg) {
+    	
+        int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
+        H2F h;  
+        
+        int n=st*6;
+       
         for (int is=1; is<7; is++) {
-            h = new H2F(txt1+"_"+is+"_"+k+"_"+run, xb, x1, x2, yb, y1, y2);
+            h = new H2F(txt1+"_"+n+"_"+k+"_"+run, xb, x1, x2, yb, y1, y2);
+//            h.setTitle(txt1);
             h.setTitleX("Sector "+is+txt2);
             h.setTitleY(txt3);
-            dg.addDataSet(h,is-1);
-            this.getDataGroup().add(dg,pc,0,k,run);
-        }            
+            dg.addDataSet(h,n);n++;
+        } 
+        this.getDataGroup().add(dg,pc,0,k,run);
+
     } 
     
-    public void createXYZHistos(int k) {
+    public void createXYZHistos(String tab) {
     	    
-        int run = getRunNumber();
+        int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
+
         H2F h;
+        DataGroup dg1 = new DataGroup(3,3);
+        DataGroup dg2 = new DataGroup(3,3);
+        DataGroup dg3 = new DataGroup(3,3);
+        
         String tit1[] = {"PCAL EVENTS","ECIN EVENTS","ECOU EVENTS"};
         String tit2[] = {"PCAL PARTIAL SF","ECIN PARTIAL SF","ECOU PARTIAL SF"};
         String tit3[] = {"TOTAL SF PCAL","TOTAL SF ECIN","TOTAL SF ECOU"};
         
-        DataGroup dg1 = new DataGroup(3,3);
-        DataGroup dg2 = new DataGroup(3,3);
-        DataGroup dg3 = new DataGroup(3,3);
         
         int nb=200, x=400, y=400;
         
@@ -178,46 +206,57 @@ public class ECsf extends DetectorMonitor {
         this.getDataGroup().add(dg3, 0,2,k,run);
     }
     
-    public void createADCHistos(int k, int pc, int nch, double x0, double x1, double x2, double x3, String txt) {
+    public void createUVWHistos(String tab, int pc, int cal, int nch, double y0, double y1, String txt) {
     	
-        int run = getRunNumber();
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
         H2F h;  
-    
+        
+        DataGroup dg = new DataGroup(6,3);
+   
         for (int is=1; is<7; is++) {
-            DataGroup dg = new DataGroup(3,3);
-            h = new H2F("adc_pcal_u_"+is+"_"+pc+"_"+k+"_"+run,"adc_pcal_u_"+is+"_"+k+"_"+run, nch, x0, x1, 68, 1., 69.);
-            h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("U"); 
-            dg.addDataSet(h,0);  
-            h = new H2F("adc_pcal_v_"+is+"_"+pc+"_"+k+"_"+run,"adc_pcal_v_"+is+"_"+k+"_"+run, nch, x0, x1, 62, 1., 63.);
-            h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("V");        
-            dg.addDataSet(h,1);            
-            h = new H2F("adc_pcal_w_"+is+"_"+pc+"_"+k+"_"+run,"adc_pcal_w_"+is+"_"+k+"_"+run, nch, x0, x1, 62, 1., 63.);
-            h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("W");  
-            dg.addDataSet(h,2); 
-        
-            h = new H2F("adc_ecin_u_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecin_u_"+is+"_"+k+"_"+run, nch, x0, x2, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("U");    
-            dg.addDataSet(h,3);  
-            h = new H2F("adc_ecin_v_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecin_v_"+is+"_"+k+"_"+run, nch, x0, x2, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("V");        
-            dg.addDataSet(h,4);            
-            h = new H2F("adc_ecin_w_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecin_w_"+is+"_"+k+"_"+run, nch, x0, x2, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("W");  
-            dg.addDataSet(h,5); 
-        
-            h = new H2F("adc_ecou_u_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecou_u_"+is+"_"+k+"_"+run, nch, x0, x3, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("U");    
-            dg.addDataSet(h,6);  
-            h = new H2F("adc_ecou_v_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecou_v_"+is+"_"+k+"_"+run, nch, x0, x3, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("V");        
-            dg.addDataSet(h,7);            
-            h = new H2F("adc_ecou_w_"+is+"_"+pc+"_"+k+"_"+run,"adc_ecou_w_"+is+"_"+k+"_"+run, nch, x0, x3, 36, 1., 37.);
-            h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("W");  
-            dg.addDataSet(h,8);   
-            this.getDataGroup().add(dg,is,pc,k,run);
-        }  
+            switch (cal) {
+            case 0:
+            h = new H2F("adc_pcal_u_"+is+"_"+pc+"_"+k+"_"+run, 68, 1., 69., nch, y0, y1);
+            h.setTitleX("Sector "+is+" PCAL "+"U Strip"); h.setTitleY(txt); 
+            dg.addDataSet(h,is-1);  
+            h = new H2F("adc_pcal_v_"+is+"_"+pc+"_"+k+"_"+run, 62, 1., 63., nch, y0, y1);
+            h.setTitleX("Sector "+is+" PCAL "+"V Strip"); h.setTitleY(txt);        
+            dg.addDataSet(h,is-1+6);            
+            h = new H2F("adc_pcal_w_"+is+"_"+pc+"_"+k+"_"+run, 62, 1., 63., nch, y0, y1);
+            h.setTitleX("Sector "+is+" PCAL "+"W Strip"); h.setTitleY(txt);  
+            dg.addDataSet(h,is-1+12); 
+            break;
+            case 1:
+            h = new H2F("adc_ecin_u_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECIN "+"U Strip"); h.setTitleY(txt);    
+            dg.addDataSet(h,is-1);  
+            h = new H2F("adc_ecin_v_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECIN "+"V Strip"); h.setTitleY(txt);        
+            dg.addDataSet(h,is-1+6);            
+            h = new H2F("adc_ecin_w_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECIN "+"W Strip"); h.setTitleY(txt);  
+            dg.addDataSet(h,is-1+12); 
+            break;
+            case 2:
+            h = new H2F("adc_ecou_u_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECOU "+"U Strip"); h.setTitleY(txt);    
+            dg.addDataSet(h,is-1);  
+            h = new H2F("adc_ecou_v_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECOU "+"V Strip"); h.setTitleY(txt);        
+            dg.addDataSet(h,is-1+6);            
+            h = new H2F("adc_ecou_w_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
+            h.setTitleX("Sector "+is+" ECOU "+"W Strip"); h.setTitleY(txt);  
+            dg.addDataSet(h,is-1+12);   
+            }
+        } 
+
+        this.getDataGroup().add(dg,cal,pc,k,run);
 
     } 
+    
+    public void initCCDB(int runno) {
+        electron_sf = ebcm.getConstants(runno, "/calibration/eb/electron_sf");    
+    }
     
     @Override
     public void processEvent(DataEvent event) {
@@ -232,7 +271,7 @@ public class ECsf extends DetectorMonitor {
     	int run = getRunNumber();
     	DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
     	
-    	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0; 
+    	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0, lU=0, lV=0, lW=0; 
     	float[]    x_ecal = {-1000,-1000,-1000};
         float[]    y_ecal = {-1000,-1000,-1000};
     	float[] e_ecal_TH = new float[3];
@@ -295,6 +334,11 @@ public class ECsf extends DetectorMonitor {
                     xyz.translateXYZ(-(det==1?40:50),0,0);
                     xyz.rotateY(Math.toRadians(25.));
                     xyz.rotateZ(Math.toRadians(60*(e_sect-1)));
+                    if (det==1) {
+                    	lU = reccal.getFloat("lu",icalo);
+                    	lV = reccal.getFloat("lv",icalo);
+                    	lW = reccal.getFloat("lw",icalo);
+                    }
                     x_ecal[ind]     = (float) xyz.x();
                     y_ecal[ind]     = (float) xyz.y();
                     t_ecal[ind]     = t-Tvertex-pa/29.98f;
@@ -332,44 +376,56 @@ public class ECsf extends DetectorMonitor {
         for (int i=0; i<4; i++) sff[i] = e_ecal_EL[i]/e_mom;
         float sf = sff[3];
         
-        boolean     good_e = e_sect>0&&e_sect<7;         
-        boolean good_fiduc = iU[0]>2&&iV[0]<63&&iW[0]<63&&iU[1]>2&&iV[1]<36&&iW[1]<36&&iU[2]>2&&iV[2]<36&&iW[2]<36;
+        boolean     good_e = e_sect>0 && e_sect<7 && e_mom>EB*0.02 && sff[3] > 0.02;         
+        boolean good_fiduc = lV>15 && lW>15;
         
-        if(e_mom>EB*0.02 && sff[3] > 0.02){			
-           if(good_e){	
-              if(good_fiduc) {
-                 ((H2F) this.getDataGroup().getItem(0,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);
-                 ((H2F) this.getDataGroup().getItem(0,0,7,run).getData(e_sect-1).get(0)).fill(e_ecal_EL[3],sf);				
-              }
-              ((H2F) this.getDataGroup().getItem(1,0,0,run).getData(e_sect-1).get(0)).fill(e_mom,sf);
-              ((H2F) this.getDataGroup().getItem(1,0,7,run).getData(e_sect-1).get(0)).fill(e_ecal_EL[3],sf);
-              ((H2F) this.getDataGroup().getItem(0,0,1,run).getData(e_sect-1).get(0)).fill(e_theta,sf);
-              ((H2F) this.getDataGroup().getItem(0,0,2,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[0],sf);
-           }
-           for (int i=0; i<3; i++) {
-             if(good_e){
-                ((H2F) this.getDataGroup().getItem(0,0,3+i,run).getData(e_sect-1).get(0)).fill(e_ecal_TH[i],sff[i]);
-                ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?1f:0);
-                ((H2F) this.getDataGroup().getItem(0,1,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sff[i]<0.5?sff[i]:0.);
-                ((H2F) this.getDataGroup().getItem(0,2,6,run).getData(i).get(0)).fill(-x_ecal[i], y_ecal[i],sf<0.5?sf:0.);
-                ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+0).get(0)).fill(sff[i]<0.5?sff[i]:0., iU[i]);
-                ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+1).get(0)).fill(sff[i]<0.5?sff[i]:0., iV[i]);
-                ((H2F) this.getDataGroup().getItem(e_sect,0,9,run).getData(3*i+2).get(0)).fill(sff[i]<0.5?sff[i]:0., iW[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+0).get(0)).fill(sf<0.5?sf:0., iU[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+1).get(0)).fill(sf<0.5?sf:0., iV[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,1,9,run).getData(3*i+2).get(0)).fill(sf<0.5?sf:0., iW[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+0).get(0)).fill(t_ecal[i], iU[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+1).get(0)).fill(t_ecal[i], iV[i]);				  
-                ((H2F) this.getDataGroup().getItem(e_sect,0,16,run).getData(3*i+2).get(0)).fill(t_ecal[i], iW[i]);				  
-             }
-           }
-        }
+//      boolean good_fiduc = iU[0]>2&&iV[0]<63&&iW[0]<63&&iU[1]>2&&iV[1]<36&&iW[1]<36&&iU[2]>2&&iV[2]<36&&iW[2]<36;
+       
+        if(!good_e)  return;
+        
+        if(good_fiduc) {
+        	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1  ).get(0)).fill(e_ecal_EL[3], sf);
+        	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+6).get(0)).fill(e_mom,sf);
+            ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
+            ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+18).get(0)).fill(e_ecal_TH[0],sf); 
+            ((H1F) getDG(0,0,"PID Fits",run).getData(e_sect-1).get(0)).fill(sf/getSFcorr(e_sect,e_ecal_EL[3]));
+       }
+    	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1   ).get(0)).fill(e_ecal_EL[3], sf);
+    	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1+ 6).get(0)).fill(e_mom,sf);
+        ((H2F) getDG(1,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
+        ((H2F) getDG(1,0,"E/P",run).getData(e_sect-1+18).get(0)).fill(e_ecal_TH[0],sf);  
+        
+        int is = e_sect;
+        
+        for (int id=0; id<3; id++) {
+            ((H2F) getDG(0,0,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?1f:0);
+            ((H2F) getDG(0,1,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?sff[id]:0.);
+            ((H2F) getDG(0,2,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sf<0.5?sf:0.);
+            ((H2F) getDG(id,1,"UVW",run).getData(is-1   ).get(0)).fill(iU[id], sff[id]<0.5?sff[id]:0.);
+            ((H2F) getDG(id,1,"UVW",run).getData(is-1+ 6).get(0)).fill(iV[id], sff[id]<0.5?sff[id]:0.);
+            ((H2F) getDG(id,1,"UVW",run).getData(is-1+12).get(0)).fill(iW[id], sff[id]<0.5?sff[id]:0.);				  
+            ((H2F) getDG(id,0,"UVW",run).getData(is-1   ).get(0)).fill(iU[id], sf<0.5?sf:0.);				  
+            ((H2F) getDG(id,0,"UVW",run).getData(is-1+ 6).get(0)).fill(iV[id], sf<0.5?sf:0.);				  
+            ((H2F) getDG(id,0,"UVW",run).getData(is-1+12).get(0)).fill(iW[id], sf<0.5?sf:0.);				  
+            ((H2F) getDG(id,0,"Timing",run).getData(is-1   ).get(0)).fill(iU[id], t_ecal[id]);				  
+            ((H2F) getDG(id,0,"Timing",run).getData(is-1+ 6).get(0)).fill(iV[id], t_ecal[id]);				  
+            ((H2F) getDG(id,0,"Timing",run).getData(is-1+12).get(0)).fill(iW[id], t_ecal[id]);				  
+         }       
 
     }
     
-    public void updateFits(int index) {
-        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));    	
-        int    pc = 1;
+    public DataGroup getDG(int i, int j, String tab, int run) {
+    	return this.getDataGroup().getItem(i,j,getDetectorTabNames().indexOf(tab),run);
+    }
+    
+    public float getSFcorr(int is, float p) {
+    	return 1+sfpar[is][0]/p + sfpar[is-1][1]/p/p;
+    }
+    
+    public void updateFits(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
+    	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));    	
+        int    pc = 0;
         int    is = getActiveSector(); 
         int     i = getActiveLayer();
         int     j = getActiveView();
@@ -389,12 +445,13 @@ public class ECsf extends DetectorMonitor {
     @Override
     public void plotEvent(DataEvent de) {
         analyze();
-        if(dumpGraphs) dumpGraphs();    
+        if(dumpGraphs) dumpGraphs();   
     }
 
     public void analyze() {    
     	System.out.println(getDetectorName()+".Analyze() ");
     	fitGraphs(1,7,0,(dropSummary)?0:3,0,(dropSummary)?0:3); 
+        writeFile("electron_sf");
         if(!isAnalyzeDone) createTimeLineHistos();
     	fillTimeLineHisto();
         System.out.println("Finished");
@@ -406,39 +463,42 @@ public class ECsf extends DetectorMonitor {
         
         // SF v UVW Fits
         for (int is=is1; is<is2; is++) {
-           tl.fitData.add(fitEngine(((H2F)this.getDataGroup().getItem(0,0,7,run).getData(is-1).get(0)).projectionY(),0,0.15,0.3,0.15,0.3,1.7,2.5),is,0,7,run); 
+ //           tl.fitData.add(fitEngine(((H2F) getDG(0,0,"E/P",run).getData(is-1).get(0)).projectionY(),0,0.15,0.3,0.15,0.3,1.7,2.5),is,0,7,run); 
+            tl.fitData.add(fitEngine(((H1F) getDG(0,0,"PID Fits",run).getData(is-1).get(0)),0,0.15,0.3,0.15,0.3,1.7,2.5),is,0,7,run); 
            for (int id=id1; id<id2; id++) {
                for (int il=il1; il<il2; il++) {
-               	  for (int pc=1; pc<2; pc++) {
-                     H2F h = (H2F) this.getDataGroup().getItem(is,pc,9,run).getData(id*3+il).get(0);
-           	         for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h.sliceY(i),0,0.15,0.3,0.15,0.3,1.7,2.5),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); 
+               	  for (int pc=0; pc<1; pc++) {
+                     H2F h = (H2F) getDG(id,pc,"UVW",run).getData(is-1+6*il).get(0);
+           	         for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h.sliceX(i),0,0.15,0.3,0.15,0.3,1.7,2.5),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); 
         	         fitStore(is, id, il, pc, run, 1f);
                	  }
                } 
            }
         }
         
-        //SF v P Fits
     	for (int is=1; is<7; is++) { 
     		
             ParallelSliceFitter fitter;
               
             if (!dropSummary) {
             	
-            fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(getActivePC(),0,7,run).getData(is-1).get(0));
-            fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX(); 
-            FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); // E/P vs. measured energy
+            // E/P vs. measured energy        	
+            fitter = new ParallelSliceFitter((H2F) getDG(0,0,"E/P",run).getData(is-1).get(0));
+            fitter.setBackgroundOrder(0); fitter.setMin(0.18); fitter.setMax(0.30); fitter.fitSlicesX(); 
+            FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); 
           
     	    GraphErrors MeanGraph = fitter.getMeanSlices();
-    	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,2.5,0.3,2.5),is,0,5,run); 
+    	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,2.5,0.3,2.0),is,0,5,run); 
     	    
-    		fitter = new ParallelSliceFitter((H2F) this.getDataGroup().getItem(getActivePC(),0,0,run).getData(is-1).get(0));
-    	    fitter.setBackgroundOrder(1); fitter.setMin(0.18); fitter.setMax(0.32); fitter.fitSlicesX();
-    	    FitSummary.add(fitter.getMeanSlices(), is, 0, 1, run);  // E/P vs. tracking momentum
+    	    // E/P vs. tracking momentum
+    		fitter = new ParallelSliceFitter((H2F) getDG(0,0,"E/P",run).getData(is-1+6).get(0));
+    	    fitter.setBackgroundOrder(0); fitter.setMin(0.18); fitter.setMax(0.30); fitter.fitSlicesX();
+    	    FitSummary.add(fitter.getMeanSlices(), is, 0, 1, run); 
     	    
     	    GraphErrors meanGraph = fitter.getMeanSlices(); 
-    	    tl.fitData.add(fitEngine(meanGraph,14,1.6,9.4,1.6,9.4),is,0,6,run); 
+    	    tl.fitData.add(fitEngine(meanGraph,14,2,7,2,7),is,0,6,run); 
     	    
+    	    //SF sigE/E Fits
     	    
     	    GraphErrors  sigGraph = fitter.getSigmaSlices(); 
    	    
@@ -533,10 +593,12 @@ public class ECsf extends DetectorMonitor {
         FitSummary.add(Mean, is,id+10*(pc+1)*(pc+1)*(il+1),5,run);        	        
     }    
     
-    public void plotMeanHWSummary(int index) {
+    public void plotMeanHWSummary(String tab) {
         
-        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = 1;
+    	int index=getDetectorTabNames().indexOf(tab);
+    	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        
+        int           pc = 0;
         int            n = 0;
         
         List<DataLine> lines = new ArrayList<DataLine>();
@@ -573,9 +635,42 @@ public class ECsf extends DetectorMonitor {
         }
         }        
     }  
-    
-    public void plotFitSummary1(int index) {
+        
+    public void plotPIDFits(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        c.setGridX(false); c.setGridY(false); c.divide(6, 3);
+        GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
+        String txt;
+        
+        int run = getRunNumber();    
+	   
+    	for (int is=1; is<7; is++) {  
+    	    SFFunction sf = new SFFunction("esf",11,is,ebccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
+   		    txt = "Sector "+is+" Measured Energy (GeV)";
+            if (FitSummary.hasItem(is,0,7,run)) {
+            	c.cd(is-1);c.getPad().getAxisZ().setLog(true);  c.draw((H2F) getDG(0,0,"E/P",run).getData(is-1).get(0));
+            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.15f,0.35f,1,6,1,txt," E/P","same"); //c.draw(sf,"same");
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineColor(20); 
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineWidth(6);
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setOptStat("1110");
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setRange(0.1,2.5);
+            	c.draw(tl.fitData.getItem(is,0,5,run).graph.getFunction(),"same");             	
+            }
+         
+            c.cd(is-1+6);c.getPad(is-1+12).getAxisX().setRange(0.1, 0.4); 
+            c.draw(Fits.getItem(is,0,7,getRunNumber()).getHist());
+            c.draw(Fits.getItem(is,0,7,getRunNumber()).getGraph(),"same");   
+                        
+            GraphPlot((GraphErrors)tl.fitData.getItem(is,0,4,run).getGraph(),c,is-1+12,0.f,0.6f,0.001f,0.008f,1,4,1,"","",""); 
+            g1.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1e));
+            g2.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0e)); 
+     	}
+    }    
+    
+    public void plotFitSummary1(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
+    	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
         int run = getRunNumber();
@@ -585,44 +680,10 @@ public class ECsf extends DetectorMonitor {
     	}
     }    
     
-    public void plotFitSummary8(int index) {
+    public void plotFitSummary2(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        c.setGridX(false); c.setGridY(false); c.divide(6, 3);
-        String txt;
-        
-        int run = getRunNumber();    
-	   
-    	for (int is=1; is<7; is++) {  
-    	    SFFunction sf = new SFFunction("esf",11,is,ebccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
-   		    txt = "Sector "+is+" Measured Energy (GeV)";
-            if (FitSummary.hasItem(is,0,7,run)) {
-            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.22f,0.28f,2,4,1,txt," E/P",""); c.draw(sf,"same");
-            	tl.fitData.getItem(is,0,5,run).graph.setMarkerColor(1);
-            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineColor(8); 
-            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineWidth(2);
-            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setOptStat("1110");
-            	c.draw(tl.fitData.getItem(is,0,5,run).graph.getFunction(),"same");             	
-            }
-    		txt = "Sector "+is+" Track Momentum (GeV)";
-            if (FitSummary.hasItem(is,0,1,run)) {
-            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,1,run),c,is-1+6,0.0f,10.0f,0.22f,0.28f,2,4,1,txt," E/P",""); 
-            	tl.fitData.getItem(is,0,6,run).graph.setMarkerColor(1); 
-            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setLineColor(8); 
-            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setLineWidth(2);
-            	tl.fitData.getItem(is,0,6,run).graph.getFunction().setOptStat("1110");
-            	c.draw(tl.fitData.getItem(is,0,6,run).graph.getFunction(),"same");             	
-            }
-
-            c.cd(is-1+12);c.getPad(is-1+12).getAxisX().setRange(0.1, 0.4); 
-            c.draw(Fits.getItem(is,0,7,getRunNumber()).getHist());
-            c.draw(Fits.getItem(is,0,7,getRunNumber()).getGraph(),"same");     	
-     	}
-    }
-    
-    public void plotFitSummary2(int index) {
-        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        c.setGridX(false); c.setGridY(false); c.divide(3, 2);
-        
+        c.setGridX(false); c.setGridY(false); c.divide(3, 2);        
         int col[] = {1,2,3,4,5,7};
         int run = getRunNumber();
     	for (int is=1; is<7; is++) {    		
@@ -633,7 +694,8 @@ public class ECsf extends DetectorMonitor {
     	}    	
     }
     
-    public void plotFitSummary3(int index) {
+    public void plotFitSummary3(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.setGridX(false); c.setGridY(false); c.divide(3, 2);
         int col[] = {1,2,3,4,5,7};
@@ -646,25 +708,27 @@ public class ECsf extends DetectorMonitor {
     	}    	
     } 
     
-    public void plotFitSummary4(int index) {
+    public void plotFitSummary4(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
     	GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
-        c.setGridX(false); c.setGridY(false); c.divide(6, 2);
+        c.setGridX(false); c.setGridY(false); c.divide(6, 3);
         int col[] = {1,2,3,4,5,7};
         int run = getRunNumber();
      	for (int is=1; is<7; is++) {    		
 //            F1D f = new F1D("res","[a]*[a]*x+[b]*[b]",0.,0.6); f.setLineColor(1); f.setLineWidth(3);
 //            f.setParameter(0, par[is-1][0]);f.setParameter(1, par[is-1][1]);
 //            if (FitSummary.hasItem(is,0,4,run)) GraphPlot((GraphErrors)FitSummary.getItem(is,0,4,run),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","","");
-              GraphPlot((GraphErrors)tl.fitData.getItem(is,0,4,run).getGraph(),c,is-1,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","",""); 
+              GraphPlot((GraphErrors)tl.fitData.getItem(is,0,4,run).getGraph(),c,is-1+12,0.f,0.6f,0.001f,0.008f,col[is-1],4,1,"","",""); 
               g1.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p1e));
               g2.addPoint(is,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0),0,Math.sqrt(tl.fitData.getItem(is,0,4,run).p0e));
 //            if (FitSummary.hasItem(is,0,4,run)) c.draw(f,"same");            
     	}    	
-        GraphPlot(g1,c,7,0.5f,6.5f,0.0f,0.11f,1,6,1,"SECTOR","",""); GraphPlot(g2,c,7,0.5f,6.5f,0.0f,0.11f,1,7,2,"","","same"); 
+//        GraphPlot(g1,c,7,0.5f,6.5f,0.0f,0.11f,1,6,1,"SECTOR","",""); GraphPlot(g2,c,7,0.5f,6.5f,0.0f,0.11f,1,7,2,"","","same"); 
     }  
     
-    public void plotXYZHistos(int index) {
+    public void plotXYZHistos(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
  	    DataGroup dg = getDataGroup().getItem(0,0,index,getRunNumber());
  	    
@@ -687,14 +751,96 @@ public class ECsf extends DetectorMonitor {
    	
     }    
     
-    public void plotADCHistos(int index) {
+    public void plotUVWHistos(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
     	if(!getDataGroup().hasItem(getActiveSector(),getActivePC(),index,getRunNumber())) return;
-  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),getActivePC(),index,getRunNumber()));	       	
+  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveLayer(),getActivePC(),index,getRunNumber()));	       	
     }
     
-    public void plotEOPHistos(int index) {
+    public void plotSECHistos(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
   	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActivePC(),0,index,getRunNumber()));	       	
-    }  
+    } 
+    
+	public void writeFile(String table) {
+		
+		String line = new String();
+		
+		try { 
+			File outputFile = new File(outPath+table+"_"+getRunNumber());
+			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+			BufferedWriter outputBw = new BufferedWriter(outputFw);
+			
+			System.out.println("ECsf.writefile("+table+")");
+			
+			for (int is=0; is<7; is++) {
+				switch (table) {							
+				case "electron_sf": line =  getSF(is);  break;
+				}
+				if (line!=null) {
+				      System.out.println(line);
+				      outputBw.write(line);
+				      outputBw.newLine();
+					}				
+			}
+
+			outputBw.close();
+			outputFw.close();
+		}
+		catch(IOException ex) {
+			System.out.println("Error writing file '" );                   
+			ex.printStackTrace();
+		}
+
+	}
+	
+	public String getSF(int is) {
+		if(is==0) {
+			return is+" 0  0 "
+					+String.format("%.5f",electron_sf.getDoubleValue("sf1",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sf2",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sf3",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sf4",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sfs1",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sfs2",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sfs3",is,0,0))+" "
+					+String.format("%.5f",electron_sf.getDoubleValue("sfs4",is,0,0));
+		} else {
+			return is+" 0  0 "
+					+String.format("%.5f",tl.fitData.getItem(is,0,5,getRunNumber()).p0)+" "
+					+" 1.0 "
+					+String.format("%.5f",tl.fitData.getItem(is,0,5,getRunNumber()).p1)+" "
+					+String.format("%.5f",tl.fitData.getItem(is,0,5,getRunNumber()).p2)+" "
+					+String.format("%.5f",tl.fitData.getItem(is,0,7,getRunNumber()).sigma)+" "
+					+"1.0 0.0 0.0";					
+		}
+	}
+	
+	public void readSF(String fname) {
+		
+        try{
+            FileReader       file = new FileReader(fname);
+            BufferedReader reader = new BufferedReader(file);
+			System.out.println("ECsf.readSF("+fname+")");
+            int n = 0 ;
+            while (n<7) {		
+                String line = reader.readLine();
+                String[] col = line.trim().split("\\s+"); 
+                int is = Integer.parseInt(col[0]); 
+                sfpar[is][0] = Float.parseFloat(col[5]);
+                sfpar[is][1] = Float.parseFloat(col[6]);
+                n++;
+            }
+            reader.close();
+            file.close();    
+        }
+        catch(FileNotFoundException ex) {
+            ex.printStackTrace();            
+        }     
+        catch(IOException ex) {
+            ex.printStackTrace();
+        }        
+	}
         
     public void dumpGraphs() {
     	int run = getRunNumber();
@@ -737,7 +883,8 @@ public class ECsf extends DetectorMonitor {
     	saveTimeLine(20,0,7,"Resolution","SF");
     }
     
-    public void plotTimeLines(int index) {
+    public void plotTimeLines(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
     	if(TLflag) {plotTimeLineSectors(index); } else {plotClusterTimeLines(index);}
     }   
     
@@ -812,13 +959,13 @@ public class ECsf extends DetectorMonitor {
     public void timerUpdate() {  
     	
         for(int i=0; i<3; i++) {
-        H2F e  = (H2F) this.getDataGroup().getItem(0,0,6,getRunNumber()).getData(i).get(0);
-        H2F w  = (H2F) this.getDataGroup().getItem(0,1,6,getRunNumber()).getData(i).get(0);
-        H2F ww = (H2F) this.getDataGroup().getItem(0,2,6,getRunNumber()).getData(i).get(0);
+        H2F e  = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i).get(0);
+        H2F w  = (H2F) getDG(0,1,"XY",getRunNumber()).getData(i).get(0);
+        H2F ww = (H2F) getDG(0,2,"XY",getRunNumber()).getData(i).get(0);
         for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
         	    float ne = e.getDataBufferBin(loop);
-            if (ne>0) {H2F h = (H2F) this.getDataGroup().getItem(0,0,6,getRunNumber()).getData(i+3).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
-            if (ne>0) {H2F h = (H2F) this.getDataGroup().getItem(0,0,6,getRunNumber()).getData(i+6).get(0); h.setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);}
+            if (ne>0) {H2F h = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i+3).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
+            if (ne>0) {H2F h = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i+6).get(0); h.setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);}
         }
         }
         
