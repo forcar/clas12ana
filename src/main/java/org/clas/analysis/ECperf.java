@@ -1057,10 +1057,11 @@ public class ECperf extends DetectorMonitor {
     
     public boolean makeELEC(){
     	
-    	if(nE!=1) return false;
+    	if(nE!=1) return false; //e_ecal.size()!=1;
     	
     	boolean good_fiduc1 = false, good_fiduc2 = false, good_fiduc3 = false; 
         e_ecal_esum = 0f; e_ecal_pcsum=0; e_ecal_ecsum=0;
+        
         elec_ecal_resid.clear();
         elec_ftof_resid.clear();  
         
@@ -1101,12 +1102,10 @@ public class ECperf extends DetectorMonitor {
     		iU = p.hasProperty("iu")?(int)p.getProperty("iu"):0;
     		iV = p.hasProperty("iv")?(int)p.getProperty("iv"):0;
     		iW = p.hasProperty("iw")?(int)p.getProperty("iw"):0; 
-
-    		if (ind==0) {
-    			lU = p.hasProperty("lu")?(int)p.getProperty("lu"):0;
-    			lV = p.hasProperty("lv")?(int)p.getProperty("lv"):0;
-    			lW = p.hasProperty("lw")?(int)p.getProperty("lw"):0; 
-    		}
+    		
+    		lU = ind==0&&p.hasProperty("lu")?(int)p.getProperty("lu"):0;
+    		lV = ind==0&&p.hasProperty("lv")?(int)p.getProperty("lv"):0;
+    		lW = ind==0&&p.hasProperty("lw")?(int)p.getProperty("lw"):0; 
     		
     		Point3D xyz = getResidual(p);	    
 
@@ -2590,9 +2589,7 @@ public class ECperf extends DetectorMonitor {
     }
     
     public void showPhotTim() {
-		int index = getDetectorTabNames().indexOf("ECtime");
-		
-    	
+		int index = getDetectorTabNames().indexOf("ECtime");		  	
     }
     
 /* CALIBRATION FILES */    
