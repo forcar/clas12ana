@@ -134,6 +134,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     List<Integer>     runList  = new ArrayList<Integer>();
     
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
+    
+    int    selectedTabIndex = 0;
+    String selectedTabName  = " ";
         
     public static void main(String[] args){
 
@@ -175,9 +178,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECt("ECt"); 
-//  		monitors[n] = new ECsf("ECsf"); 
+  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
-    		monitors[n] = new ECmip("ECmip"); 
+//    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0");
 
         }
@@ -303,11 +306,28 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 this.tabbedpane.add(this.monitors[k].getDetectorPanel(), this.monitors[k].getDetectorName());
         	    this.monitors[k].getDetectorView().getView().addDetectorListener(this);                        
         }
-        
-        this.tabbedpane.addChangeListener(this);               
+/*        
+        this.tabbedpane.addChangeListener(new ChangeListener() {   
+        	public void stateChanged(ChangeEvent e) {
+        	System.out.println("Change Event");
+        	if (e.getSource() instanceof JTabbedPane) {
+        		JTabbedPane pane = (JTabbedPane) e.getSource();
+        		selectedTabIndex = pane.getSelectedIndex();
+        		selectedTabName  = (String) pane.getTitleAt(selectedTabIndex);
+        		System.out.println(selectedTabIndex + " " + selectedTabName);
+        	}
+        	}
+        });
+*/        
+        this.tabbedpane.addChangeListener(this);	               
         this.processorPane.addEventListener(this);        
         this.setCanvasUpdate(canvasUpdateTime);
         
+    }
+    
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        this.timerUpdate();
     }
     
 	@Override
@@ -780,10 +800,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setLogParam(val);
         }
-    }
-
-    public void stateChanged(ChangeEvent e) {
-        this.timerUpdate();
     }
     
     @Override
