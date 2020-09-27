@@ -52,7 +52,7 @@ import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
-import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
+//import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.RangeSlider;
@@ -68,6 +68,7 @@ import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
+import org.clas.tools.EmbeddedCanvasTabbed;
 
 public class DetectorMonitor implements ActionListener {    
     
@@ -969,6 +970,8 @@ public class DetectorMonitor implements ActionListener {
     
     public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
     }
+    
+// GRAPHING    
         
     public void GraphPlot(GraphErrors graph, EmbeddedCanvas c, int zone, float xmin, float xmax, float ymin, float ymax, int mcol, int msiz, int msty, String xtit, String ytit, String opt) {
     	c.cd(zone); c.getPad(zone).getAxisX().setRange(xmin, xmax); c.getPad(zone).getAxisY().setRange(ymin, ymax); 
@@ -1210,7 +1213,8 @@ public class DetectorMonitor implements ActionListener {
         
         }
         
-        Map<Long, DataGroup> map = this.getDataGroup().getMap();
+        Map<Long, DataGroup> map = this.getDataGroup().getMap(); //All defined histos are here
+        
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
             Long key = entry.getKey();
             if (run==ig.getIndex(key, 3)) {
@@ -1251,9 +1255,10 @@ public class DetectorMonitor implements ActionListener {
         }      
         }
         
-        Map<Long, DataGroup> map = getDataGroup().getMap();
+        Map<Long, DataGroup> map = getDataGroup().getMap();  //All defined histos are here
+        
         for( Map.Entry<Long, DataGroup> entry : map.entrySet()) {
-            DataGroup group = entry.getValue();
+            DataGroup group = entry.getValue(); 
             int nrows = group.getRows();
             int ncols = group.getColumns();
             int nds   = nrows*ncols;
