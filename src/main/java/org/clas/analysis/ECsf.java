@@ -57,7 +57,8 @@ public class ECsf extends DetectorMonitor {
                                  "PMT Fits",
                                  "Summary",
                                  "PID Fits",
-                                 "Timeline");
+                                 "Timeline",
+                                 "MC");
 
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
@@ -107,16 +108,17 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
         createXYZHistos("XY");
-        createUVWHistos("UVW",1,0,25,0.,0.5,"PARTIAL SF");
-        createUVWHistos("UVW",1,1,25,0.,0.3,"PARTIAL SF");
-        createUVWHistos("UVW",1,2,25,0.,0.1,"PARTIAL SF");
-        createUVWHistos("UVW",0,0,25,0.05,0.4,"TOTAL SF");
-        createUVWHistos("UVW",0,1,25,0.05,0.4,"TOTAL SF");
-        createUVWHistos("UVW",0,2,25,0.05,0.4,"TOTAL SF");
-        createUVWHistos("Timing",0,0,100,-10.,10.," T-TVERT-PATH/c (ns)");
-        createUVWHistos("Timing",0,1,100,-10.,10.," T-TVERT-PATH/c (ns)");
-        createUVWHistos("Timing",0,2,100,-10.,10.," T-TVERT-PATH/c (ns)");
+        createUVWHistos("UVW",1,0,25,0.,0.5,"PARTIAL SF",false);
+        createUVWHistos("UVW",1,1,25,0.,0.3,"PARTIAL SF",false);
+        createUVWHistos("UVW",1,2,25,0.,0.1,"PARTIAL SF",false);
+        createUVWHistos("UVW",0,0,25,0.05,0.4,"TOTAL SF",false);
+        createUVWHistos("UVW",0,1,25,0.05,0.4,"TOTAL SF",false);
+        createUVWHistos("UVW",0,2,25,0.05,0.4,"TOTAL SF",false);
+        createUVWHistos("Timing",0,0,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
+        createUVWHistos("Timing",0,1,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
+        createUVWHistos("Timing",0,2,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
         createPIDFitHistos("PID Fits",50,0.1,0.4," "," Corrected E/P");
+        createMCHistos("MC");
     }
 
     @Override       
@@ -133,6 +135,8 @@ public class ECsf extends DetectorMonitor {
     	plotUVWHistos("UVW");
     	if(!dropSummary) plotXYZHistos("XY");
     	plotUVWHistos("Timing");
+    	plotMCHistos("MC");
+    	
     }
     
     public void plotAnalysis(int run) {
@@ -206,11 +210,14 @@ public class ECsf extends DetectorMonitor {
         this.getDataGroup().add(dg3, 0,2,k,run);
     }
     
-    public void createUVWHistos(String tab, int pc, int cal, int nch, double y0, double y1, String txt) {
+    public void createUVWHistos(String tab, int pc, int cal, int nch, double y0, double y1, String txt, Boolean fun) {
     	
     	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
-        H2F h;  
-        
+        H2F h;  F1D f0,f1,f2;
+        f0 = new F1D("f0","[a]",1,68); f0.setParameter(0,0); 
+        f1 = new F1D("f1","[a]",1,62); f1.setParameter(0,0); 
+        f2 = new F1D("f2","[a]",1,36); f2.setParameter(0,0); 
+       
         DataGroup dg = new DataGroup(6,3);
    
         for (int is=1; is<7; is++) {
@@ -218,41 +225,62 @@ public class ECsf extends DetectorMonitor {
             case 0:
             h = new H2F("adc_pcal_u_"+is+"_"+pc+"_"+k+"_"+run, 68, 1., 69., nch, y0, y1);
             h.setTitleX("Sector "+is+" PCAL "+"U Strip"); h.setTitleY(txt); 
-            dg.addDataSet(h,is-1);  
+            dg.addDataSet(h,is-1);    if(fun) dg.addDataSet(f0, is-1);
             h = new H2F("adc_pcal_v_"+is+"_"+pc+"_"+k+"_"+run, 62, 1., 63., nch, y0, y1);
             h.setTitleX("Sector "+is+" PCAL "+"V Strip"); h.setTitleY(txt);        
-            dg.addDataSet(h,is-1+6);            
+            dg.addDataSet(h,is-1+6);  if(fun) dg.addDataSet(f1, is-1+6);           
             h = new H2F("adc_pcal_w_"+is+"_"+pc+"_"+k+"_"+run, 62, 1., 63., nch, y0, y1);
             h.setTitleX("Sector "+is+" PCAL "+"W Strip"); h.setTitleY(txt);  
-            dg.addDataSet(h,is-1+12); 
+            dg.addDataSet(h,is-1+12); if(fun) dg.addDataSet(f1, is-1+12);
             break;
             case 1:
             h = new H2F("adc_ecin_u_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECIN "+"U Strip"); h.setTitleY(txt);    
-            dg.addDataSet(h,is-1);  
+            dg.addDataSet(h,is-1);    if(fun) dg.addDataSet(f2, is-1); 
             h = new H2F("adc_ecin_v_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECIN "+"V Strip"); h.setTitleY(txt);        
-            dg.addDataSet(h,is-1+6);            
+            dg.addDataSet(h,is-1+6);  if(fun) dg.addDataSet(f2, is-1+6);           
             h = new H2F("adc_ecin_w_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECIN "+"W Strip"); h.setTitleY(txt);  
-            dg.addDataSet(h,is-1+12); 
+            dg.addDataSet(h,is-1+12); if(fun) dg.addDataSet(f2, is-1+12); 
             break;
             case 2:
             h = new H2F("adc_ecou_u_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECOU "+"U Strip"); h.setTitleY(txt);    
-            dg.addDataSet(h,is-1);  
+            dg.addDataSet(h,is-1);    if(fun) dg.addDataSet(f2, is-1);
             h = new H2F("adc_ecou_v_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECOU "+"V Strip"); h.setTitleY(txt);        
-            dg.addDataSet(h,is-1+6);            
+            dg.addDataSet(h,is-1+6);  if(fun) dg.addDataSet(f2, is-1+6);           
             h = new H2F("adc_ecou_w_"+is+"_"+pc+"_"+k+"_"+run, 36, 1., 37., nch, y0, y1);
             h.setTitleX("Sector "+is+" ECOU "+"W Strip"); h.setTitleY(txt);  
-            dg.addDataSet(h,is-1+12);   
+            dg.addDataSet(h,is-1+12); if(fun) dg.addDataSet(f2, is-1+12);  
             }
         } 
 
         this.getDataGroup().add(dg,cal,pc,k,run);
 
     } 
+    
+    public void createMCHistos(String tab) {
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
+        H1F h;  
+        
+        DataGroup dg = new DataGroup(6,3);
+        
+        for (int is=1; is<7; is++) {
+            h = new H1F("adc_pcal_u_"+is+"_"+k+"_"+run, 100,-3,3); h.setOptStat("1100");
+            h.setTitleX("Sector "+is+" PCAL Vertex Time (ns) ");  
+            dg.addDataSet(h,is-1);        	
+            h = new H1F("adc_ecin_u_"+is+"_"+k+"_"+run, 100,-3,3); h.setOptStat("1100");
+            h.setTitleX("Sector "+is+" ECIN Vertex Time (ns) ");  
+            dg.addDataSet(h,is-1+6);        	
+            h = new H1F("adc_ecou_u_"+is+"_"+k+"_"+run, 100,-3,3); h.setOptStat("1100");
+            h.setTitleX("Sector "+is+" ECOU Vertex Time (ns) ");  
+            dg.addDataSet(h,is-1+12);        	
+        }
+        
+        this.getDataGroup().add(dg,0,0,k,run);
+    }
     
     public void initCCDB(int runno) {
         electron_sf = ebcm.getConstants(runno, "/calibration/eb/electron_sf");    
@@ -409,7 +437,12 @@ public class ECsf extends DetectorMonitor {
             ((H2F) getDG(id,0,"UVW",run).getData(is-1+12).get(0)).fill(iW[id], sf<0.5?sf:0.);				  
             ((H2F) getDG(id,0,"Timing",run).getData(is-1   ).get(0)).fill(iU[id], t_ecal[id]);				  
             ((H2F) getDG(id,0,"Timing",run).getData(is-1+ 6).get(0)).fill(iV[id], t_ecal[id]);				  
-            ((H2F) getDG(id,0,"Timing",run).getData(is-1+12).get(0)).fill(iW[id], t_ecal[id]);				  
+            ((H2F) getDG(id,0,"Timing",run).getData(is-1+12).get(0)).fill(iW[id], t_ecal[id]);
+            if(sff[id]>0) {
+            if(id==0) ((H1F) getDG(0,0,"MC",run).getData(is-1).get(0)).fill(-t_ecal[id]);
+            if(id==1) ((H1F) getDG(0,0,"MC",run).getData(is-1+6).get(0)).fill(-t_ecal[id]);
+            if(id==2) ((H1F) getDG(0,0,"MC",run).getData(is-1+12).get(0)).fill(-t_ecal[id]);
+            }
          }       
 
     }
@@ -650,11 +683,11 @@ public class ECsf extends DetectorMonitor {
    		    txt = "Sector "+is+" Measured Energy (GeV)";
             if (FitSummary.hasItem(is,0,7,run)) {
             	c.cd(is-1);c.getPad().getAxisZ().setLog(true);  c.draw((H2F) getDG(0,0,"E/P",run).getData(is-1).get(0));
-            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,2.5f,0.15f,0.35f,1,6,1,txt," E/P","same"); //c.draw(sf,"same");
+            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,EB*0.25f,0.15f,0.35f,1,6,1,txt," E/P","same"); //c.draw(sf,"same");
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineColor(20); 
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineWidth(6);
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setOptStat("1110");
-            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setRange(0.1,2.5);
+            	tl.fitData.getItem(is,0,5,run).graph.getFunction().setRange(0.1,EB*0.25);
             	c.draw(tl.fitData.getItem(is,0,5,run).graph.getFunction(),"same");             	
             }
          
@@ -761,6 +794,11 @@ public class ECsf extends DetectorMonitor {
     	int index=getDetectorTabNames().indexOf(tab);
   	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActivePC(),0,index,getRunNumber()));	       	
     } 
+    
+    public void plotMCHistos(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
+  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));	       	    	
+    }
     
 	public void writeFile(String table) {
 		
