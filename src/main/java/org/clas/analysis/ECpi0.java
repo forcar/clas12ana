@@ -59,6 +59,8 @@ public class ECpi0 extends DetectorMonitor{
     float                          fmin = 30f;
     float                          fmax = 240f;
     
+    Boolean                 isPARTReady = false;
+    
     public ECpi0(String name) {
         super(name);
         this.setDetectorTabNames("PI0",
@@ -93,10 +95,7 @@ public class ECpi0 extends DetectorMonitor{
         engine.setLogParam(logParam);
         engine.setGeomVariation("rga_fall2018");
 //        engine.setPCALTrackingPlane(0);
-        part.setGeom("2.5");  
-        part.setConfig("pi0");  
-        part.setGoodPhotons(1212); 
-        part.getCCDB(getRunNumber());
+        isPARTReady = false;
     	tl.setFitData(Fits);
     }
     
@@ -108,7 +107,14 @@ public class ECpi0 extends DetectorMonitor{
     	Fits.clear();
     	tl.Timeline.clear();
     	slider.setValue(0);
-    }  
+    } 
+    public void initPART(int run) {
+        part.setGeom("2.5");  
+        part.setConfig("pi0");  
+        part.setGoodPhotons(1212); 
+        part.getCCDB(run);
+        isPARTReady = true;
+    }
     
     public boolean openTree() {
     	tree  = new TreeFile(jawPath+"mctrue.hipo","T","ev:avgT:avgZ:vz:mvz:aR:vR:mvR:tedep");
@@ -482,6 +488,7 @@ public class ECpi0 extends DetectorMonitor{
     	
         int run = getRunNumber();
         
+        if (!isPARTReady) initPART(run);
         if (dropBanks) dropBanks(event);
                 
         part.readEC(event,"ECAL::clusters");      // all raw clusters
@@ -511,6 +518,8 @@ public class ECpi0 extends DetectorMonitor{
                 if(energy*1e3>10) {esum[is-1]+=energy*1e3; nesum[idet][is-1]++;}
             }
         }
+        
+        // FTOF VETO
         
         if(event.hasBank("MIP::event")){          
             DataBank bank = event.getBank("MIP::event");
