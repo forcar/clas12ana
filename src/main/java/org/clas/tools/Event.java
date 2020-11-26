@@ -29,7 +29,7 @@ public class Event {
 	public  DataBank trajBank = null;
 	
 	public int TRpid = 0;
-	private boolean isHipo3Event; 
+	private boolean isHipo3Event = false; 
 	public boolean   isMC = false;
 	public boolean isMuon = false;
 	public boolean isPhys = false;
@@ -414,6 +414,7 @@ public class Event {
 				Particle p = new Particle();                         
 				p.setProperty("sector", ftofBank.getByte("sector",imap)); 
 				p.setProperty("layer",  ftofBank.getByte("layer",imap));
+				p.setProperty("strip",  ftofBank.getShort("component",imap));
 				p.setProperty("index",  ftofBank.getShort("index",imap));
 				p.setProperty("energy", ftofBank.getFloat("energy",imap));
 				p.setProperty("time",   ftofBank.getFloat("time",imap));
@@ -620,6 +621,15 @@ public class Event {
 		}
 		return ecalpart;
 	}	
+	
+	public float getVar(List<Particle> list, String property, int layer) {
+		for (Particle p: list ) {
+			if (p.getProperty("layer") == layer) {
+				if(p.hasProperty(property)) return (float)p.getProperty(property);
+			}
+		}
+		return 0f;
+	}
 /*	
 	public void getRECparticleOLD(int tpid) {
 //		if(tpid==11) System.out.println(" ");
