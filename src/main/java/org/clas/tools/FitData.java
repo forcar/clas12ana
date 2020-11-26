@@ -38,7 +38,7 @@ public class FitData {
 			"[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x",
 			"[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x", "[a]*exp(x,[b])", "[a]+[b]*cos(x*[c])",
 			"[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5",
-			"[sf0]*(1+[sf2]/x+[sf3]/x/x)"};
+			"[sf1]*(1+[sf3]/x+[sf4]/x/x)"};
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
@@ -114,7 +114,8 @@ public class FitData {
 	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ; graph.getFunction().setRange(fmin, fmax);}
 	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3) ; graph.getFunction().setRange(fmin, fmax);}
 	    if (func==13) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ; graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
-	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.020,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
+	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
+//	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.020,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
 	}
 	
 	public void initFunc(int par, double val) {
