@@ -18,6 +18,7 @@ import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -31,11 +32,17 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
+import org.jlab.io.hipo.HipoDataSync;
+import org.jlab.jnp.hipo4.io.HipoWriter;
+import org.jlab.jnp.hipo4.io.HipoReader;
+
+
 //import org.jlab.io.hipo3.Hipo3DataSource;
 import org.jlab.service.eb.EBAnalyzer;
 //import org.jlab.service.eb.EBConstants;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
+import org.jlab.service.eb.EBTBEngine;
 import org.jlab.service.ec.ECEngine;
 import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
@@ -45,10 +52,13 @@ import org.jlab.rec.eb.EBRadioFrequency;
 import org.jlab.rec.eb.EBUtil;
 import org.jlab.rec.eb.SamplingFractions;
 
-public class ECPart  {
+import org.clas.tools.Event;
+
+public class ECPart extends EBTBEngine {
 	
 	public EventBuilder eb = null;
 	EBEngine         ebe = new EBEngine("ECPART");
+	Event             ev = new Event();
 	EBCCDBConstants  ccdb;
 	EBMatching       ebm;
 	EBRadioFrequency rf;
@@ -57,12 +67,15 @@ public class ECPart  {
     
     IndexedList<List<DetectorResponse>>  singleNeutrals = new IndexedList<>(1);
     IndexedList<List<DetectorResponse>>      singleMIPs = new IndexedList<>(1);
+    
     DetectorParticle p1 = new DetectorParticle();
     DetectorParticle p2 = new DetectorParticle();
     
+    List<Particle> pmc = new ArrayList<>();;
+    
     public double distance11,distance12,distance21,distance22;
     public double e1,e2,e1c,e2c,cth,cth1,cth2;
-    public double X,tpi2,cpi0,refE,refP,refTH;
+    public double X,tpi2,cpi0,ppx1,ppy1,ppz1,refE,refP,refTH,refPH;
     public double x1,y1,x2,y2;
     public double epc,eec1,eec2;
     public LorentzVector VG1,VG2;
@@ -92,96 +105,52 @@ public class ECPart  {
     
     int photonMult = 12;
     
+    Vector3 vtx = new Vector3(0,0,0);
+    double opa = 0;
+    
+    String eventBank        = "REC::Event";    
+    String particleBank     = "REC::Particle";
+    String calorimeterBank  = "REC::Calorimeter";    
+    
     public ECPart() {  
-    	
+    	initBankNames();
     }
     
     public void getCCDB(int runno) {
-    	System.out.println("ECpart.setCCDB()");
+    	System.out.println("ECpart.setCCDB("+runno+")");
     	ebe.init();
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
     }
     
     public boolean readMC(DataEvent event) {
-        int pid1=0, pid2=0, off=0;
-        double ppx1=0,ppy1=0,ppz1=0;
-        double ppx2=0,ppy2=0,ppz2=0;
-        double rm = 0.;
-        
-        Boolean isEvio = event instanceof EvioDataEvent;      
-        
-        if (!isEvio && !event.hasBank("MC::Particle")) return false;
-        
-        if(isEvio&&event.hasBank("GenPart::true")) {
-            EvioDataBank bank = (EvioDataBank) event.getBank("GenPart::true");
-            ppx1 = bank.getDouble("px",0);
-            ppy1 = bank.getDouble("py",0);
-            ppz1 = bank.getDouble("pz",0);
-            pid1 = bank.getInt("pid",0);
-        }
-        
-        if(!isEvio&&event.hasBank("MC::Particle")) {
+    	
+        pmc.clear();
+        if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
-            
-           if(bank.rows()==3) off=1;
-
-            ppx1 = bank.getFloat("px",0+off);
-            ppy1 = bank.getFloat("py",0+off);
-            ppz1 = bank.getFloat("pz",0+off);
-            pid1 = bank.getInt("pid",0+off);  
-            n2mc++;
-            
-            if (pid1==22&&bank.rows()>1) {  // Two-photon runs
-                ppx2 = bank.getFloat("px",1+off);
-                ppy2 = bank.getFloat("py",1+off);
-                ppz2 = bank.getFloat("pz",1+off);
-                pid2 = bank.getInt("pid",1+off);                   
+            for (int i=0; i<bank.rows(); i++) {
+            	double px = bank.getFloat("px",i);
+            	double py = bank.getFloat("py",i);
+            	double pz = bank.getFloat("pz",i);
+            	double vx = bank.getFloat("vx",i);
+            	double vy = bank.getFloat("vy",i);
+            	double vz = bank.getFloat("vz",i);
+            	int   pid = bank.getInt("pid",i);  
+                pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
+                if(i==0) vtx.setXYZ(vx, vy, vz);
             }
-        }
-        
-        if (pid1==11)           rm=melec;
-        if (pid1==111||off==1)  rm=mpi0;
-        if (pid1==2112)         rm=mneut;
-        
-        double ppx=ppx1+ppx2; double ppy=ppy1+ppy2; double ppz=ppz1+ppz2;
-        
-        refP  = Math.sqrt(ppx*ppx+ppy*ppy+ppz*ppz);  
-        refE  = Math.sqrt(refP*refP+rm*rm);            
-        refTH = Math.acos(ppz/refP)*180/Math.PI; 
-        
-        return true;
+            n2mc++;
+            return true;
+        }                  
+        return false;
     }
     
-    public static List<DetectorResponse>  getResponses(DataEvent event, String bankName, DetectorType type){        
-            List<DetectorResponse> responseList = new ArrayList<>();
-            if(event.hasBank(bankName)==true){
-                DataBank bank = event.getBank(bankName);
-                for(int row = 0; row < bank.rows(); row++){
-                    int sector = bank.getByte("sector", row);
-                    int  layer = bank.getByte("layer",  row);
-                    DetectorResponse  response = new DetectorResponse(sector,layer,0);
-                    response.getDescriptor().setType(type);
-                    float x = bank.getFloat("x", row);
-                    float y = bank.getFloat("y", row);
-                    float z = bank.getFloat("z", row);
-                    response.setHitIndex(bankName.equals("ECAL::clusters")?row:bank.getInt("index",row));
-                    response.setPosition(x, y, z);
-                    response.setEnergy(bank.getFloat("energy", row));
-                    response.setTime(bank.getFloat("time", row));
-                    responseList.add(response);
-                }
-            }
-            return responseList;
-    } 
-    
 	// readEC: Copies relevant parts of EBEngine.processDataEvent    
-    public void  readEC(DataEvent event, String bank){    	
-    	
+    public void  readEC(DataEvent de, String bank){    	    	
         rf = new EBRadioFrequency(ccdb);    	
         eb = new EventBuilder(ccdb);    	   	
         eb.initEvent(); //don't bother with event header    	
-        eb.getEvent().getEventHeader().setRfTime(rf.getTime(event)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));            	
-        eb.addDetectorResponses(getResponses(event, bank, DetectorType.ECAL));    	
+        eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));  	
         eb.getPindexMap().put(0, 0); 
         eb.getPindexMap().put(1, 0);         
     } 
@@ -200,6 +169,21 @@ public class ECPart  {
      	return new ArrayList<DetectorParticle>() ;     	
     }
     
+    public void getRECBanks(DataEvent de, EventBuilder eb) {
+        DataBank bankP = DetectorData.getDetectorParticleBank(eb.getEvent().getParticles(), de, particleBank);
+        de.appendBanks(bankP);
+      
+        DataBank bankEve = DetectorData.getEventBank(eb.getEvent(), de, eventBank);
+        de.appendBanks(bankEve);
+
+        List<DetectorResponse> calorimeters = eb.getEvent().getCalorimeterResponseList();
+        if(calorimeterBank!=null && calorimeters.size()>0) {
+            DataBank bankCal = DetectorData.getCalorimeterResponseBank(calorimeters, de, calorimeterBank);
+            de.appendBanks(bankCal);
+        }
+    	
+    }
+    
     public void getUnmatchedResponses() {        
         unmatchedResponses.clear();
         unmatchedResponses.add(eb.getUnmatchedResponses(null, DetectorType.ECAL,1)); //PCAL
@@ -212,36 +196,14 @@ public class ECPart  {
      	getSingleMIPResponses(); 
     }
     
-    public void getNeutralResponses() {        
-        getUnmatchedResponses();
-       	getSingleNeutralResponses(); // For two-photon decays in different sectors     	
-    }
-    
     public void getSingleMIPResponses() {
-        List<DetectorResponse> rEC = new ArrayList<>();
+        List<DetectorResponse> rPC = new ArrayList<>();
         singleMIPs.clear();
         for (int is=1; is<7; is++) {
-            rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is);  //look in PCAL only          
-            if(rEC.size()==1&&mip[is-1]==1) singleMIPs.add(rEC,is);
+            rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is);  //look in PCAL only          
+            if(rPC.size()==1&&mip[is-1]==1) singleMIPs.add(rPC,is);
         }     	
-    }
-        
-    public void getSingleNeutralResponses() {
-        List<DetectorResponse> rEC = new ArrayList<>();
-        singleNeutrals.clear();
-        for (int is=1; is<7; is++) {
-            rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is); //look in PCAL only
-            if(rEC.size()==1&&mip[is-1]!=1) singleNeutrals.add(rEC,is);
-        } 
-    }
-    
-    public List<DetectorResponse> findSecondPhoton(int sector) {
-        int neut=0, isave=0;
-        for (int is=sector+1; is<7; is++) {
-            if(singleNeutrals.hasItem(is)) {neut++; isave=is;}
-        }
-        return (neut==1) ? singleNeutrals.getItem(isave):new ArrayList<DetectorResponse>();
-    }
+    }   
     
     public double getEcalEnergy(int sector){
         iis[0]=0;epc=0;eec1=0;eec2=0;
@@ -253,13 +215,39 @@ public class ECPart  {
       	return particles.get(0).getEnergy(DetectorType.ECAL);
     }  
     
+    public  List<DetectorResponse> getPCResponses(int sector) {
+    	return DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector);   	
+    }
+    
     public List<DetectorParticle> getMIParticles(int sector) {
     	
         List<DetectorParticle> particles = new ArrayList<>();          
         List<DetectorResponse>      rPC  = new ArrayList<>();        
-        rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector);
-        if (rPC.size()==1) particles.add(DetectorParticle.createNeutral(rPC.get(0))); // Zero torus/solenoid fields
+        rPC = getPCResponses(sector);
+        if (rPC.size()==1) particles.add(DetectorParticle.createNeutral(rPC.get(0),vtx)); // Zero torus/solenoid fields
         return particles;
+    }
+    
+    public void getNeutralResponses() {        
+        getUnmatchedResponses();
+       	getSingleNeutralResponses(); // For two-photon decays in different sectors     	
+    }
+          
+    public void getSingleNeutralResponses() {
+        List<DetectorResponse> rPC = new ArrayList<>();
+        singleNeutrals.clear();
+        for (int is=1; is<7; is++) {
+            rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is); //look in PCAL only
+            if(rPC.size()==1&&mip[is-1]!=1) singleNeutrals.add(rPC,is);
+        } 
+    }
+    
+    public List<DetectorResponse> findSecondPhoton(int sector) {
+        int neut=0, isave=0;
+        for (int is=sector+1; is<7; is++) {
+            if(singleNeutrals.hasItem(is)) {neut++; isave=is;}
+        }
+        return (neut==1) ? singleNeutrals.getItem(isave):new ArrayList<DetectorResponse>();
     }
      
     public double getTwoPhotonInvMass(int sector){
@@ -269,22 +257,23 @@ public class ECPart  {
     }   
     
     // getNeutralParticles: Similar to EBMatching.findNeutrals(1)
+    // Note here I am requiring 2 PCAL responses, NOT 2 complete ECAL particles
     public List<DetectorParticle> getNeutralParticles(int sector) {
               
         List<DetectorResponse>      rEC  = new ArrayList<>();        
         List<DetectorParticle> particles = new ArrayList<>();          
-        
+
         rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector); //get PCAL responses
 
         switch (rEC.size()) {
         case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector);
                 if (rEC2.size()>0) {
-                   particles.add(DetectorParticle.createNeutral(rEC.get(0)));                    // make neutral particle 1 from PCAL sector                   
-                   particles.add(DetectorParticle.createNeutral(rEC2.get(0))); return particles; // make neutral particle 2 from other PCAL sector
+                   particles.add(DetectorParticle.createNeutral(rEC.get(0),vtx));                    // make neutral particle 1 from PCAL sector                   
+                   particles.add(DetectorParticle.createNeutral(rEC2.get(0),vtx)); return particles; // make neutral particle 2 from other PCAL sector
                 }
                 break;
-        case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
-                particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
+        case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0),vtx));                   // make neutral particle 1 from PCAL sector
+                particles.add(DetectorParticle.createNeutral(rEC.get(1),vtx)); return particles; // make neutral particle 2 from PCAL sector
 //        case 3: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
 //        		particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
         }
@@ -297,7 +286,7 @@ public class ECPart  {
         int ii=0;
         for (DetectorParticle p: particles) {
             DetectorResponse rPC = p.getDetectorResponses().get(0); //get 1st PCAL responses
-//                   epc = rPC.getEnergy();
+                   epc = rPC.getEnergy();
             iip[ii][0] = rPC.getHitIndex();  
             iis[ii]    = rPC.getDescriptor().getSector();
               x[ii][0] = rPC.getPosition().x();
@@ -357,12 +346,12 @@ public class ECPart  {
         e1 = p1.getEnergy(DetectorType.ECAL);
         e2 = p2.getEnergy(DetectorType.ECAL);
         
-        SF1db = SamplingFractions.getMean(22, p1, eb.ccdb);
+        SF1db = SamplingFractions.getMean(22, p1, this.ccdb);
         e1c = e1/SF1db;
         Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);        
         VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
         
-        SF2db = SamplingFractions.getMean(22, p2, eb.ccdb);
+        SF2db = SamplingFractions.getMean(22, p2, this.ccdb);
         e2c = e2/SF2db;
         Particle g2 = new Particle(22,n2.x()*e2c,n2.y()*e2c,n2.z()*e2c);
         VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
@@ -393,16 +382,14 @@ public class ECPart  {
        boolean pcec2 = DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 1).size()!=0 &&
                        DetectorResponse.getListByLayer(pp2.getDetectorResponses(),DetectorType.ECAL, 4).size()!=0;  
        
-       boolean goodPhotons = pc12;
-       
        switch (test) {
-           case 121:  goodPhotons = pc12 && pcec1;          break;
-           case 122:  goodPhotons = pc12 && pcec2;          break;
-           case 120:  goodPhotons = pc12 && (pcec1||pcec2); break;
-           case 1212: goodPhotons = pc12 && (pcec1&&pcec2);
+           case 121:  return pc12 && pcec1;          
+           case 122:  return pc12 && pcec2;        
+           case 120:  return pc12 && (pcec1 || pcec2); 
+           case 1212: return pc12 && (pcec1 && pcec2);
        }
        
-       return goodPhotons;
+       return pc12;
        
     }
     
@@ -461,9 +448,10 @@ public class ECPart  {
                            engine.setPeakThresholds(40,80,80);
                            engine.setClusterCuts(7,15,20); break;    		
     	case      "Pizero":engine.setStripThresholds(10,9,8);  
-//    					   engine.setStripThresholds(20,19,18);
                            engine.setPeakThresholds(18,20,15); 
-//                           engine.setPeakThresholds(28,30,25);
+                           engine.setClusterCuts(7,15,20); break;
+    	case        "Test":engine.setStripThresholds(10,200,8);  
+                           engine.setPeakThresholds(18,500,15); 
                            engine.setClusterCuts(7,15,20); 
     	}
     }
@@ -507,64 +495,206 @@ public class ECPart  {
         GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
     }
     
+    public List<Particle> getPART(double thr, int pid) {   	
+    	List<Particle> olist = new ArrayList<Particle>();    
+    	for (Particle p : ev.getParticle(pid)) {
+    		short status = (short) p.getProperty("status");
+    		if(status>=2000 && status<3000 && p.p()>thr) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
+    
+    
     public void electronDemo(String[] args) {
     	
         HipoDataSource reader = new HipoDataSource();
         ECEngine       engine = new ECEngine();
+        List<DetectorResponse> rPC = null;
         
-        String id ;
+        int mcsec=2;
      
+//        String hipoPath = "/Users/colesmith/imac/clas12/sim/radstudy/";
         String hipoPath = "/Users/colesmith/clas12/sim/";
-//        String hipoPath = "/Users/colesmith/clas12/sim/radstudy/";
         String hipo3File0 = "fc-elec-40k-s5-r2.hipo";
         String hipo3File3 = "fc-elec-40k-s5-r2.hipo";
         String hipo3File1 = "fc-ecpcsc-elec-s5-20k.hipo";
         String hipo4File1 = "fc-ecpcsc-elec-s5-20k.hipo";
         String hipo3File2 = "clasdispr-large.hipo";
         String hipo4File4 = "clas12-radstudy-5gev-22deg-pm8.hipo";
-        String hipo4File3 = "rga-fall2018-1.hipo";
-        String  hipoFile  = "radstudy/"+hipo4File4;
-        		
+        
+        String hipoFile = "out-rga-fall2018-torsol-100k.hipo"; mcsec=1;
+//        String hipoFile = "out_rga_fall2018_s6_9m.hipo"; mcsec=6;
+///        String hipoFile = "fc-ecpcsc-elec-s1-eff-lh2.hipo"; mcsec=1;
+        
         reader.open(hipoPath+hipoFile);
         
         engine.init();
         engine.isMC = true;
         engine.setVariation("default");
         engine.setCalRun(10);                
-//.setThresholds("Electron_lo",engine);
         getCCDB(10);
         setThresholds("Pizero",engine);
         setGeom("2.5");
         
-        id="_s"+Integer.toString(5)+"_l"+Integer.toString(0)+"_c";
-        H2F h1 = new H2F("E over P"+id+0,50,0.0,2.5,50,0.15,0.31);      
-        h1.setTitleX("Measured Electron Energy (GeV))");
-        h1.setTitleY("Sampling Fraction (E/P)");
+        float dp1=0.1f, dp2=0.1f;
         
-        id="_s"+Integer.toString(5)+"_l"+Integer.toString(0)+"_c";
-        H2F h2 = new H2F("E over P"+id+1,50,0.0,10.,50,0.15,0.31);      
-        h2.setTitleX("True Electron Energy (GeV))");
-        h2.setTitleY("Sampling Fraction (E/P)");
+        H1F h00 = new H1F("h00",50,-0.1,0.1); h00.setTitleX("#Deltapx GEN-REC (GeV)");
+        H1F h01 = new H1F("h01",50,-0.1,0.1); h01.setTitleX("#Deltapy GEN-REC (GeV)");
+        H1F h02 = new H1F("h02",50,-0.1,0.1); h02.setTitleX("#Deltapz GEN-REC (GeV)");
+        H1F h03 = new H1F("h03",50,-0.1,0.1); h03.setTitleX("#Deltap  GEN-REC (GeV)");
         
-        id="_s"+Integer.toString(5)+"_l"+Integer.toString(0)+"_c";
-        H2F h3 = new H2F("E vs. P"+id+2,100,0.0,10.,100,0.,2.7);      
-        h3.setTitleX("True Electron Energy (GeV))");
-        h3.setTitleY("Measured Electron Energy (GeV)");
+        H2F h10 = new H2F("h10",50,0,4.0,50,-0.1,1.0);  h10.setTitleX("ECAL #gamma E (GeV)"); h10.setTitleY("#Deltapx  (GeV)");
+        H2F h11 = new H2F("h11",50,0,1.0,50,-0.1,0.1);  h11.setTitleX("ECAL #gamma E (GeV)"); h11.setTitleY("#Deltapy  (GeV)");
+        H2F h12 = new H2F("h12",50,0,1.0,50,-0.1,1.0);  h12.setTitleX("ECAL #gamma E (GeV)"); h12.setTitleY("#Deltapz  (GeV)");
+        H2F h13 = new H2F("h13",50,0,5.0,100,-0.1,5.0); h13.setTitleX("ECAL #gamma E (GeV)"); h13.setTitleY("#Deltap   (GeV)");
         
-        h5 = new H1F("Throw",50,0.,10.); h5.setTitleX("MC Electron E (MeV)");
-        h6 = new H1F("Recon",50,0.,10.); h6.setTitleX("Efficiency");
-        h6.setTitleX("Measured Electron Energy (GeV))");
+        H2F h20 = new H2F("h20",50,0,100.0,100,-1,5); h20.setTitleX("Distance e-#gamma (cm)");        h20.setTitleY("#Deltap  GEN-REC (GeV)");
+        H2F h21 = new H2F("h21",50,0,100.0,100,0,5);  h21.setTitleX("Distance e-#gamma (cm)");        h21.setTitleY("ECAL #gamma E (GeV)");
+        H2F h22 = new H2F("h23",50,0,100.0,100,0,5);  h22.setTitleX("Distance e-#gamma (cm)");        h22.setTitleY("ECAL #gamma E (GeV)"); 
+        H2F h23 = new H2F("h23",50,0,9,50,0,5);       h23.setTitleX("Track Electron Momentum (GeV)"); h23.setTitleY("ECAL #gamma E (GeV)");
+        h21.setTitle("#Deltap>"+dp1); h22.setTitle("#Deltap<"+dp2);  h23.setTitle("#Deltap<"+dp2); 
         
-        int nevent = 0;
+        String lab[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};
+        H2F h30 = new H2F("h20",50,0,9,70,-2,12); h30.setTitleX("Track Electron Momentum (GeV)");h30.setTitleY("PCAL "+lab[0]);
+        H2F h31 = new H2F("h21",50,0,9,70,-5,30); h31.setTitleX("Track Electron Momentum (GeV)");h31.setTitleY("PCAL "+lab[1]);
+        H2F h32 = new H2F("h22",50,0,9,70,-2,12); h32.setTitleX("Track Electron Momentum (GeV)");h32.setTitleY("ECIN "+lab[0]);
+        H2F h33 = new H2F("h23",50,0,9,70,-5,30); h33.setTitleX("Track Electron Momentum (GeV)");h33.setTitleY("ECIN "+lab[1]);
+        h30.setTitle("#Deltap>"+dp1);h31.setTitle("#Deltap>"+dp1);h32.setTitle("#Deltap>"+dp1);h33.setTitle("#Deltap>"+dp1);
+        H2F h40 = new H2F("h30",50,0,9,70,-2,12); h40.setTitleX("Track Electron Momentum (GeV)");h40.setTitleY("PCAL "+lab[0]);
+        H2F h41 = new H2F("h31",50,0,9,70,-5,30); h41.setTitleX("Track Electron Momentum (GeV)");h41.setTitleY("PCAL "+lab[1]);
+        H2F h42 = new H2F("h32",50,0,9,70,-2,12); h42.setTitleX("Track Electron Momentum (GeV)");h42.setTitleY("ECIN "+lab[0]);
+        H2F h43 = new H2F("h33",50,0,9,70,-5,30); h43.setTitleX("Track Electron Momentum (GeV)");h43.setTitleY("ECIN "+lab[1]);
+        h40.setTitle("#Deltap<"+dp2);h41.setTitle("#Deltap<"+dp2);h42.setTitle("#Deltap<"+dp2);h43.setTitle("#Deltap<"+dp2);
+               
+        H2F h50 = new H2F("h40",50,0.0,10.,50,0.15,0.31);      
+        h50.setTitleX("True Electron Momentum (GeV)");
+        h50.setTitleY("Sampling Fraction E/P");
         
-        while(reader.hasEvent()&&nevent<40000){
-            nevent++;
+        H2F h51 = new H2F("h41",50,0.0,10.,50,0.15,0.31);      
+        h51.setTitleX("Track Electron Momentum (GeV)");
+        h51.setTitleY("Sampling Fraction E/P");
+        
+        H2F h52 = new H2F("h42",50,0.0,2.5,50,0.15,0.31);      
+        h52.setTitleX("ECAL Electron Energy (GeV)");
+        h52.setTitleY("Sampling Fraction E/P");
+      
+        H2F eff1 = new H2F("eff1",30,0,10,30,5,30); eff1.setTitleX("True Electron Momentum (GeV)"); eff1.setTitleY("True Electron Theta (deg)");
+        
+        H2F eff1a = new H2F("eff1a",30,0,10,30,5,30);
+        H2F eff1b = new H2F("eff1b",30,0,10,30,5,30); 
+        
+        H2F eff2a = new H2F("eff2a",30,0,10,30,5,30);
+        H2F eff2b = new H2F("eff2b",30,0,10,30,5,30); 
+        
+        H2F eff3a = new H2F("eff3a",30,0,10,30,5,30);
+        H2F eff3b = new H2F("eff3b",30,0,10,30,5,30);
+            
+        int nh=10;
+        H1F effmom[] = new H1F[nh]; H1F effthe[] = new H1F[nh]; 
+        for (int i=0;i<nh;i++) {effmom[i] = new H1F("effmom",50,0.,10.); effmom[i].setTitleX("MC Electron P (GeV)");}
+        for (int i=0;i<nh;i++) {effthe[i] = new H1F("effthe",50,5.,35.); effthe[i].setTitleX("MC Electron #theta (deg)");}
+        
+        int nevent = 0, nev=0, nelec,nphot,npim;
+        
+        List<Particle> elec = null;
+        List<Particle> phot = null;
+        List<Particle>  pim = null;
+        
+        while(reader.hasEvent()){
+            
+        	nevent++;
             DataEvent event = reader.getNextEvent();
-            engine.processDataEvent(event);   
-            readMC(event);
-            readEC(event,"ECAL::clusters") ;           
-            getMIPResponses();
-            double energy = getEcalEnergy(5);
+            
+            if(readMC(event)) { 
+           
+            refE = pmc.get(0).e(); refP = pmc.get(0).p(); refTH = pmc.get(0).theta()*180/Math.PI;
+            
+            eff1.fill(refE, refTH);
+            if(refTH>15)effmom[0].fill(refE);
+            effthe[0].fill(refTH);    
+            
+        	ev.init(event);        	
+        	ev.setEventNumber(10);
+        	ev.requireOneElectron(false);
+       	    ev.setElecTriggerSector(mcsec);
+       	    		
+            if(ev.procEvent(event)) {nev++;
+        		elec = getPART(0.0, 11);      nelec = elec.size();
+        		phot = getPART(0.0, 22);      nphot = phot.size();
+        		pim  = getPART(0.0, 212);      npim = pim.size();
+        		
+        		int npart = nelec+nphot+npim;        		        		
+        		float esum=0,dp=0,chi2pid=1000;
+        		
+        		if(npart>0) {if(refTH>15)effmom[4].fill(refE); effthe[4].fill(refTH); eff1a.fill(refE, refTH);}
+        		if(npim==0) {if(refTH>15)effmom[5].fill(refE); effthe[5].fill(refTH);}
+       		
+        		for (Particle p : phot) {esum+=p.e();}
+        		        		
+        		if(nelec==1) {
+            		chi2pid = (float) Math.abs(elec.get(0).getProperty("chi2pid"));
+            		dp = (float)(pmc.get(0).p()-elec.get(0).p());
+            		
+            		if(npim==0&&chi2pid<3.5)  {
+            			if(refTH>15)                      effmom[6].fill(refE); 
+            			if(refTH>15 && Math.abs(dp)<dp2)  effmom[7].fill(refE); 
+            			if(Math.abs(dp)<dp2)   eff3a.fill(refE,refTH);
+            			effthe[6].fill(refTH); eff2a.fill(refE,refTH); 	                    
+            		}
+            		
+        			if(esum<0.01) {
+        			h00.fill(pmc.get(0).px()-elec.get(0).px());
+               		h01.fill(pmc.get(0).py()-elec.get(0).py());
+               		h02.fill(pmc.get(0).pz()-elec.get(0).pz());
+               		h03.fill(dp);
+        			}
+        			
+                    if(esum>0.01) {
+        			h10.fill(esum,pmc.get(0).px()-elec.get(0).px());
+               		h11.fill(esum,pmc.get(0).py()-elec.get(0).py());
+               		h12.fill(esum,pmc.get(0).pz()-elec.get(0).pz());
+               		h13.fill(esum,dp);
+                    }
+                                  		
+              		float e_mom = (float) elec.get(0).p();
+                    float e_the = (float) Math.toDegrees(elec.get(0).theta());
+                    float e_phi = (float) Math.toDegrees(elec.get(0).phi());
+                    
+              		List<Particle> elecECAL = ev.getECAL((int)elec.get(0).getProperty("pindex"));
+           			float ex=ev.getVar(elecECAL, "x", 1);float ey=ev.getVar(elecECAL, "y", 1);float ez=ev.getVar(elecECAL, "z", 1);
+           			
+           			for (Particle rp : phot) { //loop over photons from REC::Particle
+             			List<Particle> photECAL = ev.getECAL((int)rp.getProperty("pindex"));
+               			for (Particle rc : photECAL) { //loop over photon entries in REC::Calorimeter
+               			  int il = (int)rc.getProperty("layer");
+             		      float ec_the = (float) Math.toDegrees(rc.theta());
+               		      float ec_phi = (float) Math.toDegrees(rc.phi());               			
+               			  float dthe = e_the-ec_the; float dphi = e_phi-ec_phi;
+                          if(il==1) {  //use only PCAL and ECIN entries                        
+               			  float gx=(float)rc.getProperty("x");float gy=(float)rc.getProperty("y");float gz=(float)rc.getProperty("z");
+               			  float dist = (float) Math.sqrt((ex-gx)*(ex-gx)+(ey-gy)*(ey-gy)+(ez-gz)*(ez-gz));
+               			  h20.fill(dist, dp); 
+               			  if(Math.abs(dp)>dp1) {h30.fill(e_mom,dthe); h31.fill(e_mom,dphi); h21.fill(dist,esum);}
+               			  if(Math.abs(dp)<dp2) {h40.fill(e_mom,dthe); h41.fill(e_mom,dphi); h22.fill(dist,esum); h23.fill(e_mom,esum);}
+                          }
+                          if(il==4 && Math.abs(dp)>dp1) {h32.fill(e_mom,dthe); h33.fill(e_mom,dphi);}
+                          if(il==4 && Math.abs(dp)<dp2) {h42.fill(e_mom,dthe); h43.fill(e_mom,dphi);}
+               			}
+               		}
+               		float en=0; for (Particle p : elecECAL) en += (float) p.getProperty("energy");         		  
+               		if(chi2pid<3.5) h51.fill(e_mom, en*1e-3/e_mom);
+        		}
+//        		System.out.println(" "+nevent+" "+nev+" "+nelec+" "+nphot+" "+npim);
+            }
+            
+            dropBanks(event);
+            engine.processDataEvent(event);  
+            readEC(event,"ECAL::clusters");  
+            getUnmatchedResponses();
+            rPC = getPCResponses(mcsec);
+            
+            double ecalE = getEcalEnergy(mcsec);
+
 //          Boolean trig1 = good_pcal &&  good_ecal && part.epc>0.04 && energy>0.12;
 //          Boolean trig2 = good_pcal && !good_ecal && part.epc>0.04;
 //          Boolean trig1 = good_pcal &&  good_ecal && part.epc>0.06 && energy>0.15;
@@ -572,37 +702,31 @@ public class ECPart  {
             
 //            System.out.println("energy,1,2,3 = "+energy+" "+part.epc+" "+part.eec1+" "+part.eec2);
             
-            Boolean good_pcal = epc>0.001;               //VTP reported cluster
+            Boolean good_pcal = epc>0.00;               //VTP reported cluster
             Boolean good_ecal = (eec1+eec2)>0.001 ; //VTP reported cluster
-            Boolean trig1 = good_pcal &&  good_ecal && epc>0.04 && energy>0.12;
+            Boolean trig1 = good_pcal &&  good_ecal && epc>0.04 && ecalE>0.12;
             Boolean trig2 = good_pcal && !good_ecal && epc>0.12;
             		
-            trig1=true; trig2=true;
-            if (trig1||trig2) {
-               h6.fill(refE);
-         	   h1.fill(energy,energy/refP);
-               h2.fill(refE,energy/refP);
-               h3.fill(refP,energy);
+//            trig1=true; trig2=true;
+            
+            if(rPC.size()>0)                   {if(refTH>15)effmom[1].fill(refE);effthe[1].fill(refTH);}
+            if(rPC.size()==1 || rPC.size()==2) {if(refTH>15)effmom[2].fill(refE);effthe[2].fill(refTH);}
+            if(rPC.size()==1)                  {if(refTH>15)effmom[3].fill(refE);effthe[3].fill(refTH);
+                                               h50.fill(refP, ecalE/refP); 
+                                               h52.fill(ecalE,ecalE/refP);}                       
             }
         }
         
-        JFrame frame = new JFrame("Electron Reconstruction");
-        frame.setSize(800,800);
-        GStyle.getH1FAttributes().setMarkerSize(4);
-        GStyle.getH1FAttributes().setMarkerStyle(1);
-        GStyle.getH1FAttributes().setLineWidth(1);
-        EmbeddedCanvas canvas = new EmbeddedCanvas();
-        
-	    ParallelSliceFitter fitter = new ParallelSliceFitter(h1);
+	    ParallelSliceFitter fitter = new ParallelSliceFitter(h52);
         fitter.fitSlicesX();
         
         GraphErrors sigGraph = fitter.getSigmaSlices();   
-        sigGraph.setTitleX("Measured Electron Energy (GeV)");  sigGraph.setTitleY("SIGMA(E/P)"); 	
+        sigGraph.setTitleX("ECAL Electron Energy (GeV)");  sigGraph.setTitleY("SIGMA E/P"); 	
         sigGraph.setMarkerSize(4); sigGraph.setMarkerStyle(1);
         
         GraphErrors meanGraph = fitter.getMeanSlices();  
-        meanGraph.setTitleX("Measured Electron Energy (GeV)"); meanGraph.setTitleY("Sampling Fraction (E/P)"); 	
-        meanGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
+        meanGraph.setTitleX("ECAL Electron Energy (GeV)"); meanGraph.setTitleY("Sampling Fraction E/P"); 	
+        meanGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1); 
           
         int npts = meanGraph.getDataSize(0)  ;
         double[] xm  = new double[npts];
@@ -637,25 +761,118 @@ public class ECPart  {
         	   resGraph.addPoint(xs[n], ys[n], 0., yse[n]);
         	}
         }
-               
-        canvas.divide(3,3);
-		canvas.setAxisTitleSize(18);
-		canvas.setAxisLabelSize(18);
-        canvas.cd(0); canvas.draw(h1);        
-        canvas.cd(1); canvas.draw(h2);
-        canvas.cd(2); canvas.draw(h3);
+        
+        
+        JFrame frame = new JFrame("Electron Reconstruction");
+        frame.setSize(1700,1900);
+        
+        GStyle.getH1FAttributes().setMarkerSize(4);
+        GStyle.getH1FAttributes().setMarkerStyle(1);
+        GStyle.getH1FAttributes().setLineWidth(1);
+        
+
+        /*
         canvas.cd(3); canvas.getPad(3).getAxisY().setRange(0.0,0.028) ; canvas.draw(sigGraph);
         canvas.cd(4); canvas.getPad(4).getAxisX().setRange(0.1,0.51) ; 
                       canvas.getPad(4).getAxisY().setRange(0.0030,0.0075) ; canvas.draw(resGraph);
-//        canvas.cd(4); canvas.getPad(4).getAxisX().setRange(0.00,1.5) ; 
-//                      canvas.getPad(4).getAxisY().setRange(0.00,0.18) ; canvas.draw(resGraph);
-        canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.18,0.26) ; canvas.draw(meanGraph);
-        SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); 
-        canvas.draw(sf,"same");
-        H1F hrat1 = H1F.divide(h6,h5); hrat1.setFillColor(2);
-        hrat1.setTitleX("True Electron Energy (GeV))"); hrat1.setTitleY("Efficiency");
-        canvas.cd(6); canvas.getPad(6).getAxisY().setRange(0.85,1.02);canvas.draw(hrat1);
+        canvas.cd(4); canvas.getPad(4).getAxisX().setRange(0.00,1.5) ; 
+                      canvas.getPad(4).getAxisY().setRange(0.00,0.18) ; canvas.draw(resGraph);
+      */
+    
+//        H2F ratio = H2F.divide(eff2, eff1);
+        H1F effmom1 = H1F.divide(effmom[1],effmom[0]); effmom1.setFillColor(3);
+        H1F effmom2 = H1F.divide(effmom[2],effmom[0]); effmom2.setFillColor(5);
+        H1F effmom3 = H1F.divide(effmom[3],effmom[0]); effmom3.setFillColor(2);
+        H1F effmom4 = H1F.divide(effmom[4],effmom[0]); effmom4.setFillColor(3);
+        H1F effmom5 = H1F.divide(effmom[5],effmom[0]); effmom5.setFillColor(5);
+        H1F effmom6 = H1F.divide(effmom[6],effmom[0]); effmom6.setFillColor(2);
+        H1F effmom7 = H1F.divide(effmom[7],effmom[0]); effmom7.setFillColor(1);        
+        H1F effthe1 = H1F.divide(effthe[1],effthe[0]); effthe1.setFillColor(3);
+        H1F effthe2 = H1F.divide(effthe[2],effthe[0]); effthe2.setFillColor(5);
+        H1F effthe3 = H1F.divide(effthe[3],effthe[0]); effthe3.setFillColor(2);
+        H1F effthe4 = H1F.divide(effthe[4],effthe[0]); effthe4.setFillColor(3);
+        H1F effthe5 = H1F.divide(effthe[5],effthe[0]); effthe5.setFillColor(5);
+        H1F effthe6 = H1F.divide(effthe[6],effthe[0]); effthe6.setFillColor(2);        
+        eff1b=eff1b.divide(eff1a, eff1); eff2b=eff2b.divide(eff2a, eff1); eff3b=eff3b.divide(eff3a, eff1);
+       
+        eff1b.setTitle("e-,#gamma,#pi-"); eff2b.setTitle("#chiPID<3.5"); eff3b.setTitle("#DeltaP<"+dp2);
+        eff1b.setTitleX("True Electron Energy (GeV)" );eff1b.setTitleY("True Electron Theta (deg)");
+        eff2b.setTitleX("True Electron Energy (GeV)" );eff2b.setTitleY("True Electron Theta (deg)");               
+        eff3b.setTitleX("True Electron Energy (GeV)" );eff3b.setTitleY("True Electron Theta (deg)");               
+        effmom1.setTitle("G: PC > 0  Y: PC = 1 or 2  R: PC = 1");        
+        effmom1.setTitleX("True Electron Energy (GeV)"); effmom1.setTitleY("Efficiency #theta>15");
+        effmom2.setTitleX("True Electron Energy (GeV)"); effmom2.setTitleY("Efficiency #theta>15");
+        effmom3.setTitleX("True Electron Energy (GeV)"); effmom3.setTitleY("Efficiency #theta>15");                
+        effthe1.setTitleX("True Electron Theta (deg)");  effthe1.setTitleY("Efficiency");
+        effthe2.setTitleX("True Electron Theta (deg)");  effthe2.setTitleY("Efficiency");
+        effthe3.setTitleX("True Electron Theta (deg)");  effthe3.setTitleY("Efficiency");        
+        effmom4.setTitle("G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2);        
+        effmom4.setTitleX("True Electron Energy (GeV)"); effmom4.setTitleY("Efficiency #theta>15");        
+        effthe4.setTitleX("True Electron Theta (deg)");  effthe4.setTitleY("Efficiency");
         
+        EmbeddedCanvas canvas = new EmbeddedCanvas();               
+        canvas.divide(4,8);
+		canvas.setAxisTitleSize(18);
+		canvas.setAxisLabelSize(18);
+		
+		int ncd=-1;
+		
+		ncd++; canvas.cd(ncd) ; canvas.draw(h00);  
+		ncd++; canvas.cd(ncd) ; canvas.draw(h01);  
+		ncd++; canvas.cd(ncd) ; canvas.draw(h02);  
+		ncd++; canvas.cd(ncd) ; canvas.draw(h03);  
+		
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h10);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h11);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h12);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h13);  
+
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h20);
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h21);
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h22);
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h23);
+		
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h30);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h31);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h32);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h33);  
+		
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h40);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h41);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h42);  
+		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h43);  
+		
+        ncd++; canvas.cd(ncd); canvas.draw(h50);          
+        ncd++; canvas.cd(ncd); canvas.draw(h51);  
+        ncd++; canvas.cd(ncd); canvas.draw(h52);  
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.15,0.31); canvas.draw(meanGraph);          
+        SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  canvas.draw(sf,"same");        
+    
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.05);  canvas.getPad(ncd).setTitleFontSize(18);
+        canvas.draw(effmom1);  canvas.draw(effmom2,"same"); canvas.draw(effmom3,"same");
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.05);  canvas.getPad(ncd).setTitleFontSize(18);
+        canvas.draw(effthe1);  canvas.draw(effthe2,"same"); canvas.draw(effthe3,"same");
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.015); canvas.getPad(ncd).setTitleFontSize(18);
+                               canvas.getPad(ncd).getAxisX().setGrid(true);       canvas.getPad(ncd).getAxisY().setGrid(true);                               
+        canvas.draw(effmom4);  canvas.draw(effmom5,"same"); canvas.draw(effmom6,"same"); canvas.draw(effmom7,"same"); 
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.015); canvas.getPad(ncd).setTitleFontSize(18);
+        canvas.draw(effthe4);  canvas.draw(effthe5,"same"); canvas.draw(effthe6,"same"); 
+
+        
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.9,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff1b);
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.9,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff2b);
+        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.5,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff3b);
+        
+        
+        /*
+        canvas.cd(3); canvas.getPad(3).getAxisY().setRange(0.5,1.015);
+        canvas.draw(hrat1); 
+        canvas.draw(hrat1); canvas.draw(hrat2,"same"); canvas.draw(hrat3,"same");
+        canvas.cd(4); canvas.getPad(4).getAxisY().setRange(0.5,1.015);
+        canvas.draw(hrat2,"same"); 
+        canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.5,1.015);
+        canvas.draw(hrat3,"same");
+        */
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -704,8 +921,7 @@ public class ECPart  {
             engine.processDataEvent(event);
             run = getRunNumber(event);
             readMC(event); readEC(event,"ECAL::clusters");
-            np.clear();
-            np= getNeutralPart();
+            np.clear();np = getNeutralPart();
        		int n=0;
 //       		System.out.println(" ");
        		h5.fill(refP);
@@ -736,6 +952,255 @@ public class ECPart  {
         frame.setVisible(true);  
     }
     
+    public void photonDist(String[] args) {
+    	
+        HipoDataSource reader = new HipoDataSource();
+        ECEngine       engine = new ECEngine();
+        List<DetectorParticle> np = new ArrayList<DetectorParticle>();
+        int run = this.runNumber;    
+        
+        H2F h2a = new H2F("Dist Error 1",50,0,70,50,0.95,4);         
+        h2a.setTitleX("Distance (cm)"); h2a.setTitleY("E1 / E2");
+        
+        H2F h2b = new H2F("Dist Error 2",50,0,70,50,-0.4,0.4);         
+        h2b.setTitleX("Distance (cm)"); h2b.setTitleY("#Delta E / E");
+        
+        H2F h2c = new H2F("Dist Error 3",50,0,4,50,0,4);         
+        h2c.setTitleX("E #gamma 1 / E #gamma 2 (PCAL)"); h2c.setTitleY("E #gamma 1 / E #gamma 2 (ECIN)");
+        
+        H2F h2cc = new H2F("Dist Error 3c",50,0,4,50,0,4);         
+        h2cc.setTitleX("E #gamma 1 / E #gamma 2 (PCAL)"); h2cc.setTitleY("E #gamma 1 / E #gamma 2 (ECIN)");
+        
+        H2F h2d = new H2F("Dist Error 4",50,0,4,50,0,4);         
+        h2d.setTitleX("E #gamma 1 / E #gamma 2 (PCAL)"); h2d.setTitleY("E #gamma 2 / E #gamma 1 (ECIN)");
+
+        H2F h2e = new H2F("Dist Error 5",80,0,70,80,-1.5,1.5);         
+        h2e.setTitleX("Distance (cm)"); h2e.setTitleY("#Delta#theta 12");
+        
+        H2F h2f = new H2F("Dist Error 6",50,0,5.2,50,-0.4,0.4);         
+        h2f.setTitleX("#theta 12"); h2f.setTitleY("#Delta E / E");
+        
+        H2F h2g = new H2F("Dist Error 7",10,1,11,50,-1,1);
+        h2g.setTitleX("Number of photons"); h2g.setTitleY("#Delta E / E");
+        
+        H1F h11 = new H1F("Eff1",50,0,5.2);
+        H1F h12 = new H1F("Eff2",50,0,5.2);
+        H1F h13 = new H1F("Eff3",50,0,5.2);
+        H1F h14 = new H1F("Eff4",50,0,5.2);
+        H1F h15 = new H1F("Eff5",50,0,5.2);
+        H1F h16 = new H1F("Eff6",50,0,5.2);
+        
+        H2F hnpp = new H2F("npp",50,0,5.2,10,1,11);
+                
+        String evioPath = "/Users/colesmith/clas12/sim/photon/";
+        String evioFile = "fc4gev-100k.hipo"; int sec=2; int etot=8;
+        
+        if (args.length == 0) { 
+            reader.open(evioPath+evioFile);
+        } else {
+            String inputFile = args[0];
+            reader.open(inputFile);
+        } 
+        
+        HipoDataSync  writer = new HipoDataSync();
+        writer.open("/Users/colesmith/photon_dist.hipo");
+        
+        engine.init();
+        engine.isMC = true;
+        engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
+        engine.setPCALTrackingPlane(9);
+        engine.setCalRun(2);
+        
+        getCCDB(2);
+        setThresholds("Test",engine);
+        setGeom("2.5");
+        setGoodPhotons(12);
+        
+        int n=0,np2=0,npc=0,nec=0;
+        List<DetectorResponse> rPC  = new ArrayList<>();        
+        List<DetectorResponse> rECi  = new ArrayList<>();        
+        List<DetectorResponse> rECo  = new ArrayList<>();        
+        List<DetectorResponse> rrPC  = new ArrayList<>();        
+        List<DetectorResponse> rrECi1  = new ArrayList<>();        
+        List<DetectorResponse> rrECi2  = new ArrayList<>();        
+        List<DetectorResponse> rrECo  = new ArrayList<>();     
+        
+        int npp=0,indx=-1;
+        float pthresh=1f;
+       
+        while(reader.hasEvent()){
+            DataEvent de = reader.getNextEvent();
+            engine.processDataEvent(de);
+            run = getRunNumber(de);            
+            if (readMC(de)) {
+            	readEC(de,"ECAL::clusters");
+            	np.clear(); np = getNeutralPart(); 
+            	getRECBanks(de,eb);
+            	writer.writeEvent(de);
+            	h11.fill(opa);
+            	npp=0;indx=-1;
+            	if (np.size()>0) {
+            		h12.fill(opa);
+            		for (DetectorParticle phot : np) {
+            			indx++;
+                		double ep = phot.getEnergy(DetectorType.ECAL)/SamplingFractions.getMean(22, phot, eb.ccdb);
+            			if(ep>pthresh) {
+//            				System.out.println(npp+" "+indx+" "+ep);
+            				npp++;           				
+            				for (DetectorResponse dr : phot.getDetectorResponses()) {
+            					
+            				}
+            			}
+            		}
+            	}
+            	hnpp.fill(opa,npp);
+            	if (npp>1)  h13.fill(opa);
+            	if (npp==2) h14.fill(opa);
+            	if (npp>=2) h15.fill(opa);
+            	if (npp>=2) {
+                	double e1=0,e2=0,the1=0,the2=0,dist=0;
+                    p1 = np.get(0);  //Photon 1
+                    p2 = np.get(1);  //Photon 2   
+                    Vector3 n1 = p1.vector(); n1.unit();
+                    Vector3 n2 = p2.vector(); n2.unit();
+                    e1=np.get(0).getEnergy(DetectorType.ECAL);
+                    e2=np.get(1).getEnergy(DetectorType.ECAL);
+                    SF1db = SamplingFractions.getMean(22, np.get(0), eb.ccdb);
+                    e1 = e1/SF1db;
+                    SF1db = SamplingFractions.getMean(22, np.get(1), eb.ccdb);
+                    e2 = e2/SF1db;
+                    Particle g1 = new Particle(22,n1.x()*e1,n1.y()*e1,n1.z()*e1);        
+                    Particle g2 = new Particle(22,n2.x()*e2,n2.y()*e2,n2.z()*e2); 
+                    the1 = Math.acos(g1.cosTheta(g2))*180/3.14159; 
+                    Vector3D r1=null,r2=null;
+                    npc=0; nec=0;
+                    double epc1=0,epc2=0,eeci1=0,eeci2=0;
+    				for (DetectorResponse dr : p1.getDetectorResponses()) {
+    					int lay = dr.getDescriptor().getLayer();
+       					if(lay==1) {r1=dr.getPosition();npc++;epc1=dr.getEnergy();}    					
+       					if(lay==4) {nec++;eeci1=dr.getEnergy();}    					
+       				    				}
+    				for (DetectorResponse dr : p2.getDetectorResponses()) {
+    					int lay = dr.getDescriptor().getLayer();
+    					if(lay==1) {r2=dr.getPosition();npc++;epc2=dr.getEnergy();}    					
+       					if(lay==4) {nec++;eeci2=dr.getEnergy();}    					
+   				}
+                    h2f.fill(opa, (e1+e2)/etot-1);
+                    if(npc==2) {
+                    r2.sub(r1); dist=r2.mag();
+                    h2a.fill(dist, e2>0?e1/e2:1000);
+                    h2b.fill(dist, (e1+e2)/etot-1);
+                    h2e.fill(dist,opa-the1);
+                	if(nec==2) h2c.fill(epc1/epc2,eeci1/eeci2);
+                	if(nec==2 && e1/e2>1.3) h2cc.fill(epc1/epc2,eeci1/eeci2);
+                	h2g.fill(npp,(e1+e2)/etot-1);
+            	    }
+            	}           		
+            }
+
+        }
+        
+        writer.close();
+            	
+            	
+/*
+                n++; 
+            	if(np.size()==2)   np2++; 
+            	double e1=0,e2=0,the1=0,the2=0,dist=0;
+//            	System.out.println(n+" "+np.size()+" "+refE+" "+" "+rPC.size()+" "+rECi.size()+" "+rECo.size());
+            
+            	
+            	double esum=0; int npp=0;
+            	for (DetectorParticle p : np) {
+            		double ep = p.getEnergy(DetectorType.ECAL)/SamplingFractions.getMean(22, p, eb.ccdb);
+            		if(ep>1.4) {esum+= ep; npp++;}
+            	}
+            	h2g.fill(npp,esum/etot-1);
+            	
+            	if (npp>0)  h12.fill(opa);
+            	if (npp>1)  h13.fill(opa);
+            	if (npp>=2) h14.fill(opa);
+            	if (npp==2) h16.fill(opa);
+            	if (false) {
+            		h15.fill(opa);
+                	p1 = np.get(0);  //Photon 1
+                	p2 = np.get(1);  //Photon 2   
+                	Vector3 n1 = p1.vector(); n1.unit();
+                	Vector3 n2 = p2.vector(); n2.unit();
+                	e1=np.get(0).getEnergy(DetectorType.ECAL);
+                	e2=np.get(1).getEnergy(DetectorType.ECAL);
+                	SF1db = SamplingFractions.getMean(22, np.get(0), eb.ccdb);
+                	e1 = e1/SF1db;
+                	SF1db = SamplingFractions.getMean(22, np.get(1), eb.ccdb);
+                	e2 = e2/SF1db;
+                    Particle g1 = new Particle(22,n1.x()*e1,n1.y()*e1,n1.z()*e1);        
+                    Particle g2 = new Particle(22,n2.x()*e2,n2.y()*e2,n2.z()*e2);   
+                    the1 = Math.acos(g1.cosTheta(g2))*180/3.14159;      
+                    
+                	Vector3D r1 = rPC.get(0).getPosition();
+                	Vector3D r2 = rPC.get(1).getPosition();
+                	r2.sub(r1); dist=r2.mag();  
+//                	float epc1  = (float) rPC.get(0).getEnergy();
+//                	float epc2  = (float) rPC.get(1).getEnergy();
+//                	float eeci1 = (float) rECi.get(0).getEnergy();
+//                	float eeci2 = (float) rECi.get(1).getEnergy();
+//                	float eeco1 = (float) rPC.get(0).getEnergy();
+//                	float eeco2 = (float) rPC.get(1).getEnergy();
+                	
+                	double epc1 = DetectorResponse.getListByLayer(np.get(0).getDetectorResponses(),DetectorType.ECAL, 1).get(0).getEnergy();
+                	double epc2 = DetectorResponse.getListByLayer(np.get(1).getDetectorResponses(),DetectorType.ECAL, 1).get(0).getEnergy();
+//                	double eeci1 = DetectorResponse.getListByLayer(np.get(0).getDetectorResponses(),DetectorType.ECAL, 4).get(0).getEnergy();
+//                	double eeci2 = DetectorResponse.getListByLayer(np.get(1).getDetectorResponses(),DetectorType.ECAL, 4).get(0).getEnergy();
+                	rrECi1 = DetectorResponse.getListByLayer(np.get(0).getDetectorResponses(),DetectorType.ECAL, 4);
+                	rrECi2 = DetectorResponse.getListByLayer(np.get(1).getDetectorResponses(),DetectorType.ECAL, 4);
+                	double eeci1 = rrECi1.size()>0 ? rrECi1.get(0).getEnergy():0;
+                	double eeci2 = rrECi2.size()>0 ? rrECi2.get(0).getEnergy():0;
+                	h2a.fill(dist, e2>0?e1/e2:1000);
+                	h2b.fill(dist, (e1+e2)/etot-1); h2f.fill(opa, (e1+e2)/etot-1);
+                	if(eeci2>0 && epc2>0) h2c.fill(epc1/epc2,eeci1/eeci2);
+                	if(eeci1>0 && epc2>0) h2d.fill(epc1/epc2,eeci2/eeci1);
+                	h2e.fill(dist,opa-the1);
+                	
+            	}
+            	*/
+//            	System.out.println(dist+" "+the1+" "+opa+" "+(e1+e2)+" "+(e2>0?e1/e2:0));
+
+
+        System.out.println("Total events= "+n+" np2= "+np2+" npc= "+npc);
+        
+        JFrame frame = new JFrame("Photon Efficieny");
+        frame.setSize(800,800);
+        EmbeddedCanvas canvas = new EmbeddedCanvas(); canvas.divide(4,4);
+        
+        canvas.cd(0); canvas.draw(h2a);
+        canvas.cd(1); canvas.draw(h2b);
+        canvas.cd(2); canvas.draw(h2f);
+        canvas.cd(3); canvas.draw(h2e);
+        
+        canvas.cd(4); canvas.draw(h2c);
+        canvas.cd(5); canvas.draw(h2cc);
+         
+        canvas.cd(6); canvas.draw(hnpp);
+        canvas.cd(7); canvas.draw(h2g);
+        canvas.cd(8); canvas.draw(h2g.projectionY());
+        canvas.cd(9); canvas.draw(h2g.projectionX());
+        
+        H1F hr12 = H1F.divide(h12,  h11); hr12.setFillColor(4); hr12.setTitleY("Eff n>0");   hr12.setTitleX("Opening Angle (deg)");
+        H1F hr13 = H1F.divide(h13,  h11); hr13.setFillColor(3); hr13.setTitleY("Eff n>1");   hr13.setTitleX("Opening Angle (deg)");
+        H1F hr14 = H1F.divide(h14,  h11); hr14.setFillColor(2); hr14.setTitleY("Eff n==2");  hr14.setTitleX("Opening Angle (deg)");
+        H1F hr15 = H1F.divide(h15,  h11); hr15.setFillColor(5); hr15.setTitleY("Eff n>=2");  hr15.setTitleX("Opening Angle (deg)");
+//        H1F hr16 = H1F.divide(h16,  h11); hr16.setFillColor(6); hr16.setTitleY("EFF n==2");  hr16.setTitleX("Opening Angle (deg)");
+        canvas.cd(10);  canvas.draw(h11); canvas.draw(h12,"same"); 
+        canvas.cd(11);  canvas.draw(hr13); 
+        canvas.cd(12); canvas.draw(hr14); 
+        canvas.cd(13); canvas.draw(hr15); 
+//        canvas.cd(12); canvas.draw(hr16); 
+        
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);          
+    }
+    
     public void photonDemo(String[] args) {
     	
         HipoDataSource reader = new HipoDataSource();
@@ -743,7 +1208,7 @@ public class ECPart  {
         List<DetectorParticle> np = new ArrayList<DetectorParticle>();
         int run = this.runNumber;
         
-        String evioPath = "/Users/colesmith/clas12/sim/photon/hipo/";
+        String evioPath = "/Users/colesmith/imac/clas12/sim/photon/hipo/";
         String evioFile = "fc-phot-20k-25deg-r2-0.2-3.8-newgeom-gemc2.6.hipo"; int sec=2;
         
         if (args.length == 0) { 
@@ -785,6 +1250,9 @@ public class ECPart  {
         setGeom("2.5");
         setGoodPhotons(12);
       
+        int n=0, ng=0, npp=0;
+        float pthresh=0.1f;
+        
         while(reader.hasEvent()){
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);
@@ -793,12 +1261,16 @@ public class ECPart  {
             	readEC(event,"ECAL::clusters");
             	np.clear(); np = getNeutralPart();
             	h5.fill(refP);
-            	
-            	if(np.size()>0) {
-            		h11.fill(refP);
+            	npp=0;
+            	if(np.size()>0) { // 1 or more neutral particles id=22,2112
+            		h11.fill(refP); n++;
         	    	int n1=0,n4=0,n7=0,sum=0;
         	    	double e1=0, e4=0, e7=0, e1p=0, e4p=0, e7p=0;
             	    for (DetectorParticle phot : np) {
+            	    	double p1 = phot.getEnergy(DetectorType.ECAL);
+            	    	if(p1>pthresh) {
+            	    	npp++;
+//            	    	System.out.println(refP+" "+p1/SamplingFractions.getMean(22, phot, eb.ccdb));
             	    	for (DetectorResponse dr : phot.getDetectorResponses()) {
             	    		int lay = dr.getDescriptor().getLayer();
             	    		double e = dr.getEnergy();
@@ -806,16 +1278,19 @@ public class ECPart  {
             	    		if(lay==4) {n4++; e4p+=e; h221.fill(n4); if(n4==1) {e4=e; h220.fill(refP);}}
             	    		if(lay==7) {n7++; e7p+=e; h231.fill(n7); if(n7==1) {e7=e; h230.fill(refP);}}
             	    	}
+            	    	}
             	    }
             	    h21.fill(refP,n1); h22.fill(refP,n4); h23.fill(refP,n7);
                     if(n1>1) h212.fill(e1/e1p);
                     if(n4>1) h222.fill(e4/e4p);
                     if(n7>1) h232.fill(e7/e7p);
             	}
-            	if(np.size()==1) {
-            		h12.fill(refP);
+            	if(npp==1) { // only 1 neutral particle id=22,2112            		
+            		h12.fill(refP); ng++;
             	    for (DetectorParticle phot : np) {
+            	    	double p1 = phot.getEnergy(DetectorType.ECAL);
             	    	int sum=0;
+ //           	    	if(p1>pthresh) {
             	    	for (DetectorResponse dr : phot.getDetectorResponses()) {
             	    		int lay = dr.getDescriptor().getLayer();
             	    		if(lay==1) sum+= 100;
@@ -825,20 +1300,22 @@ public class ECPart  {
             	    	if(sum>=100) h13.fill(refP);
             	    	if(sum>=140) h14.fill(refP);
             	    	if(sum==147) h15.fill(refP);
+//            	    	}
             		}
             	}
             }
         }
-        
+        System.out.println("Total events= "+n+" ng= "+ng);
+
         JFrame frame = new JFrame("Photon Reconstruction");
         frame.setSize(800,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas(); canvas.divide(4,3);
         
         H1F hr11 = H1F.divide(h11,  h5); hr11.setFillColor(3); hr11.setTitleY("Photon Efficiency n>0"); hr11.setTitleX("Photon Momentum (GeV)");
         H1F hr12 = H1F.divide(h12,  h5); hr12.setFillColor(1); hr12.setTitleY("Photon Efficiency n=1"); hr12.setTitleX("Photon Momentum (GeV)");
-        H1F hr13 = H1F.divide(h13,  h5); hr13.setFillColor(2); hr13.setTitleY("Photon Eff 1");   hr13.setTitleX("Photon Momentum (GeV)");
-        H1F hr14 = H1F.divide(h14,  h5); hr14.setFillColor(5); hr14.setTitleY("Photon Eff 14");  hr14.setTitleX("Photon Momentum (GeV)");
-        H1F hr15 = H1F.divide(h15,  h5); hr15.setFillColor(4); hr15.setTitleY("Photon Eff 147"); hr15.setTitleX("Photon Momentum (GeV)");
+        H1F hr13 = H1F.divide(h13,  h5); hr13.setFillColor(2); hr13.setTitleY("Photon Eff 1");          hr13.setTitleX("Photon Momentum (GeV)");
+        H1F hr14 = H1F.divide(h14,  h5); hr14.setFillColor(5); hr14.setTitleY("Photon Eff 14");         hr14.setTitleX("Photon Momentum (GeV)");
+        H1F hr15 = H1F.divide(h15,  h5); hr15.setFillColor(4); hr15.setTitleY("Photon Eff 147");        hr15.setTitleX("Photon Momentum (GeV)");
         canvas.cd(4);  
         canvas.draw(hr11); canvas.draw(hr12,"same"); canvas.draw(hr13,"same"); canvas.draw(hr14,"same"); canvas.draw(hr15,"same");
         
@@ -876,10 +1353,13 @@ public class ECPart  {
     public void pizeroDemo(String[] args) {
     	
         HipoDataSource reader = new HipoDataSource();
+//     	HipoReader reader = new HipoReader();
         ECEngine       engine = new ECEngine();
+        List<DetectorParticle> np = new ArrayList<DetectorParticle>();
         
         H2F h2a,h2b,h2c,h2d,h2e,h2f;
         H1F h5a,h5b,h5c,h6,h7a,h7b,h8;
+        H2F hmp;
         
         int n2hit=0,n2rec1=0,n2rec2=0,nimcut=0;        
         double emax = 12.5;
@@ -904,6 +1384,8 @@ public class ECPart  {
         
         h5 = new H1F("Thrown",50,0.,emax); h5.setTitleX("MC Pizero E (MeV)");
         
+        hmp = new H2F("Mult",50,0,12,10,1,11);
+        
 //        h5a = new H1F("2Gamma",50,0.,20.);  h5a.setTitleX("Opening Angle (deg)");
 //        h5b = new H1F("2Gamma",50,0.,20.);  h5b.setTitleX("Opening Angle (deg)");
 //        h5c = new H1F("2Gamma",50,0.,20.);  h5c.setTitleX("Opening Angle (deg)");
@@ -924,12 +1406,17 @@ public class ECPart  {
         hview[3] = new H1F("Shared View UVW",50,100,200);         
         hview[3].setTitleX("Invariant Mass (MeV)");
                 
-        String evioPath = "/Users/colesmith/clas12/sim/pizero/hipo/";
+        String evioPath = "/Users/colesmith/clas12/sim/pizero/";
+//        String evioPath = "/Users/colesmith/clas12/sim/";
+        
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
 //      String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo4"; int sec=2;
 //    String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35-r5716.hipo"; int sec=2;
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35-r5716.hipo"; int sec=2;
+        
         String evioFile = "fc-pizero-100k-s2-newgeom-15-1.0-12.0.hipo"; int sec=2;
+//        String evioFile = "rga_fall2018_s2-pizero.hipo"; int sec=2;
+//        String evioFile = "fc-pizero-s2-new-4.4.0.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
         
 //         evioPath = "/Users/colesmith/ECMON/HIPO4/fbossu/3deg/";
@@ -938,6 +1425,7 @@ public class ECPart  {
         
         // GEMC file: 10k 2.0 GeV pizeros thrown at 25 deg into Sector 2 using GEMC 2.4 geometry
         // JLAB: evioPath = "/lustre/expphy/work/hallb/clas12/lcsmith/clas12/forcar/gemc/evio/";
+         
         
         if (args.length == 0) { 
             reader.open(evioPath+evioFile);
@@ -945,8 +1433,11 @@ public class ECPart  {
             String inputFile = args[0];
             reader.open(inputFile);
         }
-              
-//        engine.setGeomVariation("rga_fall2018");
+     
+        HipoDataSync  writer = new HipoDataSync();
+        writer.open("/Users/colesmith/pizero_demo.hipo");
+             
+//        engine.setGeomVariation("rga_fall2018"); //this must be set before engine.init()
         engine.init();
         engine.isMC = isMC;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
@@ -959,14 +1450,17 @@ public class ECPart  {
         setGoodPhotons(12);
                 
         while(reader.hasEvent()){
-            DataEvent event = reader.getNextEvent();
-            dropBanks(event);
-            if (engine.processDataEvent(event)) {   
-//            int iview = engine.getSharedView();
+            DataEvent de = reader.getNextEvent();
+            dropBanks(de);
+            if (engine.processDataEvent(de)) {   
+//            int iview = engine.getClusters().get(0).getStatus();
             
-            if(readMC(event)) {  
-            	readEC(event,"ECAL::clusters");
+            if(readMC(de)) {  
+            	readEC(de,"ECAL::clusters");
             	getNeutralResponses();
+            	getRECBanks(de,eb);
+            	writer.writeEvent(de);
+ //           	np.clear(); np = getNeutralPart(); hmp.fill(refE,np.size());            	
             	double   invmass = 1e3*Math.sqrt(getTwoPhotonInvMass(sec));            
             	boolean goodmass = invmass>0 && invmass<200;            
             	boolean    pcec1 = goodPhotons(121,p1,p2);
@@ -977,18 +1471,18 @@ public class ECPart  {
 
             	h5.fill(refE);
             	if (goodmass) {
-                                  	n2hit++;   h6.fill(refE);  	            
-                  if(pcec1||pcec2) {n2rec1++; h7a.fill(refE);}
-                  if(pcec1&&pcec2) {n2rec2++; h7b.fill(refE);}
+                                      n2hit++;   h6.fill(refE);  	            
+                  if(pcec1 || pcec2) {n2rec1++; h7a.fill(refE);}
+                  if(pcec1 && pcec2) {n2rec2++; h7b.fill(refE);}
           
                   if (pcec1&&pcec2) {
-//                	  if( engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
+//                	  if(engine.hasSharedView()) {hview[iview].fill(invmass);hview[3].fill(invmass);}
                 	  if(true) {
-                	  h2a.fill(refE, invmass);                                    			  //Two-photon invariant mass                
-                	  h2b.fill(refE, X);                                     			  //Pizero energy asymmetry
+                	  h2a.fill(refE, invmass);                                        //Two-photon invariant mass                
+                	  h2b.fill(refE, X);                                     	      //Pizero energy asymmetry
                 	  h2c.fill(refE,(Math.sqrt(tpi2)-refE));            			  //Pizero total energy error
-                	  h2e.fill(Math.acos(cth)*180/Math.PI,(Math.sqrt(tpi2)-refE)); //Pizero total energy error
-                	  h2f.fill(Math.acos(cth)*180/Math.PI,invmass-mpi0*1e3);            	  //Pizero total energy error
+                	  h2e.fill(Math.acos(cth)*180/Math.PI,(Math.sqrt(tpi2)-refE));    //Pizero total energy error
+                	  h2f.fill(Math.acos(cth)*180/Math.PI,invmass-mpi0*1e3);          //Pizero total energy error
                 	  h2d.fill(refE,Math.acos(cpi0)*180/Math.PI-refTH); 			  //Pizero theta angle error
                 	  nimcut++; h8.fill(refE);
                 	  }
@@ -998,10 +1492,12 @@ public class ECPart  {
             }
         }
         
+        writer.close();
+        
         H1F hrat1 = H1F.divide(h6,  h5); hrat1.setFillColor(2); hrat1.setTitleY("PC 2 Photon Eff");    hrat1.setTitleX("Pizero Energy (GeV)");
         H1F hrat2 = H1F.divide(h7a, h5); hrat2.setFillColor(2); hrat2.setTitleY("PC*EC 1 Photon Eff"); hrat2.setTitleX("Pizero Energy (GeV)");
         H1F hrat3 = H1F.divide(h7b, h5); hrat3.setFillColor(2); hrat3.setTitleY("PC*EC 2 Photon Eff"); hrat3.setTitleX("Pizero Energy (GeV)");
-        H1F hrat4 = H1F.divide(h8, h6);  hrat4.setFillColor(2); hrat4.setTitleY("PC*EC NIMCUT Eff");        hrat4.setTitleX("Pizero Energy (GeV)");
+        H1F hrat4 = H1F.divide(h8, h6);  hrat4.setFillColor(2); hrat4.setTitleY("PC*EC NIMCUT Eff");   hrat4.setTitleX("Pizero Energy (GeV)");
         
         H1F h1 = h2a.projectionY();  h1.setOptStat("1100") ; h1.setFillColor(4); h1.setTitleX("Two-Photon Invariant Mass (MeV)");
         H1F h2 = h2b.projectionY();  h2.setOptStat("1100") ; h2.setFillColor(4); h2.setTitleX("X:(E1-E2)/(E1+E2)");
@@ -1018,7 +1514,7 @@ public class ECPart  {
         JFrame frame = new JFrame("Pizero Reconstruction");
         frame.setSize(800,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-        canvas.divide(4,5);
+        canvas.divide(4,6);
 		canvas.setAxisTitleSize(18);
 		canvas.setAxisLabelSize(18);
 		
@@ -1047,6 +1543,8 @@ public class ECPart  {
         canvas.cd(18); hview[2].setOptStat("1100"); canvas.draw(hview[2]);
         canvas.cd(19); hview[3].setOptStat("1100"); canvas.draw(hview[3]);
         
+        canvas.cd(20); canvas.draw(hmp);
+        
 	    ParallelSliceFitter fitter = new ParallelSliceFitter(h2a);
         fitter.fitSlicesX();  
         dumpGraph("/Users/colesmith/pi0fit.vec",fitter.getSigmaSlices());
@@ -1060,9 +1558,10 @@ public class ECPart  {
         ECPart part = new ECPart();  
         part.initGraphics();
 //     	part.pizeroDemo(args);
-     	part.photonDemo(args);
+//     	part.photonDist(args);
+//     	part.photonDemo(args);
 //     	part.neutronDemo(args);
-//        part.electronDemo(args);
+        part.electronDemo(args);
     }
     
 }
