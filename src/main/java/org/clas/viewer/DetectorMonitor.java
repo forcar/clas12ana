@@ -152,19 +152,19 @@ public class DetectorMonitor implements ActionListener {
 
     public String variation = "default";
     public String      geom = "2.5";
-    public String    config = "phot";  //For re-running ECEngine this should always be "phot" to match original cooking
+    public String    config = "phot";  //When re-running ECEngine from cooked data this should always be "phot"
 	
 	public Boolean  isHipo3Event = true;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-//  int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
-    int[][] sthrPhot = {{10,10,10},{1,9,9},{8,8,8}};
+    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+//    int[][] sthrPhot = {{10,10,10},{1,9,9},{8,8,8}};
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-//  int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
+//    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
     int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
         
@@ -211,12 +211,13 @@ public class DetectorMonitor implements ActionListener {
     
 //    public CalibrationConstants    calib = null;
     public ConstantsManager           cm = new ConstantsManager();
-    public EBCCDBConstants        ebccdb = null;
     public ConstantsManager         ebcm = new ConstantsManager();
+    public EBCCDBConstants        ebccdb = null;
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
     public float                logParam = 2f;
-
+    public String                   root = " ";
+    public String                 osType = " ";
     int ntimer = 0;
     
     String[]  ccdbTables = new String[]{
@@ -242,7 +243,7 @@ public class DetectorMonitor implements ActionListener {
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
-        
+        root           = "DetectorMonitor."+detectorName+".";
         numberOfEvents = 0;        
         eventResetTime_current[0]=0;
         eventResetTime_current[1]=0;     
@@ -252,8 +253,7 @@ public class DetectorMonitor implements ActionListener {
             eventResetTime_current[i]=eventResetTime_default[i];
         }
         outPath = FileSystemView.getFileSystemView().getHomeDirectory().toString()+"/CLAS12ANA/";
-        System.out.println(detectorName+" outPath = "+outPath);
-        getEnv();
+        osType  = System.getProperty("os.name");
         pawPath = outPath+"paw/";
         vecPath = pawPath+detectorName+"/";  
         jawPath = outPath+"jaw/";
@@ -261,16 +261,16 @@ public class DetectorMonitor implements ActionListener {
         TimeSlice.put("UVW", 3);
         TimeSlice.put("FADC Slot", 16);
         TimeSlice.put("HV Slot", 24);
+        System.out.println(root+"outPath = "+outPath);
+        System.out.println(root+"osType  = "+osType);
+        System.out.println(root+"ebcm.init");
         ebcm.init(EBCCDBConstants.getAllTableNames());
-    	cm.init(Arrays.asList(ccdbTables));
-    }
-    
-    public void getEnv() {        
-        String ostype = System.getProperty("os.name"); 
-        System.out.println("DetectorMonitor.getEnv(): os.name = "+ostype);
+        System.out.println(root+"cm.init");
+     	cm.init(Arrays.asList(ccdbTables));
     }
     
     public void init() {
+    	System.out.println(root+"init");
         initPanel();    	
     }
     
@@ -283,7 +283,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initEBCCDB(int runNumber) {    
-    	System.out.println("DetectorMonitor."+detectorName+".initEBCCDB("+runNumber+")");
+    	System.out.println(root+"initEBCCDB("+runNumber+")");
     	ebccdb = new EBCCDBConstants(runNumber,ebcm);
     }
     
@@ -297,7 +297,6 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initGStyle() {
-
         GStyle.getAxisAttributesX().setTitleFontSize(14);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
         GStyle.getAxisAttributesY().setTitleFontSize(14);
@@ -341,7 +340,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void configEngine(String val) {
-    	System.out.println("DetectorMonitor.configEngine("+val+")");
+    	System.out.println(root+"configEngine("+val+")");
     	engine.isSingleThreaded=true;
         engine.setVariation(variation);
         engine.init();
@@ -351,7 +350,7 @@ public class DetectorMonitor implements ActionListener {
    }
     
     public void setEngineThresholds(String val) {
-    	System.out.println("DetectorMonitor.setEngineThresholds("+val+")");
+    	System.out.println(root+"setEngineThresholds("+val+")");
         engine.setStripThresholds(getStripThr(val, 0, 1),
                                   getStripThr(val, 1, 1),
                                   getStripThr(val, 2, 1));  
@@ -403,24 +402,24 @@ public class DetectorMonitor implements ActionListener {
         return 0;
      } 
     
-    public void dropBanks(DataEvent event) {
+    public void dropBanks(DataEvent de) {
     	
     	if(!isEngineReady) {configEngine("phot"); isEngineReady = true;}
     	
 //    	System.out.println(" ");
 //    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));
 //    	event.show();
-        if(!isHipo3Event&&event.hasBank("ECAL::clusters")) event.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
-        if( isHipo3Event&&event.hasBank("ECAL::clusters")) event.removeBank("ECAL::clusters");
-        if( isHipo3Event&&event.hasBank("ECAL::hits"))     event.removeBank("ECAL::hits");
-        if( isHipo3Event&&event.hasBank("ECAL::peaks"))    event.removeBank("ECAL::peaks");
-        if( isHipo3Event&&event.hasBank("ECAL::calib"))    event.removeBank("ECAL::calib");
-        if( isHipo3Event&&event.hasBank("ECAL::moments"))  event.removeBank("ECAL::moments");
-
-//        System.out.println(" ");
-//        event.show();        
+        if(!isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
+        if( isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBank("ECAL::clusters");
+        if( isHipo3Event&&de.hasBank("ECAL::hits"))     de.removeBank("ECAL::hits");
+        if( isHipo3Event&&de.hasBank("ECAL::peaks"))    de.removeBank("ECAL::peaks");
+        if( isHipo3Event&&de.hasBank("ECAL::calib"))    de.removeBank("ECAL::calib");
+        if( isHipo3Event&&de.hasBank("ECAL::moments"))  de.removeBank("ECAL::moments");
+//      System.out.println(" ");
+//      event.show();        
 //    	System.out.println("CLUSTER AFTER? "+event.hasBank("ECAL::clusters"));
-        if(event.hasBank("ECAL::adc")) engine.processDataEvent(event);     	
+        
+        if(de.hasBank("ECAL::adc")) engine.processDataEvent(de);     	
     }
     
     public void analyze() {
@@ -883,7 +882,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getBeamEnergy(int run) { 
-    	if (run<=10)    return  7.54626f;
+    	if (run<=100)   return 10.7f;
     	if (run<=5699)  return 10.6041f;
     	if (run<=5875)  return  7.54626f;
     	if (run<=6000)  return  6.53536f;
@@ -971,7 +970,7 @@ public class DetectorMonitor implements ActionListener {
     public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
     }
     
-// GRAPHING    
+// GRAPH HELPERS   
         
     public void GraphPlot(GraphErrors graph, EmbeddedCanvas c, int zone, float xmin, float xmax, float ymin, float ymax, int mcol, int msiz, int msty, String xtit, String ytit, String opt) {
     	c.cd(zone); c.getPad(zone).getAxisX().setRange(xmin, xmax); c.getPad(zone).getAxisY().setRange(ymin, ymax); 
@@ -1032,7 +1031,10 @@ public class DetectorMonitor implements ActionListener {
          System.out.println("Exiting getGraph()");
          return g;
 
-    }    
+    } 
+    
+    //TIMELINE HELPERS
+    
     public void setTLflag(Boolean flag) {
     	this.TLflag = flag;
     	if (getRunNumber()>0) plotHistos(getRunNumber());
@@ -1134,6 +1136,8 @@ public class DetectorMonitor implements ActionListener {
     	return hnew;
     }
     
+    //FITTING HELPERS
+    
     public FitData fitEngine(GraphErrors g, int ff, int fmin) {
         FitData fd = new FitData(g);        
     	if(g.getDataSize(0)==0) return fd;
@@ -1191,6 +1195,8 @@ public class DetectorMonitor implements ActionListener {
         }
         return map;
     }
+    
+    //DATAGROUP HELPERS
  
     public void readDataGroup(int run, TDirectory dir) {
         String folder = getDetectorName() + "/";
