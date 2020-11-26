@@ -539,8 +539,7 @@ public class ECt extends DetectorMonitor {
   	   
        float rftime = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
 
-       DataBank recRunRF  = null;
-       float trf = 0;
+       DataBank recRunRF  = null; float trf = 0;
 
        if(event.hasBank("RUN::rf"))  {
     	   recRunRF = event.getBank("RUN::rf");             
@@ -576,9 +575,7 @@ public class ECt extends DetectorMonitor {
        }
        }
        
-       boolean goodEvent = event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
-       
-       if(!goodEvent) return;
+       if(!(event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter"))) return;
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
@@ -661,7 +658,7 @@ public class ECt extends DetectorMonitor {
                        float vel=c; 
                        if(Math.abs(pid)==211) vel=Math.abs(beta*c); //use EB beta for pion calibration residuals
                        
-                	   float vcorr = STT - phase + TVOffset;  // phose=0 unless STT is not phase corrected (early engineering runs)
+                	   float vcorr = STT - phase + TVOffset;  // phase=0 unless STT is not phase corrected (early engineering runs)
                 	   float pcorr = path/vel;
                        float tvcor = tu  - vcorr;
                        float resid = tvcor - pcorr; 
