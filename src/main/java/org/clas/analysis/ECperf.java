@@ -41,11 +41,14 @@ public class ECperf extends DetectorMonitor {
 	DataGroup dg = null;
 	int nc=0;
 	
+	int trigger_sect;
+	
 	public boolean goodE,goodP,goodPROT,goodPBAR,goodPIP,goodPIM,goodNEUT,goodPHOT,goodPI0;
 	public int nE,nP,nPROT,nPBAR,nPIP,nPIM,nNEUT,nPHOT;
 	
 	public boolean taggedPI0, taggedETA;
 	String[]   det = new String[]{"PCAL ","ECIN ","ECOU "};
+	String[]  det5 = new String[]{"P1B","P1A","PCAL ","ECIN ","ECOU "};
 	String[] scdet = new String[]{"P1A ","P1B ","P2 "};
 	String[]   xyz = new String[]{"X","Y","Z"}; 
 	
@@ -75,7 +78,7 @@ public class ECperf extends DetectorMonitor {
 	public int   p_sect;
 	public float p_mom, p_the, p_phi, p_vx, p_vy, p_vz, p_cz, p_x, p_y;
 	
-	public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum,e_ecal_sf;
+	public float e_ecal_esum,e_ecal_pcsum,e_ecal_ecsum,e_ecal_rat,e_ecal_sf;
 	public float p_ecal_esum,p_ecal_pcsum,p_ecal_ecsum;
         
 	public int   prot_part_ind;
@@ -115,8 +118,10 @@ public class ECperf extends DetectorMonitor {
 	public List<Particle> neut_ecal = new ArrayList<Particle>();
 	public List<NeutralMeson> nm_ecal = new ArrayList<NeutralMeson>();
 //	public IndexedList<List<Float>>  ecal_rad = new IndexedList<List<Float>>(3);
-	public IndexedList<List<Particle>> ecphot = new IndexedList<List<Particle>>(2);	
+	public IndexedList<List<Particle>> ecphot      = new IndexedList<List<Particle>>(2);	
 	public IndexedList<List<Particle>> ecphot_filt = new IndexedList<List<Particle>>(1);	
+	public IndexedList<List<Particle>>  ecpim      = new IndexedList<List<Particle>>(2);	
+	public IndexedList<List<Particle>>  ecpim_filt = new IndexedList<List<Particle>>(1);	
 	public IndexedList<Float> elec_ftof_resid = new IndexedList<Float>(3);
 	public IndexedList<Float> posi_ftof_resid = new IndexedList<Float>(3);
 	
@@ -255,6 +260,7 @@ public class ECperf extends DetectorMonitor {
 	    if (nE==0)            fillECtrig(3);
 	    if (nPIM>0)           fillECtrig(4);
 	    if (nPIM>0 && nE==0) {fillECtrig(5); fillECpim();}
+//	    if (nPIM>0 && nE>0) {fillECtrig(5); fillECpim();}
 	    
 	    if (!makeELEC()) return;
         
@@ -285,11 +291,15 @@ public class ECperf extends DetectorMonitor {
 	    goodPBAR = nPBAR>0;
 	    goodNEUT = nNEUT>0;
 	    goodPHOT = nPHOT>0;	    
-	    ecphot.clear(); ecphot_filt.clear();
+	    ecphot.clear(); ecphot_filt.clear(); ecpim_filt.clear();
 	    if(goodP) makePOSI();
 	    if(goodPHOT) {
 	    	ecphot      = getECALClusters(phot_ecal); 
 	    	ecphot_filt = filterECALClusters(ecphot,2,22); 
+	    }
+	    if(goodPIM) {
+	    	ecpim      = getECALClusters(pim_ecal);
+	    	ecpim_filt = filterECALClusters(ecpim,4,212);
 	    }
     } 
     
@@ -342,13 +352,14 @@ public class ECperf extends DetectorMonitor {
 		fillECposi();
 		fillECtime();
 		fillSCelec();
+    	fillTrajXY();
 		
 	    if(goodPIP) { // FC pi+
 	    	if(select_epip()) { //(e' pi+) tagged neutron
 	    		fillECpip();
 	    		fillECneut();
 	    		fillECphot();	    		
-	    	}	
+	    	}
 	    	fillECpipFocus();
 	    }
 
@@ -449,33 +460,34 @@ public class ECperf extends DetectorMonitor {
 	        tag = is+"_"+st+"_"+k+"_"+run;
 			dg.addDataSet(makeH2(tab+"_1_",tag,60,0,EB,60,0.12,0.35,"","p (GeV)","E/P"),is-1);
 			dg.addDataSet(makeH2(tab+"_2_",tag,68,1,69,50,0.12,0.35,"","PCAL U STRIP","E/P"),is-1+6);
-			dg.addDataSet(makeH2(tab+"_3_",tag,68,1,69,50,-4,4,     "","PCAL U STRIP","#chi PID"),is-1+12); dg.addDataSet(f1,is-1+12);
+			dg.addDataSet(makeH2(tab+"_3_",tag,68,1,69,50,-5,4,     "","PCAL U STRIP","#chi PID"),is-1+12); dg.addDataSet(f1,is-1+12);
 //			dg.addDataSet(makeH2(tab+"_4_",tag,70,0,EB/6,70,0,EB/5, "","PC (GeV)","EC (GeV)"),is-1+18);	
-			dg.addDataSet(makeH2(tab+"_4_",tag,60,0,EB/4,50,-5,5, "","Em (GeV)","#chi PID"),is-1+18); dg.addDataSet(f2,is-1+18);	
+			dg.addDataSet(makeH2(tab+"_4_",tag,68,1,69,50,0,1, "","PCAL U STRIP","PCAL / ETOT"),is-1+18); dg.addDataSet(f2,is-1+18);	
         }		
 		break;
 		
-        case 1:        
-//		f1 = new F1D("H_e_EC_resid1_f+"+run,"[a]",5,35); //angle
-        f1 = new F1D("H_e_EC_resid1_f+"+run,"[a]",0,EB);  //momentum
-//		f1 = new F1D("H_e_EC_resid1_f+"+run,"[a]",0.8,1.0);  //cz
-        f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
-        for(int i=0;i<3;i++) { //pcal,ecin,ecou
-//			float ylim = (i==0)?5:10;
-			dg = new DataGroup(6,3); int inn=0;       			 
-			for(int n=0; n<3; n++) { //x,y,z
-				float ylim1 = n<2?(i<1?5:15):1; float ylim2=n<2?(i<1?5:15):1;
-				for(int is=1;is<7;is++){  //sector 
-					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;
-//					dg.addDataSet(makeH2(tag,"H_e_EC_resid_",60,5,35,40,-ylim,ylim,"","S"+is+" #thete_e","DC"+xyz[n]+"-"+det[i]),inn);
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,0,EB,40,-ylim1,ylim2,"","S"+is+" p_e","DC"+xyz[n]+"-"+det[i]),inn);
-//					dg.addDataSet(makeH2(tag,"H_e_EC_resid_",60,0,EB,40,-ylim1,ylim2,"","S"+is+" cz_e","DC"+xyz[n]+"-"+det[i]),inn);
-					dg.addDataSet(f1, inn); inn++; 
+        case 1:   
+		float[] x1={0,5}; float[] x2={EB,35};
+		f1 = new F1D("H_e_EC_resid_f1+"+run,"[a]",x1[0],x2[0]); 
+		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
+		f2 = new F1D("H_e_EC_resid_f2+"+run,"[a]",x1[1],x2[1]); 
+		f2.setParameter(0, 0f); f2.setLineColor(1); f2.setLineWidth(1);
+		String[] xtxt = {" p_e"," #theta_e"}; 
+
+		for(int i=0;i<3;i++) { //pcal,ecin,ecou
+	        dg = new DataGroup(6,4); in=0; float y = i<1?5:15;
+			for(int j=0; j<2; j++) { //p,the	
+			for(int n=0; n<2; n++) { //x,y
+				for(int is=1;is<7;is++){  //sector  	
+					tag = is+"_"+n+"_"+j+"_"+i+"_"+st+"_"+k+"_"+run;
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,x1[j],x2[j],40,-y,y,"","S"+is+xtxt[j],"DC-"+det[i]+xyz[n]), in);
+					dg.addDataSet((j==0?f1:f2), in); in++;  
 				}
 			}
+			}
 		 	this.getDataGroup().add(dg,i,st,k,run);
-		}
-	 	return;		
+		}		
+		return;	
 		
         case 2:
         dg = new DataGroup(6,6);        
@@ -564,8 +576,8 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,4);
         for(int is=1;is<7;is++){
 	        tag = is+"_"+st+"_"+k+"_"+run;
-			dg.addDataSet(makeH2(tab+"_1_",tag,60,0,3,60,0.0,0.35,"","p (GeV)","E/P"),is-1);                dg.addDataSet(f1,is-1);
-			dg.addDataSet(makeH2(tab+"_2_",tag,68,1,69,50,0.0,0.35,"","PCAL U STRIP","E/P"),is-1+6);
+			dg.addDataSet(makeH2(tab+"_1_",tag,60,0,10,60,0.0,0.35,"","p (GeV)","E/P"),is-1);                dg.addDataSet(f1,is-1);
+			dg.addDataSet(makeH2(tab+"_2_",tag,68,1,69,50,0.5,7,"","PCAL U STRIP","EC / PCAL"),is-1+6);
 			dg.addDataSet(makeH2(tab+"_3_",tag,68,1,69,50,-4,4,     "","PCAL U STRIP","#chi PID"),is-1+12); dg.addDataSet(f2,is-1+12);
 //			dg.addDataSet(makeH2(tab+"_4_",tag,70,0,EB/6,70,0,EB/5, "","PC (GeV)","EC (GeV)"),is-1+18);	
 			dg.addDataSet(makeH2(tab+"_4_",tag,60,0,1.6,50,-5,5, "","Em (GeV)","#chi PID"),is-1+18);       dg.addDataSet(f3,is-1+18);	
@@ -575,7 +587,7 @@ public class ECperf extends DetectorMonitor {
         case 1:   
 		float[] x1={0,5}; float[] x2={EB,35};
 		f1 = new F1D("H_pim_EC_resid_f1+"+run,"[a]",x1[0],x2[0]); 
-		f1.setParameter(0, 0f); f1.setLineColor(0); f1.setLineWidth(1);
+		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
 		f2 = new F1D("H_pim_EC_resid_f2+"+run,"[a]",x1[1],x2[1]); 
 		f2.setParameter(0, 0f); f2.setLineColor(1); f2.setLineWidth(1);
 		String[] xtxt = {" p_pim"," #theta_pim"}; 
@@ -586,7 +598,7 @@ public class ECperf extends DetectorMonitor {
 			for(int n=0; n<2; n++) { //x,y
 				for(int is=1;is<7;is++){  //sector  	
 					tag = is+"_"+n+"_"+j+"_"+i+"_"+st+"_"+k+"_"+run;
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,x1[j],x2[j],40,-y,y,"","S"+is+xtxt[j],"DC-"+det[i]+"("+xyz[n]+")"), in);
+					dg.addDataSet(makeH2(tab+"_1_",tag,60,x1[j],x2[j],40,-y,y,"","S"+is+xtxt[j],"DC-"+det[i]+xyz[n]), in);
 					dg.addDataSet((j==0?f1:f2), in); in++;  
 				}
 			}
@@ -722,26 +734,32 @@ public class ECperf extends DetectorMonitor {
     	String tab = "SCelec", tag = null;
     	int    run=getRunNumber(), k=getDetectorTabNames().indexOf(tab);
     	
-		F1D     f1 = null;    
+		F1D     f1 = null, f2=null;    
 		
     	switch (st) {
     	
-        case 1:        
-		f1 = new F1D("H_e_SC_resid_f+"+run,"[a]",5,35); 
-		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);		    	
+        case 1:   
+		String[] xtxt = {" p_e"," bar number",}; 
+
 		for(int i=0;i<2;i++) { //p1a,p1b
-	        dg = new DataGroup(6,3);  int in=0;      
-			for(int n=0; n<3; n++) { //x,y,z
+			float[] x1={0,1}; float[] x2={EB,i==0?24:63};
+			f1 = new F1D("H_e_SC_resid_f1+"+run,"[a]",x1[0],x2[0]); 
+			f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
+			f2 = new F1D("H_e_SC_resid_f2+"+run,"[a]",x1[1],x2[1]); 
+			f2.setParameter(0, 0f); f2.setLineColor(1); f2.setLineWidth(1);
+	        dg = new DataGroup(6,4); int in=0;  
+			for(int j=0; j<2; j++) { //p,the	
+			for(int n=0; n<2; n++) { //x,y
 				for(int is=1;is<7;is++){  //sector  	
-					tag = is+"_"+n+"_"+i+"_"+st+"_"+k+"_"+run;		
-					float y1 = i==0?n==0?12:5:5;
-					dg.addDataSet(makeH2(tab+"_1_",tag,60,5,35,40,-y1,y1,"","S"+is+" #theta_e","DC"+xyz[n]+"-"+scdet[i]), in);
-					dg.addDataSet(f1, in); in++;  
+					tag = is+"_"+n+"_"+j+"_"+i+"_"+st+"_"+k+"_"+run;
+					float y1 = i==0?n==0?15:5:5; int nx=j==0?60:i==0?23:62;
+					dg.addDataSet(makeH2(tab+"_1_",tag,nx,x1[j],x2[j],40,-y1,y1,"","S"+is+xtxt[j],"DC-"+scdet[i]+xyz[n]), in);
+					dg.addDataSet((j==0?f1:f2), in); in++;  
 				}
-			}	
+			}
+			}
 		 	this.getDataGroup().add(dg,i,st,k,run);
-		}
-		
+		}		
 		return;
 		
     	case 5:
@@ -875,12 +893,12 @@ public class ECperf extends DetectorMonitor {
         }
         break;
     	case 3:
-        dg = new DataGroup(3,3);
-        for(int iv=0; iv<3; iv++) {
+        dg = new DataGroup(5,3);
+        for(int iv=0; iv<5; iv++) {
 	        tag = iv+"_"+st+"_"+k+"_"+run;
-	        dg.addDataSet(makeH2(tab+"_1_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv);        	
-	        dg.addDataSet(makeH2(tab+"_2_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv+3);        	
-	        dg.addDataSet(makeH2(tab+"_3_",tag,100,-400,400,100,-400,400,det[iv],"X (CM)","Y(CM)"),iv+6);        	
+	        dg.addDataSet(makeH2(tab+"_1_",tag,90,-400,400,90,-400,400,det5[iv],"X (CM)","Y(CM)"),iv);        	
+	        dg.addDataSet(makeH2(tab+"_2_",tag,90,-400,400,90,-400,400,det5[iv],"X (CM)","Y(CM)"),iv+5);        	
+	        dg.addDataSet(makeH2(tab+"_3_",tag,90,-400,400,90,-400,400,det5[iv],"X (CM)","Y(CM)"),iv+10);        	
         }  
         break;
     	case 4:
@@ -1060,7 +1078,7 @@ public class ECperf extends DetectorMonitor {
     	if(nE!=1) return false; //e_ecal.size()!=1;
     	
     	boolean good_fiduc1 = false, good_fiduc2 = false, good_fiduc3 = false; 
-        e_ecal_esum = 0f; e_ecal_pcsum=0; e_ecal_ecsum=0;
+        e_ecal_esum = 0f; e_ecal_pcsum=0; e_ecal_ecsum=0; e_ecal_rat=0;
         
         elec_ecal_resid.clear();
         elec_ftof_resid.clear();  
@@ -1077,17 +1095,11 @@ public class ECperf extends DetectorMonitor {
         e_vz  = (float) epart.vz();
         
         List<Particle> elecECAL = ev.getECAL((int)epart.getProperty("pindex"));
-    	List<Particle> elecFTOF = ev.getFTOF((int)epart.getProperty("pindex"));
     	List<Particle> elecHTCC = ev.getHTCC((int)epart.getProperty("pindex"));
     	
-    	for (Particle p : elecFTOF) {
-            e_sect    = (int) p.getProperty("sector");   			
-	    	int scind = (int) p.getProperty("layer");
-		    Point3D xyz = getResidual(p);
-	        elec_ftof_resid.add((float)xyz.x(),e_sect,0,scind-1);
-	    	elec_ftof_resid.add((float)xyz.y(),e_sect,1,scind-1);
-	    	elec_ftof_resid.add((float)xyz.z(),e_sect,2,scind-1); 		 		
-    	}
+
+//    	Boolean good_e = elecECAL.size()==1 && elecECAL.get(0).getProperty("sector")==ev.getElecTriggerSector();
+//    	if(!good_e) return false;
     	  
     	for (Particle p : elecECAL) {    		
             e_sect   =   (int) p.getProperty("sector");
@@ -1111,8 +1123,9 @@ public class ECperf extends DetectorMonitor {
 
     		elec_ecal_resid.add((float)xyz.x(),e_sect,0,ind);
     		elec_ecal_resid.add((float)xyz.y(),e_sect,1,ind);
-    		elec_ecal_resid.add((float)xyz.z(),e_sect,2,ind);
-    		elec_ecal_resid.add(p.hasProperty("iu")?(float)p.getProperty("iu"):0,e_sect,3,ind);
+//    		elec_ecal_resid.add((float)xyz.z(),e_sect,2,ind);
+
+    		elec_ecal_resid.add(p.hasProperty("iu")?(float)iU:(float)(lU*0.891/4.5),e_sect,3,ind);
     		elec_ecal_resid.add(chipid,e_sect,4,ind);
     		
     		if(ind>-1) e_ecal_esum  += en;
@@ -1123,6 +1136,7 @@ public class ECperf extends DetectorMonitor {
     	    if (ind==2) good_fiduc3 = iU>2 && iV<36 && iW<36; //ECOU	
    	    }
     	
+    	e_ecal_rat = e_ecal_pcsum/e_ecal_esum;
     	e_ecal_sf = e_ecal_esum/e_mom/1000f;
     	
     	for (Particle p : elecHTCC) {
@@ -1547,19 +1561,19 @@ public class ECperf extends DetectorMonitor {
 		
 		((H2F) dg0.getData(e_sect-1).get(0)).fill(e_mom,e_ecal_sf);
 //		((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_ecal_pcsum/1000f,e_ecal_ecsum/1000f);
-		((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_ecal_esum/1000f,elec_ecal_resid.getItem(e_sect,4,0));
+//		((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_ecal_esum/1000f,elec_ecal_resid.getItem(e_sect,4,0));
 
 		for (Map.Entry<Long,Float>  entry : elec_ecal_resid.getMap().entrySet()){
 			long hash = entry.getKey();
 			int is = ig.getIndex(hash, 0); int ic = ig.getIndex(hash, 1); int il = ig.getIndex(hash, 2);
-			DataGroup dg1 = this.getDataGroup().getItem(il,1,k,run);				
+			DataGroup dg1 = this.getDataGroup().getItem(il,1,k,run);	
+			if(e_mom>0) {
 			if(ic==3) ((H2F) dg0.getData(e_sect-1+ 6).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_sf);
 			if(ic==3) ((H2F) dg0.getData(e_sect-1+12).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),elec_ecal_resid.getItem(e_sect,4,0));
-			if(ic<3) {
-//			((H2F)dg1.getData(is-1+ic*6+il*12).get(0)).fill(e_the,entry.getValue());
-			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_mom,entry.getValue());
-//			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_cz,entry.getValue());
+			if(ic==3) ((H2F) dg0.getData(e_sect-1+18).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_rat);
 			}
+			if(ic==0) {((H2F)dg1.getData(is-1  ).get(0)).fill(e_mom,entry.getValue()); ((H2F)dg1.getData(is-1+12).get(0)).fill(e_the,entry.getValue());}
+			if(ic==1) {((H2F)dg1.getData(is-1+6).get(0)).fill(e_mom,entry.getValue()); ((H2F)dg1.getData(is-1+18).get(0)).fill(e_the,entry.getValue());}
 		}
 		counter[e_sect-1][0]++;
 		
@@ -1703,16 +1717,21 @@ public class ECperf extends DetectorMonitor {
 	public void fillSCelec() {
 		int run = getRunNumber();
 		int   k = getDetectorTabNames().indexOf("SCelec");
-		 
-		IndexGenerator ig = new IndexGenerator();
 		
-		for (Map.Entry<Long,Float>  entry : elec_ftof_resid.getMap().entrySet()){
-			int is = ig.getIndex(entry.getKey(), 0); 
-			int ic = ig.getIndex(entry.getKey(), 1); 
-			int il = ig.getIndex(entry.getKey(), 2);
-			DataGroup dg1 = this.getDataGroup().getItem(il,1,k,run);
-			((H2F)dg1.getData(is-1+ic*6).get(0)).fill(e_the,entry.getValue());
-		}
+        Particle epart = e_ecal.get(0);
+    	List<Particle> elecFTOF = ev.getFTOF((int)epart.getProperty("pindex"));
+		    	
+    	for (Particle p : elecFTOF) {
+            int is = (int) p.getProperty("sector");   			
+	    	int il = (int) p.getProperty("layer");
+	    	int ip = (int) p.getProperty("strip");
+		    Point3D xyz = getResidual(p);
+		    if(il!=3) {
+		    	DataGroup dg1 = this.getDataGroup().getItem(il-1,1,k,run);
+		    	((H2F)dg1.getData(is-1  ).get(0)).fill(e_mom,xyz.x()); ((H2F)dg1.getData(is-1+12).get(0)).fill(ip,xyz.x());
+		    	((H2F)dg1.getData(is-1+6).get(0)).fill(e_mom,xyz.y()); ((H2F)dg1.getData(is-1+18).get(0)).fill(ip,xyz.y());	
+		    }
+    	}
 		
 	}
     
@@ -1758,9 +1777,13 @@ public class ECperf extends DetectorMonitor {
 		((H2F)dg1.getData(6).get(0)).fill(pip_phi,epip_dPhi);
 		((H2F)dg1.getData(7).get(0)).fill(pip_the,epip_dPhi);
 		((H2F)dg1.getData(8).get(0)).fill(pip_vz,epip_dPhi);
-		((H2F)dg1.getData(9).get(0)).fill(pip_mom,pip_beta);  	
-		fillTrajXY();
+		((H2F)dg1.getData(9).get(0)).fill(pip_mom,pip_beta);  
     } 
+    
+    public void fillTrajXY() {
+		fillFTOFTrajXY();
+		fillECALTrajXY();    	
+    }
     
 	public void fillECpim() {		
 		int run = getRunNumber();
@@ -1774,12 +1797,17 @@ public class ECperf extends DetectorMonitor {
 	        float phi = (float) Math.toDegrees(p.phi());
 	        float pid = (float) p.getProperty("chi2pid");
 	        List<Particle> pimECAL = ev.getECAL((int)p.getProperty("pindex"));
-	        int is=0,il=0,iU=0; float esum = 0, epcal = 0;
+	        int is=0,il=0,iU=0; float pcsum=0, ecsum=0, esum = 0, epcal = 0;
 			for (Particle pp : pimECAL) {
 	    		is = (int) pp.getProperty("sector");
 	    		il = (int) pp.getProperty("layer");				
 				DataGroup dg1 = this.getDataGroup().getItem(getDet(il),1,k,run);				
-				if(il==1) {iU = pp.hasProperty("iu")?(int)pp.getProperty("iu"):0; epcal=(float)pp.getProperty("energy")/1000;}
+				if(il==1) {
+					iU = pp.hasProperty("iu")?(int)pp.getProperty("iu"):(int)(pp.getProperty("lu")*0.891/4.5); 
+					epcal=(float)pp.getProperty("energy")/1000;
+					pcsum+=(float) pp.getProperty("energy")/1000;
+			    }
+				if(il==4||il==7) ecsum+=(float) pp.getProperty("energy")/1000;
 				Point3D xyz = getResidual(pp);
 				((H2F)dg1.getData(is-1+   0).get(0)).fill(mom,xyz.x());
 				((H2F)dg1.getData(is-1+   6).get(0)).fill(mom,xyz.y());	        
@@ -1791,7 +1819,7 @@ public class ECperf extends DetectorMonitor {
 			if(esum>0) {
 				float eop = esum/mom;
 				((H2F) dg0.getData(is-   1).get(0)).fill(mom,eop);
-				((H2F) dg0.getData(is-1+ 6).get(0)).fill(iU,eop);
+				((H2F) dg0.getData(is-1+ 6).get(0)).fill(iU,ecsum/pcsum);
 				((H2F) dg0.getData(is-1+12).get(0)).fill(iU,pid);
 				((H2F) dg0.getData(is-1+18).get(0)).fill(esum,pid);
 			}
@@ -1832,54 +1860,96 @@ public class ECperf extends DetectorMonitor {
 		}    	
     }
     
-    public void fillTrajXY() {
+    public void fillECALTrajXY() {
 		int       run = getRunNumber();
 		int         k = getDetectorTabNames().indexOf("ECpip");
 		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
 				
 		BitSet bits = new BitSet(3);
 		BitSet b000 = new BitSet(3);                                        // PCAL=0 ECIN=0 ECOU=0
-		BitSet b001 = new BitSet(3);                           b001.set(2); // PCAL=1 ECIN=0 ECOU=0
+		BitSet b001 = new BitSet(3);                           b001.set(2); // PCAL=0 ECIN=0 ECOU=1
 		BitSet b010 = new BitSet(3);              b010.set(1);              // PCAL=0 ECIN=1 ECOU=0
 		BitSet b011 = new BitSet(3);              b011.set(1); b011.set(2); // PCAL=0 ECIN=1 ECOU=1
 		BitSet b100 = new BitSet(3); b100.set(0);                           // PCAL=1 ECIN=0 ECOU=0
 		BitSet b101 = new BitSet(3); b101.set(0);              b101.set(2); // PCAL=1 ECIN=0 ECOU=1
 		BitSet b110 = new BitSet(3); b110.set(0); b110.set(1);              // PCAL=1 ECIN=1 ECOU=0
 		BitSet b111 = new BitSet(3); b111.set(0); b111.set(1); b111.set(2); // PCAL=1 ECIN=1 ECIN=1
+		
 		Boolean goodPC=false,goodECi=false,goodECo=false;
 		
-//		System.out.println("New Event");
+//		System.out.println("New ECAL Event");
     	if(ev.trajDet.containsKey(7)) { 
 			for(int tmap : ev.trajDet.get(7)) { //retrieve ECAL trajectory planes
 				int pin = ev.trajBank.getInt("pindex",tmap);
-				float x = -ev.trajBank.getFloat("x",tmap); float y = ev.trajBank.getFloat("y",tmap);					
+				float x = -ev.trajBank.getFloat("x",tmap); float y = ev.trajBank.getFloat("y",tmap); float z = ev.trajBank.getFloat("z",tmap);				
 				int lay = getDet(ev.trajBank.getInt("layer",tmap));
-				if(ev.part.get(pin).pid()==211 && ev.part.get(pin).p()>1.5) { 
+				if(ev.part.get(pin).pid()==211 && ev.part.get(pin).p()>0.7) { 
 					bits.clear(); 
 					for (Particle p : ev.getECAL(pin)) {
 						bits.set(getDet((int) p.getProperty("layer")));
-//						System.out.println(bits.toString()+" "+lay+" "+(-x)+" "+p.getProperty("x")+" "+y+" "+p.getProperty("y"));
+//						System.out.println(bits.toString()+"\t"+lay+" "+(-x)+" "+p.getProperty("x")+" "+y+" "+p.getProperty("y")+" "+z+" "+p.getProperty("z"));
 					}
 					
 					switch (lay) {
-					case 0: ((H2F)dg1.getData(lay).get(0)).fill(x,y);
+					case 0: ((H2F)dg1.getData(lay+2).get(0)).fill(x,y);
 					        goodPC = bits.equals(b111) || bits.equals(b100) || bits.equals(b101) || bits.equals(b110);
-					        if(goodPC) ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					        if(goodPC) ((H2F)dg1.getData(lay+7).get(0)).fill(x,y);
 					        break;
-					case 1: if(goodPC) ((H2F)dg1.getData(lay).get(0)).fill(x,y);
+					case 1: if(goodPC) ((H2F)dg1.getData(lay+2).get(0)).fill(x,y);
 					        goodECi = bits.equals(b111) || bits.equals(b011) || bits.equals(b110) || bits.equals(b010);
-					        if(goodPC && goodECi) ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					        if(goodPC && goodECi) ((H2F)dg1.getData(lay+7).get(0)).fill(x,y);
 					        break; 
-					case 2: if(goodPC) ((H2F)dg1.getData(lay).get(0)).fill(x,y);
+					case 2: if(goodPC) ((H2F)dg1.getData(lay+2).get(0)).fill(x,y);
 					        goodECo = bits.equals(b111) || bits.equals(b001) || bits.equals(b101) || bits.equals(b011);
-					        if(goodPC && goodECo) ((H2F)dg1.getData(lay+3).get(0)).fill(x,y);
+					        if(goodPC && goodECo) ((H2F)dg1.getData(lay+7).get(0)).fill(x,y);
 					}						
 				}
 			}
 		}   	
    	
     }
+    
+    public void fillFTOFTrajXY() {
+		int       run = getRunNumber();
+		int         k = getDetectorTabNames().indexOf("ECpip");
+		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
+				
+		BitSet bits = new BitSet(2);
+		BitSet b00  = new BitSet(2);                                       // P1A=0 P1B=0 
+		BitSet b10  = new BitSet(2);              b10.set(0);              // P1A=1 P1B=0   
+		BitSet b01  = new BitSet(2);                          b01.set(1);  // P1A=0 P1B=1  
+		BitSet b11  = new BitSet(2);              b11.set(0); b11.set(1);  // P1A=1 P1B=1   
 
+		Boolean goodP1A=false,goodP1B=false;
+		
+//		System.out.println("New FTOF Event");
+    	if(ev.trajDet.containsKey(12)) { 
+			for(int tmap : ev.trajDet.get(12)) { //retrieve FTOF trajectory planes
+				int pin = ev.trajBank.getInt("pindex",tmap);
+				float x = -ev.trajBank.getFloat("x",tmap); float y = ev.trajBank.getFloat("y",tmap); float z = ev.trajBank.getFloat("z",tmap);					
+				int lay = ev.trajBank.getInt("layer",tmap)-1;
+				if(ev.part.get(pin).pid()==211 && ev.part.get(pin).p()>0.7) { 
+					bits.clear(); 
+					for (Particle p : ev.getFTOF(pin)) {
+						bits.set((int)p.getProperty("layer")-1);
+//						System.out.println(bits.toString()+"\t"+lay+" "+(-x)+" "+p.getProperty("x")+" "+y+" "+p.getProperty("y")+" "+z+" "+p.getProperty("z"));
+					}
+					
+					switch (lay) {
+					case 1: ((H2F)dg1.getData(0).get(0)).fill(x,y);
+					        goodP1B = bits.equals(b01) || bits.equals(b11);
+					        if(goodP1B) ((H2F)dg1.getData(5).get(0)).fill(x,y);
+					        break;
+					case 0: if(goodP1B) ((H2F)dg1.getData(1).get(0)).fill(x,y);
+					        goodP1A = bits.equals(b10) || bits.equals(b11) ;
+					        if(goodP1B && goodP1A) ((H2F)dg1.getData(6).get(0)).fill(x,y);
+					        break; 
+					}						
+				}
+			}
+		}   	
+   	
+    }
     public void fillECnm(String name) {	
     	
 		int run = getRunNumber();
@@ -2232,7 +2302,7 @@ public class ECperf extends DetectorMonitor {
 		int icmax=3, ilmax=3;
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.clear();
-        if(getActive123()==6) {c.divide(6,3); icmax=3;}
+        if(getActive123()==6) {c.divide(6,3); icmax=2;}
         if(getActive123()==7) {c.divide(6,6); ilmax=3; icmax=2;}
         
         int n=0;
@@ -2272,7 +2342,7 @@ public class ECperf extends DetectorMonitor {
         
         int n=0;
         for (int il=0; il<3; il++) {
-        	for (int ic=0; ic<3; ic++ ) {
+        	for (int ic=0; ic<2; ic++ ) {
         		for (int is=1; is<7; is++) { int isk = is+10*index;
         			if (getActive123()==6 && getActiveLayer()==il) {
         				c.cd(n); H1F h = tl.fitData.getItem(isk,ic,il,getRunNumber()).getHist(); 
@@ -2295,7 +2365,7 @@ public class ECperf extends DetectorMonitor {
         
         int n=0;
         for (int il=0; il<2; il++) {
-        	for (int ic=0; ic<3; ic++ ) {
+        	for (int ic=0; ic<2; ic++ ) {
         		for (int is=1; is<7; is++) { int isk = is+10*index;
         			if (getActive123()==6 && getActiveLayer()==il) {
         				c.cd(n); H1F h = tl.fitData.getItem(isk,ic,il,getRunNumber()).getHist(); 
@@ -2536,24 +2606,33 @@ public class ECperf extends DetectorMonitor {
       	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));        
  	    DataGroup dg = getDataGroup().getItem(0,3,index,getRunNumber());
         
-        c.clear();
-        c.divide(3, 3);
+        c.clear(); c.divide(5, 3);
         
         H2F h2;
         
-	    c.cd(0); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(0).get(0); c.draw(h2);
-	    c.cd(1); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(1).get(0); c.draw(h2);
-	    c.cd(2); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(2).get(0); c.draw(h2);  
-	    
-	    c.cd(3); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(3).get(0); c.draw(h2);
-	    c.cd(4); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(4).get(0); c.draw(h2);
-	    c.cd(5); c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(5).get(0); c.draw(h2);
-	    
-	    c.cd(6); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(6).get(0); c.draw(h2);
-	    c.cd(7); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(7).get(0); c.draw(h2);
-	    c.cd(8); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(8).get(0); c.draw(h2); 	    
-	    	    
+        for (int i=0; i<5; i++) {
+    	    c.cd(i);    c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(i).get(0);    c.draw(h2);
+    	    c.cd(i+5);  c.getPad().getAxisZ().setLog(getLogZ());                                          h2 = (H2F) dg.getData(i+5).get(0);  c.draw(h2);
+    	    c.cd(i+10); c.getPad().getAxisZ().setRange(0.5,1.5); c.getPad().getAxisZ().setLog(getLogZ()); h2 = (H2F) dg.getData(i+10).get(0); c.draw(h2);       	
+        }
+	    	    	    
     }
+       
+    public void getPipEff() {    	
+		int run = getRunNumber();
+		int   k = getDetectorTabNames().indexOf("ECpip");		
+		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
+		
+        for(int i=0; i<5; i++) {
+        	H2F e  = (H2F) dg1.getData(i).get(0);
+        	H2F w  = (H2F) dg1.getData(i+5).get(0);
+        	for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
+        		float ne = e.getDataBufferBin(loop);
+        		if (ne>0) {H2F h = (H2F) dg1.getData(i+10).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
+        	}
+        }		
+		
+    }    
     
     public void showNeutronEff() {
 		int index = getDetectorTabNames().indexOf("ECneut");
@@ -2570,22 +2649,6 @@ public class ECperf extends DetectorMonitor {
 		int index = getDetectorTabNames().indexOf("ECpi0");
 		EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
 		c.cd(11);c.getPad().getAxisX().setRange(0., 5.5); c.getPad().getAxisY().setRange(0., 0.3); c.draw(getEff(index,1,2));   	
-    }
-    
-    public void getPipEff() {    	
-		int run = getRunNumber();
-		int   k = getDetectorTabNames().indexOf("ECpip");		
-		DataGroup dg1 = this.getDataGroup().getItem(0,3,k,run);
-		
-        for(int i=0; i<3; i++) {
-        	H2F e  = (H2F) dg1.getData(i).get(0);
-        	H2F w  = (H2F) dg1.getData(i+3).get(0);
-        	for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
-        		float ne = e.getDataBufferBin(loop);
-        		if (ne>0) {H2F h = (H2F) dg1.getData(i+6).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
-        	}
-        }		
-		
     }
     
     public void showPhotTim() {
