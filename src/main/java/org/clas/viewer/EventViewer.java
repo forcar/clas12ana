@@ -41,6 +41,7 @@ import javax.swing.filechooser.FileSystemView;
 
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
+import org.clas.analysis.ECmc;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
@@ -172,13 +173,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case "ECcalib": monitors[n++]=new ECcalib(s);break; 
         	     case   "ECpi0": monitors[n++]=new ECpi0(s);  break;
         	     case  "ECperf": monitors[n++]=new ECperf(s); break;
+        	     case    "ECmc": monitors[n++]=new ECmc(s);   break;
         	     case  "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
+    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECt("ECt"); 
-  		monitors[n] = new ECsf("ECsf"); 
+//      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0");
