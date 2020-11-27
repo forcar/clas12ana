@@ -51,7 +51,14 @@ public class ECmc extends DetectorMonitor {
     
     public void localinit() {
         System.out.println("ECmc.localinit()");
-        configEngine("muon");  
+//        configEngine("muon"); 
+        engine.init();
+        engine.isMC = true;
+        engine.setVariation("default");
+        engine.setCalRun(10);                
+        eb.getCCDB(10);
+        eb.setThresholds("Pizero",engine);
+        eb.setGeom("2.5");
         tl.setFitData(Fits);
     }
     
@@ -164,8 +171,8 @@ public class ECmc extends DetectorMonitor {
     }
     
     public void analyze() {
-    	System.out.println(getDetectorName()+".Analyze() ");    	
-    	fith52(); geteff();
+    	System.out.println(getDetectorName()+".Analyze() ");  
+    	meanGraph = fith52(); geteff();
     	isAnalyzeDone = true;
     }
     
@@ -365,7 +372,7 @@ public class ECmc extends DetectorMonitor {
     
     @Override
     public void plotEvent(DataEvent de) {
-        analyze();         
+//        analyze();         
     }
     
     public GraphErrors fith52() {
@@ -417,25 +424,40 @@ public class ECmc extends DetectorMonitor {
     }
     
     public void geteff() {
-        H1F effmom1 = H1F.divide(effmom[1],effmom[0]); effmom1.setFillColor(3);
-        H1F effmom2 = H1F.divide(effmom[2],effmom[0]); effmom2.setFillColor(5);
-        H1F effmom3 = H1F.divide(effmom[3],effmom[0]); effmom3.setFillColor(2);
-        H1F effmom4 = H1F.divide(effmom[4],effmom[0]); effmom4.setFillColor(3);
-        H1F effmom5 = H1F.divide(effmom[5],effmom[0]); effmom5.setFillColor(5);
-        H1F effmom6 = H1F.divide(effmom[6],effmom[0]); effmom6.setFillColor(2);
-        H1F effmom7 = H1F.divide(effmom[7],effmom[0]); effmom7.setFillColor(1);        
-        H1F effthe1 = H1F.divide(effthe[1],effthe[0]); effthe1.setFillColor(3);
-        H1F effthe2 = H1F.divide(effthe[2],effthe[0]); effthe2.setFillColor(5);
-        H1F effthe3 = H1F.divide(effthe[3],effthe[0]); effthe3.setFillColor(2);
-        H1F effthe4 = H1F.divide(effthe[4],effthe[0]); effthe4.setFillColor(3);
-        H1F effthe5 = H1F.divide(effthe[5],effthe[0]); effthe5.setFillColor(5);
-        H1F effthe6 = H1F.divide(effthe[6],effthe[0]); effthe6.setFillColor(2);        
-        eff1b=eff1b.divide(eff1a, eff1); eff2b=eff2b.divide(eff2a, eff1); eff3b=eff3b.divide(eff3a, eff1);    	
+        effmom1 = H1F.divide(effmom[1],effmom[0]); effmom1.setFillColor(3);
+        effmom2 = H1F.divide(effmom[2],effmom[0]); effmom2.setFillColor(5);
+        effmom3 = H1F.divide(effmom[3],effmom[0]); effmom3.setFillColor(2);
+        effmom4 = H1F.divide(effmom[4],effmom[0]); effmom4.setFillColor(3);
+        effmom5 = H1F.divide(effmom[5],effmom[0]); effmom5.setFillColor(5);
+        effmom6 = H1F.divide(effmom[6],effmom[0]); effmom6.setFillColor(2);
+        effmom7 = H1F.divide(effmom[7],effmom[0]); effmom7.setFillColor(1);        
+        effthe1 = H1F.divide(effthe[1],effthe[0]); effthe1.setFillColor(3);
+        effthe2 = H1F.divide(effthe[2],effthe[0]); effthe2.setFillColor(5);
+        effthe3 = H1F.divide(effthe[3],effthe[0]); effthe3.setFillColor(2);
+        effthe4 = H1F.divide(effthe[4],effthe[0]); effthe4.setFillColor(3);
+        effthe5 = H1F.divide(effthe[5],effthe[0]); effthe5.setFillColor(5);
+        effthe6 = H1F.divide(effthe[6],effthe[0]); effthe6.setFillColor(2);        
+        eff1b=eff1b.divide(eff1a, eff1); eff2b=eff2b.divide(eff2a, eff1); eff3b=eff3b.divide(eff3a, eff1); 
+        
+        eff1b.setTitle("e-,#gamma,#pi-"); eff2b.setTitle("#chiPID<3.5"); eff3b.setTitle("#DeltaP<"+dp2);
+        eff1b.setTitleX("True Electron Energy (GeV)" );eff1b.setTitleY("True Electron Theta (deg)");
+        eff2b.setTitleX("True Electron Energy (GeV)" );eff2b.setTitleY("True Electron Theta (deg)");               
+        eff3b.setTitleX("True Electron Energy (GeV)" );eff3b.setTitleY("True Electron Theta (deg)");               
+        effmom1.setTitle("G: PC > 0  Y: PC = 1 or 2  R: PC = 1");        
+        effmom1.setTitleX("True Electron Energy (GeV)"); effmom1.setTitleY("Efficiency #theta>15");
+        effmom2.setTitleX("True Electron Energy (GeV)"); effmom2.setTitleY("Efficiency #theta>15");
+        effmom3.setTitleX("True Electron Energy (GeV)"); effmom3.setTitleY("Efficiency #theta>15");                
+        effthe1.setTitleX("True Electron Theta (deg)");  effthe1.setTitleY("Efficiency");
+        effthe2.setTitleX("True Electron Theta (deg)");  effthe2.setTitleY("Efficiency");
+        effthe3.setTitleX("True Electron Theta (deg)");  effthe3.setTitleY("Efficiency");        
+        effmom4.setTitle("G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2);        
+        effmom4.setTitleX("True Electron Energy (GeV)"); effmom4.setTitleY("Efficiency #theta>15");        
+        effthe4.setTitleX("True Electron Theta (deg)");  effthe4.setTitleY("Efficiency");        
     }
         
     @Override
     public void timerUpdate() {  
-    	meanGraph = fith52();
+//    	meanGraph = fith52();
     	geteff();
     }
 
