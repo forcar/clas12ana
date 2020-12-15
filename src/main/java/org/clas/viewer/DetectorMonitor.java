@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileSystemView;
 
 import org.clas.tools.ECConstants;
 import org.clas.tools.FitData;
+import org.clas.tools.DataGroupManager;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.calib.utils.CalibrationConstants;
@@ -75,6 +76,7 @@ public class DetectorMonitor implements ActionListener {
     private final String                detectorName;
     private ArrayList<String>       detectorTabNames = new ArrayList();
     private IndexedList<DataGroup>      detectorData = new IndexedList<DataGroup>(4);
+    public  Map<String,DataGroupManager>       dgMan = new LinkedHashMap<String,DataGroupManager>();
     public  List<Integer>                    runlist = new ArrayList<Integer>();
     public  int                       runIndexSlider = 0;
     public  JSlider                           slider = null;
@@ -219,6 +221,9 @@ public class DetectorMonitor implements ActionListener {
     public String                   root = " ";
     public String                 osType = " ";
     int ntimer = 0;
+    
+	Map<String,Object[]> map = new HashMap<String,Object[]>();
+    Object[] can = {false, false, 0, 0, 0, 0};
     
     String[]  ccdbTables = new String[]{
             "/calibration/ec/attenuation", 
@@ -846,11 +851,12 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void setDetectorTabNames(String... names) {
-        for(String name : names) {
-            detectorTabNames.add(name);
-        }
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed(names);
         setDetectorCanvas(canvas);
+        
+        for(String name : names) {
+            detectorTabNames.add(name);    
+        }
     }
  
     public void setDetectorSummary(DataGroup group) {
@@ -968,6 +974,81 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
+    }
+    
+// HISTO HELPERS    
+    
+    public H1F makeH1(String name, String tag, int nx, double x1, double x2, String tit, String titx, int ... color) {
+	    H1F h1 = new H1F(name+tag,name+tag,nx,x1,x2);
+	    if(tit!="") h1.setTitle(tit);
+	    h1.setTitleX(titx);
+	    int n=0;
+        for (int col : color) {
+    	    if(n==0) h1.setLineColor(col); 
+    	    if(n==1) h1.setFillColor(col);
+    	    if(n==2 && col==1) h1.setOptStat("1000000");
+    	    if(n==2 && col==2) h1.setOptStat("1000100");
+    	    n++;
+        }
+	    return h1;
+    }
+    
+    public H1F makeH1(String name, int nx, double x1, double x2, String tit, String titx, String tity, int ... color) {
+	    H1F h1 = new H1F(name,nx,x1,x2);
+	    if(tit!="") h1.setTitle(tit);
+	    h1.setTitleX(titx);  h1.setTitleY(tity);
+	    int n=0;	    
+        for (int col : color) {
+    	    if(n==0) h1.setLineColor(col); 
+    	    if(n==1) h1.setFillColor(col);
+    	    if(n==2 && col==1) h1.setOptStat("1000000");
+    	    if(n==2 && col==2) h1.setOptStat("1000100");
+   	        n++;
+        }
+	    return h1;
+    }    
+    
+    
+    public H1F makeH1(String name, int nx, double x1, double x2, String tit, String titx, int ... color) {
+	    H1F h1 = new H1F(name,nx,x1,x2);
+	    if(tit!="") h1.setTitle(tit);
+	    h1.setTitleX(titx);
+	    int n=0;
+        for (int col : color) {
+    	    if(n==0) h1.setLineColor(col); 
+    	    if(n==1) h1.setFillColor(col);
+    	    if(n==2 && col==1) h1.setOptStat("1000000");
+    	    if(n==2 && col==2) h1.setOptStat("1000100");
+    	    n++;
+        }
+	    return h1;
+    }
+
+    public H2F makeH2(String name, String tag, int nx, double x1, double x2, int ny, double y1, double y2, String tit, String titx, String tity) {
+	    H2F h2 = new H2F(name+tag,name+tag,nx,x1,x2,ny,y1,y2);
+	    if(tit!="") h2.setTitle(tit);
+	    h2.setTitleX(titx); h2.setTitleY(tity);
+	    return h2;
+    }
+    
+    public H2F makeH2(String name, int nx, double x1, double x2, int ny, double y1, double y2, String tit, String titx, String tity) {
+	    H2F h2 = new H2F(name,nx,x1,x2,ny,y1,y2);
+	    if(tit!="") h2.setTitle(tit);
+	    h2.setTitleX(titx); h2.setTitleY(tity);
+	    return h2;
+    }
+    
+    public GraphErrors makeGraph(String name, int ... options) {
+    	GraphErrors graph = new GraphErrors();
+    	graph.setName(name); 
+    	int n=0;
+    	for (int opt : options) {
+    		if(n==0) graph.setMarkerColor(opt); 
+    		if(n==1) graph.setMarkerSize(opt); 
+    		if(n==2) graph.setMarkerStyle(opt);
+    		n++;
+    	}    	
+    	return graph;
     }
     
 // GRAPH HELPERS   
@@ -1197,6 +1278,22 @@ public class DetectorMonitor implements ActionListener {
     }
     
     //DATAGROUP HELPERS
+    
+	public void cc(String name, boolean linlogy, boolean linlogz, float ymin, float ymax, float zmin, float zmax) {
+		Object[] obj = {linlogy,linlogz,ymin,ymax,zmin,zmax};
+		map.put(name,obj);  
+	}    
+    
+	public Boolean config(String name, EmbeddedCanvas canvas) {
+		if(!map.containsKey(name)) return false;
+		can = map.get(name); 
+		canvas.getPad().getAxisY().setLog((Boolean)can[0]);
+		canvas.getPad().getAxisZ().setLog((Boolean)can[1]);
+		float ymin=(float)can[2], ymax=(float)can[3], zmin=(float)can[4], zmax=(float)can[5]; 
+		if(ymin!=ymax) canvas.getPad().getAxisY().setRange(ymin,ymax);
+		if(zmin!=zmax) canvas.getPad().getAxisZ().setRange(zmin,zmax);
+		return true;
+	}    
  
     public void readDataGroup(int run, TDirectory dir) {
         String folder = getDetectorName() + "/";
@@ -1277,6 +1374,7 @@ public class DetectorMonitor implements ActionListener {
             }
         }
     }
+
     
     public void drawGroup(EmbeddedCanvas c, DataGroup group) {
     	if(group==null) return;
@@ -1286,16 +1384,24 @@ public class DetectorMonitor implements ActionListener {
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
             List<IDataSet> dsList = group.getData(i);
-            c.cd(i);  String opt = " ";c.getPad().getAxisY().setAutoScale(true);
-            c.getPad().getAxisY().setLog(getLogY());
-            c.getPad().getAxisZ().setLog(getLogZ());
-            if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
-            if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
-            for (IDataSet ds : dsList) {
-            	   c.draw(ds,opt); opt="same";
+            c.cd(i);  String opt = " ";                       
+            if(dsList.size()>0) {	
+            	IDataSet ds0 = dsList.get(0);            	
+            	if(!config(ds0.getName(),c)) {
+            		if (ds0 instanceof H1F) {
+            			c.getPad().getAxisY().setAutoScale(true);
+            			c.getPad().getAxisY().setLog(getLogY());
+            		}
+            		if (ds0 instanceof H2F) {
+            			c.getPad().getAxisZ().setLog(getLogZ());
+            			if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
+            			if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
+            		}
+            	}
+            	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
             }
         } 	       	
-    } 
+    }
     
     /**
      * @param fromBank the bank containing the index variable
