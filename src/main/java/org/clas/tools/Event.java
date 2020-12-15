@@ -68,6 +68,7 @@ public class Event {
 	private int nelec=0;
 	
 	private float timeshift = 0f;
+	private int  startTimeCut = -100;
 	
 	public int tpol = 0;
 	public int spol = 0;
@@ -126,7 +127,7 @@ public class Event {
 	    
 	    if(hasRECevent)            processRECevent();
 	    if(requireOneElectron && !countElectronTriggers(false)) return false;
-	    if(!isMuon  && starttime > -100) {
+	    if(!isMuon  && starttime > startTimeCut) {
 	    	if(hasRECscintillator) processRECscintillator();
 	    	if(hasRECcalorimeter)  processRECcalorimeter();
 	    	if(hasRECcherenkov)    processRECcherenkov();
@@ -160,7 +161,7 @@ public class Event {
 		List<Particle> pout = new ArrayList<Particle>();
 	    IndexGenerator ig = new IndexGenerator();                
 	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
-	           int pid = ig.getIndex(entry.getKey(), 0);   
+	           int pid = ig.getIndex(entry.getKey(), 0);  
 	           if(ipid==pid) for (Particle p : entry.getValue()) pout.add(p);
 	    }	
 	    return pout;
@@ -200,6 +201,10 @@ public class Event {
 	
 	public void setTimeShift(float val) {
 		timeshift = val;
+	}
+	
+	public void setStartTimeCut(int val) {
+		startTimeCut = val;
 	}
 	
 	public void processRUNconfig() {		
@@ -379,6 +384,15 @@ public class Event {
             part.add(i,p);     //Lists do not support sparse indices !!!!!            
         }                		
 	}
+	
+    public List<Particle> getPART(double thr, int pid) {   	
+    	List<Particle> olist = new ArrayList<Particle>();    
+    	for (Particle p : getParticle(pid)) {
+    		short status = (short) p.getProperty("status");
+    		if(status>=2000 && status<3000 && p.p()>=thr) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
 	
 	//Recreate particle class for tpid from partMap and partBank and store in IndexedList<List<Particle>> partmap with ip index	
 	public void getRECparticle(int tpid) {		
