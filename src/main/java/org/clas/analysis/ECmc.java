@@ -21,14 +21,8 @@ public class ECmc extends DetectorMonitor {
 	
 	Event ev = new Event();
 	EBMC  eb = new EBMC();
-	
-    H1F h00,h01,h02,h03;
-    H2F h10,h11,h12,h13,h20,h21,h22,h23,h30,h31,h32,h33,h40,h41,h42,h43,h50,h51,h52,eff1,eff1a,eff1b,eff2a,eff2b,eff3a,eff3b;
-	H1F effmom1,effmom2,effmom3,effmom4,effmom5,effmom6,effmom7,effthe1,effthe2,effthe3,effthe4,effthe5,effthe6;
-	GraphErrors meanGraph = null;
-	
-    int nh=10;
-    H1F effmom[] = new H1F[nh]; H1F effthe[] = new H1F[nh];
+	DataGroup dg = null;
+	   
     float dp1=0.1f, dp2=0.1f; int mcsec=1;
     
     List<Particle> elec = null;
@@ -37,13 +31,13 @@ public class ECmc extends DetectorMonitor {
 		
     public ECmc(String name) {
         super(name);
-        setDetectorTabNames("GEN-REC",
-        		            "DTHE,DPHI",
-        		            "EFF");
-
+        setDetectorTabNames("GENREC",
+        		            "KINEMATICS",
+        		            "EFFICIENCY");
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
+
         this.init();
         this.localinit();
         this.localclear();
@@ -51,7 +45,6 @@ public class ECmc extends DetectorMonitor {
     
     public void localinit() {
         System.out.println("ECmc.localinit()");
-//        configEngine("muon"); 
         engine.init();
         engine.isMC = true;
         engine.setVariation("default");
@@ -75,82 +68,120 @@ public class ECmc extends DetectorMonitor {
     
     @Override
     public void createHistos(int run) {  
+	    System.out.println("ECmc:createHistos("+run+")");
+    	setRunNumber(run);
+    	runlist.add(run);    	
     	histosExist = true;    	
-    	DataGroup dg = null;
-        int n;
+    	createGENREC(0);
+    	createKINEMATICS(0);
+       	createEFFICIENCY(0);
+       	createEFFICIENCY(1);
+       	createEFFICIENCY(2);
+    }
+    
+    public void createGENREC(int st) {
         
-        dg = new DataGroup(4,3); n=0;
-        h00 = new H1F("h00",50,-0.1,0.1);           h00.setTitleX("#Deltapx GEN-REC (GeV)"); dg.addDataSet(h00, n); n++;
-        h01 = new H1F("h01",50,-0.1,0.1);           h01.setTitleX("#Deltapy GEN-REC (GeV)"); dg.addDataSet(h01, n); n++;
-        h02 = new H1F("h02",50,-0.1,0.1);           h02.setTitleX("#Deltapz GEN-REC (GeV)"); dg.addDataSet(h02, n); n++;
-        h03 = new H1F("h03",50,-0.1,0.1);           h03.setTitleX("#Deltap  GEN-REC (GeV)"); dg.addDataSet(h03, n); n++;       
-        h10 = new H2F("h10",50,0,4.0,50,-0.1,1.0);  h10.setTitleX("ECAL #gamma E (GeV)"); h10.setTitleY("#Deltapx  (GeV)"); dg.addDataSet(h10, n); n++;
-        h11 = new H2F("h11",50,0,1.0,50,-0.1,0.1);  h11.setTitleX("ECAL #gamma E (GeV)"); h11.setTitleY("#Deltapy  (GeV)"); dg.addDataSet(h11, n); n++;
-        h12 = new H2F("h12",50,0,1.0,50,-0.1,1.0);  h12.setTitleX("ECAL #gamma E (GeV)"); h12.setTitleY("#Deltapz  (GeV)"); dg.addDataSet(h12, n); n++;
-        h13 = new H2F("h13",50,0,5.0,100,-0.1,5.0); h13.setTitleX("ECAL #gamma E (GeV)"); h13.setTitleY("#Deltap   (GeV)"); dg.addDataSet(h13, n); n++;        
-        h20 = new H2F("h20",50,0,100.0,100,-1,5);   h20.setTitleX("Distance e-#gamma (cm)");        h20.setTitleY("#Deltap  GEN-REC (GeV)"); dg.addDataSet(h20, n); n++;
-        h21 = new H2F("h21",50,0,100.0,100,0,5);    h21.setTitleX("Distance e-#gamma (cm)");        h21.setTitleY("ECAL #gamma E (GeV)");    dg.addDataSet(h21, n); n++;
-        h22 = new H2F("h23",50,0,100.0,100,0,5);    h22.setTitleX("Distance e-#gamma (cm)");        h22.setTitleY("ECAL #gamma E (GeV)");    dg.addDataSet(h22, n); n++; 
-        h23 = new H2F("h23",50,0,9,50,0,5);         h23.setTitleX("Track Electron Momentum (GeV)"); h23.setTitleY("ECAL #gamma E (GeV)");    dg.addDataSet(h23, n); n++;
-        h21.setTitle("#Deltap>"+dp1); h22.setTitle("#Deltap<"+dp2);  h23.setTitle("#Deltap<"+dp2); 
-        this.getDataGroup().add(dg,0,0,0,run);
-        
-        dg = new DataGroup(4,2); n=0;       
-        String lab[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};
-        h30 = new H2F("h30",50,0,9,70,-2,12); h30.setTitleX("Track Electron Momentum (GeV)");h30.setTitleY("PCAL "+lab[0]); dg.addDataSet(h30, n); n++;
-        h31 = new H2F("h31",50,0,9,70,-5,30); h31.setTitleX("Track Electron Momentum (GeV)");h31.setTitleY("PCAL "+lab[1]); dg.addDataSet(h31, n); n++;
-        h32 = new H2F("h32",50,0,9,70,-2,12); h32.setTitleX("Track Electron Momentum (GeV)");h32.setTitleY("ECIN "+lab[0]); dg.addDataSet(h32, n); n++;
-        h33 = new H2F("h33",50,0,9,70,-5,30); h33.setTitleX("Track Electron Momentum (GeV)");h33.setTitleY("ECIN "+lab[1]); dg.addDataSet(h33, n); n++;
-        h30.setTitle("#Deltap>"+dp1);h31.setTitle("#Deltap>"+dp1);h32.setTitle("#Deltap>"+dp1);h33.setTitle("#Deltap>"+dp1);
-        h40 = new H2F("h40",50,0,9,70,-2,12); h40.setTitleX("Track Electron Momentum (GeV)");h40.setTitleY("PCAL "+lab[0]); dg.addDataSet(h40, n); n++;
-        h41 = new H2F("h41",50,0,9,70,-5,30); h41.setTitleX("Track Electron Momentum (GeV)");h41.setTitleY("PCAL "+lab[1]); dg.addDataSet(h41, n); n++;
-        h42 = new H2F("h42",50,0,9,70,-2,12); h42.setTitleX("Track Electron Momentum (GeV)");h42.setTitleY("ECIN "+lab[0]); dg.addDataSet(h42, n); n++;
-        h43 = new H2F("h43",50,0,9,70,-5,30); h43.setTitleX("Track Electron Momentum (GeV)");h43.setTitleY("ECIN "+lab[1]); dg.addDataSet(h43, n); n++;
-        h40.setTitle("#Deltap<"+dp2);h41.setTitle("#Deltap<"+dp2);h42.setTitle("#Deltap<"+dp2);h43.setTitle("#Deltap<"+dp2);
-        this.getDataGroup().add(dg,0,0,1,run);
-        
-        
-        dg = new DataGroup(4,3); n=0;       
-        h50 = new H2F("h40",50,0.0,10.,50,0.15,0.31); dg.addDataSet(h50, n); n++;      
-        h50.setTitleX("True Electron Momentum (GeV)");
-        h50.setTitleY("Sampling Fraction E/P");
-        
-        h51 = new H2F("h41",50,0.0,10.,50,0.15,0.31); dg.addDataSet(h51, n); n++;      
-        h51.setTitleX("Track Electron Momentum (GeV)");
-        h51.setTitleY("Sampling Fraction E/P");
-        
-        h52 = new H2F("h42",50,0.0,2.5,50,0.15,0.31); dg.addDataSet(h52, n); n++;      
-        h52.setTitleX("ECAL Electron Energy (GeV)");
-        h52.setTitleY("Sampling Fraction E/P");
+    	String tab = "GENREC", tag = null;
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab), n=0;
+        tag = st+"_"+k+"_"+run;
+ 
+    	switch (st) {        
+        case 0: 
+        dg = new DataGroup(4,5);
+        dg.addDataSet(makeH1("h00",50,-0.1,0.1,"","#Deltapx GEN-REC (GeV)",1,4),n++); 
+        dg.addDataSet(makeH1("h01",50,-0.1,0.1,"","#Deltapy GEN-REC (GeV)",1,4),n++); 
+        dg.addDataSet(makeH1("h02",50,-0.1,0.1,"","#Deltapz GEN-REC (GeV)",1,4),n++); 
+        dg.addDataSet(makeH1("h03",50,-0.1,0.1,"","#Deltap  GEN-REC (GeV)",1,4),n++);
+        dg.addDataSet(makeH2("hv0",50,0,4.0, 50,-5,5,"ECAL E#gamma>10 MeV","ECAL #gamma E (GeV)","#DeltaVx  GEN-REC (cm)"),n++);
+        dg.addDataSet(makeH2("hv1",50,0,4.0, 50,-5,5,"ECAL E#gamma>10 MeV","ECAL #gamma E (GeV)","#DeltaVy  GEN-REC (cm)"),n++);
+        dg.addDataSet(makeH2("hv2",50,0,4.0, 50,-5,5,"ECAL E#gamma>10 MeV","ECAL #gamma E (GeV)","#DeltaVz  GEN-REC (cm)"),n++);
+        dg.addDataSet(makeH2("hv3",50,-6,0,60,-10,30,"#Deltap>"+dp1,"Vz GEN (cm)","z0 (cm)"),n++);
+        dg.addDataSet(makeH2("hv4",50,5,35,60,-10,30,"#Deltap>"+dp1,"True Electron Theta (deg)","z0 (cm)"),n++);
+        dg.addDataSet(makeH2("hv5",50,0, 9,60,-10,30,"#Deltap>"+dp1,"True Electron Momentum (GeV)","z0 (cm)"),n++);
+        dg.addDataSet(makeH2("h10",50,0,4.0, 50,-0.1,1.0,"","ECAL #gamma E (GeV)","#Deltapx (GeV)"),n++);
+        dg.addDataSet(makeH2("h11",50,0,1.0, 50,-0.1,0.1,"","ECAL #gamma E (GeV)","#Deltapy (GeV)"),n++);
+        dg.addDataSet(makeH2("h12",50,0,1.0, 50,-0.1,1.0,"","ECAL #gamma E (GeV)","#Deltapz (GeV)"),n++);
+        dg.addDataSet(makeH2("h13",50,0,5.0, 50,-0.1,5.0,"","ECAL #gamma E (GeV)","#Deltap  (GeV)"),n++);
+        dg.addDataSet(makeH2("h20",50,0,100,100,-0.1,5.0,"","Distance e-#gamma (cm)","#Deltap  GEN-REC (GeV)"),n++);   
+        dg.addDataSet(makeH2("h21",50,0,100,100, 0.0,5.0,"#Deltap>"+dp1,"Distance e-#gamma (cm)","#Deltap  GEN-REC (GeV)"),n++);   
+        dg.addDataSet(makeH2("h22",50,0,100,100, 0.0,5.0,"#Deltap<"+dp2,"Distance e-#gamma (cm)","#Deltap  GEN-REC (GeV)"),n++);   
+        dg.addDataSet(makeH2("h23",50,0,  9,100, 0.0,5.0,"#Deltap<"+dp2,"Track Electron Momentum (GeV)","ECAL #gamma E (GeV)"),n++);   
+    	}
+        this.getDataGroup().add(dg,0,st,k,run);        
+    }
+    
+    public void createKINEMATICS(int st) {
+    	
+    	String tab = "KINEMATICS", tag = null;
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab), n=0;
+        tag = st+"_"+k+"_"+run;
       
-        eff1 = new H2F("eff1",30,0,10,30,5,30); eff1.setTitleX("True Electron Momentum (GeV)"); eff1.setTitleY("True Electron Theta (deg)");
-        
-        eff1a = new H2F("eff1a",30,0,10,30,5,30);
-        eff1b = new H2F("eff1b",30,0,10,30,5,30); 
-        
-        eff2a = new H2F("eff2a",30,0,10,30,5,30);
-        eff2b = new H2F("eff2b",30,0,10,30,5,30); 
-        
-        eff3a = new H2F("eff3a",30,0,10,30,5,30);
-        eff3b = new H2F("eff3b",30,0,10,30,5,30);
-            
-        for (int i=0;i<nh;i++) {effmom[i] = new H1F("effmom",50,0.,10.); effmom[i].setTitleX("MC Electron P (GeV)");}
-        for (int i=0;i<nh;i++) {effthe[i] = new H1F("effthe",50,5.,35.); effthe[i].setTitleX("MC Electron #theta (deg)");}
-        
-        eff1b.setTitle("e-,#gamma,#pi-"); eff2b.setTitle("#chiPID<3.5"); eff3b.setTitle("#DeltaP<"+dp2);       
-        eff1b.setTitleX("True Electron Energy (GeV)" );eff1b.setTitleY("True Electron Theta (deg)");
-        eff2b.setTitleX("True Electron Energy (GeV)" );eff2b.setTitleY("True Electron Theta (deg)");               
-        eff3b.setTitleX("True Electron Energy (GeV)" );eff3b.setTitleY("True Electron Theta (deg)");               
-        effmom1.setTitle("G: PC > 0  Y: PC = 1 or 2  R: PC = 1");        
-        effmom1.setTitleX("True Electron Energy (GeV)"); effmom1.setTitleY("Efficiency #theta>15");
-        effmom2.setTitleX("True Electron Energy (GeV)"); effmom2.setTitleY("Efficiency #theta>15");
-        effmom3.setTitleX("True Electron Energy (GeV)"); effmom3.setTitleY("Efficiency #theta>15");                
-        effthe1.setTitleX("True Electron Theta (deg)");  effthe1.setTitleY("Efficiency");
-        effthe2.setTitleX("True Electron Theta (deg)");  effthe2.setTitleY("Efficiency");
-        effthe3.setTitleX("True Electron Theta (deg)");  effthe3.setTitleY("Efficiency");        
-        effmom4.setTitle("G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2);        
-        effmom4.setTitleX("True Electron Energy (GeV)"); effmom4.setTitleY("Efficiency #theta>15");        
-        effthe4.setTitleX("True Electron Theta (deg)");  effthe4.setTitleY("Efficiency");    	
+    	switch (st) {        
+        case 0: 
+        dg = new DataGroup(4,2);      
+        String lab[] = new String[]{"e - #gamma #Delta#theta","e - #gamma #Delta#phi"};
+        dg.addDataSet(makeH2("h30",50,0,9,70,-2,12,"#Deltap>"+dp1,"Track Electron Momentum (GeV)","PCAL "+lab[0]),n++);   
+        dg.addDataSet(makeH2("h31",50,0,9,70,-5,30,"#Deltap>"+dp1,"Track Electron Momentum (GeV)","PCAL "+lab[1]),n++);   
+        dg.addDataSet(makeH2("h32",50,0,9,70,-2,12,"#Deltap>"+dp1,"Track Electron Momentum (GeV)","ECIN "+lab[0]),n++);   
+        dg.addDataSet(makeH2("h33",50,0,9,70,-5,30,"#Deltap>"+dp1,"Track Electron Momentum (GeV)","ECIN "+lab[1]),n++);
+        dg.addDataSet(makeH2("h40",50,0,9,70,-2,12,"#Deltap<"+dp2,"Track Electron Momentum (GeV)","PCAL "+lab[0]),n++);   
+        dg.addDataSet(makeH2("h41",50,0,9,70,-5,30,"#Deltap<"+dp2,"Track Electron Momentum (GeV)","PCAL "+lab[1]),n++);   
+        dg.addDataSet(makeH2("h42",50,0,9,70,-2,12,"#Deltap<"+dp2,"Track Electron Momentum (GeV)","ECIN "+lab[0]),n++);   
+        dg.addDataSet(makeH2("h43",50,0,9,70,-5,30,"#Deltap<"+dp2,"Track Electron Momentum (GeV)","ECIN "+lab[1]),n++);
+    	}
+        this.getDataGroup().add(dg,0,st,k,run);        
+    }
+    
+    public void createEFFICIENCY(int st) {
+    	
+    	String tab = "EFFICIENCY", tag = null;
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab), n=0, nh=8;;
+    	
+    	switch (st) {        
+        case 0: 
+        dg = new DataGroup(4,3);         
+        dg.addDataSet(makeH2("h50",50,0.0,10.,60,0.0,0.31,"","True Electron Momentum (GeV)","Sampling Fraction E/P"),n++);   
+        dg.addDataSet(makeH2("h51",50,0.0,10.,60,0.0,0.31,"","Track Electron Momentum (GeV)","Sampling Fraction E/P"),n++);   
+        dg.addDataSet(makeH2("h52",50,0.0,10.,60,0.0,0.31,"","Track Electron Momentum (GeV)","Sampling Fraction E/P"),n++);   
+        dg.addDataSet(makeH2("h53",50,0.0,2.5,60,0.0,0.31,"","ECAL Electron Energy (GeV)","Sampling Fraction E/P"),n++);
+        dg.addDataSet(makeGraph("g53",1),n-1); SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); dg.addDataSet(sf,n-1);
+        dg.addDataSet(makeH1("h60a",50,0,10,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,3),n++);
+        dg.addDataSet(makeH1("h60b",50,0,10,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,5),n-1);
+        dg.addDataSet(makeH1("h60c",50,0,10,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,2),n-1);
+        dg.addDataSet(makeH1("h61a",50,5,35,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Theta (deg)","Efficiency",1,3),n++);
+        dg.addDataSet(makeH1("h61b",50,5,35,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Theta (deg)","Efficiency",1,5),n-1);
+        dg.addDataSet(makeH1("h61c",50,5,35,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Theta (deg)","Efficiency",1,2),n-1);
+        dg.addDataSet(makeH1("h62a",50,0,10,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Energy (GeV)","Efficiency #theta>15",1,3),n++);
+        dg.addDataSet(makeH1("h62b",50,0,10,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Energy (GeV)","Efficiency #theta>15",1,5),n-1);
+        dg.addDataSet(makeH1("h62c",50,0,10,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Energy (GeV)","Efficiency #theta>15",1,2),n-1);
+        dg.addDataSet(makeH1("h62d",50,0,10,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Energy (GeV)","Efficiency #theta>15",1,1),n-1);
+        dg.addDataSet(makeH1("h63a",50,5,35,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Theta (deg)","Efficiency",1,3),n++);
+        dg.addDataSet(makeH1("h63b",50,5,35,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Theta (deg)","Efficiency",1,5),n-1);
+        dg.addDataSet(makeH1("h63c",50,5,35,"G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2,"True Electron Theta (deg)","Efficiency",1,2),n-1);
+    	dg.addDataSet(makeH2("h70",30,0,10,30,5,30,"e-,#gamma,#pi-","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+    	dg.addDataSet(makeH2("h71",30,0,10,30,5,30,"#chiPID<3.5","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+    	dg.addDataSet(makeH2("h72",30,0,10,30,5,30,"#DeltaP<"+dp2,"True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+    	dg.addDataSet(makeH1("h73a",10,1,11,"","Multiplicity",1,1), n++);
+    	dg.addDataSet(makeH1("h73b",10,1,11,"","Multiplicity",1,34), n-1);
+    	dg.addDataSet(makeH1("h73c",10,1,11,"","Multiplicity",1,2), n-1);
+        break;
+        case 1:
+        dg = new DataGroup(4,3);
+        dg.addDataSet(makeH2("eff1", 30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff1a",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff1b",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff2a",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff2b",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff3a",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        dg.addDataSet(makeH2("eff3b",30,0,10,30,5,30,"","True Electron Momentum (GeV)","True Electron Theta (deg)"),n++);
+        break;
+        case 2:
+        dg = new DataGroup(6,6);
+        for (int i=0;i<nh;i++) dg.addDataSet(makeH1("effmom"+i,50,0.,10.,"","MC Electron P (GeV)",4,4),n++);
+        for (int i=0;i<nh;i++) dg.addDataSet(makeH1("effthe"+i,50,5.,35.,"","MC Electron #theta (deg)",4,4),n++);
+    	}
+    	
+        this.getDataGroup().add(dg,0,st,k,run);
     }
     
     @Override       
@@ -172,7 +203,7 @@ public class ECmc extends DetectorMonitor {
     
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
-    	meanGraph = fith52(); geteff();
+    	fith52(); geteff();
     	isAnalyzeDone = true;
     }
     
@@ -189,13 +220,23 @@ public class ECmc extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {
     	
-        if(eb.readMC(event)) { 
+		int run = getRunNumber();
+		DataGroup  dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("GENREC"),run);
+		DataGroup  dg1 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("KINEMATICS"),run);
+		DataGroup dg20 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup dg21 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup dg22 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+
+    	if(eb.readMC(event)) { 
             
-        float refE = (float) eb.pmc.get(0).e(); float refP = (float) eb.pmc.get(0).p(); float refTH = (float) (eb.pmc.get(0).theta()*180/Math.PI);
+        float refE  = (float) eb.pmc.get(0).e(); 
+        float refP  = (float) eb.pmc.get(0).p(); 
+        float refTH = (float) Math.toDegrees(eb.pmc.get(0).theta());
+        float refPH = (float) Math.toDegrees(eb.pmc.get(0).phi());
         
-        eff1.fill(refE, refTH);
-        if(refTH>15)effmom[0].fill(refE);
-        effthe[0].fill(refTH);    
+        dg21.getH2F("eff1").fill(refE, refTH);
+        if(refTH>15)dg22.getH1F("effmom0").fill(refE);
+        dg22.getH1F("effthe0").fill(refTH);    
         
     	ev.init(event);        	
     	ev.setEventNumber(10);
@@ -203,15 +244,15 @@ public class ECmc extends DetectorMonitor {
    	    ev.setElecTriggerSector(mcsec);
    	    		
         if(ev.procEvent(event)) {
-    		elec = getPART(0.0, 11);      int nelec = elec.size();
-    		phot = getPART(0.0, 22);      int nphot = phot.size();
-    		pim  = getPART(0.0, 212);     int  npim = pim.size();
+    		elec = getPART(0.0, 11);      int nelec = elec.size(); dg20.getH1F("h73a").fill(nelec);
+    		phot = getPART(0.0, 22);      int nphot = phot.size(); dg20.getH1F("h73b").fill(nphot);
+    		pim  = getPART(0.0, 212);     int  npim = pim.size();  dg20.getH1F("h73c").fill(npim);
     		
     		int npart = nelec+nphot+npim;        		        		
     		float esum=0,dp=0,chi2pid=1000;
     		
-    		if(npart>0) {if(refTH>15)effmom[4].fill(refE); effthe[4].fill(refTH); eff1a.fill(refE, refTH);}
-    		if(npim==0) {if(refTH>15)effmom[5].fill(refE); effthe[5].fill(refTH);}
+    		if(npart>0) {if(refTH>15)dg22.getH1F("effmom4").fill(refE); dg22.getH1F("effthe4").fill(refTH); dg21.getH2F("eff1a").fill(refE, refTH);}
+    		if(npim==0) {if(refTH>15)dg22.getH1F("effmom5").fill(refE); dg22.getH1F("effthe5").fill(refTH);}
    		
     		for (Particle p : phot) {esum+=p.e();}
     		        		
@@ -220,29 +261,35 @@ public class ECmc extends DetectorMonitor {
         		dp = (float)(eb.pmc.get(0).p()-elec.get(0).p());
         		
         		if(npim==0&&chi2pid<3.5)  {
-        			if(refTH>15)                      effmom[6].fill(refE); 
-        			if(refTH>15 && Math.abs(dp)<dp2)  effmom[7].fill(refE); 
-        			if(Math.abs(dp)<dp2)   eff3a.fill(refE,refTH);
-        			effthe[6].fill(refTH); eff2a.fill(refE,refTH); 	                    
+        			if(refTH>15)                      dg22.getH1F("effmom6").fill(refE); 
+        			if(refTH>15 && Math.abs(dp)<dp2)  dg22.getH1F("effmom7").fill(refE); 
+        			if(Math.abs(dp)<dp2)   dg21.getH2F("eff3a").fill(refE,refTH);
+        			dg22.getH1F("effthe6").fill(refTH); dg21.getH2F("eff2a").fill(refE,refTH); 	                    
         		}
         		
-    			if(esum<0.01) {
-    			h00.fill(eb.pmc.get(0).px()-elec.get(0).px());
-           		h01.fill(eb.pmc.get(0).py()-elec.get(0).py());
-           		h02.fill(eb.pmc.get(0).pz()-elec.get(0).pz());
-           		h03.fill(dp);
-    			}
+        		if(esum<0.01) {
+        			dg0.getH1F("h00").fill(eb.pmc.get(0).px()-elec.get(0).px());
+        			dg0.getH1F("h01").fill(eb.pmc.get(0).py()-elec.get(0).py());
+        			dg0.getH1F("h02").fill(eb.pmc.get(0).pz()-elec.get(0).pz());
+        			dg0.getH1F("h03").fill(dp);
+        		}
     			
                 if(esum>0.01) {
-    			h10.fill(esum,eb.pmc.get(0).px()-elec.get(0).px());
-           		h11.fill(esum,eb.pmc.get(0).py()-elec.get(0).py());
-           		h12.fill(esum,eb.pmc.get(0).pz()-elec.get(0).pz());
-           		h13.fill(esum,dp);
+        			dg0.getH2F("h10").fill(esum,eb.pmc.get(0).px()-elec.get(0).px());
+        			dg0.getH2F("h11").fill(esum,eb.pmc.get(0).py()-elec.get(0).py());
+        			dg0.getH2F("h12").fill(esum,eb.pmc.get(0).pz()-elec.get(0).pz());
+        			dg0.getH2F("h13").fill(esum,dp);
+        			dg0.getH2F("hv0").fill(esum,eb.pmc.get(0).vx()-elec.get(0).vx());
+        			dg0.getH2F("hv1").fill(esum,eb.pmc.get(0).vy()-elec.get(0).vy());
+        			dg0.getH2F("hv2").fill(esum,eb.pmc.get(0).vz()-elec.get(0).vz());
                 }
                               		
           		float e_mom = (float) elec.get(0).p();
                 float e_the = (float) Math.toDegrees(elec.get(0).theta());
                 float e_phi = (float) Math.toDegrees(elec.get(0).phi());
+                
+                double    pt = Math.sqrt(e_mom*e_mom-elec.get(0).pz()*elec.get(0).pz());
+                double ptref = Math.sqrt(refP*refP-eb.pmc.get(0).pz()*eb.pmc.get(0).pz());
                 
           		List<Particle> elecECAL = ev.getECAL((int)elec.get(0).getProperty("pindex"));
        			float ex=ev.getVar(elecECAL, "x", 1);float ey=ev.getVar(elecECAL, "y", 1);float ez=ev.getVar(elecECAL, "z", 1);
@@ -252,21 +299,28 @@ public class ECmc extends DetectorMonitor {
            			for (Particle rc : photECAL) { //loop over photon entries in REC::Calorimeter
            			  int il = (int)rc.getProperty("layer");
          		      float ec_the = (float) Math.toDegrees(rc.theta());
-           		      float ec_phi = (float) Math.toDegrees(rc.phi());               			
-           			  float dthe = e_the-ec_the; float dphi = e_phi-ec_phi;
+           		      float ec_phi = (float) Math.toDegrees(rc.phi()); 
+           			  float dthe = e_the-ec_the; 
+           			  float dphi = e_phi-ec_phi; 
+           			  float dphi_ref = refPH-ec_phi;
+           			  
                       if(il==1) {  //use only PCAL and ECIN entries                        
+//                    double z0     =    pt*0.667*Math.sin(dphi*3.14159/180.)*100; 
+                      double z0  =    ptref*0.667*Math.sin(dphi_ref*3.14159/180.)*100; 
+               	      if(Math.abs(dp)>dp1) {dg0.getH2F("hv3").fill(eb.pmc.get(0).vz(),z0);dg0.getH2F("hv4").fill(refTH,z0);dg0.getH2F("hv5").fill(refP,z0);}	
            			  float gx=(float)rc.getProperty("x");float gy=(float)rc.getProperty("y");float gz=(float)rc.getProperty("z");
            			  float dist = (float) Math.sqrt((ex-gx)*(ex-gx)+(ey-gy)*(ey-gy)+(ez-gz)*(ez-gz));
-           			  h20.fill(dist, dp); 
-           			  if(Math.abs(dp)>dp1) {h30.fill(e_mom,dthe); h31.fill(e_mom,dphi); h21.fill(dist,esum);}
-           			  if(Math.abs(dp)<dp2) {h40.fill(e_mom,dthe); h41.fill(e_mom,dphi); h22.fill(dist,esum); h23.fill(e_mom,esum);}
+           			  dg0.getH2F("h20").fill(dist, dp); 
+           			  if(Math.abs(dp)>dp1) {dg1.getH2F("h30").fill(e_mom,dthe); dg1.getH2F("h31").fill(e_mom,dphi); dg0.getH2F("h21").fill(dist,esum);}
+           			  if(Math.abs(dp)<dp2) {dg1.getH2F("h40").fill(e_mom,dthe); dg1.getH2F("h41").fill(e_mom,dphi); dg0.getH2F("h22").fill(dist,esum);dg0.getH2F("h23").fill(e_mom,esum);}
                       }
-                      if(il==4 && Math.abs(dp)>dp1) {h32.fill(e_mom,dthe); h33.fill(e_mom,dphi);}
-                      if(il==4 && Math.abs(dp)<dp2) {h42.fill(e_mom,dthe); h43.fill(e_mom,dphi);}
+                      if(il==4 && Math.abs(dp)>dp1) {dg1.getH2F("h32").fill(e_mom,dthe); dg1.getH2F("h33").fill(e_mom,dphi);}
+                      if(il==4 && Math.abs(dp)<dp2) {dg1.getH2F("h42").fill(e_mom,dthe); dg1.getH2F("h43").fill(e_mom,dphi);}
            			}
            		}
-           		float en=0; for (Particle p : elecECAL) en += (float) p.getProperty("energy");         		  
-           		if(chi2pid<3.5) h51.fill(e_mom, en*1e-3/e_mom);
+           		float en=0; for (Particle p : elecECAL) en += (float) p.getProperty("energy");    
+           		dg20.getH2F("h51").fill(e_mom, en*1e-3/e_mom);
+           		if(chi2pid<3.5) dg20.getH2F("h52").fill(e_mom, en*1e-3/e_mom);
     		}
 //    		System.out.println(" "+nevent+" "+nev+" "+nelec+" "+nphot+" "+npim);
         }
@@ -293,81 +347,45 @@ public class ECmc extends DetectorMonitor {
         		
 //        trig1=true; trig2=true;
         
-        if(rPC.size()>0)                   {if(refTH>15)effmom[1].fill(refE);effthe[1].fill(refTH);}
-        if(rPC.size()==1 || rPC.size()==2) {if(refTH>15)effmom[2].fill(refE);effthe[2].fill(refTH);}
-        if(rPC.size()==1)                  {if(refTH>15)effmom[3].fill(refE);effthe[3].fill(refTH);
-                                           h50.fill(refP, ecalE/refP); 
-                                           h52.fill(ecalE,ecalE/refP);}                       
-    }  
-
-        
+        if(rPC.size()>0)                   {if(refTH>15)dg22.getH1F("effmom1").fill(refE); dg22.getH1F("effthe1").fill(refTH);}
+        if(rPC.size()==1 || rPC.size()==2) {if(refTH>15)dg22.getH1F("effmom2").fill(refE); dg22.getH1F("effthe2").fill(refTH);}
+        if(rPC.size()==1)                  {if(refTH>15)dg22.getH1F("effmom3").fill(refE); dg22.getH1F("effthe3").fill(refTH);
+        dg20.getH2F("h50").fill(refP, ecalE/refP); 
+        dg20.getH2F("h53").fill(ecalE,ecalE/refP);}                       
+    }          
     }
     
-    public void plotMCHistos() {
-    	int index = 0;
-      
-        EmbeddedCanvas c = null; int ncd;
-       
-        index=getDetectorTabNames().indexOf("GEN-REC");
-        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(0)); c.divide(4,3); ncd=-1;           
-		c.setAxisTitleSize(18);
-		c.setAxisLabelSize(18);
-		
-		ncd++; c.cd(ncd) ; c.draw(h00);  
-		ncd++; c.cd(ncd) ; c.draw(h01);  
-		ncd++; c.cd(ncd) ; c.draw(h02);  
-		ncd++; c.cd(ncd) ; c.draw(h03);  
-		
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h10);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h11);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h12);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h13);  
-
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h20);
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h21);
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h22);
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h23);
-
-        index=getDetectorTabNames().indexOf("DTHE,DPHI");
-        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); c.divide(4,2); ncd=-1;           
-		c.setAxisTitleSize(18);
-		c.setAxisLabelSize(18);
-
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h30);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h31);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h32);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h33);  
-		
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h40);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h41);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h42);  
-		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h43);  
-
-        index=getDetectorTabNames().indexOf("EFF");
-        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); c.divide(4,3); ncd=-1;           
-		c.setAxisTitleSize(18);
-		c.setAxisLabelSize(18);
-
-        ncd++; c.cd(ncd); c.draw(h50);          
-        ncd++; c.cd(ncd); c.draw(h51);  
-        ncd++; c.cd(ncd); c.draw(h52);  
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.15,0.31); c.draw(meanGraph);          
-        SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  c.draw(sf,"same");        
+    public void plotMCHistos() {      
+        plot("GENREC");
+        plot("KINEMATICS");
+        plot("EFFICIENCY");   
+    }
     
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
-        c.draw(effmom1);  c.draw(effmom2,"same"); c.draw(effmom3,"same");
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
-        c.draw(effthe1);  c.draw(effthe2,"same"); c.draw(effthe3,"same");
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
-                               c.getPad(ncd).getAxisX().setGrid(true);       c.getPad(ncd).getAxisY().setGrid(true);                               
-        c.draw(effmom4);  c.draw(effmom5,"same"); c.draw(effmom6,"same"); c.draw(effmom7,"same"); 
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
-        c.draw(effthe4);  c.draw(effthe5,"same"); c.draw(effthe6,"same"); 
+    public void plotEFFICIENCY() {
+    	
+        EmbeddedCanvas c = null; int ncd;
 
+        int index=getDetectorTabNames().indexOf("EFFICIENCY");
+        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)); c.divide(4,3); ncd=3;           
+		c.setAxisTitleSize(18);
+		c.setAxisLabelSize(18);
+		
+		int run = getRunNumber();
+		DataGroup dg2 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+          
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
+        c.draw(dg2.getH2F("h60a"));  c.draw(dg2.getH2F("h60b"),"same"); c.draw(dg2.getH2F("h60c"),"same");
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
+        c.draw(dg2.getH2F("h61a"));  c.draw(dg2.getH2F("h61b"),"same"); c.draw(dg2.getH2F("h61c"),"same");
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
+                          c.getPad(ncd).getAxisX().setGrid(true);       c.getPad(ncd).getAxisY().setGrid(true);                               
+        c.draw(dg2.getH2F("h62a"));  c.draw(dg2.getH2F("h62b"),"same"); c.draw(dg2.getH2F("h62c"),"same"); c.draw(dg2.getH2F("h62d"),"same"); 
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
+        c.draw(dg2.getH2F("h63a"));  c.draw(dg2.getH2F("h63b"),"same"); c.draw(dg2.getH2F("h63c"),"same"); 
         
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff1b);
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff2b);
-        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.5,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff3b);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(dg2.getH2F("h70"));
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(dg2.getH2F("h71"));
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.5,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(dg2.getH2F("h72"));
     }
     
     @Override
@@ -375,19 +393,24 @@ public class ECmc extends DetectorMonitor {
 //        analyze();         
     }
     
-    public GraphErrors fith52() {
-	    ParallelSliceFitter fitter = new ParallelSliceFitter(h52);
+    public void fith52() {
+    	
+		int run = getRunNumber();
+		DataGroup dg2 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+       
+		ParallelSliceFitter fitter = new ParallelSliceFitter(dg2.getH2F("h53"));
+		fitter.setMin(0.2);
         fitter.fitSlicesX();
         
         GraphErrors sigGraph = fitter.getSigmaSlices();   
         sigGraph.setTitleX("ECAL Electron Energy (GeV)");  sigGraph.setTitleY("SIGMA E/P"); 	
         sigGraph.setMarkerSize(4); sigGraph.setMarkerStyle(1);
         
-        GraphErrors meanGraph = fitter.getMeanSlices();  
-        meanGraph.setTitleX("ECAL Electron Energy (GeV)"); meanGraph.setTitleY("Sampling Fraction E/P"); 	
-        meanGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1); 
+        dg2.getGraph("g53").copy(fitter.getMeanSlices());  
+        dg2.getGraph("g53").setTitleX("ECAL Electron Energy (GeV)");  dg2.getGraph("g53").setTitleY("Sampling Fraction E/P"); 	
+        dg2.getGraph("g53").setMarkerSize(4);  dg2.getGraph("g53").setMarkerStyle(1); 
           
-        int npts = meanGraph.getDataSize(0)  ;
+        int npts =  dg2.getGraph("g53").getDataSize(0)  ;
         double[] xm  = new double[npts];
         double[] ym  = new double[npts];
         double[] yme = new double[npts];
@@ -395,15 +418,15 @@ public class ECmc extends DetectorMonitor {
         double[] ys  = new double[npts];
         double[] yse = new double[npts];
         
-        for (int i=0; i<meanGraph.getDataSize(0); i++) {
-      	   xm[i] = 1/Math.sqrt(meanGraph.getDataX(i));
-      	   ym[i] = meanGraph.getDataY(i);
-      	  yme[i] = meanGraph.getDataEY(i);      			  
+        for (int i=0; i< dg2.getGraph("g53").getDataSize(0); i++) {
+      	   xm[i] = 1/Math.sqrt(dg2.getGraph("g53").getDataX(i));
+      	   ym[i] = dg2.getGraph("g53").getDataY(i);
+      	  yme[i] = dg2.getGraph("g53").getDataEY(i);     
         } 
         
         GraphErrors resGraph = new GraphErrors();
         resGraph.setTitleX("1/E (GeV^-^1)");  resGraph.setTitleY("(#sigma / E)^2"); 
-        resGraph.setMarkerSize(4); meanGraph.setMarkerStyle(1);
+        resGraph.setMarkerSize(4); resGraph.setMarkerStyle(1);
         
         int n=0;
         for (int i=0; i<sigGraph.getDataSize(0); i++) {
@@ -420,45 +443,39 @@ public class ECmc extends DetectorMonitor {
         	   resGraph.addPoint(xs[n], ys[n], 0., yse[n]);
         	}
         } 
-        return meanGraph;
     }
     
     public void geteff() {
-        effmom1 = H1F.divide(effmom[1],effmom[0]); effmom1.setFillColor(3);
-        effmom2 = H1F.divide(effmom[2],effmom[0]); effmom2.setFillColor(5);
-        effmom3 = H1F.divide(effmom[3],effmom[0]); effmom3.setFillColor(2);
-        effmom4 = H1F.divide(effmom[4],effmom[0]); effmom4.setFillColor(3);
-        effmom5 = H1F.divide(effmom[5],effmom[0]); effmom5.setFillColor(5);
-        effmom6 = H1F.divide(effmom[6],effmom[0]); effmom6.setFillColor(2);
-        effmom7 = H1F.divide(effmom[7],effmom[0]); effmom7.setFillColor(1);        
-        effthe1 = H1F.divide(effthe[1],effthe[0]); effthe1.setFillColor(3);
-        effthe2 = H1F.divide(effthe[2],effthe[0]); effthe2.setFillColor(5);
-        effthe3 = H1F.divide(effthe[3],effthe[0]); effthe3.setFillColor(2);
-        effthe4 = H1F.divide(effthe[4],effthe[0]); effthe4.setFillColor(3);
-        effthe5 = H1F.divide(effthe[5],effthe[0]); effthe5.setFillColor(5);
-        effthe6 = H1F.divide(effthe[6],effthe[0]); effthe6.setFillColor(2);        
-        eff1b=eff1b.divide(eff1a, eff1); eff2b=eff2b.divide(eff2a, eff1); eff3b=eff3b.divide(eff3a, eff1); 
-        
-        eff1b.setTitle("e-,#gamma,#pi-"); eff2b.setTitle("#chiPID<3.5"); eff3b.setTitle("#DeltaP<"+dp2);
-        eff1b.setTitleX("True Electron Energy (GeV)" );eff1b.setTitleY("True Electron Theta (deg)");
-        eff2b.setTitleX("True Electron Energy (GeV)" );eff2b.setTitleY("True Electron Theta (deg)");               
-        eff3b.setTitleX("True Electron Energy (GeV)" );eff3b.setTitleY("True Electron Theta (deg)");               
-        effmom1.setTitle("G: PC > 0  Y: PC = 1 or 2  R: PC = 1");        
-        effmom1.setTitleX("True Electron Energy (GeV)"); effmom1.setTitleY("Efficiency #theta>15");
-        effmom2.setTitleX("True Electron Energy (GeV)"); effmom2.setTitleY("Efficiency #theta>15");
-        effmom3.setTitleX("True Electron Energy (GeV)"); effmom3.setTitleY("Efficiency #theta>15");                
-        effthe1.setTitleX("True Electron Theta (deg)");  effthe1.setTitleY("Efficiency");
-        effthe2.setTitleX("True Electron Theta (deg)");  effthe2.setTitleY("Efficiency");
-        effthe3.setTitleX("True Electron Theta (deg)");  effthe3.setTitleY("Efficiency");        
-        effmom4.setTitle("G: e-,#gamma,#pi-  Y: NO #pi-  R: #chiPID<3.5 B: #DeltaP<"+dp2);        
-        effmom4.setTitleX("True Electron Energy (GeV)"); effmom4.setTitleY("Efficiency #theta>15");        
-        effthe4.setTitleX("True Electron Theta (deg)");  effthe4.setTitleY("Efficiency");        
+		int run = getRunNumber();
+		DataGroup dg20 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup dg21 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup dg22 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+        dg20.getH1F("h60a").add(H1F.divide(dg22.getH1F("effmom1"),dg22.getH1F("effmom0")));
+        dg20.getH1F("h60b").add(H1F.divide(dg22.getH1F("effmom2"),dg22.getH1F("effmom0"))); 
+        dg20.getH1F("h60c").add(H1F.divide(dg22.getH1F("effmom3"),dg22.getH1F("effmom0"))); 
+        dg20.getH1F("h62a").add(H1F.divide(dg22.getH1F("effmom4"),dg22.getH1F("effmom0"))); 
+        dg20.getH1F("h62b").add(H1F.divide(dg22.getH1F("effmom5"),dg22.getH1F("effmom0"))); 
+        dg20.getH1F("h62c").add(H1F.divide(dg22.getH1F("effmom6"),dg22.getH1F("effmom0")));
+        dg20.getH1F("h62d").add(H1F.divide(dg22.getH1F("effmom7"),dg22.getH1F("effmom0")));        
+        dg20.getH1F("h61a").add(H1F.divide(dg22.getH1F("effthe1"),dg22.getH1F("effthe0"))); 
+        dg20.getH1F("h61b").add(H1F.divide(dg22.getH1F("effthe2"),dg22.getH1F("effthe0"))); 
+        dg20.getH1F("h61c").add(H1F.divide(dg22.getH1F("effthe3"),dg22.getH1F("effthe0"))); 
+        dg20.getH1F("h63a").add(H1F.divide(dg22.getH1F("effthe4"),dg22.getH1F("effthe0"))); 
+        dg20.getH1F("h63b").add(H1F.divide(dg22.getH1F("effthe5"),dg22.getH1F("effthe0"))); 
+        dg20.getH1F("h63c").add(H1F.divide(dg22.getH1F("effthe6"),dg22.getH1F("effthe0")));                
+        dg20.getH2F("h70").add(H2F.divide(dg21.getH2F("eff1a"),dg21.getH2F("eff1")));
+        dg20.getH2F("h71").add(H2F.divide(dg21.getH2F("eff2a"),dg21.getH2F("eff1")));
+        dg20.getH2F("h72").add(H2F.divide(dg21.getH2F("eff3a"),dg21.getH2F("eff1")));     
     }
+    
+    public void plot(String tabname) {      	
+    	int index = getDetectorTabNames().indexOf(tabname);
+    	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));   	
+    } 
         
     @Override
     public void timerUpdate() {  
-//    	meanGraph = fith52();
-    	geteff();
+
     }
 
 
