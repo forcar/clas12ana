@@ -593,7 +593,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private DataEvent initRun(int runno, DataEvent event) {
-    	
+    	System.out.println("EventViewer.initRun("+runno+")");
         for(int k=0; k<this.monitors.length; k++) {
         	if(autoSave && this.runNumber!=0) this.monitors[k].saveHistosToFile();
             this.runNumber = runno; 
