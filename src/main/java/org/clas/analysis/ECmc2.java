@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.clas.analysis.ECPart.SFFunction;
+import org.clas.tools.DataGroupManager;
 import org.clas.tools.EBMC;
 import org.clas.tools.Event;
 import org.clas.viewer.DetectorMonitor;
@@ -19,6 +20,7 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSync;
 import org.jlab.rec.eb.SamplingFractions;
@@ -28,8 +30,10 @@ public class ECmc2 extends DetectorMonitor {
 	Event ev = new Event();
 	EBMC  eb = new EBMC();
     List<DetectorParticle> np = new ArrayList<DetectorParticle>();
+   
     HipoDataSync  writer = null;
 	DataGroup dg = null;
+	String tit = null;
 	List<Particle> phot = new ArrayList<Particle>();
 	List<Particle> neut = new ArrayList<Particle>();
 //	List<Float> GEN =  new ArrayList<Float>();
@@ -38,7 +42,8 @@ public class ECmc2 extends DetectorMonitor {
 
     public ECmc2(String name) {
         super(name);
-        setDetectorTabNames("MAIN","GENREC","EFFICIENCY");
+        
+        dgm.setDetectorTabNames("MAIN","GENREC","EFFICIENCY");
 
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
@@ -57,7 +62,7 @@ public class ECmc2 extends DetectorMonitor {
         engine.setPCALTrackingPlane(9);
         engine.setCalRun(10);                
         eb.getCCDB(10);
-        eb.setThresholds("Test",engine);
+        eb.setThresholds("Pizero",engine);
         eb.setGeom("2.5");
         eb.setGoodPhotons(12);
         eb.isMC = true;
@@ -116,27 +121,41 @@ public class ECmc2 extends DetectorMonitor {
     
 
     public void createGENREC(int st) {
-	
-    	String tab = "GENREC", tag = null;
-    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab), n=0;
-    	tag = st+"_"+k+"_"+run;    
-    
+	  
     	switch (st) {        
-    	case 0: 
-        	dg = new DataGroup(4,3);
-            dg.addDataSet(makeH2("d00",50,10,20,  50,-1,1,"","GEN #theta #gamma2 (deg)","#DeltaE/E #gamma1 (GeV)"),n++); cc("d00",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d01",50,59,61,  50,-1,1,"","GEN #phi #gamma1 (deg)",  "#DeltaE/E #gamma1 (GeV)"),n++); cc("d01",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d02",50,0,70,   50,-1,1,"","Distance (cm)",           "#DeltaE/E #gamma1 (GeV)"),n++); cc("d02",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d03",50,0,5.2,  50,-1,1,"","#theta12 (deg))",         "#DeltaE/E #gamma1 (GeV)"),n++); cc("d03",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d10",50,10,20,  50,-1,1,"","GEN #theta #gamma2 (deg)","#DeltaE/E #gamma2 (GeV)"),n++); cc("d10",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d11",50,59,61,  50,-1,1,"","GEN #phi #gamma2 (deg)",  "#DeltaE/E #gamma2 (GeV)"),n++); cc("d11",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d12",50,0,70,   50,-1,1,"","Distance (cm)",           "#DeltaE/E #gamma2 (GeV)"),n++); cc("d12",false,true,0,0,0,0);  
-            dg.addDataSet(makeH2("d13",50,0,5.2,  50,-1,1,"","#theta12 (deg))",         "#DeltaE/E #gamma2 (GeV)"),n++); cc("d13",false,true,0,0,0,0);  
- 
-    	}
-        this.getDataGroup().add(dg,0,st,k,run);         
-   	
-    }
+    	case 0:
+    		dgm.add("GENREC",6,4,0,st,getRunNumber());
+        	                                      tit = "pc=2 ec=0";
+            dgm.makeH2("d00",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma1");
+            dgm.makeH2("d10",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma2");
+            dgm.makeH2("d02",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma1"); 
+            dgm.makeH2("d12",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma2"); 
+            dgm.makeH2("d03",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma1");  
+            dgm.makeH2("d13",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma2");  
+                                                  tit = "pc=2 ec=1";
+            dgm.makeH2("d20",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma1"); 
+            dgm.makeH2("d30",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma2");  
+            dgm.makeH2("d22",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma1");   
+            dgm.makeH2("d32",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma2");  
+            dgm.makeH2("d23",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma1");   
+            dgm.makeH2("d33",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma2");
+                                                  tit = "pc=2 ec=2";
+            dgm.makeH2("d40",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma1"); 
+            dgm.makeH2("d50",50,10,20,  50,-1,1,0,tit,"GEN #theta #gamma2 (deg)","#DeltaE/E #gamma2"); 
+            dgm.makeH2("d42",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma1"); 
+            dgm.makeH2("d52",50,0,70,   50,-1,1,0,tit,"Distance (cm)",           "#DeltaE/E #gamma2");  
+            dgm.makeH2("d43",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma1");  
+            dgm.makeH2("d53",50,0,5.2,  50,-1,1,0,tit,"#theta12 (deg))",         "#DeltaE/E #gamma2");              
+                                                  tit = "pc=2 ec=1"; 
+            dgm.makeH2("d60",50,10,20,  50, 0,2,1,tit,"GEN #theta #gamma2 (deg)","(E1+E2)/2E"); 
+            dgm.makeH2("d70",50,10,20,  50, 0,2,1,tit,"GEN #theta #gamma2 (deg)","SQRT(E1*E2)/E");   
+            dgm.makeH2("d62",50,0,70,   50, 0,2,1,tit,"Distance (cm)",           "(E1+E2)/2E");    
+            dgm.makeH2("d72",50,0,70,   50, 0,2,1,tit,"Distance (cm)",           "SQRT(E1*E2)/E");  
+            dgm.makeH2("d63",50,0,5.2,  50, 0,2,1,tit,"#theta12 (deg))",         "(E1+E2)/2E");  
+            dgm.makeH2("d73",50,0,5.2,  50, 0,2,1,tit,"#theta12 (deg))",         "SQRT(E1*E2)/E");             
+    	}        
+   	   
+    }   
     
     public void createEFFICIENCY(int st) {
     	
@@ -182,7 +201,7 @@ public class ECmc2 extends DetectorMonitor {
     
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
-    	geteff();
+//    	geteff();
     	writer.close();
     	isAnalyzeDone = true;
     }
@@ -201,28 +220,26 @@ public class ECmc2 extends DetectorMonitor {
     
     @Override
     public void processEvent(DataEvent de) {
-    	
-		int run = getRunNumber();
-		DataGroup  dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("MAIN"),run);
-		DataGroup  dgr = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("GENREC"),run);
-		DataGroup dg10 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
-		DataGroup dg11 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("EFFICIENCY"),run);
 		
 		List<Float> GEN =  new ArrayList<Float>();
 		List<Float> REC1 = new ArrayList<Float>();	
 		
 		int npp=0,indx=-1; float pthresh=1f;
-		int n=0,np2=0,npc=0,nec=0, sec=2, nphot=0, nneut=0, npart=0, etot=8;
-		
-		System.out.println(" ");
+		int n=0,np2=0,npc=0,neci=0,neco=0,sec=2,nphot=0, nneut=0, npart=0, etot=8;
+		double e1=0,e2=0,oparec=0,the2=0,dist=0,epc1=0,epc2=0,eeci1=0,eeci2=0,eeco1=0,eeco2=0;
+		Vector3D r1=null,r2=null;
+				        
+//		System.out.println(getEventNumber());
 		
 		boolean goodev = eb.readMC(de) && eb.pmc.size()==2;
 				
-        if (goodev) {                   
+        if (goodev) {    
+        	
             engine.processDataEvent(de);  
             
         	eb.readEC(de,"ECAL::clusters");
         	np.clear(); np = eb.getNeutralPart(); npart = np.size(); 
+        	
         	eb.getRECBanks(de,eb.eb); writer.writeEvent(de);
         	
     		GEN = get2(eb.pmc); 
@@ -235,29 +252,79 @@ public class ECmc2 extends DetectorMonitor {
        	    
  //    		phot.clear(); REC1.clear();
      		
-        	dg10.getH1F("h10").fill(GEN.get(6));
+//        	dg10.getH1F("h10").fill(GEN.get(6)); 
+//       	    dgm.fill("h10", GEN.get(6));
 
        	    if(ev.procEvent(de)) {
        	    	
        	    phot = ev.getPART(0.0, 22);  neut = ev.getPART(0.0,2112); 
        	    nphot = phot.size(); nneut = neut.size();
       	    
-       	    System.out.println(npart+" "+nphot+" "+nneut);
+//       	    System.out.println(npart+" "+nphot+" "+nneut);
+       	    
+ 			for (DetectorParticle dp : np) { 
+ 				double ep = dp.getEnergy(DetectorType.ECAL)/SamplingFractions.getMean(22, dp, eb.ccdb);
+// 				System.out.println(ep+" "+dp.countResponses(DetectorType.ECAL,1)+" "+
+// 						                  dp.countResponses(DetectorType.ECAL,4)+" "+
+// 						                  dp.countResponses(DetectorType.ECAL,7));
+// 				if(ep>pthresh) {       				
+// 					for (DetectorResponse dr : dp.getDetectorResponses()) {
+// 			    		int lay = dr.getDescriptor().getLayer();
+// 			    		if(lay==1) {r1=dr.getPosition();npc++;epc1=dr.getEnergy();}    					
+// 			    		if(lay==4) {nec++;eeci1=dr.getEnergy();}     					
+// 					}
+// 				}
+ 			}      
      		
      		if (npart>0) {
-     			if(nphot==2) {
+     			
+ 			    if (npart>=2) {
+                	
+ 			    	DetectorParticle p1 = np.get(0);  //Photon 1
+ 			    	DetectorParticle p2 = np.get(1);  //Photon 2  
+           
+ 			    	Vector3 n1 = p1.vector(); n1.unit();
+ 			    	Vector3 n2 = p2.vector(); n2.unit();
+            
+ 			    	e1=np.get(0).getEnergy(DetectorType.ECAL)/SamplingFractions.getMean(22, p1, eb.ccdb);
+ 			    	e2=np.get(1).getEnergy(DetectorType.ECAL)/SamplingFractions.getMean(22, p2, eb.ccdb);
+            
+ 			    	List<Particle> list = new ArrayList<Particle>();
+ 			    	list.add(new Particle(22,n1.x()*e1,n1.y()*e1,n1.z()*e1)); 
+ 			    	list.add(new Particle(22,n2.x()*e2,n2.y()*e2,n2.z()*e2));
+                            
+ 			    	for (DetectorResponse dr : p1.getDetectorResponses()) {
+ 			    		int lay = dr.getDescriptor().getLayer();
+ 			    		if(lay==1) {npc++  ;  epc1=dr.getEnergy() ; r1=dr.getPosition();}    					
+ 			    		if(lay==4) {neci++ ; eeci1=dr.getEnergy();}
+ 			    		if(lay==7) {neco++ ; eeco1=dr.getEnergy();}
+ 			    	}
+ 				
+ 			    	for (DetectorResponse dr : p2.getDetectorResponses()) {
+ 			    		int lay = dr.getDescriptor().getLayer();
+ 			    		if(lay==1) {npc++  ;  epc2=dr.getEnergy() ; r2=dr.getPosition();}    					
+ 			    		if(lay==4) {neci++ ; eeci2=dr.getEnergy();}    					
+ 			    		if(lay==7) {neco++ ; eeco2=dr.getEnergy();}
+ 			    	}
+ 			    	
+ 			    	if(npc==2) {r2.sub(r1); dist=r2.mag();}
+// 	 			    System.out.println(npc+" "+nec); 
+ 			    	     				
      				REC1=get2(phot);
      				
-     				System.out.println(GEN.get(0)+" "+REC1.get(0)+" "+GEN.get(3)+" "+REC1.get(3));
-     				System.out.println(GEN.get(1)+" "+REC1.get(1)+" "+GEN.get(4)+" "+REC1.get(4));
-     				System.out.println(GEN.get(2)+" "+REC1.get(2)+" "+GEN.get(5)+" "+REC1.get(5));
+//     				System.out.println(GEN.get(0)+" "+REC1.get(0)+" "+GEN.get(3)+" "+REC1.get(3));
+//     				System.out.println(GEN.get(1)+" "+REC1.get(1)+" "+GEN.get(4)+" "+REC1.get(4));
+//     				System.out.println(GEN.get(2)+" "+REC1.get(2)+" "+GEN.get(5)+" "+REC1.get(5));
        	    
-     				dg10.getH1F("h10").fill(GEN.get(6));
+//     				dg10.getH1F("h10").fill(GEN.get(6));
+//     				dgm.fill("h10",GEN.get(6));
      			
      				double dth11 = GEN.get(1)-REC1.get(1);  
      				double dth14 = Math.abs(GEN.get(1)-REC1.get(4));
      				Boolean swap = Math.abs(dth11)<0.17 ? false:true;
-     				System.out.println(dth11+" "+dth14+" "+swap);
+     				
+//     				System.out.println(dth11+" "+dth14+" "+swap);
+     				
      				double  delE1 = swap ? GEN.get(0)-REC1.get(3):GEN.get(0)-REC1.get(0);
      				double delTH1 = swap ? GEN.get(1)-REC1.get(4):GEN.get(1)-REC1.get(1);
      				double delPH1 = swap ? GEN.get(2)-REC1.get(5):GEN.get(2)-REC1.get(2);
@@ -265,16 +332,48 @@ public class ECmc2 extends DetectorMonitor {
      				double delTH2 = swap ? GEN.get(4)-REC1.get(1):GEN.get(4)-REC1.get(4);
      				double delPH2 = swap ? GEN.get(5)-REC1.get(2):GEN.get(5)-REC1.get(5);
      				double dopa = GEN.get(6)-REC1.get(6);
-     				System.out.println(delE1+" "+delTH1+" "+delPH1);
-     				System.out.println(delE2+" "+delTH2+" "+delPH2);   
-     				if(npart==2) {
-        			dgr.getH2F("d00").fill(GEN.get(4),delE1/GEN.get(0));
-        			dgr.getH2F("d01").fill(GEN.get(2),delE1/GEN.get(0));        			
-        			dgr.getH2F("d10").fill(GEN.get(4),delE2/GEN.get(3));
-        			dgr.getH2F("d11").fill(GEN.get(2),delE2/GEN.get(3));   
-     				}
-     			}     			
-     		}
+     				
+ //    				System.out.println(delE1+" "+delTH1+" "+delPH1);
+ //    				System.out.println(delE2+" "+delTH2+" "+delPH2);   
+     				
+     			    if (npc==2 && neci==0) {
+     			    	dgm.fill("d00",GEN.get(4),delE1/GEN.get(0));
+     			    	dgm.fill("d02",dist,      delE1/GEN.get(0));        			
+     			    	dgm.fill("d03",GEN.get(6),delE1/GEN.get(0));        			
+     			    	dgm.fill("d10",GEN.get(4),delE2/GEN.get(3));
+     			    	dgm.fill("d12",dist,      delE2/GEN.get(3));        			
+     			    	dgm.fill("d13",GEN.get(6),delE2/GEN.get(3)); 
+     			    }
+     				
+     				if (npc==2 && neci==1) {
+     					dgm.fill("d20",GEN.get(4),delE1/GEN.get(0));
+     					dgm.fill("d22",dist,      delE1/GEN.get(0));        			
+     					dgm.fill("d23",GEN.get(6),delE1/GEN.get(0));        			
+     					dgm.fill("d30",GEN.get(4),delE2/GEN.get(3));
+     					dgm.fill("d32",dist,      delE2/GEN.get(3));        			     				
+     					dgm.fill("d33",GEN.get(6),delE2/GEN.get(3));      
+               			
+     					dgm.fill("d60",GEN.get(4),(REC1.get(0)+REC1.get(3))/2/GEN.get(0));
+     					dgm.fill("d62",dist,      (REC1.get(0)+REC1.get(3))/2/GEN.get(0));        			
+     					dgm.fill("d63",GEN.get(6),(REC1.get(0)+REC1.get(3))/2/GEN.get(0));        			
+     					dgm.fill("d70",GEN.get(4),Math.sqrt(REC1.get(0)*REC1.get(3))/GEN.get(3));
+     					dgm.fill("d72",dist,      Math.sqrt(REC1.get(0)*REC1.get(3))/GEN.get(3));        			     				
+     					dgm.fill("d73",GEN.get(6),Math.sqrt(REC1.get(0)*REC1.get(3))/GEN.get(3));               			
+     			    }
+     				
+     				if (npc==2 && neci==2) {
+     					dgm.fill("d40",GEN.get(4),delE1/GEN.get(0));
+     					dgm.fill("d42",dist,      delE1/GEN.get(0));        			
+     					dgm.fill("d43",GEN.get(6),delE1/GEN.get(0));        			
+     					dgm.fill("d50",GEN.get(4),delE2/GEN.get(3));
+     					dgm.fill("d52",dist,      delE2/GEN.get(3));        			     				
+     					dgm.fill("d53",GEN.get(6),delE2/GEN.get(3));
+     				}   			
+     			}    			     			
+     		}     		
+       	    }   
+        }
+ 
 /*    			        	
      			npp=0;indx=-1;
         	
@@ -352,15 +451,13 @@ public class ECmc2 extends DetectorMonitor {
      				
      			}
      			*/
-     		}
-        }
         
     }
    
     public void plotMCHistos() {      
-        plot("MAIN");
+//        plot("MAIN");
         plot("GENREC");
-        plot("EFFICIENCY");   
+//        plot("EFFICIENCY");   
     }
     
     @Override
@@ -370,9 +467,9 @@ public class ECmc2 extends DetectorMonitor {
     
     public void geteff() {
 		int run = getRunNumber();
-		DataGroup  dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("MAIN"),run);
-		DataGroup dg10 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
-		DataGroup dg11 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup  dg0 = dgm.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("MAIN"),run);
+		DataGroup dg10 = dgm.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("EFFICIENCY"),run);
+		DataGroup dg11 = dgm.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("EFFICIENCY"),run);
 		dg10.getH1F("eff1").add(H1F.divide(dg11.getH1F("h11"),dg10.getH1F("h10")));
 		dg10.getH1F("eff2").add(H1F.divide(dg11.getH1F("h12"),dg10.getH1F("h10")));
 		dg10.getH1F("eff3").add(H1F.divide(dg11.getH1F("h13"),dg10.getH1F("h10")));
@@ -381,9 +478,8 @@ public class ECmc2 extends DetectorMonitor {
 		dg0.getH1F("h1gy").add(dg0.getH2F("h2g").projectionX());		
     }
     
-    public void plot(String tabname) {      	
-    	int index = getDetectorTabNames().indexOf(tabname);
-    	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));   	
+    public void plot(String tabname) {     
+    	dgm.drawGroup(tabname,0,0, getRunNumber());
     } 
         
     @Override

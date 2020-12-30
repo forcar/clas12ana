@@ -17,21 +17,20 @@ import org.jlab.utils.groups.IndexedList;
 public class DataGroupManager {
 	
 	public IndexedList<DataGroup>       detectorData = new IndexedList<>(4);
+	private EmbeddedCanvasTabbed      detectorCanvas = null;
 	public ArrayList<String>        detectorTabNames = new ArrayList();
 	Map<String,Object[]>                         map = new HashMap<>();
 	public Map<String,int[]>                    imap = new HashMap<>();
 	public Map<String,String>                   hmap = new HashMap<>();
-	private EmbeddedCanvasTabbed      detectorCanvas = null;
+	
 	DataGroup dg = null;
-	String tag = null;
-	int[] ilist = null;
-	int n=0;
-	public Boolean  doAutoRange = false;
+	String   tag = null;
+	int  ilist[] = null, n=0;
+	public double zMin=0, zMax=0;
+    public Boolean  doAutoRange = false;
 	public Boolean detectorLogY = false;
 	public Boolean detectorLogZ = false;
 	
-	public double zMin=0, zMax=0;
-
 	public DataGroupManager() {
 		
 	}
@@ -107,6 +106,8 @@ public class DataGroupManager {
     	return (detectorData.getItem(imap.get(name)).getData(hmap.get(name)) instanceof H2F);
    }
     
+   
+    
 // HISTO HELPERS  
     
     public void fill(String name, double ... val) {    	
@@ -129,7 +130,14 @@ public class DataGroupManager {
     }
     
     public void geteff(String eff, String numer, String denom) {
-    	getH1F(eff).add(H1F.divide(getH1F(numer), getH1F(denom)));
+    	if(isH1(eff)) getH1F(eff).reset();
+    	if(isH2(eff)) getH2F(eff).reset();
+    	if(isH1(eff)) getH1F(eff).add(H1F.divide(getH1F(numer), getH1F(denom)));
+    	if(isH2(eff)) getH2F(eff).add(H2F.divide(getH2F(numer), getH2F(denom)));
+    }
+    
+    public void makeH1(String name) {
+    	dg.addDataSet(getH1F(name),n++);
     }
     
     public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, int ... color) {
