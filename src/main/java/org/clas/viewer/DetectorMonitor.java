@@ -76,7 +76,7 @@ public class DetectorMonitor implements ActionListener {
     private final String                detectorName;
     private ArrayList<String>       detectorTabNames = new ArrayList();
     private IndexedList<DataGroup>      detectorData = new IndexedList<DataGroup>(4);
-    public  Map<String,DataGroupManager>       dgMan = new LinkedHashMap<String,DataGroupManager>();
+    public  DataGroupManager                     dgm = new DataGroupManager();
     public  List<Integer>                    runlist = new ArrayList<Integer>();
     public  int                       runIndexSlider = 0;
     public  JSlider                           slider = null;
@@ -105,7 +105,7 @@ public class DetectorMonitor implements ActionListener {
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
     private int                    detectorActivePID = 0;
-    private int                    detectorActive123 = 1;
+    private int                    detectorActive123 = 0;
     private int                   detectorActiveRDIF = 0;
     private Boolean                     detectorLogY = false;
     private Boolean                     detectorLogZ = true;
@@ -199,6 +199,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean isEngineReady = false;
     public Boolean isTimeLineFitsDone = false;
     public Boolean   histosExist = false;
+    public Boolean     dgmActive = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -285,6 +286,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initCCDB(int runNumber) {    	
+    	System.out.println(root+"initCCDB("+runNumber+")");
     }
     
     public void initEBCCDB(int runNumber) {    
@@ -492,7 +494,7 @@ public class DetectorMonitor implements ActionListener {
     public boolean isGoodTrigger(int bit) {return TriggerBeam[bit] ? isTrigBitSet(bit):true;}
    
     public EmbeddedCanvasTabbed getDetectorCanvas() {
-        return detectorCanvas;
+         return detectorCanvas;
     }
     
     public ArrayList<String> getDetectorTabNames() {
@@ -500,6 +502,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public IndexedList<DataGroup>  getDataGroup(){
+    	if(dgmActive) return dgm.detectorData;
         return detectorData;
     }
     
@@ -604,11 +607,13 @@ public class DetectorMonitor implements ActionListener {
     
     public void setLogY(boolean flag) {
 	    detectorLogY = flag;
+	    dgm.detectorLogY = flag;
 	    plotHistos(getRunNumber());
     }   
     
     public void setLogZ(boolean flag) {
 	    detectorLogZ = flag;
+	    dgm.detectorLogZ = flag;
 	    plotHistos(getRunNumber());
     }
     
@@ -745,6 +750,7 @@ public class DetectorMonitor implements ActionListener {
                 RangeSlider lslider = (RangeSlider) e.getSource();   
                 lMin = lslider.getValue(); lMax = lslider.getUpperValue();
                 zMax = 0.1*lMax; zMin = Math.min(lMin,zMax); 
+                dgm.zMin=zMin ; dgm.zMax=zMax;
                 zMaxLab = Math.pow(10, zMax/10); zMinLab = Math.pow(2, zMin/10); 
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
@@ -755,6 +761,7 @@ public class DetectorMonitor implements ActionListener {
         arBtn.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 doAutoRange = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;
+                dgm.doAutoRange = doAutoRange;
                 plotHistos(getRunNumber());
             }
         });         
@@ -834,7 +841,7 @@ public class DetectorMonitor implements ActionListener {
     
     public void setCanvasUpdate(int time) {
         for(int tab=0; tab<detectorTabNames.size(); tab++) {
-            detectorCanvas.getCanvas(detectorTabNames.get(tab)).initTimer(time);
+           getDetectorCanvas().getCanvas(detectorTabNames.get(tab)).initTimer(time);
         }
     }
     
@@ -851,12 +858,9 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void setDetectorTabNames(String... names) {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed(names);
-        setDetectorCanvas(canvas);
-        
-        for(String name : names) {
-            detectorTabNames.add(name);    
-        }
+        for(String name : names) detectorTabNames.add(name); 
+        if(dgmActive) {dgm.setDetectorTabNames(names); setDetectorCanvas(dgm.getDetectorCanvas()); return;}
+        setDetectorCanvas(new EmbeddedCanvasTabbed(names));      
     }
  
     public void setDetectorSummary(DataGroup group) {
@@ -1384,7 +1388,7 @@ public class DetectorMonitor implements ActionListener {
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
             List<IDataSet> dsList = group.getData(i);
-            c.cd(i);  String opt = " ";                       
+            c.cd(i);  String opt = " ";               
             if(dsList.size()>0) {	
             	IDataSet ds0 = dsList.get(0);            	
             	if(!config(ds0.getName(),c)) {
