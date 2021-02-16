@@ -46,6 +46,10 @@ public class DataGroupManager {
 		n=0;
 	}
 	
+	public void setDataGroup(String name, int is, int st, int run) {
+		dg = detectorData.getItem(is,st,detectorTabNames.indexOf(name),run);
+	}
+	
 	public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
 		detectorCanvas = canvas;
 	}
@@ -129,6 +133,10 @@ public class DataGroupManager {
     	return detectorData.getItem(imap.get(name)).getH2F(hmap.get(name));
     }
     
+    public GraphErrors getGraph(String name) {
+    	return detectorData.getItem(imap.get(name)).getGraph(hmap.get(name));    	
+    }
+    
     public void geteff(String eff, String numer, String denom) {
     	if(isH1(eff)) getH1F(eff).reset();
     	if(isH2(eff)) getH2F(eff).reset();
@@ -136,7 +144,7 @@ public class DataGroupManager {
     	if(isH2(eff)) getH2F(eff).add(H2F.divide(getH2F(numer), getH2F(denom)));
     }
     
-    public void makeH1(String name) {
+    public void makeH1(String name) { //use this to force zone based display of H1 created with overlap tag f=-2
     	dg.addDataSet(getH1F(name),n++);
     }
     
@@ -152,7 +160,7 @@ public class DataGroupManager {
     	    if(nn==2 && col==2) h1.setOptStat("1000100");
     	    nn++;
         }
-        dg.addDataSet(h1, (f==-2)? n-1: n++);;
+        dg.addDataSet(h1, (f==-2)? n-1: n++);
 	    if(f>=0)  dg.addDataSet(makeF1D("f"+n+tag,x1,x2,f), n-1); 	   
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }
@@ -169,7 +177,7 @@ public class DataGroupManager {
     	    if(nn==2 && col==2) h1.setOptStat("1000100");
    	        nn++;
         }
-        dg.addDataSet(h1, (f==-2)? n-1: n++);;
+        dg.addDataSet(h1, (f==-2)? n-1: n++);
 	    if(f>=0)  dg.addDataSet(makeF1D("f"+n+tag,x1,x2,f), n-1);
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }    
@@ -188,17 +196,21 @@ public class DataGroupManager {
     	return f1;
     }
     
-    public void makeGraph(String name, int ... options) {
+    public void makeGraph(String name, int f, int ... options) {
     	GraphErrors graph = new GraphErrors();
     	graph.setName(getName(name)); 
-    	int n=0;
+    	int nn=0;
     	for (int opt : options) {
-    		if(n==0) graph.setMarkerColor(opt); 
-    		if(n==1) graph.setMarkerSize(opt); 
-    		if(n==2) graph.setMarkerStyle(opt);
-    		n++;
+    		if(nn==0) graph.setMarkerColor(opt); 
+    		if(nn==1) graph.setMarkerSize(opt); 
+    		if(nn==2) graph.setMarkerStyle(opt);
+    		nn++;
     	}    	
-    	dg.addDataSet(graph, n++);
+    	dg.addDataSet(graph, (f==-2)? n-1: n++);
+    }
+    
+    public void addDataSet(IDataSet ds, int f) {
+    	dg.addDataSet(ds, (f==-2)? n-1: n++);
     }
     
     //DATAGROUP HELPERS	    
