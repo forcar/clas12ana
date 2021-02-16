@@ -638,7 +638,8 @@ public class ECcalib extends DetectorMonitor {
 		}
 		
 		ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
-		
+    	
+
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){
 			is = ig.getIndex(entry.getKey(), 0);
             if(ecpart.getItem(is).size()==3) {
@@ -691,6 +692,7 @@ public class ECcalib extends DetectorMonitor {
             		
             		Boolean  pid = ev.isMuon ? true:pmip!=0 && Math.abs(mass2-0.0193)<0.03;
             		Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3;    
+
             		if (mip && pid) fillMIP(is,il,run,uvw,wuv,ecl,ep,pmip,x,y);
             	}
 			}  

@@ -26,6 +26,7 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.math.F1D;
 import org.jlab.groot.math.Func1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
@@ -51,7 +52,7 @@ import org.jlab.rec.eb.EBCCDBEnum;
 import org.jlab.rec.eb.EBRadioFrequency;
 import org.jlab.rec.eb.EBUtil;
 import org.jlab.rec.eb.SamplingFractions;
-
+import org.clas.tools.EmbeddedCanvasTabbed;
 import org.clas.tools.Event;
 
 public class ECPart extends EBTBEngine {
@@ -71,7 +72,7 @@ public class ECPart extends EBTBEngine {
     DetectorParticle p1 = new DetectorParticle();
     DetectorParticle p2 = new DetectorParticle();
     
-    List<Particle> pmc = new ArrayList<>();;
+    public List<Particle> pmc = new ArrayList<>();;
     
     public double distance11,distance12,distance21,distance22;
     public double e1,e2,e1c,e2c,cth,cth1,cth2;
@@ -110,10 +111,34 @@ public class ECPart extends EBTBEngine {
     
     String eventBank        = "REC::Event";    
     String particleBank     = "REC::Particle";
-    String calorimeterBank  = "REC::Calorimeter";    
+    String calorimeterBank  = "REC::Calorimeter";  
+    
+    private EmbeddedCanvasTabbed      detectorCanvas = null;  
+    private ArrayList<String>       detectorTabNames = new ArrayList();
     
     public ECPart() {  
     	initBankNames();
+    	detectorCanvas = new EmbeddedCanvasTabbed();
+    }
+    
+    public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
+        detectorCanvas = canvas;
+    }
+    
+    public void setDetectorTabNames(String... names) {
+        for(String name : names) {
+            detectorTabNames.add(name);
+        }
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed(names);
+        setDetectorCanvas(canvas);
+    }
+    
+    public EmbeddedCanvasTabbed getDetectorCanvas() {
+        return detectorCanvas;
+    }
+    
+    public ArrayList<String> getDetectorTabNames() {
+        return detectorTabNames;
     }
     
     public void getCCDB(int runno) {
@@ -339,7 +364,7 @@ public class ECPart extends EBTBEngine {
         
         p1 = particles.get(0);  //Photon 1
         p2 = particles.get(1);  //Photon 2
-       
+        
         Vector3 n1 = p1.vector(); n1.unit();
         Vector3 n2 = p2.vector(); n2.unit();
                 
@@ -511,6 +536,7 @@ public class ECPart extends EBTBEngine {
         ECEngine       engine = new ECEngine();
         List<DetectorResponse> rPC = null;
         
+        setDetectorTabNames("GEN-REC","DTHE,DPHI","EFF");
         int mcsec=2;
      
 //        String hipoPath = "/Users/colesmith/imac/clas12/sim/radstudy/";
@@ -810,58 +836,65 @@ public class ECPart extends EBTBEngine {
         effmom4.setTitleX("True Electron Energy (GeV)"); effmom4.setTitleY("Efficiency #theta>15");        
         effthe4.setTitleX("True Electron Theta (deg)");  effthe4.setTitleY("Efficiency");
         
-        EmbeddedCanvas canvas = new EmbeddedCanvas();               
-        canvas.divide(4,8);
-		canvas.setAxisTitleSize(18);
-		canvas.setAxisLabelSize(18);
+        EmbeddedCanvas c = null; int ncd;
+               
+        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(0)); c.divide(4,3); ncd=-1;           
+		c.setAxisTitleSize(18);
+		c.setAxisLabelSize(18);
 		
-		int ncd=-1;
+		ncd++; c.cd(ncd) ; c.draw(h00);  
+		ncd++; c.cd(ncd) ; c.draw(h01);  
+		ncd++; c.cd(ncd) ; c.draw(h02);  
+		ncd++; c.cd(ncd) ; c.draw(h03);  
 		
-		ncd++; canvas.cd(ncd) ; canvas.draw(h00);  
-		ncd++; canvas.cd(ncd) ; canvas.draw(h01);  
-		ncd++; canvas.cd(ncd) ; canvas.draw(h02);  
-		ncd++; canvas.cd(ncd) ; canvas.draw(h03);  
-		
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h10);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h11);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h12);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h13);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h10);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h11);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h12);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.draw(h13);  
 
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h20);
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h21);
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h22);
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setLog(true); canvas.draw(h23);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h20);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h21);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h22);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setLog(true); c.draw(h23);
+
+        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(1)); c.divide(4,2); ncd=-1;           
+		c.setAxisTitleSize(18);
+		c.setAxisLabelSize(18);
+
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h30);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h31);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h32);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h33);  
 		
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h30);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h31);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h32);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h33);  
-		
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h40);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h41);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h42);  
-		ncd++; canvas.cd(ncd) ; canvas.getPad(ncd).getAxisZ().setLog(true); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(h43);  
-		
-        ncd++; canvas.cd(ncd); canvas.draw(h50);          
-        ncd++; canvas.cd(ncd); canvas.draw(h51);  
-        ncd++; canvas.cd(ncd); canvas.draw(h52);  
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.15,0.31); canvas.draw(meanGraph);          
-        SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  canvas.draw(sf,"same");        
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h40);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h41);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h42);  
+		ncd++; c.cd(ncd) ; c.getPad(ncd).getAxisZ().setLog(true); c.getPad(ncd).setTitleFontSize(18); c.draw(h43);  
+
+        c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(2)); c.divide(4,3); ncd=-1;           
+		c.setAxisTitleSize(18);
+		c.setAxisLabelSize(18);
+
+        ncd++; c.cd(ncd); c.draw(h50);          
+        ncd++; c.cd(ncd); c.draw(h51);  
+        ncd++; c.cd(ncd); c.draw(h52);  
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.15,0.31); c.draw(meanGraph);          
+        SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5);  c.draw(sf,"same");        
     
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.05);  canvas.getPad(ncd).setTitleFontSize(18);
-        canvas.draw(effmom1);  canvas.draw(effmom2,"same"); canvas.draw(effmom3,"same");
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.05);  canvas.getPad(ncd).setTitleFontSize(18);
-        canvas.draw(effthe1);  canvas.draw(effthe2,"same"); canvas.draw(effthe3,"same");
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.015); canvas.getPad(ncd).setTitleFontSize(18);
-                               canvas.getPad(ncd).getAxisX().setGrid(true);       canvas.getPad(ncd).getAxisY().setGrid(true);                               
-        canvas.draw(effmom4);  canvas.draw(effmom5,"same"); canvas.draw(effmom6,"same"); canvas.draw(effmom7,"same"); 
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisY().setRange(0.5,1.015); canvas.getPad(ncd).setTitleFontSize(18);
-        canvas.draw(effthe4);  canvas.draw(effthe5,"same"); canvas.draw(effthe6,"same"); 
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
+        c.draw(effmom1);  c.draw(effmom2,"same"); c.draw(effmom3,"same");
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.05);  c.getPad(ncd).setTitleFontSize(18);
+        c.draw(effthe1);  c.draw(effthe2,"same"); c.draw(effthe3,"same");
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
+                               c.getPad(ncd).getAxisX().setGrid(true);       c.getPad(ncd).getAxisY().setGrid(true);                               
+        c.draw(effmom4);  c.draw(effmom5,"same"); c.draw(effmom6,"same"); c.draw(effmom7,"same"); 
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisY().setRange(0.5,1.015); c.getPad(ncd).setTitleFontSize(18);
+        c.draw(effthe4);  c.draw(effthe5,"same"); c.draw(effthe6,"same"); 
 
         
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.9,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff1b);
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.9,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff2b);
-        ncd++; canvas.cd(ncd); canvas.getPad(ncd).getAxisZ().setRange(0.5,1.01); canvas.getPad(ncd).setTitleFontSize(18); canvas.draw(eff3b);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff1b);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.9,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff2b);
+        ncd++; c.cd(ncd); c.getPad(ncd).getAxisZ().setRange(0.5,1.01); c.getPad(ncd).setTitleFontSize(18); c.draw(eff3b);
         
         
         /*
@@ -873,7 +906,7 @@ public class ECPart extends EBTBEngine {
         canvas.cd(5); canvas.getPad(5).getAxisY().setRange(0.5,1.015);
         canvas.draw(hrat3,"same");
         */
-        frame.add(canvas);
+        frame.add(c);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         /*
@@ -992,7 +1025,7 @@ public class ECPart extends EBTBEngine {
         
         H2F hnpp = new H2F("npp",50,0,5.2,10,1,11);
                 
-        String evioPath = "/Users/colesmith/clas12/sim/photon/";
+        String evioPath = "/Users/colesmith/clas12/sim/2gamma/";
         String evioFile = "fc4gev-100k.hipo"; int sec=2; int etot=8;
         
         if (args.length == 0) { 
@@ -1037,6 +1070,7 @@ public class ECPart extends EBTBEngine {
             	np.clear(); np = getNeutralPart(); 
             	getRECBanks(de,eb);
             	writer.writeEvent(de);
+        		float      opa =(float) Math.toDegrees(Math.acos(pmc.get(0).cosTheta(pmc.get(1))));
             	h11.fill(opa);
             	npp=0;indx=-1;
             	if (np.size()>0) {
@@ -1079,25 +1113,24 @@ public class ECPart extends EBTBEngine {
     					int lay = dr.getDescriptor().getLayer();
        					if(lay==1) {r1=dr.getPosition();npc++;epc1=dr.getEnergy();}    					
        					if(lay==4) {nec++;eeci1=dr.getEnergy();}    					
-       				    				}
+       				}
     				for (DetectorResponse dr : p2.getDetectorResponses()) {
     					int lay = dr.getDescriptor().getLayer();
     					if(lay==1) {r2=dr.getPosition();npc++;epc2=dr.getEnergy();}    					
        					if(lay==4) {nec++;eeci2=dr.getEnergy();}    					
-   				}
+   				    }
                     h2f.fill(opa, (e1+e2)/etot-1);
                     if(npc==2) {
-                    r2.sub(r1); dist=r2.mag();
-                    h2a.fill(dist, e2>0?e1/e2:1000);
-                    h2b.fill(dist, (e1+e2)/etot-1);
-                    h2e.fill(dist,opa-the1);
-                	if(nec==2) h2c.fill(epc1/epc2,eeci1/eeci2);
-                	if(nec==2 && e1/e2>1.3) h2cc.fill(epc1/epc2,eeci1/eeci2);
-                	h2g.fill(npp,(e1+e2)/etot-1);
+                    	r2.sub(r1); dist=r2.mag();
+                    	h2a.fill(dist, e2>0?e1/e2:1000);
+                    	h2b.fill(dist, (e1+e2)/etot-1);
+                    	h2e.fill(dist,opa-the1);
+                    	if(nec==2) h2c.fill(epc1/epc2,eeci1/eeci2);
+                    	if(nec==2 && e1/e2>1.3) h2cc.fill(epc1/epc2,eeci1/eeci2);
+                    	h2g.fill(npp,(e1+e2)/etot-1);
             	    }
             	}           		
             }
-
         }
         
         writer.close();
@@ -1208,7 +1241,7 @@ public class ECPart extends EBTBEngine {
         List<DetectorParticle> np = new ArrayList<DetectorParticle>();
         int run = this.runNumber;
         
-        String evioPath = "/Users/colesmith/imac/clas12/sim/photon/hipo/";
+        String evioPath = "/Users/colesmith/clas12/sim/photon/";
         String evioFile = "fc-phot-20k-25deg-r2-0.2-3.8-newgeom-gemc2.6.hipo"; int sec=2;
         
         if (args.length == 0) { 
@@ -1251,14 +1284,14 @@ public class ECPart extends EBTBEngine {
         setGoodPhotons(12);
       
         int n=0, ng=0, npp=0;
-        float pthresh=0.1f;
+        float pthresh=0.01f;
         
         while(reader.hasEvent()){
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);
-            run = getRunNumber(event);
             if (readMC(event)) {
             	readEC(event,"ECAL::clusters");
+            	float refP = (float) pmc.get(0).p();
             	np.clear(); np = getNeutralPart();
             	h5.fill(refP);
             	npp=0;
@@ -1310,6 +1343,8 @@ public class ECPart extends EBTBEngine {
         JFrame frame = new JFrame("Photon Reconstruction");
         frame.setSize(800,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas(); canvas.divide(4,3);
+        
+        
         
         H1F hr11 = H1F.divide(h11,  h5); hr11.setFillColor(3); hr11.setTitleY("Photon Efficiency n>0"); hr11.setTitleX("Photon Momentum (GeV)");
         H1F hr12 = H1F.divide(h12,  h5); hr12.setFillColor(1); hr12.setTitleY("Photon Efficiency n=1"); hr12.setTitleX("Photon Momentum (GeV)");
@@ -1558,10 +1593,10 @@ public class ECPart extends EBTBEngine {
         ECPart part = new ECPart();  
         part.initGraphics();
 //     	part.pizeroDemo(args);
-//     	part.photonDist(args);
+     	part.photonDist(args);
 //     	part.photonDemo(args);
 //     	part.neutronDemo(args);
-        part.electronDemo(args);
+//        part.electronDemo(args);
     }
     
 }

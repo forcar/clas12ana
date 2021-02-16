@@ -135,8 +135,7 @@ public class ECsf extends DetectorMonitor {
     	plotUVWHistos("UVW");
     	if(!dropSummary) plotXYZHistos("XY");
     	plotUVWHistos("Timing");
-    	plotMCHistos("MC");
-    	
+    	plotMCHistos("MC");    	
     }
     
     public void plotAnalysis(int run) {

@@ -7,12 +7,16 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jlab.clas.detector.CalorimeterResponse;
+import org.jlab.clas.detector.CherenkovResponse;
 import org.jlab.clas.detector.DetectorData;
 import org.jlab.clas.detector.DetectorParticle;
 import org.jlab.clas.detector.DetectorResponse;
+import org.jlab.clas.detector.DetectorTrack;
+import org.jlab.clas.detector.ScintillatorResponse;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
+import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
@@ -32,18 +36,18 @@ import org.jlab.service.eb.EventBuilder;
 import org.jlab.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 
-public class EBMC extends EBTBEngine {
+public class EBMCEngine extends EBEngine {
 	
 	public EventBuilder eb = null;
-	EBEngine         ebe = new EBEngine("EBMC");
-	public EBCCDBConstants  ccdb;
-	EBMatching       ebm;
-	EBRadioFrequency rf;
+	EBEngine           ebe = new EBEngine("EBMC");
 	
-    public List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<>(); 
-    
-    IndexedList<List<DetectorResponse>>  singleNeutrals = new IndexedList<>(1);
-    IndexedList<List<DetectorResponse>>      singleMIPs = new IndexedList<>(1);
+	public EBCCDBConstants  ccdb;
+	EBMatching              ebm;
+	EBRadioFrequency        rf;
+	
+    public List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<>();     
+    IndexedList<List<DetectorResponse>>         singleNeutrals = new IndexedList<>(1);
+    IndexedList<List<DetectorResponse>>             singleMIPs = new IndexedList<>(1);
     
     DetectorParticle p1 = new DetectorParticle();
     DetectorParticle p2 = new DetectorParticle();
@@ -72,7 +76,7 @@ public class EBMC extends EBTBEngine {
     public String config = null;
     public double SF1 = 0.27, SF1db=0.27;
     public double SF2 = 0.27, SF2db=0.27;
-    public boolean isMC = true;
+    public boolean isMC = true, hasStartTime = false;
     public H1F h5,h6,h7,h8;
   
     public int n2mc=0;
@@ -92,10 +96,40 @@ public class EBMC extends EBTBEngine {
     private EmbeddedCanvasTabbed      detectorCanvas = null;  
     private ArrayList<String>       detectorTabNames = new ArrayList();
     
-    public EBMC() {  
+    String trackType        = null;    
+    String trajectoryType   = null;
+    String covMatrixType    = null;
+    String ftofHitsType     = null;
+    
+    public EBMCEngine() {  
+    	super("EBMC");  
     	initBankNames();
     	detectorCanvas = new EmbeddedCanvasTabbed();
     }
+    
+    @Override
+    public void initBankNames() {
+        setTrackType("TimeBasedTrkg::TBTracks");
+        setTrajectoryType("TimeBasedTrkg::Trajectory");
+        setCovMatrixType("TimeBasedTrkg::TBCovMat");   	
+        setFTOFHitsType("FTOF::hits");    
+    }
+    
+    public void setTrackType(String trackType) {
+        this.trackType = trackType;
+    }
+    
+    public void setFTOFHitsType(String hitsType) {
+        this.ftofHitsType = hitsType;
+    }
+
+    public void setCovMatrixType(String covMatrixType) {
+        this.covMatrixType = covMatrixType;
+    }
+
+    public void setTrajectoryType(String trajectoryType) {
+        this.trajectoryType = trajectoryType;
+    }    
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
         detectorCanvas = canvas;
@@ -118,13 +152,16 @@ public class EBMC extends EBTBEngine {
     }
     
     public void getCCDB(int runno) {
-    	System.out.println("ECpart.setCCDB("+runno+")");
+    	System.out.println("EBMC.setCCDB("+runno+")");
     	ebe.init();
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
     }
     
-    public boolean readMC(DataEvent event) {
-    	
+    public boolean hasStartTime(int pid) {
+    	return (pid==11 || pid==-11 || pid==-211 || pid==211);
+    }
+    
+    public boolean readMC(DataEvent event) {    	
         pmc.clear();
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
@@ -135,9 +172,10 @@ public class EBMC extends EBTBEngine {
             	double vx = bank.getFloat("vx",i);
             	double vy = bank.getFloat("vy",i);
             	double vz = bank.getFloat("vz",i);
-            	int   pid = bank.getInt("pid",i);  
-                pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
-                if(i==0) vtx.setXYZ(vx, vy, vz);
+            	int   pid = bank.getInt("pid",i);
+            	
+                if(pid==22) pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
+                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid);} 
             }
             n2mc++;
             return true;
@@ -145,29 +183,41 @@ public class EBMC extends EBTBEngine {
         return false;
     }
     
-	// readEC: Copies relevant parts of EBEngine.processDataEvent    
-    public void  readEC(DataEvent de, String bank){    	    	
-        rf = new EBRadioFrequency(ccdb);    	
-        eb = new EventBuilder(ccdb);    	   	
-        eb.initEvent(); //don't bother with event header    	
-        eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
-        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));  	
-        eb.getPindexMap().put(0, 0); 
-        eb.getPindexMap().put(1, 0);         
-    } 
+	//Copies relevant parts of EBEngine.processDataEvent  
     
-	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent 
-    // Note for MC w/o charged trigger particles EBAnalyzer.foundTriggerTime will be false and SF not applied to PID=22
-    public List<DetectorParticle> getNeutralPart() {
-    	eb.processNeutralTracks();    	
+    @Override
+    public boolean  processDataEvent(DataEvent de){    	
+    	
+        eb = new EventBuilder(ccdb);   	
+        eb.initEvent(); //don't bother with event header  
+        
+        rf = new EBRadioFrequency(ccdb);    	
+        eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
+       
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));        
+        eb.addDetectorResponses(ScintillatorResponse.readHipoEvent(de, ftofHitsType, DetectorType.FTOF));
+        eb.addDetectorResponses(CherenkovResponse.readHipoEvent(de,"HTCC::rec",DetectorType.HTCC));   
+        
+        List<DetectorTrack>  tracks = DetectorData.readDetectorTracks(de, trackType, trajectoryType, covMatrixType);
+        eb.addTracks(tracks);
+        
+        eb.getPindexMap().put(0, tracks.size()); 
+        eb.getPindexMap().put(1, 0);
+        
+        eb.processHitMatching();
+        eb.assignTrigger();
+        
+    	eb.processNeutralTracks(); 
+    	
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
+        
         if(eb.getEvent().getParticles().size()>0) {
-            Collections.sort(eb.getEvent().getParticles());
-            eb.setParticleStatuses();  
-            return eb.getEvent().getParticles();
+            Collections.sort(eb.getEvent().getParticles()); 
+            eb.setParticleStatuses();
+            return true;
         } 
-     	return new ArrayList<DetectorParticle>() ;     	
+     	return false;     	
     }
     
     public void getRECBanks(DataEvent de, EventBuilder eb) {
@@ -183,6 +233,10 @@ public class EBMC extends EBTBEngine {
             de.appendBanks(bankCal);
         }
     	
+    }
+    
+    public List<DetectorParticle> getNeutralPart() {
+    	return new ArrayList<DetectorParticle>() ;         
     }
     
     public void getUnmatchedResponses() {        
@@ -220,8 +274,7 @@ public class EBMC extends EBTBEngine {
     	return DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector);   	
     }
     
-    public List<DetectorParticle> getMIParticles(int sector) {
-    	
+    public List<DetectorParticle> getMIParticles(int sector) {   	
         List<DetectorParticle> particles = new ArrayList<>();          
         List<DetectorResponse>      rPC  = new ArrayList<>();        
         rPC = getPCResponses(sector);
@@ -451,9 +504,9 @@ public class EBMC extends EBTBEngine {
     	case      "Pizero":engine.setStripThresholds(10,9,8);  
                            engine.setPeakThresholds(18,20,15); 
                            engine.setClusterCuts(7,15,20); break;
-    	case        "Test":engine.setStripThresholds(10,200,8);  
-                           engine.setPeakThresholds(18,500,15); 
-                           engine.setClusterCuts(7,15,20); 
+    	case        "Test":engine.setStripThresholds(10,9,8);  
+                           engine.setPeakThresholds(18,20,15); 
+                           engine.setClusterCuts(7,6,6); 
     	}
     }
     
@@ -481,11 +534,11 @@ public class EBMC extends EBTBEngine {
     }   
     
     public void initGraphics() {
-        GStyle.getAxisAttributesX().setTitleFontSize(14);
-        GStyle.getAxisAttributesX().setLabelFontSize(14);
-        GStyle.getAxisAttributesY().setTitleFontSize(14);
-        GStyle.getAxisAttributesY().setLabelFontSize(14);
-        GStyle.getAxisAttributesZ().setLabelFontSize(14); 
+        GStyle.getAxisAttributesX().setTitleFontSize(18);
+        GStyle.getAxisAttributesX().setLabelFontSize(18);
+        GStyle.getAxisAttributesY().setTitleFontSize(18);
+        GStyle.getAxisAttributesY().setLabelFontSize(18);
+        GStyle.getAxisAttributesZ().setLabelFontSize(18); 
         GStyle.getAxisAttributesX().setAxisGrid(false);
         GStyle.getAxisAttributesY().setAxisGrid(false);
         GStyle.getAxisAttributesX().setLabelFontName("Avenir");

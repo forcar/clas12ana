@@ -86,7 +86,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem       cf,cf0,cf1,cf2,cf3,cf4,cf5 = null;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6,cf7,cf8 = null;   
     JCheckBoxMenuItem                              ctr = null;  
     JRadioButtonMenuItem               ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5 = null;  
@@ -111,31 +111,35 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
-    public Boolean   clearHist = true;
-    public Boolean    autoSave = false;
-    public Boolean   dropBanks = false;
-    public Boolean dropSummary = false;
-    public Boolean  dumpGraphs = false;
-    public Boolean   dumpFiles = false;
-    public Boolean defaultGain = false;
-    public Boolean    fiduCuts = false;
-    public Boolean   dropEsect = false;
-    public Boolean  cfitEnable = false;
-    public Boolean  sfitEnable = false;
-    public Boolean  dfitEnable = false;
-    public Boolean gdfitEnable = false;
-    public Boolean  yLogEnable = false;
-    public Boolean  zLogEnable = true;
-    public Boolean  fitVerbose = false;
-    public String       TLname = "UVW";
-    public Boolean      TLflag = false;
-    public Boolean       clear = true; 
-    public Integer       TRpid = 11;
-    DetectorMonitor[] monitors = null;
-    public JFileChooser     fc = null; 
+    public Boolean    clearHist = true;
+    public Boolean     autoSave = false;
+    public Boolean    dropBanks = false;
+    public Boolean  dropSummary = false;
+    public Boolean   dumpGraphs = false;
+    public Boolean    dumpFiles = false;
+    public Boolean  defaultGain = false;
+    public Boolean     fiduCuts = false;
+    public Boolean    dropEsect = false;
+    public Boolean   cfitEnable = false;
+    public Boolean   sfitEnable = false;
+    public Boolean   dfitEnable = false;
+    public Boolean  gdfitEnable = false;
+    public Boolean   yLogEnable = false;
+    public Boolean   zLogEnable = true;
+    public Boolean  dbgECEngine = false;
+    public Boolean  dbgAnalyzer = false;
+    public Boolean unsharedTime = false;
+    public Boolean   fitVerbose = false;
+    public String        TLname = "UVW";
+    public Boolean       TLflag = false;
+    public Boolean        clear = true; 
+    public Integer        TRpid = 11;
+    
+    public JFileChooser      fc = null; 
     
     List<Integer>     runList  = new ArrayList<Integer>();
     
+    DetectorMonitor[]  monitors = null;
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
     
     int    selectedTabIndex = 0;
@@ -181,8 +185,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	}
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
-//    		monitors[n] = new ECmc1("ECmc1");
-    		monitors[n] = new ECmc2("ECmc2");
+//    		monitors[n] = new ECmc("ECmc");
+    		monitors[n] = new ECmc1("ECmc1");
+//    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECt("ECt"); 
 //      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -234,6 +239,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         cf4      = new JCheckBoxMenuItem("log Y");                    cf4.addItemListener(this);   menu.add(cf4);  
         cf5      = new JCheckBoxMenuItem("log Z");                    cf5.addItemListener(this);   menu.add(cf5);  cf5.doClick();
+        cf6      = new JCheckBoxMenuItem("RejectSharedPeakTime");     cf6.addItemListener(this);   menu.add(cf6); 
         menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
@@ -249,6 +255,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ct2 = new JRadioButtonMenuItem("HV Slot");    ct2.addItemListener(this);       group.add(ct2); menu.add(ct2);
         ct3 = new JRadioButtonMenuItem("Sectors");    ct3.addItemListener(this);       group.add(ct3); menu.add(ct3);
         menuBar.add(menu);
+        
+        menu     = new JMenu("Debug");
+        cf7      = new JCheckBoxMenuItem("ECEngine"); cf7.addItemListener(this);   menu.add(cf7);  
+        cf8      = new JCheckBoxMenuItem("Analyzer"); cf8.addItemListener(this);   menu.add(cf8); 
+        menuBar.add(menu);       
 
         String TriggerDef[] = { "Electron OR",
 		        "e Sector 1","e Sector 2","e Sector 3","e Sector 4","e Sector 5","e Sector 6",
@@ -356,6 +367,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf3)  gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf4)   yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf5)   zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf6) unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf7) dbgECEngine  = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf8)  dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
@@ -381,10 +395,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].gdfitEnable = gdfitEnable;
                                                    this.monitors[k].setLogY(yLogEnable);                                                  
                                                    this.monitors[k].setLogZ(zLogEnable);
+                                                   this.monitors[k].setUseUnsharedTime(unsharedTime);
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].initTimeLine(TLname);
-                                                   this.monitors[k].setTLflag(TLflag);}
+                                                   this.monitors[k].setTLflag(TLflag);
+                                                   this.monitors[k].setDbgECEngine(dbgECEngine);
+                                                   this.monitors[k].setDbgAnalyzer(dbgAnalyzer);}
     }  
 	
     public void actionPerformed(ActionEvent e) {

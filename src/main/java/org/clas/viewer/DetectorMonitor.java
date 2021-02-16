@@ -105,7 +105,7 @@ public class DetectorMonitor implements ActionListener {
     private int                   detectorActiveView = 0;
     private int                  detectorActiveLayer = 0;
     private int                    detectorActivePID = 0;
-    private int                    detectorActive123 = 0;
+    private int                    detectorActive123 = 1;
     private int                   detectorActiveRDIF = 0;
     private Boolean                     detectorLogY = false;
     private Boolean                     detectorLogZ = true;
@@ -182,24 +182,27 @@ public class DetectorMonitor implements ActionListener {
     public String   tlPath = null;
     public String  vecPath = null;
     
-    public Boolean isAnalyzeDone = false;
-    public Boolean      autoSave = false;
-    public Boolean     dropBanks = false;
-    public Boolean   dropSummary = false; 
-    public Boolean    dumpGraphs = false; 
-    public Boolean     dumpFiles = false; 
-    public Boolean   defaultGain = false; 
-    public Boolean     dropEsect = false;
-    public Boolean      fiduCuts = false;
-    public Boolean    cfitEnable = false; 
-    public Boolean    dfitEnable = false; 
-    public Boolean   gdfitEnable = false; 
-    public Boolean    sfitEnable = false; 
-    public Boolean    fitVerbose = false; 
-    public Boolean isEngineReady = false;
+    public Boolean      isAnalyzeDone = false;
+    public Boolean           autoSave = false;
+    public Boolean          dropBanks = false;
+    public Boolean        dropSummary = false; 
+    public Boolean         dumpGraphs = false; 
+    public Boolean          dumpFiles = false; 
+    public Boolean        defaultGain = false; 
+    public Boolean          dropEsect = false;
+    public Boolean           fiduCuts = false;
+    public Boolean         cfitEnable = false; 
+    public Boolean         dfitEnable = false; 
+    public Boolean        gdfitEnable = false; 
+    public Boolean         sfitEnable = false; 
+    public Boolean         fitVerbose = false; 
+    public Boolean      isEngineReady = false;
     public Boolean isTimeLineFitsDone = false;
-    public Boolean   histosExist = false;
-    public Boolean     dgmActive = false;
+    public Boolean        histosExist = false;
+    public Boolean          dgmActive = false;
+    public Boolean    useUnsharedTime = false;
+    public Boolean        dbgECEngine = false;
+    public Boolean        dbgAnalyzer = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -355,6 +358,19 @@ public class DetectorMonitor implements ActionListener {
         engine.setLogParam(0.);
         setEngineThresholds(config);
    }
+    
+    public void setUseUnsharedTime(Boolean val) {
+    	engine.setUseUnsharedTime(val);
+    }
+    
+    public void setDbgECEngine(Boolean val) {
+    	dbgECEngine = val;
+    	engine.debug = val;
+    }
+    
+    public void setDbgAnalyzer(Boolean val) {
+    	dbgAnalyzer = val;
+    }
     
     public void setEngineThresholds(String val) {
     	System.out.println(root+"setEngineThresholds("+val+")");
@@ -892,14 +908,22 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getBeamEnergy(int run) { 
-    	if (run<=100)   return 10.7f;
+    	if (run<=100)   return 10.6041f;
     	if (run<=5699)  return 10.6041f;
     	if (run<=5875)  return  7.54626f;
     	if (run<=6000)  return  6.53536f;
     	if (run<=6399)  return 10.5986f;
     	if (run<=6783)  return 10.1998f;
-    	if (run<=11285) return 10.4096f;
-    	if (run<=11323) return  4.17179f;
+    	if (run<=11283) return 10.4096f;
+    	if (run<=11315) return  4.17179f;
+    	if (run<=11391) return 10.2129f;
+    	if (run<=11599) return 10.3894f;
+    	if (run<=11656) return  2.14418f;
+    	if (run<=12282) return 10.3894f;
+    	if (run<=12388) return  2.1864f;
+    	if (run<=12616) return 10.1967f;
+    	if (run<=12716) return 10.3394f;
+    	if (run<=12955) return 10.4057f;    	
     	if (run<=50000) return 10.2129f;
     	return 0.0f;
     }

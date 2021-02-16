@@ -3,7 +3,7 @@ package org.clas.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.clas.tools.EBMC;
+import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.detector.DetectorParticle;
@@ -19,15 +19,17 @@ import org.jlab.rec.eb.SamplingFractions;
 public class ECmc1 extends DetectorMonitor {
 	
 	Event ev = new Event();
-	EBMC  eb = new EBMC();
+	EBMCEngine  eb = new EBMCEngine();
+	
     List<DetectorParticle> np = new ArrayList<DetectorParticle>();    
-	List<Float> GEN =  new ArrayList<Float>();
-	List<Float> REC1 = new ArrayList<Float>();   
-    HipoDataSync  writer = null;		
-	List<Particle> phot = new ArrayList<Particle>();
-	List<Particle> neut = new ArrayList<Particle>();
+	List<Float>           GEN = new ArrayList<Float>();
+	List<Float>           REC = new ArrayList<Float>();   
+    HipoDataSync       writer = null;		
+	List<Particle>       phot = new ArrayList<Particle>();
+	List<Particle>       neut = new ArrayList<Particle>();
+	
 	String tit = null;
-	double ethresh = 0.3;
+	double ethresh = 0.01;
     
     public ECmc1(String name) {
         super(name);
@@ -60,7 +62,7 @@ public class ECmc1 extends DetectorMonitor {
         
         tl.setFitData(Fits);
         writer = new HipoDataSync();
-        writer.open("/Users/colesmith/CLAS12ANA/ECmc1/photon_demo.hipo");
+        writer.open("/Users/colesmith/CLAS12ANA/ECmc1/photon_mc1.hipo");
     }
     
     public void localclear() {
@@ -138,12 +140,12 @@ public class ECmc1 extends DetectorMonitor {
     	switch (st) {        
         case 0:                        
     		dgm.add("EFFICIENCY",2,2,0,st,getRunNumber()); 
-    		tit = "n>0 any layer, thresh = "+ethresh*1e3+" MeV";
+    		tit = "N#gamma>0, thresh = "+ethresh*1e3+" MeV";
         	dgm.makeH1("ef11",50,0,3.8,-1,tit,              "Photon Energy (GeV)",1,3);
         	dgm.makeH1("ef13",50,0,3.8,-2,"n>0 layer 1",    "Photon Energy (GeV)",1,2);
         	dgm.makeH1("ef14",50,0,3.8,-2,"n>0 layer 1,4",  "Photon Energy (GeV)",1,5);
         	dgm.makeH1("ef15",50,0,3.8,-2,"n>0 layer 1,4,7","Photon Energy (GeV)",1,4);
-        	tit = "n=1 each layer, thresh = "+ethresh*1e3+" MeV";
+        	tit = "N#gamma=1, thresh = "+ethresh*1e3+" MeV";
         	dgm.makeH1("ef21",50,0,3.8,-1,tit,              "Photon Energy (GeV)",1,3);
         	dgm.makeH1("ef22",50,0,3.8,-2,"n=1 any layer",  "Photon Energy (GeV)",1,1);
         	dgm.makeH1("ef23",50,0,3.8,-2,"n=1 layer 1",    "Photon Energy (GeV)",1,2);
@@ -206,7 +208,7 @@ public class ECmc1 extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent de) {
     	
-		GEN.clear(); REC1.clear(); 
+		GEN.clear();  REC.clear(); 
 		
     	List<Integer> s1 = new ArrayList<Integer>();
     	List<Integer> s4 = new ArrayList<Integer>();
@@ -227,7 +229,7 @@ public class ECmc1 extends DetectorMonitor {
 
             engine.processDataEvent(de); 
             
-        	eb.readEC(de,"ECAL::clusters");
+        	eb.processDataEvent(de);
         	np.clear(); np = eb.getNeutralPart(); npart = np.size();
         	eb.getRECBanks(de,eb.eb); writer.writeEvent(de);
        	    
@@ -256,10 +258,10 @@ public class ECmc1 extends DetectorMonitor {
         	
         	if(npart>0) { // 1 or more neutral particles 
          		
-           		REC1 = getkin(plist);
-        		double  delE1 = (GEN.get(0)-REC1.get(0))/refP;
-        		double delTH1 = (GEN.get(1)-REC1.get(1));
-        		double delPH1 = (GEN.get(2)-REC1.get(2));
+           		 REC = getkin(plist);
+        		double  delE1 = (GEN.get(0)- REC.get(0))/refP;
+        		double delTH1 = (GEN.get(1)- REC.get(1));
+        		double delPH1 = (GEN.get(2)- REC.get(2));
         		
         		dgm.fill("h11",refP);       	   
         	    

@@ -35,11 +35,12 @@ public class Event {
 	public boolean isPhys = false;
 	
 	public List<Particle>              part    = new ArrayList<Particle>();	
-	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);    
+	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
+	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);  
+	
 	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         htccMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
-	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
 	public Map<Integer,List<Integer>>  trajMap = new HashMap<Integer,List<Integer>>();
 	public Map<Integer,List<Integer>>  trajDet = new HashMap<Integer,List<Integer>>();
 	
@@ -120,6 +121,10 @@ public class Event {
 	
 	public boolean isMuon() {
 		return hasECALclusters && !hasRECcalorimeter;
+	}
+	
+	public boolean isGoodRows() {
+		return caloBank.rows()==clusBank.rows();
 	}
 	
 	public boolean procEvent(DataEvent event) {
@@ -268,8 +273,8 @@ public class Event {
 	
 	public void storeRECparticle(DataBank bank) {
 		partBank = bank;
-		getPART();
-		partMap  = loadMapByIndex(partBank,"pid");	
+		getPART(); //fill list part - replica of PART bank
+		partMap  = loadMapByIndex(partBank,"pid");	 //fill IndexedList partMap
 	}
 
 	
@@ -308,10 +313,6 @@ public class Event {
 	
 	public void storeECALpeaks(DataBank bank) {	
 		peakBank = bank;		
-	}
-	
-	public boolean isGoodRows() {
-		return caloBank.rows()==clusBank.rows();
 	}
 	
 	public void reportElectrons(String tag) {
@@ -357,7 +358,7 @@ public class Event {
 		return true;			
 	}
 
-	//Recreate particle class from partBank and store in List<Particle> part with original pindex
+	//Convert PART bank to List<Particle> with original bank index
 	public void getPART() {
         for(int i = 0; i < partBank.rows(); i++){           	
             int      pid = partBank.getInt("pid", i);              
