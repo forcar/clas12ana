@@ -52,7 +52,8 @@ public class EBMCEngine extends EBEngine {
     DetectorParticle p1 = new DetectorParticle();
     DetectorParticle p2 = new DetectorParticle();
     
-    public List<Particle> pmc = new ArrayList<>();;
+    public List<Particle> pmc = new ArrayList<>();
+    public List<Vector3>  pmv = new ArrayList<>();
     
     public double distance11,distance12,distance21,distance22;
     public double e1,e2,e1c,e2c,cth,cth1,cth2;
@@ -79,7 +80,7 @@ public class EBMCEngine extends EBEngine {
     public boolean isMC = true, hasStartTime = false;
     public H1F h5,h6,h7,h8;
   
-    public int n2mc=0;
+    public int n2mc=0, MCpid=11;
 
     public int[] mip = {0,0,0,0,0,0};
     public int runNumber=11;
@@ -114,6 +115,10 @@ public class EBMCEngine extends EBEngine {
         setCovMatrixType("TimeBasedTrkg::TBCovMat");   	
         setFTOFHitsType("FTOF::hits");    
     }
+    
+	public void setMCpid(int val) {
+		MCpid = val;
+	}
     
     public void setTrackType(String trackType) {
         this.trackType = trackType;
@@ -162,7 +167,7 @@ public class EBMCEngine extends EBEngine {
     }
     
     public boolean readMC(DataEvent event) {    	
-        pmc.clear();
+        pmc.clear(); pmv.clear();
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
             for (int i=0; i<bank.rows(); i++) {
@@ -174,7 +179,7 @@ public class EBMCEngine extends EBEngine {
             	double vz = bank.getFloat("vz",i);
             	int   pid = bank.getInt("pid",i);
             	
-                if(pid==22) pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
+                if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
                 if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid);} 
             }
             n2mc++;
@@ -194,7 +199,7 @@ public class EBMCEngine extends EBEngine {
         rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
        
-        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));        
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,"ECAL::moments"));        
         eb.addDetectorResponses(ScintillatorResponse.readHipoEvent(de, ftofHitsType, DetectorType.FTOF));
         eb.addDetectorResponses(CherenkovResponse.readHipoEvent(de,"HTCC::rec",DetectorType.HTCC));   
         
@@ -215,6 +220,7 @@ public class EBMCEngine extends EBEngine {
         if(eb.getEvent().getParticles().size()>0) {
             Collections.sort(eb.getEvent().getParticles()); 
             eb.setParticleStatuses();
+//            getRECBanks(de,eb);
             return true;
         } 
      	return false;     	
@@ -282,15 +288,15 @@ public class EBMCEngine extends EBEngine {
         return particles;
     }
     
-    public void getNeutralResponses() {        
+    public void getNeutralResponses(int s1, int s2) {        
         getUnmatchedResponses();
-       	getSingleNeutralResponses(); // For two-photon decays in different sectors     	
+       	getSingleNeutralResponses(s1,s2); // For two-photon decays in different sectors     	
     }
           
-    public void getSingleNeutralResponses() {
+    public void getSingleNeutralResponses(int s1, int s2) {
         List<DetectorResponse> rPC = new ArrayList<>();
         singleNeutrals.clear();
-        for (int is=1; is<7; is++) {
+        for (int is=s1; is<s2; is++) {
             rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is); //look in PCAL only
             if(rPC.size()==1&&mip[is-1]!=1) singleNeutrals.add(rPC,is);
         } 
