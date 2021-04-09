@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jlab.clas.physics.Particle;
+import org.jlab.clas.physics.Vector3;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
@@ -27,8 +28,9 @@ public class Event {
 	private DataBank htccBank = null;
 	private DataBank peakBank = null;
 	public  DataBank trajBank = null;
+	public  DataBank   mcBank = null;
 	
-	public int TRpid = 0;
+	public int TRpid = 0, MCpid=11;
 	private boolean isHipo3Event = false; 
 	public boolean   isMC = false;
 	public boolean isMuon = false;
@@ -55,6 +57,7 @@ public class Event {
 	private boolean hasRECparticle = false;
 	private boolean hasRECtrack = false;
 	private boolean hasRECtraj = false;
+	private boolean hasMCParticle = false;
 	private boolean hasHTCC = false;
 	private boolean hasHTCCrec = false;
 	
@@ -71,9 +74,12 @@ public class Event {
 	private float timeshift = 0f;
 	private int  startTimeCut = -100;
 	
-	public int tpol = 0;
-	public int spol = 0;
+	public float tpol = 0;
+	public float spol = 0;
 	
+    public List<Particle> pmc = new ArrayList<>();
+    public List<Vector3>  pmv = new ArrayList<>();
+    
 	public Event() {
 		
 	}
@@ -96,6 +102,7 @@ public class Event {
 		clusBank = null;
 		caliBank = null;
 		peakBank = null;
+		mcBank   = null;
 		initpartmap(13); //initialize with cosmic muon (pid=13)
 		hasRUNconfig       = ev.hasBank("RUN::config");
 		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
@@ -110,6 +117,7 @@ public class Event {
 		hasRECtraj         = ev.hasBank("REC::Traj");
 		hasHTCC            = ev.hasBank("HTCC::adc");
 		hasHTCCrec         = ev.hasBank("HTCC::rec");
+		hasMCParticle      = ev.hasBank("MC::Particle");
 		if(hasRUNconfig) processRUNconfig();		
 	}
 	
@@ -128,6 +136,9 @@ public class Event {
 	}
 	
 	public boolean procEvent(DataEvent event) {
+		
+        if(hasMCParticle)          processMCparticle();
+        
         if(!isGoodEvent()) return false;
 	    
 	    if(hasRECevent)            processRECevent();
@@ -182,6 +193,10 @@ public class Event {
 		p.setProperty("ppid", pid);
 		partmap.getItem(pid).add(p);
 		part.add(p);
+	}
+	
+	public void setMCpid(int val) {
+		MCpid = val;
 	}
 	
 	public void setHipoEvent(boolean val) {
@@ -256,14 +271,18 @@ public class Event {
 		storeECALpeaks(ev.getBank("ECAL::peaks"));		
 	}
 	
+	public void processMCparticle() {
+		storeMCParticle(ev.getBank("MC::Particle"));
+	}
+	
 	public void storeRUNconfig(DataBank bank) {
 		this.run       = bank.getInt("run",0);
 		this.event     = bank.getInt("event",0);
 		this.unixtime  = bank.getInt("unixtime",0);
 		this.trigger   = bank.getLong("trigger",0);
 		this.timestamp = bank.getLong("timestamp",0);	
-		this.tpol      = -(int) bank.getFloat("torus",0);
-		this.spol      = -(int) bank.getFloat("solenoid",0);
+		this.tpol      = -bank.getFloat("torus",0);
+		this.spol      = -bank.getFloat("solenoid",0);
 	}
 	
 	public void storeRECevent(DataBank bank) {
@@ -313,6 +332,21 @@ public class Event {
 	
 	public void storeECALpeaks(DataBank bank) {	
 		peakBank = bank;		
+	}
+	
+	public void storeMCParticle(DataBank bank) {	
+		mcBank = bank;		
+        pmc.clear(); pmv.clear();
+        for (int i=0; i<bank.rows(); i++) {
+        	double px = bank.getFloat("px",i);
+            double py = bank.getFloat("py",i);
+            double pz = bank.getFloat("pz",i);
+            double vx = bank.getFloat("vx",i);
+            double vy = bank.getFloat("vy",i);
+            double vz = bank.getFloat("vz",i);
+            int   pid = bank.getInt("pid",i);               
+            if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
+         }            
 	}
 	
 	public void reportElectrons(String tag) {
