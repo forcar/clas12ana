@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
@@ -60,6 +61,7 @@ import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioSource;
 import org.jlab.io.hipo.HipoDataEvent;
@@ -68,6 +70,7 @@ import org.jlab.io.hipo3.Hipo3DataSource;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.io.task.DataSourceProcessor;
 import org.jlab.io.task.DataSourceProcessorPane;
 import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
@@ -144,7 +147,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     int    selectedTabIndex = 0;
     String selectedTabName  = " ";
-        
+    
+    private DataSourceProcessor  dataProcessor = new DataSourceProcessor();    
+    private java.util.Timer      processTimer  = null;
+    private int                  eventDelay    = 0;
+   
     public static void main(String[] args){
 
         JFrame frame = new JFrame("CLAS12Ana");
@@ -184,15 +191,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-//   		monitors[n] = new ECperf("ECperf"); 
-//    		monitors[n] = new ECmc("ECmc");
-    		monitors[n] = new ECmc1("ECmc1");
+   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECmc2("ECmc2");
-//    		monitors[n] = new ECt("ECt"); 
+//    		monitors[n] = new ECmc1("ECmc1");
+//    		monitors[n] = new ECmc2("ECmc2");
+//    	    monitors[n] = new ECt("ECt"); 
 //      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
-//    		monitors[n] = new ECpi0("ECpi0");
+//    		monitors[n] = new ECpi0("ECpi0"); 
 
         }
     }
@@ -337,7 +344,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         });
 */        
         this.tabbedpane.addChangeListener(this);	               
-        this.processorPane.addEventListener(this);        
+        this.processorPane.addEventListener(this);
+        this.dataProcessor.addEventListener(this);
         this.setCanvasUpdate(canvasUpdateTime);
         
     }
@@ -380,7 +388,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
 		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
 		if (source==ctr5)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
-		
+				
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
 		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
@@ -395,7 +403,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].gdfitEnable = gdfitEnable;
                                                    this.monitors[k].setLogY(yLogEnable);                                                  
                                                    this.monitors[k].setLogZ(zLogEnable);
-                                                   this.monitors[k].setUseUnsharedTime(unsharedTime);
+                                                   this.monitors[k].setUseUnsharedTime(unsharedTime); 
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].initTimeLine(TLname);
@@ -630,7 +638,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private void readFiles() {
-        HipoDataSource   hipoReader = new HipoDataSource();
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setDialogTitle("Choose input files directory...");
         fc.setMultiSelectionEnabled(true);
@@ -643,18 +650,30 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                         Integer current = 0;
                         Integer nevents = 0;
                         DataEvent event = null;
-                        hipoReader.open(fd);
-                        current = hipoReader.getCurrentIndex();
-                        nevents = hipoReader.getSize();
-                        System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());                        
-                        for (int k = 0; k < nevents; k++) {
-                        	event = hipoReader.getNextEvent();                
-                            if(event != null) {
-                                this.dataEventAction(event);
-                                if(k % 10000 == 0) System.out.println("Read " + k + " events");
-                            }
+                        HipoDataSource   source = new HipoDataSource();
+                        source.open(fd);
+                        this.dataProcessor.setSource(source);
+                        current = source.getCurrentIndex();
+                        nevents = source.getSize();
+                        System.out.println("\nFILE: " + nf + " " + fd.getName() + " N.EVENTS: " + nevents.toString() + "  CURRENT : " + current.toString());
+                        boolean hasFinished = false;
+                        while (hasFinished==false) {
+                        	for (int i=1 ; i<=50 ; i++) {
+                        		boolean status = dataProcessor.processNextEvent(eventDelay,DataEventType.EVENT_ACCUMULATE);
+                        		if(status==false&&hasFinished==false){
+                        			hasFinished = true;
+                        			System.out.println("[DataProcessingPane] ----> task is done...");
+                        		}
+                        	}
                         }
-                        hipoReader.close();
+//                        this.startProcessorTimer();
+//                        int k=0;
+//                        while (source.hasEvent()) {
+//                        	event = source.getNextEvent();                                      
+//                            this.dataEventAction(event); k++;
+//                            if(k % 10000 == 0) System.out.println("Read " + k + " events");
+//                        }
+                        source.close(); clear=true;
                         nf++;
                     }
                 }
@@ -762,7 +781,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 loadHistosFromFile(fname);
             }                
         }  
-        if(isCalibrationFile(fname)) this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+        this.monitors[0].writeScript(monitors[0].getDetectorName());
+        if(isCalibrationFile(fname)) {
+        	this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+        }
     }
              
     public void loadHistoFromRunIndex() {
@@ -875,6 +897,31 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         
     }
+    
+    private void startProcessorTimer(){
+        //System.out.println(" starting timer ");
+        class CrunchifyReminder extends TimerTask {
+            boolean hasFinished = false;
+            public void run() {
+                //dataProcessor.processNextEvent(0, DataEventType.EVENT_START);
+                /*if(hasFinished==true){
+                    dataProcessor.processNextEvent(0, DataEventType.EVENT_STOP);
+                    return;
+                }*/
+                //System.out.println("running");
+                for (int i=1 ; i<=50 ; i++) {
+                    boolean status = dataProcessor.processNextEvent(eventDelay,DataEventType.EVENT_ACCUMULATE);
+                    if(status==false&&hasFinished==false){
+                        hasFinished = true;
+                        System.out.println("[DataProcessingPane] ----> task is done...");
+                    }
+                }
+//                statusLabel.setText(dataProcessor.getStatusString());
+            }
+        }
+        processTimer = new java.util.Timer();
+        processTimer.schedule(new CrunchifyReminder(),1,1);        
+    }    
 
 	@Override
 	public void processShape(DetectorShape2D arg0) {
