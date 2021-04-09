@@ -98,12 +98,12 @@ public class ECsf extends DetectorMonitor {
         runlist.add(run);
         this.setNumberOfEvents(0);
         dg = new DataGroup(6,4);
-        createSecHistos("E/P",0,0,50,0.0, EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",0,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
         createSecHistos("E/P",0,1,50,0.5,EB,50,0.1,0.4,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
         createSecHistos("E/P",0,2,30,  3.,35.,50,0.1,0.4,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",0,3,48,  3.,35.,50,0.1,0.4,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
         dg = new DataGroup(6,4);
-        createSecHistos("E/P",1,0,50,0.0, EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
         createSecHistos("E/P",1,1,50,0.5,EB,50,0.1,0.4,"ep_p"," Momentum (GeV)",   " E/P",dg);
         createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
@@ -675,8 +675,8 @@ public class ECsf extends DetectorMonitor {
         GraphErrors g1 = new GraphErrors(), g2 = new GraphErrors();
         String txt;
         
-        int run = getRunNumber();    
-	   
+        int run = getRunNumber(); EB = getBeamEnergy(run);
+  	   
     	for (int is=1; is<7; is++) {  
     	    SFFunction sf = new SFFunction("esf",11,is,ebccdb,0.1,2.5);  sf.setLineWidth(2) ; sf.setLineColor(1);
    		    txt = "Sector "+is+" Measured Energy (GeV)";
