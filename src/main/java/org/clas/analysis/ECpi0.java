@@ -1,5 +1,9 @@
 package org.clas.analysis;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,11 +31,14 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.service.ec.ECStrip;
 import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedTable;
 
 import Jampack.Inv;
 
 public class ECpi0 extends DetectorMonitor{
-	
+	 
+	IndexedTable              photon_sf = null;
+
 	H1F                              h1 = null;       
 	H2F                              h2 = null;
 	DataGroup                        dg = null;
@@ -41,9 +48,9 @@ public class ECpi0 extends DetectorMonitor{
     String[]                          v = new String[]{"u","v","w"};    
     int[]                          npmt = {68,62,62,36,36,36,36,36,36};    
     int[]                         iidet = {1,4,7};
-//    List<DetectorResponse>  ecClusters  = null;	
+	
 	ECPart                         part = new ECPart();
-//	ECpartOld                      part = new ECpartOld();
+
     List<TOFPaddle>          paddleList = null;
     List<List<DetectorResponse>>    res = new ArrayList<List<DetectorResponse>>();   
     Map<String,Integer>            smap = new HashMap<String,Integer>();  
@@ -89,12 +96,7 @@ public class ECpi0 extends DetectorMonitor{
     
     public void localinit() {
     	System.out.println("ECpi0.localinit()");
-        engine.setVeff(18.1f);
-        engine.setNewTimeCal(true);
-        engine.setLogWeight(true);
-        engine.setLogParam(logParam);
         engine.setGeomVariation("rga_fall2018");
-//        engine.setPCALTrackingPlane(0);
         isPARTReady = false;
     	tl.setFitData(Fits);
     }
@@ -354,6 +356,10 @@ public class ECpi0 extends DetectorMonitor{
        }
            
     }
+    
+    public void initCCDB(int runno) {
+        photon_sf = ebcm.getConstants(runno, "/calibration/eb/photon_sf");    
+    }    
     
     public void processMC(DataEvent event, DataBank ecBank) {
     	
@@ -617,6 +623,10 @@ public class ECpi0 extends DetectorMonitor{
         }        
     }
     
+    public DataGroup getDG(int i, int j, String tab, int run) {
+    	return this.getDataGroup().getItem(i,j,getDetectorTabNames().indexOf(tab),run);
+    }
+    
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -663,8 +673,9 @@ public class ECpi0 extends DetectorMonitor{
     }
 
     public void analyze() {    
-        System.out.println("ECpi0.analyze()");
+        System.out.println(getDetectorName()+".Analyze() ");
         fitGraphs(1,7,0,(dropSummary)?0:3,0,(dropSummary)?0:3);
+        writeFile("photon_sf");
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
@@ -865,6 +876,79 @@ public class ECpi0 extends DetectorMonitor{
     
     public void plotMCSummary(int index) {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,getActiveLayer(),index,getRunNumber()));
+    }
+      	
+    public void writeFile(String table) {
+    		
+    	String line = new String();
+    		
+    	try { 
+    		File outputFile = new File(outPath+table+"_"+getRunNumber());
+    		FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+    		BufferedWriter outputBw = new BufferedWriter(outputFw);
+    			
+    		System.out.println("ECpi0.writefile("+table+")");
+    		
+    		for (int is=0; is<7; is++) {
+    			switch (table) {							
+    			case "photon_sf": line =  getSF(is);  break;
+    			}
+    			if (line!=null) {
+    			      System.out.println(line);
+    			      outputBw.write(line);
+    			      outputBw.newLine();
+    			}				
+    		}
+   			outputBw.close();
+   			outputFw.close();
+    		}
+   		catch(IOException ex) {
+   			System.out.println("Error writing file '" );                   
+   			ex.printStackTrace();
+   		}
+    	
+    }
+    
+    public void writeScript(String table) {
+    	
+    	try { 
+    		File outputFile = new File(outPath+table+"_"+runlist.get(0)+"-"+runlist.get(runlist.size()-1));
+    		FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+    		BufferedWriter outputBw = new BufferedWriter(outputFw);
+    		
+    		System.out.println("ECpi0.writeScript("+table+")");
+    		
+    		Object[] runs = runlist.toArray();
+    		
+    		for (int i=0; i<runlist.size(); i++) {    			
+    			outputBw.write("ccdb add /calibration/eb/photon_sf -r "+runs[i]+"-"+(i<runlist.size()-1?((int)runs[i+1]-1):"inf")+" photon_sf_"+runs[i]);
+    			outputBw.newLine();
+    		}
+    	
+    		outputBw.close();
+    		outputFw.close();
+    		
+    	}
+   		catch(IOException ex) {
+   			System.out.println("Error writing file '" );                   
+   			ex.printStackTrace();
+   		}    		
+    }
+    	
+    public String getSF(int is) {
+    	
+    	float val = (float) photon_sf.getDoubleValue("sf1",is,0,0);
+    	float sf1 = is==0 ? val : (float) (val*tl.fitData.getItem(is,0,0,getRunNumber()).mean/mpi0);
+
+    	return is+" 0  0 "
+    			+sf1+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sf2",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sf3",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sf4",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sfs1",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sfs2",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sfs3",is,0,0))+" "
+    			+String.format("%.5f",photon_sf.getDoubleValue("sfs4",is,0,0));  	
     }
     
 /*   TIMELINES */
