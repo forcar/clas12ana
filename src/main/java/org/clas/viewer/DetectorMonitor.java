@@ -920,7 +920,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=11599) return 10.3894f;
     	if (run<=11656) return  2.14418f;
     	if (run<=12282) return 10.3894f;
-    	if (run<=12388) return  2.1864f;
+    	if (run<=12447) return  2.1864f;
     	if (run<=12616) return 10.1967f;
     	if (run<=12716) return 10.3394f;
     	if (run<=12955) return 10.4057f;    	
@@ -1002,6 +1002,9 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {   	
+    }
+    
+    public void writeScript(String table) {   	
     }
     
 // HISTO HELPERS    
@@ -1422,8 +1425,15 @@ public class DetectorMonitor implements ActionListener {
             		}
             		if (ds0 instanceof H2F) {
             			c.getPad().getAxisZ().setLog(getLogZ());
-            			if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
-            			if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
+            			if(!doAutoRange)  c.getPad().getAxisZ().setRange(0.1*zMin, 200*zMax); 
+            			if( doAutoRange) {c.getPad().getAxisX().setAutoScale(true);
+		                                  c.getPad().getAxisY().setAutoScale(true);
+		                                  c.getPad().getAxisZ().setAutoScale(true);}
+            		}
+            		if (ds0 instanceof GraphErrors) {
+            			if( doAutoRange) {c.getPad().getAxisX().setAutoScale(true);
+                                          c.getPad().getAxisY().setAutoScale(true);
+                                          c.getPad().getAxisZ().setAutoScale(true);}            			
             		}
             	}
             	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
