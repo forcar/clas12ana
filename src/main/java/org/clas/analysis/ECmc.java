@@ -19,8 +19,9 @@ import org.jlab.io.base.DataEvent;
 
 public class ECmc extends DetectorMonitor {
 	
-	Event ev = new Event();
+	Event       ev = new Event();
 	EBMCEngine  eb = new EBMCEngine();
+	
 	DataGroup dg = null;
 	   
     float dp1=0.1f, dp2=0.1f; int mcsec=1;
@@ -199,24 +200,26 @@ public class ECmc extends DetectorMonitor {
     
     @Override
     public void processEvent(DataEvent event) {
-        
-    	if(eb.readMC(event)) { 
-        
-        float refE  = (float) eb.pmc.get(0).e(); 
-        float refP  = (float) eb.pmc.get(0).p(); 
-        float refTH = (float) Math.toDegrees(eb.pmc.get(0).theta());
-        float refPH = (float) Math.toDegrees(eb.pmc.get(0).phi());
-
-        dgm.fill("eff1",refE, refTH);
-        if(refTH>15)dgm.fill("effmom0",refE);
-        dgm.fill("effthe0",refTH);    
-        
+    	
     	ev.init(event);        	
     	ev.setEventNumber(10);
     	ev.requireOneElectron(false);
    	    ev.setElecTriggerSector(mcsec);
+   	    ev.setMCpid(11);
+   	    
+   	    float refE=0,refP=0,refTH=0,refPH=0;
    	    		
         if(ev.procEvent(event)) {
+        	            
+            refE  = (float) ev.pmc.get(0).e(); 
+            refP  = (float) ev.pmc.get(0).p(); 
+            refTH = (float) Math.toDegrees(ev.pmc.get(0).theta());
+            refPH = (float) Math.toDegrees(ev.pmc.get(0).phi());
+            
+            dgm.fill("eff1",refE, refTH);
+            if(refTH>15)dgm.fill("effmom0",refE);
+            dgm.fill("effthe0",refTH);  
+            
     		elec = ev.getPART(0.0, 11);      int nelec = elec.size(); dgm.fill("h73a",nelec);
     		phot = ev.getPART(0.0, 22);      int nphot = phot.size(); dgm.fill("h73b",nphot);
     		pim  = ev.getPART(0.0, 212);     int  npim = pim.size();  dgm.fill("h73c",npim);
@@ -231,7 +234,7 @@ public class ECmc extends DetectorMonitor {
     		        		
     		if(nelec==1) {
         		chi2pid = (float) Math.abs(elec.get(0).getProperty("chi2pid"));
-        		dp = (float)(eb.pmc.get(0).p()-elec.get(0).p());
+        		dp = (float)(ev.pmc.get(0).p()-elec.get(0).p());
         		
         		if(npim==0&&chi2pid<3.5)  {
         			if(refTH>15)                     dgm.fill("effmom6",refE); 
@@ -241,20 +244,20 @@ public class ECmc extends DetectorMonitor {
         		}
         		
         		if(esum<0.01) {
-        			dgm.fill("h00",eb.pmc.get(0).px()-elec.get(0).px());
-        			dgm.fill("h01",eb.pmc.get(0).py()-elec.get(0).py());
-        			dgm.fill("h02",eb.pmc.get(0).pz()-elec.get(0).pz());
+        			dgm.fill("h00",ev.pmc.get(0).px()-elec.get(0).px());
+        			dgm.fill("h01",ev.pmc.get(0).py()-elec.get(0).py());
+        			dgm.fill("h02",ev.pmc.get(0).pz()-elec.get(0).pz());
         			dgm.fill("h03",dp);
         		}
     			
                 if(esum>0.01) {
-                	dgm.fill("h10",esum,eb.pmc.get(0).px()-elec.get(0).px());
-                	dgm.fill("h11",esum,eb.pmc.get(0).py()-elec.get(0).py());
-                	dgm.fill("h12",esum,eb.pmc.get(0).pz()-elec.get(0).pz());
+                	dgm.fill("h10",esum,ev.pmc.get(0).px()-elec.get(0).px());
+                	dgm.fill("h11",esum,ev.pmc.get(0).py()-elec.get(0).py());
+                	dgm.fill("h12",esum,ev.pmc.get(0).pz()-elec.get(0).pz());
                 	dgm.fill("h13",esum,dp);
-                	dgm.fill("hv0",esum,eb.pmc.get(0).vx()-elec.get(0).vx());
-                	dgm.fill("hv1",esum,eb.pmc.get(0).vy()-elec.get(0).vy());
-                	dgm.fill("hv2",esum,eb.pmc.get(0).vz()-elec.get(0).vz());
+                	dgm.fill("hv0",esum,ev.pmc.get(0).vx()-elec.get(0).vx());
+                	dgm.fill("hv1",esum,ev.pmc.get(0).vy()-elec.get(0).vy());
+                	dgm.fill("hv2",esum,ev.pmc.get(0).vz()-elec.get(0).vz());
                 }
                               		
           		float e_mom = (float) elec.get(0).p();
@@ -262,7 +265,7 @@ public class ECmc extends DetectorMonitor {
                 float e_phi = (float) Math.toDegrees(elec.get(0).phi());
                 
                 double    pt = Math.sqrt(e_mom*e_mom-elec.get(0).pz()*elec.get(0).pz());
-                double ptref = Math.sqrt(refP*refP-eb.pmc.get(0).pz()*eb.pmc.get(0).pz());
+                double ptref = Math.sqrt(refP*refP-ev.pmc.get(0).pz()*ev.pmc.get(0).pz());
                 
           		List<Particle> elecECAL = ev.getECAL((int)elec.get(0).getProperty("pindex"));
        			float ex=ev.getVar(elecECAL, "x", 1);float ey=ev.getVar(elecECAL, "y", 1);float ez=ev.getVar(elecECAL, "z", 1);
@@ -280,7 +283,7 @@ public class ECmc extends DetectorMonitor {
                       if(il==1) {  //use only PCAL and ECIN entries                        
 //                    double z0     =    pt*0.667*Math.sin(dphi*3.14159/180.)*100; 
                       double z0  =    ptref*0.667*Math.sin(dphi_ref*3.14159/180.)*100; 
-               	      if(Math.abs(dp)>dp1) {dgm.fill("hv3",eb.pmc.get(0).vz(),z0);dgm.fill("hv4",refTH,z0);dgm.fill("hv5",refP,z0);}	
+               	      if(Math.abs(dp)>dp1) {dgm.fill("hv3",ev.pmc.get(0).vz(),z0);dgm.fill("hv4",refTH,z0);dgm.fill("hv5",refP,z0);}	
            			  float gx=(float)rc.getProperty("x");float gy=(float)rc.getProperty("y");float gz=(float)rc.getProperty("z");
            			  float dist = (float) Math.sqrt((ex-gx)*(ex-gx)+(ey-gy)*(ey-gy)+(ez-gz)*(ez-gz));
            			  dgm.fill("h20",dist, dp); 
@@ -313,7 +316,7 @@ public class ECmc extends DetectorMonitor {
         
 //        System.out.println("energy,1,2,3 = "+energy+" "+part.epc+" "+part.eec1+" "+part.eec2);
         
-        Boolean good_pcal = eb.epc>0.00;               //VTP reported cluster
+        Boolean good_pcal = eb.epc>0.00;              //VTP reported cluster
         Boolean good_ecal = (eb.eec1+eb.eec2)>0.001 ; //VTP reported cluster
         Boolean trig1 = good_pcal &&  good_ecal && eb.epc>0.04 && ecalE>0.12;
         Boolean trig2 = good_pcal && !good_ecal && eb.epc>0.12;
@@ -325,7 +328,7 @@ public class ECmc extends DetectorMonitor {
         if(rPC.size()==1)                  {if(refTH>15)dgm.fill("effmom3",refE); dgm.fill("effthe3",refTH);
         dgm.fill("h50",refP, ecalE/refP); 
         dgm.fill("h53",ecalE,ecalE/refP);}                       
-    }          
+              
     }
     
     public void plotMCHistos() {      

@@ -58,6 +58,7 @@ public class ECmc1 extends DetectorMonitor {
         eb.setThresholds("Pizero",engine);
         eb.setGeom("2.5");
         eb.setGoodPhotons(12);
+        eb.setMCpid(22);
         eb.isMC = true;
         
         tl.setFitData(Fits);
