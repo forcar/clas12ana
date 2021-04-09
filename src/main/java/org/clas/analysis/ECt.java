@@ -253,10 +253,10 @@ public class ECt extends DetectorMonitor {
         
         for (int is=1; is<7; is++) {
         	h = new H1F("TL1_"+k+"_"+is+"_"+run,"TL1_"+k+"_"+is+"_"+run,130,70,200);
-        	h.setTitleX("Sector "+is+" Start Time"); h.setTitleY("Counts"); h.setOptStat("1000100");
+        	h.setTitleX("Sector "+is+" Start Time"); h.setTitleY("Counts"); h.setOptStat("1100");
             dg.addDataSet(h,is-1);    	
         	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,60,195,225);
-        	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time"); h.setTitleY("Counts");       
+        	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time"); h.setTitleY("Counts"); h.setOptStat("1100");     
             dg.addDataSet(h,is+5);
         }
         this.getDataGroup().add(dg,0,0,k,run);  
