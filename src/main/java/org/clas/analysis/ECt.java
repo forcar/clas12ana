@@ -61,6 +61,8 @@ public class ECt extends DetectorMonitor {
     int        phase = 0;
     float        STT = 0;
     
+    static int tlnum;
+    
     Boolean       isMC = false;    
     Boolean   isGoodTL = false;
     
@@ -107,7 +109,9 @@ public class ECt extends DetectorMonitor {
                                  "LTFITS",
                                  "TWFITS",
                                  "TL",
-                                 "Timeline");
+                                 "Timeline",
+                                 "EV",
+                                 "T0");
         
 
         
@@ -118,6 +122,7 @@ public class ECt extends DetectorMonitor {
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
         engine.setPCALTrackingPlane(0);
+        tlnum = getDetectorTabNames().indexOf("TL");
         this.init();
         this.localinit();
         this.localclear();
@@ -147,7 +152,7 @@ public class ECt extends DetectorMonitor {
         setRunNumber(run);
         runlist.add(run);        
         this.setNumberOfEvents(0);        
-        createTLHistos(28);
+        createTLHistos(tlnum);
         createBETAHistos(22);
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
         if(dropSummary) return;
@@ -185,7 +190,7 @@ public class ECt extends DetectorMonitor {
       
     public void plotSummary(int run) {  
     	    setRunNumber(run);
-    	    plotTLHistos(28);  	
+    	    plotTLHistos(tlnum);  	
     	    plotTLHistos(22);
     	    plotTDCHistos(10); 
             if(dropSummary) return;
@@ -216,9 +221,9 @@ public class ECt extends DetectorMonitor {
     public void plotAnalysis(int run) {
     	    setRunNumber(run);
     	    if(!isAnalyzeDone) return;
-	    	if(isResidualDone) plotResidualSummary(23);
+	    	if(isResidualDone) {plotResidualSummary(23);}
     	    if(!dropSummary) {
-    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);}
+    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);plotEVSummary(30);plotT0Summary(31);}
 //    	    	if(isResidualDone) plotResidualSummary(23);
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
@@ -459,7 +464,7 @@ public class ECt extends DetectorMonitor {
     public void processTL(DataEvent event) {
     	
   	   int  run = getRunNumber();
-  	   ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(trigger_sect-1).get(0)).fill(STT);
+  	   ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(trigger_sect-1).get(0)).fill(STT);
        
        if(event.hasBank("ECAL::clusters")){       
        DataBank  bank1 = event.getBank("ECAL::clusters");
@@ -469,7 +474,7 @@ public class ECt extends DetectorMonitor {
            if (is==trigger_sect&&il==1){
                float    t = bank1.getFloat("time",loop);
                int iU = (bank1.getInt("coordU", loop)-4)/8+1;
-               if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)).fill(t+TOFFSET);
+               if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET);
            }
        }
        }
@@ -529,7 +534,7 @@ public class ECt extends DetectorMonitor {
         	       double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc,ip); // calibrated time
-          	       if(isGoodTL&&il==1&&ip==3) ((H1F) this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)).fill(tdcmc); 
+          	       if(isGoodTL&&il==1&&ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
                }
            }
        }    	
@@ -679,7 +684,7 @@ public class ECt extends DetectorMonitor {
                        boolean goodHisto  = Math.abs(pid)==TRpid && goodSector && goodStatus;
                        
                        if (goodHisto) {
-                    	   ((H1F) this.getDataGroup().getItem(is,0,28,run).getData(il+i-1).get(0)).fill(resid); //timelines
+                    	   ((H1F) this.getDataGroup().getItem(is,0,tlnum,run).getData(il+i-1).get(0)).fill(resid); //timelines
                            ((H2F) this.getDataGroup().getItem(is,0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
                        }
                        
@@ -750,7 +755,7 @@ public class ECt extends DetectorMonitor {
         int    iv = getActiveView();
         
         int    np = npmt[3*il+iv];
-        int    off = (index-26)*100;
+        int    off = (index-26)*200;
         
         c.clear();
         if (np==36) c.divide(6,6); if (np>36) c.divide(9,8);
@@ -761,10 +766,10 @@ public class ECt extends DetectorMonitor {
         		g=tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).getGraph(); 
         		if(g.getDataSize(0)>0) {
                    c.cd(ipp); c.getPad(ipp); c.getPad(ipp).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
-                                  if(off!=100) {double min = tl.fitData.getItem(is,3*il+iv+1,ipp,getRunNumber()).p0;
+                                  if(off!=200) {double min = tl.fitData.getItem(is,3*il+iv+1,ipp,getRunNumber()).p0;
                                                 double max = g.getDataY(g.getDataSize(0)-1); double mn=Math.min(min, max); double mx=Math.max(min, max);                                                
                                                 c.getPad(ipp).getAxisY().setRange(mn*0.95,mx*1.05);}
-                                  if(off==100)  c.getPad(ipp).getAxisY().setRange(-5,5);
+                                  if(off==200)  c.getPad(ipp).getAxisY().setRange(-5,5);
                    c.draw(g);
                    F1D f1 = new F1D("p0","[a]",0.,g.getDataX(g.getDataSize(0)-1)*1.05); f1.setParameter(0,0);
                    f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
@@ -805,12 +810,12 @@ public class ECt extends DetectorMonitor {
     public void fitTLGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {    	
         int run = getRunNumber();	 
         for (int is=is1; is<is2; is++) {
-//        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(is-1).get(0)),0,70,105,75,101,1.5,2.5),is,0,28,run); 
-        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(is-1).get(0)),0,70,200,75,200,1.5,2.5),is,0,28,run); 
-        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,28,run).getData(is+5).get(0)),0,190,230,190,130,2.0,2.0),is,1,28,run); 
+//        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,tlnum,run).getData(is-1).get(0)),0,70,105,75,101,1.5,2.5),is,0,100,run); 
+        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,tlnum,run).getData(is-1).get(0)),0,70,200,75,200,1.5,2.5),is,0,100,run); 
+        	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)),0,190,230,190,130,2.0,2.0),is,1,100,run); 
         	for (int il=0; il<9; il++) {
         		double f1 = il<3?2:5 ; double f2 = il<3?2:5;
-            	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(is,0,28,run).getData(il).get(0)),0,-2,4,-10,10,f1,f2),is,10+il,28,run);    
+            	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(is,0,tlnum,run).getData(il).get(0)),0,-2,4,-10,10,f1,f2),is,10+il,100,run);    
         	}
         }
     }
@@ -877,7 +882,7 @@ public class ECt extends DetectorMonitor {
                    fitter2.setRange(-10,50); fitter2.fitSlicesY();
                    g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0);
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");  
-            	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+100,run); //TW fits            	   
+            	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+200,run); //TW fits            	   
                 }
              }
           }
@@ -937,6 +942,84 @@ public class ECt extends DetectorMonitor {
         }
         }        
     }
+    
+    public void plotEVSummary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));     
+        
+        int n = 0;        
+        double ymin=10f, ymax=30f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
+        
+        for (int is=1; is<7; is++) {
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<3; iv++) {
+        	GraphErrors plot = new GraphErrors(); GraphErrors plotdb = new GraphErrors();
+        	for (int ip=0; ip<npmt[3*il+iv]; ip++) {
+    			float  y = (float) (tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())?tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p1:18);
+    			float ye = (float) (tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())?tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p1e:0);
+    			float ev = (float) Math.max(10,Math.min(22,y!=0?Math.abs(1/y):17f));
+    			float eve = y!=0 && y>=10 && y<=22 ? ye/y/y:0;
+        		plot.addPoint(ip+1, ev, 0, eve); 
+        		float ydb = (float) veff.getDoubleValue("veff", is, 3*il+iv+1, ip+1);
+        		plotdb.addPoint(ip+1, ydb, 0, 0);
+        	}            
+            plot.setMarkerColor(1); plot.setLineColor(1); plotdb.setMarkerColor(4); plotdb.setLineColor(4);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==9||n==18||n==27||n==36||n==45) plot.getAttributes().setTitleY("EV (cm/ns)");
+            plot.getAttributes().setTitleX("SECTOR "+is+" "+det[il]+" "+v[iv].toUpperCase()+" PMT");
+            n++; c.draw(plot); c.draw(plotdb,"same"); 
+        }
+        }
+        }
+             
+    } 
+    
+    public void plotT0Summary(int index) {
+        
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));     
+        
+        int n = 0;        
+        double ymin=0f, ymax=40f;
+        ymin=ymin*lMin/250; ymax=ymax*lMax/250;
+         
+        c.clear(); c.divide(9, 6);
+        
+        for (int is=1; is<7; is++) {
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<3; iv++) {
+        	GraphErrors plot1 = new GraphErrors(); GraphErrors plot2 = new GraphErrors(); GraphErrors plot3 = new GraphErrors();
+        	for (int ip=0; ip<npmt[3*il+iv]; ip++) {
+        		float ydb = (float) time.getDoubleValue("a0", is, 3*il+iv+1, ip+1);        		
+        		float y = 0, ye = 0, y1 = 0, y1e = 0;
+        		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
+        			y1 =  (float) tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0;
+        			y1e = (float) tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0e;  			
+        		}
+        		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
+        			 y = (float) (FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+ydb);
+        			ye = (float)  FitSummary.getItem(is,il,iv,getRunNumber()).getDataEY(ip);
+        		}
+        		plot1.addPoint(ip+1,   y, 0, ye); 
+        		plot2.addPoint(ip+1, ydb, 0, 0);
+        		plot3.addPoint(ip+1,  y1, 0, y1e);
+        	}            
+            plot1.setMarkerColor(1); plot1.setLineColor(1); 
+            plot2.setMarkerColor(4); plot2.setLineColor(4);
+            plot3.setMarkerColor(2); plot3.setLineColor(2);
+            c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+            c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+            if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("T0 (ns)");
+            plot1.getAttributes().setTitleX("SECTOR "+is+" "+det[il]+" "+v[iv].toUpperCase()+" PMT");
+            n++; c.draw(plot1); c.draw(plot2,"same"); c.draw(plot3,"same"); 
+        }
+        }
+        }
+             
+    } 
     
     public void getTMFSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
         ParallelSliceFitter fitter;
@@ -1075,9 +1158,9 @@ public class ECt extends DetectorMonitor {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0
 				+" 0.02345 "
-				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p1)+" "
-				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p0)+" "
-				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+100,getRunNumber()).p2)+" ";
+				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1)+" "
+				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0)+" "
+				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2)+" ";
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
@@ -1088,7 +1171,7 @@ public class ECt extends DetectorMonitor {
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "  //residuals
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
@@ -1097,15 +1180,6 @@ public class ECt extends DetectorMonitor {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
 		
-	}
-	
-	public String getEV(int is, int il, int iv, int ip) {
-		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
-			double ev = tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p1;
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+Math.max(10,Math.min(22,ev!=0?Math.abs(1/ev):17.0));
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 17.0";
-		}		
 	}
 	
 	public String getTMF(int is, int il, int iv, int ip) {
@@ -1131,7 +1205,16 @@ public class ECt extends DetectorMonitor {
 			return is+" "+(3*il+iv+1)+" "+ip+" 0.0";
 		}		
 	}	
-        
+	
+	public String getEV(int is, int il, int iv, int ip) {
+		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
+			double ev = tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p1;
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+Math.max(10,Math.min(22,ev!=0?Math.abs(1/ev):17.0));
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 17.0";
+		}		
+	}
+	
     public void plotUVWHistos(int index) {
        int run = getRunNumber();
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),3*getActiveLayer()+getActiveView()+1,index,run));	    
@@ -1179,13 +1262,13 @@ public class ECt extends DetectorMonitor {
     public void fillTimeLineHisto() {
     	System.out.println("Filling "+TLname+" timeline"); 
         for (int is=1; is<7; is++) {
-            float   y = (float) tl.fitData.getItem(is,0,28,getRunNumber()).mean; 
-            float  ye = (float) tl.fitData.getItem(is,0,28,getRunNumber()).meane;			 
+            float   y = (float) tl.fitData.getItem(is,0,100,getRunNumber()).mean; 
+            float  ye = (float) tl.fitData.getItem(is,0,100,getRunNumber()).meane;			 
             ((H2F)tl.Timeline.getItem(10,0)).fill(runIndex,is,y);	
             ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,Math.abs(ye));  
             
-            float  y1 = (float) tl.fitData.getItem(is,1,28,getRunNumber()).mean; 
-            float y1e = (float) tl.fitData.getItem(is,1,28,getRunNumber()).meane;			 
+            float  y1 = (float) tl.fitData.getItem(is,1,100,getRunNumber()).mean; 
+            float y1e = (float) tl.fitData.getItem(is,1,100,getRunNumber()).meane;			 
             ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,y1);	
             ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,Math.abs(y1e)); 
         }
@@ -1193,12 +1276,12 @@ public class ECt extends DetectorMonitor {
         for (int is=1; is<7; is++) {
   		  for (int il=0; il<3; il++) {	
   	        for (int iv=0; iv<3; iv++) {  
-  			    float  y = (float) tl.fitData.getItem(is,3*il+iv+10,28,getRunNumber()).mean;
-  			    float ye = (float) tl.fitData.getItem(is,3*il+iv+10,28,getRunNumber()).meane;
+  			    float  y = (float) tl.fitData.getItem(is,3*il+iv+10,100,getRunNumber()).mean;
+  			    float ye = (float) tl.fitData.getItem(is,3*il+iv+10,100,getRunNumber()).meane;
   			    ((H2F)tl.Timeline.getItem(3*il+iv+1,0)).fill(runIndex,is,y);	
   			    ((H2F)tl.Timeline.getItem(3*il+iv+1,1)).fill(runIndex,is,ye);	
-  			    float  y1 = (float) tl.fitData.getItem(is,3*il+iv+10,28,getRunNumber()).sigma;
-  			    float y1e = (float) tl.fitData.getItem(is,3*il+iv+10,28,getRunNumber()).sigmae;
+  			    float  y1 = (float) tl.fitData.getItem(is,3*il+iv+10,100,getRunNumber()).sigma;
+  			    float y1e = (float) tl.fitData.getItem(is,3*il+iv+10,100,getRunNumber()).sigmae;
   			    ((H2F)tl.Timeline.getItem(3*il+iv+11,0)).fill(runIndex,is,Math.abs(y1));	
   			    ((H2F)tl.Timeline.getItem(3*il+iv+11,1)).fill(runIndex,is,y1e);	
   	        }
@@ -1219,26 +1302,26 @@ public class ECt extends DetectorMonitor {
     public void saveTimelines() {
     	System.out.println("ECt: Saving timelines");
     	String tag = getTLtag();
-    	saveTimeLine(10,0,28,"StartTime","TIME");
-    	saveTimeLine(20,1,28,"PCALU3","TIME");
-    	saveTimeLine(1,10,28,"PCAL"+tag+"tU","TIME");
-    	saveTimeLine(2,11,28,"PCAL"+tag+"tV","TIME");
-    	saveTimeLine(3,12,28,"PCAL"+tag+"tW","TIME");
-    	saveTimeLine(4,13,28,"ECIN"+tag+"tU","TIME");
-    	saveTimeLine(5,14,28,"ECIN"+tag+"tV","TIME");
-    	saveTimeLine(6,15,28,"ECIN"+tag+"tW","TIME");
-    	saveTimeLine(7,16,28,"ECOU"+tag+"tU","TIME");
-    	saveTimeLine(8,17,28,"ECOU"+tag+"tV","TIME");
-    	saveTimeLine(9,18,28,"ECOU"+tag+"tW","TIME");
-    	saveTimeLine(11,10,28,"PCAL"+tag+"sU","SIG");
-    	saveTimeLine(12,11,28,"PCAL"+tag+"sV","SIG");
-    	saveTimeLine(13,12,28,"PCAL"+tag+"sW","SIG");
-    	saveTimeLine(14,13,28,"ECIN"+tag+"sU","SIG");
-    	saveTimeLine(15,14,28,"ECIN"+tag+"sV","SIG");
-    	saveTimeLine(16,15,28,"ECIN"+tag+"sW","SIG");
-    	saveTimeLine(17,16,28,"ECOU"+tag+"sU","SIG");
-    	saveTimeLine(18,17,28,"ECOU"+tag+"sV","SIG");
-    	saveTimeLine(19,18,28,"ECOU"+tag+"sW","SIG");
+    	saveTimeLine(10,0,100,"StartTime","TIME");
+    	saveTimeLine(20,1,100,"PCALU3","TIME");
+    	saveTimeLine(1,10,100,"PCAL"+tag+"tU","TIME");
+    	saveTimeLine(2,11,100,"PCAL"+tag+"tV","TIME");
+    	saveTimeLine(3,12,100,"PCAL"+tag+"tW","TIME");
+    	saveTimeLine(4,13,100,"ECIN"+tag+"tU","TIME");
+    	saveTimeLine(5,14,100,"ECIN"+tag+"tV","TIME");
+    	saveTimeLine(6,15,100,"ECIN"+tag+"tW","TIME");
+    	saveTimeLine(7,16,100,"ECOU"+tag+"tU","TIME");
+    	saveTimeLine(8,17,100,"ECOU"+tag+"tV","TIME");
+    	saveTimeLine(9,18,100,"ECOU"+tag+"tW","TIME");
+    	saveTimeLine(11,10,100,"PCAL"+tag+"sU","SIG");
+    	saveTimeLine(12,11,100,"PCAL"+tag+"sV","SIG");
+    	saveTimeLine(13,12,100,"PCAL"+tag+"sW","SIG");
+    	saveTimeLine(14,13,100,"ECIN"+tag+"sU","SIG");
+    	saveTimeLine(15,14,100,"ECIN"+tag+"sV","SIG");
+    	saveTimeLine(16,15,100,"ECIN"+tag+"sW","SIG");
+    	saveTimeLine(17,16,100,"ECOU"+tag+"sU","SIG");
+    	saveTimeLine(18,17,100,"ECOU"+tag+"sV","SIG");
+    	saveTimeLine(19,18,100,"ECOU"+tag+"sW","SIG");
     }
     
     public void plotTimeLines(int index) {
@@ -1271,7 +1354,7 @@ public class ECt extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(i+1),tlmean[i],"Sector "+is+tit[i]);
     		
-    		FitData       fd = tl.fitData.getItem(is,i==1?1:0,28,getRunNumber()); float tlm=(float)fd.mean;
+    		FitData       fd = tl.fitData.getItem(is,i==1?1:0,100,getRunNumber()); float tlm=(float)fd.mean;
 //    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(tlmean[i>1?0:i]*0.8,tlmean[i>1?0:i]*1.2,0.,fd.getGraph().getMax()*1.1);
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(tlm*0.8,tlm*1.2,0.,fd.getGraph().getMax()*1.1);
     		fd.getHist().getAttributes().setOptStat("1000100");
@@ -1307,7 +1390,7 @@ public class ECt extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,3*il+iv+(pc==0?11:1),0f,"Sector "+is+v[iv]+t[pc] );
     		
-    		fd = tl.fitData.getItem(is,3*il+iv+10,28,getRunNumber());
+    		fd = tl.fitData.getItem(is,3*il+iv+10,100,getRunNumber());
     		
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(fd.getHist().getXaxis().min(),fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax());  
             fd.getHist().getAttributes().setOptStat("1000100");
