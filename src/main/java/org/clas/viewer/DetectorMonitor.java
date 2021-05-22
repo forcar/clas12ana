@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileSystemView;
 
 import org.clas.tools.ECConstants;
 import org.clas.tools.FitData;
+import org.clas.tools.ParallelSliceFitter;
 import org.clas.tools.DataGroupManager;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
@@ -1092,6 +1093,23 @@ public class DetectorMonitor implements ActionListener {
     	c.draw(graph,opt);
     }
     
+    public GraphErrors getFitSlices(H2F h, String xy, int col) {
+    	
+    	double[] dum = new double[6];
+    	if(h.getDataBufferSize()==0) return new GraphErrors("dum",dum,dum,dum,dum);
+    	
+    	ParallelSliceFitter fitter;    	
+    	fitter = new ParallelSliceFitter(h); fitter.setBackgroundOrder(0); 
+    	if(xy=="x") fitter.fitSlicesX(); 
+    	if(xy=="y") fitter.fitSlicesY(); 
+    	GraphErrors graph = new GraphErrors("graph",fitter.getMeanSlices().getVectorX().getArray(),
+    			                                    fitter.getMeanSlices().getVectorY().getArray(),
+    			                                    new double[h.getDataSize(0)],
+    			                                    fitter.getSigmaSlices().getVectorY().getArray());
+    	graph.setTitleX(h.getTitleX()); graph.setTitleY(h.getTitleY()); graph.setMarkerColor(col);
+    	return graph;
+    }  
+    
     public GraphErrors sliceToGraph(GraphErrors gin, int il, int iv) {
     	int np = npmt[3*il+iv]; 
     	double[] x = new double[np]; double[] xe = new double[np]; 
@@ -1362,6 +1380,7 @@ public class DetectorMonitor implements ActionListener {
                 for(IDataSet ds : dsList){
                     System.out.println("\t --> " + ds.getName());                 
                     if(dir.getObject(folder, ds.getName())!=null) newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);    
+                    if(dir.getObject(folder, ds.getName())==null) newGroup.addDataSet(ds,i);    
                 }
             }
             map.replace(key, newGroup);
