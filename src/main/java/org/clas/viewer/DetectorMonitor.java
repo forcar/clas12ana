@@ -153,7 +153,7 @@ public class DetectorMonitor implements ActionListener {
     
     public ECEngine  engine = new ECEngine();  
 
-    public String variation = "default";
+    public String variation = "rga_fall2018";
     public String      geom = "2.5";
     public String    config = "phot";  //When re-running ECEngine from cooked data this should always be "phot"
 	
@@ -987,7 +987,7 @@ public class DetectorMonitor implements ActionListener {
     public int getTorusColor(String val) {
     	switch (val) {
     	case "-1.00": return 1;  
-    	case "-0.75": return 7;  
+    	case "-0.75": return 6;  
     	case "+0.50": return 4;  
     	case "+0.75": return 3;  
     	case "+1.00": return 2; 
@@ -1188,7 +1188,7 @@ public class DetectorMonitor implements ActionListener {
     
     
     public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
-	    int[] col = {1,1,2,5,6,7};
+	    int[] col = {1,1,2,5,6,7,8};
 	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
 	    glist.clear();
 	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
@@ -1277,6 +1277,15 @@ public class DetectorMonitor implements ActionListener {
         return fd;
      }
     
+    public FitData fitEngine(GraphErrors g, int ff, int fmin, int fmax) {
+        FitData fd = new FitData(g);        
+    	if(g.getDataSize(0)==0) return fd;
+        fd.initFit(ff,0,1,fmin,fmax); 
+        fd.doFit = true; 
+        fd.fitGraph("",cfitEnable,fitVerbose); 
+        return fd;
+     } 
+    
     public FitData fitEngine(GraphErrors g, int ff, double pmin, double pmax, double fmin, double fmax ) {
         FitData fd = new FitData(g);        
     	if(g.getDataSize(0)==0) return fd;
@@ -1328,11 +1337,13 @@ public class DetectorMonitor implements ActionListener {
     
     //DATAGROUP HELPERS
     
+    //Used to associate canvas configuration with histogram name
 	public void cc(String name, boolean linlogy, boolean linlogz, float ymin, float ymax, float zmin, float zmax) {
 		Object[] obj = {linlogy,linlogz,ymin,ymax,zmin,zmax};
 		map.put(name,obj);  
 	}    
     
+    //Implementation of canvas configuration map
 	public Boolean config(String name, EmbeddedCanvas canvas) {
 		if(!map.containsKey(name)) return false;
 		can = map.get(name); 
@@ -1437,7 +1448,7 @@ public class DetectorMonitor implements ActionListener {
             c.cd(i);  String opt = " ";               
             if(dsList.size()>0) {	
             	IDataSet ds0 = dsList.get(0);            	
-            	if(!config(ds0.getName(),c)) {
+            	if(!config(ds0.getName(),c)) { //override canvas auto configuration if ds0 is tagged
             		if (ds0 instanceof H1F) {
             			c.getPad().getAxisY().setAutoScale(true);
             			c.getPad().getAxisY().setLog(getLogY());
