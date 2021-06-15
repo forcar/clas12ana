@@ -14,7 +14,7 @@ import org.jlab.utils.groups.IndexedList;
 public class TimeLine {
 	
 	 public IndexedList<IDataSet> Timeline = new IndexedList<IDataSet>(2);
-	 public IndexedList<FitData>   fitData = null;
+	 public IndexedList<FitData>   fitData = new IndexedList<FitData>(4);
 	 private Map<Integer,Integer>   NYbins = new HashMap<Integer,Integer>();  
 	 private TDirectory                dir = null;
 	 
