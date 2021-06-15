@@ -57,7 +57,7 @@ public class DataFitter {
 	                upar.fix(par.name());
 	            }
 	            if(par.min()>-1e9&&par.max()<1e9){
-	                upar.setLimits(par.name(), par.min(), par.max());
+	                if(par.min()!=par.max()) upar.setLimits(par.name(), par.min(), par.max());
 	            }
 	        }
 	        
