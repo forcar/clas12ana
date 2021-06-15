@@ -11,11 +11,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.clas.tools.FitData;
-
+import org.clas.tools.ParallelSliceFitter;
 import org.clas.viewer.DetectorMonitor;
 
 import org.jlab.clas.physics.Particle;
@@ -27,7 +28,9 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
+import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 import org.clas.tools.Event;
@@ -75,7 +78,18 @@ public class ECcalib extends DetectorMonitor {
 
     Event     ev = new Event();
 	H1F       h1 = null;
-
+	
+	//FTOF
+	IndexedList<List<Float>>          tdcs = new IndexedList<List<Float>>(4);
+	IndexedList<List<Float>>          adcs = new IndexedList<List<Float>>(4);
+	IndexedList<List<Integer>>       lapmt = new IndexedList<List<Integer>>(3); 
+	IndexedList<List<Integer>>       ltpmt = new IndexedList<List<Integer>>(3); 
+	
+	//ECAL
+	IndexedList<List<Float>>         etdcs = new IndexedList<List<Float>>(4);
+	IndexedList<List<Float>>         eadcs = new IndexedList<List<Float>>(4);
+	
+	
     public ECcalib(String name) {
         super(name);
         this.setDetectorTabNames("MIP",
@@ -92,7 +106,9 @@ public class ECcalib extends DetectorMonitor {
                                  "Timeline",
                                  "ATT",
                                  "MIPvP",
-                                 "VAR");
+                                 "VAR",
+                                 "Align",
+                                 "Align2");
         
         this.useRDIFButtons(true);
         this.usePCCheckBox(true);
@@ -103,8 +119,7 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void localinit() {
-    	System.out.println("ECcalib.localinit()");
-    	tl.setFitData(Fits);    	
+    	System.out.println("ECcalib.localinit()");    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
     
@@ -126,7 +141,7 @@ public class ECcalib extends DetectorMonitor {
 	     System.out.println("ECcalib:createHistos("+run+")");
 	     setRunNumber(run);
 	     runlist.add(run);
-	     createMIPHistos(0,1,25,0,40," Peak Energy (MeV)");
+	     createMIPHistos(0,1,25,0, 40," Peak Energy (MeV)");
 	     createMIPHistos(0,2,50,0,100," Cluster Energy (MeV)");	     
 	     if(dropSummary) return;
 	     createXYHistos(5,80,-420,420,-420,420);    
@@ -137,6 +152,7 @@ public class ECcalib extends DetectorMonitor {
 	     createPixHistos(10);	
 	     createUVWHistos(12,25,0.,2.," MIP ");
 	     createMIPvPHistos(13);
+	     createBARHistos(15,1);
      }
      
      @Override       
@@ -157,18 +173,19 @@ public class ECcalib extends DetectorMonitor {
     	 plotPathSummary(10,0);
     	 plotUVW(12);    
     	 plotPIDSummary(13);
+    	 plotMIP(15);
      }
      
      public void plotAnalysis(int run) {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
-    	 if(!dropSummary) {updateFITS(2); if(TLname=="UVW") {plotMean(); plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
+    	 if(!dropSummary) {updateFITS(2); updateFITS(15); if(TLname=="UVW") {/*plotMean()*/;plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
 //    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
-    	 updateUVW(1); plotTimeLines(11);    	    
+    	 updateUVW(1);   plotAlignSummary(16); plotTimeLines(11);  	    
      }
      
      public void plotMean() {
-    	 if(getActiveRDIF()==1 && runlist.size()==2) {getMeanRDIF(); dumpFiles("rdif");     plotMeanRDIF(3);    return;} //plot RDIF if two runs present and dump RDIF
+    	 if(getActiveRDIF()==1 && runlist.size()==2) {getMeanRDIF(); dumpFiles("rdif");     plotMeanRDIF(3);                        return;} //plot RDIF if two runs present and dump RDIF
     	 if(getActiveRDIF()==0 && runlist.size()==1) {               dumpFiles("gain");     plotMeanSummary(3); plotVarSummary(14); return;} //dump PMT gains based on current analyzed run
     	 if(getActiveRDIF()==1 && runlist.size()==1) {               dumpFiles("rdifgain"); plotMeanSummary(3); plotVarSummary(14);}         //plot effect of RDIF correction and dump RDIF corrected CCDB gains
      }
@@ -202,7 +219,7 @@ public class ECcalib extends DetectorMonitor {
              this.getDataGroup().add(dg,i,1,k,run);
          }
           
-     }    
+     }
      
      public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt) {
      	
@@ -296,6 +313,71 @@ public class ECcalib extends DetectorMonitor {
             h.setTitleX("Sector "+is+" ECOU W"+txt); h.setTitleY("W");  
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,n,k,run);
+        }            
+    }
+     
+     public void createBARHistos(int k, int n) {
+     	
+	    int run = getRunNumber();
+	    String lab1=" FTOF1B BAR";
+    
+        for (int is=1; is<7; is++) {
+            String tag = is+"_"+n+"_"+k+"_"+run;
+            dg = new DataGroup(3,5);
+            int nch=62, x1=1, x2=63;
+            		
+            h = new H2F("ftof_pcal_u_"+tag,"ftof_pcal_u_"+tag, nch, x1, x2, 68, 1, 69);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL U Strip"); 
+            dg.addDataSet(h,0);  
+            h = new H2F("ftof_pcal_v_"+tag,"ftof_pcal_v_"+tag, nch, x1, x2, 62, 1, 63);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL V Strip");        
+            dg.addDataSet(h,1);            
+            h = new H2F("ftof_pcal_w_"+tag,"ftof_pcal_w_"+tag, nch, x1, x2, 62, 1, 63);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL W Strip");  
+            dg.addDataSet(h,2); 
+        
+            h = new H2F("ftof_ecin_u_"+tag,"ftof_ecin_u_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN U Strip");    
+            dg.addDataSet(h,3);  
+            h = new H2F("ftof_ecin_v_"+tag,"ftof_ecin_v_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN V Strip");        
+            dg.addDataSet(h,4);            
+            h = new H2F("ftof_ecin_w_"+tag,"ftof_ecin_w_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN W Strip");  
+            dg.addDataSet(h,5); 
+        
+            h = new H2F("ftof_ecou_u_"+tag,"ftof_ecou_u_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU U Strip");    
+            dg.addDataSet(h,6);  
+            h = new H2F("ftof_ecou_v_"+tag,"ftof_ecou_v_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU V Strip");        
+            dg.addDataSet(h,7);            
+            h = new H2F("ftof_ecou_w_"+tag,"ftof_ecou_w_"+tag, nch, x1, x2, 36, 1, 37);
+            h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU W Strip");  
+            dg.addDataSet(h,8);   
+            
+            nch=36; x1=1; x2=37;
+            h = new H2F("pcal_ecin_u_"+tag,"pcal_ecin_u_"+tag, 68, 1, 69, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECIN U Strip"); h.setTitleX("PCAL U Strip"); 
+            dg.addDataSet(h,9);  
+            h = new H2F("pcal_ecin_v_"+tag,"pcal_ecin_v_"+tag, 62, 1, 63, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECIN V Strip"); h.setTitleX("PCAL V Strip");        
+            dg.addDataSet(h,10);            
+            h = new H2F("pcal_ecin_w_"+tag,"pcal_ecin_w_"+tag, 62, 1, 63, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECIN W Strip"); h.setTitleX("PCAL W Strip");  
+            dg.addDataSet(h,11);
+            
+            h = new H2F("pcal_ecou_u_"+tag,"pcal_ecou_u_"+tag, 68, 1, 69, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECOU U Strip"); h.setTitleX("PCAL U Strip"); 
+            dg.addDataSet(h,12);  
+            h = new H2F("pcal_ecou_v_"+tag,"pcal_ecou_v_"+tag, 62, 1, 63, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECOU V Strip"); h.setTitleX("PCAL V Strip");        
+            dg.addDataSet(h,13);            
+            h = new H2F("pcal_ecou_w_"+tag,"pcal_ecou_w_"+tag, 62, 1, 63, nch, x1, x2);
+            h.setTitleY("Sector "+is+" ECOU W Strip"); h.setTitleX("PCAL W Strip");  
+            dg.addDataSet(h,14);
+            
+            this.getDataGroup().add(dg,is,n,k,run);          
         }            
     }  
      
@@ -505,6 +587,8 @@ public class ECcalib extends DetectorMonitor {
 	
     public void processEvent(DataEvent event) {
     	
+    	int run = getRunNumber();
+    	
     	if(dropBanks) dropBanks(event);
     	 
     	ev.init(event);
@@ -523,7 +607,7 @@ public class ECcalib extends DetectorMonitor {
 	    if(ev.isPhys) {part_ecal.addAll(makeELEC()); part_ecal.addAll(makePROT()); part_ecal.addAll(makeMIP());}
 	    if(ev.isMuon)  part_ecal.addAll(makeMUON()); 
 	    
-	    fillHists(part_ecal);    	
+	    fillHists(run, part_ecal, event);    	
     }
     
     public List<Particle> makeMUON() {
@@ -617,14 +701,13 @@ public class ECcalib extends DetectorMonitor {
     	return olist;    	
     }
     
-    public void fillHists(List<Particle> list) {
+    public void fillHists(int run, List<Particle> list, DataEvent event) {
     	
-        int run = getRunNumber();
-
     	List<Vector3> rl = new ArrayList<Vector3>();  
 		IndexGenerator ig = new IndexGenerator();
 		       	
-       	int[]  uvw = new int[3]; int[]  wuv = new int[3]; float[] ep = new float[3];
+       	float[]   uvw = new float[3]; float[]  wuv = new float[3]; float[] ep = new float[3];
+       	float[]  puvw = new float[3];
 		int is,il,ip,trigger=0,trig=TRpid;
 		float ecl,x,y,z,d,wu,wv,ww,wsum,pmip=0,v12mag,v13mag,v23mag,beta,mass2=0;
 		boolean isMuon = false;
@@ -639,10 +722,12 @@ public class ECcalib extends DetectorMonitor {
 		
 		ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
     	
-
-    	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){
+    	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
 			is = ig.getIndex(entry.getKey(), 0);
-            if(ecpart.getItem(is).size()==3) {
+            if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
+            	
+        		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
+        		
             	rl.clear();
             	for (Particle p : entry.getValue()) {
             		Vector3  r = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z")); rl.add(r);
@@ -659,15 +744,15 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float) v3.mag();
             	v23mag = (float) v23.mag();
             	
-            	for (Particle ec : entry.getValue()) {				
+            	for (Particle ec : entry.getValue()) {	//Loop over PCAL, ECIN, ECOU			
             		ip     = (int)   ec.getProperty("pindex");
             		il     = (int)   ec.getProperty("layer");
             		x      = (float) ec.getProperty("x");
             		y      = (float) ec.getProperty("y");
             		z      = (float) ec.getProperty("z");
-            		uvw[0] = (int)   ec.getProperty("iu");
-            		uvw[1] = (int)   ec.getProperty("iv");
-            		uvw[2] = (int)   ec.getProperty("iw");
+            		uvw[0] = (float) ec.getProperty("iu");
+            		uvw[1] = (float) ec.getProperty("iv");
+            		uvw[2] = (float) ec.getProperty("iw");
             		wuv[0] = uvw[2]; 
             		wuv[1] = uvw[0];
             		wuv[2] = uvw[1];
@@ -675,7 +760,8 @@ public class ECcalib extends DetectorMonitor {
             		wv     = (float) ec.getProperty("dv");
             		ww     = (float) ec.getProperty("dw");
                     wsum   = wu+wv+ww;
-            		d      = (il>0 && PixLength.hasItem(uvw[0],uvw[1],uvw[2]))? PixLength.getItem(uvw[0],uvw[1],uvw[2]):1f; 		    	
+            		//d      = (il>1 && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
+                    d=1;
             		ecl    = (float) ec.getProperty("energy")/d;	    	   
             		ep[0]  = (float) ec.getProperty("receu")/d;
             		ep[1]  = (float) ec.getProperty("recev")/d;
@@ -692,11 +778,160 @@ public class ECcalib extends DetectorMonitor {
             		
             		Boolean  pid = ev.isMuon ? true:pmip!=0 && Math.abs(mass2-0.0193)<0.03;
             		Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3;    
-
+            		Boolean  pix = il==1 ? wu==1 && wv==1 && ww==1 : wsum==3 || wsum==4;
+            		
             		if (mip && pid) fillMIP(is,il,run,uvw,wuv,ecl,ep,pmip,x,y);
+            		
+            		if (pix) {
+            		for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1).get(0)).fill(bar,uvw[i]);
+            		if (il==1) {puvw[0]=uvw[0]; puvw[1]=uvw[1]; puvw[2]=uvw[2];}
+            		if (il==4) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1+6).get(0)).fill(puvw[i],uvw[i]);
+            		if (il==7) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1+6).get(0)).fill(puvw[i],uvw[i]);
+            		}
             	}
 			}  
     	}
+    }
+    
+    public void getECALTDC(int run, int eis, DataEvent event) {
+    	
+    	etdcs.clear(); 
+    	
+        if(event.hasBank("ECAL::tdc")==true){
+            DataBank  bank = event.getBank("ECAL::tdc");
+            int rows = bank.rows();
+            for(int i = 0; i < rows; i++){
+                int  is = bank.getByte("sector",i);
+                int  il = bank.getByte("layer",i);
+                int  ip = bank.getShort("component",i);               
+                float tdcd    = bank.getInt("TDC",i)*0.02345f;
+                if(eis==is && tdcd>0) {
+                    if(!etdcs.hasItem(is,il,ip)) etdcs.add(new ArrayList<Float>(),is,il,ip);
+                        etdcs.getItem(is,il,ip).add(tdcd);       
+                }
+            }
+        }    	
+    }
+    
+    public void getECALADC(int run, int eis, DataEvent event) {
+    	
+   	 eadcs.clear(); 
+    	
+     if(event.hasBank("ECAL::adc")==true){
+         DataBank  bank = event.getBank("ECAL::adc");
+         int rows = bank.rows();
+         for(int i = 0; i < rows; i++){
+             int  is = bank.getByte("sector",i);            
+             int  il = bank.getByte("layer",i);
+             int  ip = bank.getShort("component",i);
+             int adc = Math.abs(bank.getInt("ADC",i));
+             float t = bank.getFloat("time",i);               
+             int ped = bank.getShort("ped", i); 
+             
+             if(eis==is && adc>0) {
+            	 if(!eadcs.hasItem(is,il,ip)) adcs.add(new ArrayList<Float>(),is,il,ip);
+                 	 eadcs.getItem(is,il,ip).add((float) adc); 
+             }
+         }
+     }             
+    }
+    
+    public void getFTOFTDC(int run, int eis, DataEvent event) {
+    	
+    	tdcs.clear(); ltpmt.clear() ; 
+        
+        if(event.hasBank("FTOF::tdc")){
+            DataBank  bank = event.getBank("FTOF::tdc");
+            int rows = bank.rows();           
+            for(int i = 0; i < rows; i++){
+                int  is = bank.getByte("sector",i);
+                int  il = bank.getByte("layer",i);
+                int  lr = bank.getByte("order",i);                       
+                int  ip = bank.getShort("component",i);
+                float tdcd = bank.getInt("TDC",i)*0.02345f;  
+                
+                if(eis==is && tdcd>0) {
+                	if(!tdcs.hasItem(is,il,lr-2,ip)) tdcs.add(new ArrayList<Float>(),is,il,lr-2,ip);
+                    	tdcs.getItem(is,il,lr-2,ip).add(tdcd); 
+                    	if (!ltpmt.hasItem(is,il,ip)) {
+                    		ltpmt.add(new ArrayList<Integer>(),is,il,ip);
+                    		ltpmt.getItem(is,il,ip).add(ip);
+                    } 
+                }
+            }
+        }        
+    }
+    
+    public void getFTOFADC(int run, int eis, DataEvent event) { 
+    	
+    	 adcs.clear(); lapmt.clear();
+    	 
+    	 if(event.hasBank("FTOF::adc")){
+            DataBank  bank = event.getBank("FTOF::adc");
+            int rows = bank.rows();
+            for(int i = 0; i < rows; i++){
+                int  is = bank.getByte("sector",i);
+                int  il = bank.getByte("layer",i);
+                int  lr = bank.getByte("order",i);
+                int  ip = bank.getShort("component",i);
+                int adc = bank.getInt("ADC",i);
+                float t = bank.getFloat("time",i);               
+                int ped = bank.getShort("ped", i);
+                
+                if(eis==is && adc>100) {
+                if(!adcs.hasItem(is,il,lr,ip)) adcs.add(new ArrayList<Float>(),is,il,lr,ip);
+                    adcs.getItem(is,il,lr,ip).add((float) adc); 
+                    if (!lapmt.hasItem(is,il,ip)) {
+           	             lapmt.add(new ArrayList<Integer>(),is,il,ip);
+                         lapmt.getItem(is,il,ip).add(ip);              
+                    }
+                }                   
+            }
+        }   	
+    }
+    
+    public List<Integer> getFTOFBAR(float thr) {
+ 	   
+        IndexGenerator ig = new IndexGenerator();
+        List<Integer> bars = new ArrayList<Integer>(); 
+        float gm=0;
+        
+        for (Map.Entry<Long,List<Integer>>  entry : lapmt.getMap().entrySet()){
+            long hash = entry.getKey();
+            int is = ig.getIndex(hash, 0);
+            int il = ig.getIndex(hash, 1);
+            int ip = ig.getIndex(hash, 2);
+                   
+         	if(adcs.hasItem(is,il,0,ip) && adcs.hasItem(is,il,1,ip)) {
+         		gm = (float) Math.sqrt(adcs.getItem(is,il,0,ip).get(0)*adcs.getItem(is,il,1,ip).get(0));
+         	}
+         	if(gm>thr && il==2) bars.add(ip);
+        }       
+        return bars;       
+    }    
+    
+    public void fillBAR(int run, DataEvent de) {
+    	 if(!(de.hasBank("ECAL::adc") && de.hasBank("FTOF::adc"))) return;
+    	 DataBank ecal = de.getBank("ECAL::adc");  
+    	 DataBank ftof = de.getBank("FTOF::adc"); 
+    	 for (int i=0; i<ftof.rows(); i++ ) {
+             int  fis = ftof.getByte("sector", i);
+             int  fil = ftof.getByte("layer", i); 
+             int  fip = ftof.getShort("component", i);
+             int  fad = ftof.getInt("ADC",i);
+             if(fil==2) {
+            	 for (int j=0; j<ecal.rows(); j++) {
+            		 int  eis = ecal.getByte("sector", j);
+            		 int  eil = ecal.getByte("layer", j); 
+            		 int  eip = ecal.getShort("component", j); 
+                     int  ead = ecal.getInt("ADC",j);
+                     if(eis==fis) {
+            			 ((H2F) this.getDataGroup().getItem(eis,1,15,run).getData(eil-1).get(0)).fill(fip,eip);  
+           		 }
+            	 }
+             }
+    	 }
+    	
     }
     
   //Target-PCAL: 6977.8 mm CCDB:/geometry/pcal/dist2tgt
@@ -728,7 +963,7 @@ public class ECcalib extends DetectorMonitor {
     	}
     }
     
-    public void fillMIP(int is, int il, int run, int[] uvw, int[] wuv, float ec, float[] ep, float p, float x, float y) {
+    public void fillMIP(int is, int il, int run, float[] uvw, float[] wuv, float ec, float[] ep, float p, float x, float y) {
     	
     	int il3=il/3;
     	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]?mipc[il3]:0);
@@ -737,7 +972,7 @@ public class ECcalib extends DetectorMonitor {
     	for (int i=0; i<3; i++) {
     		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(ec,uvw[i]);    	
     	    ((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]);	
-    	    ((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData(uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);		    
+    	    ((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);		    
 		    ((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i]);		  
 		    ((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,ep[i]<mxp[il3]?mipp[il3]:0);
 		    ((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,ep[i]<mxp[il3]?ep[i]:0);
@@ -775,9 +1010,16 @@ public class ECcalib extends DetectorMonitor {
         }
         }
         
-    }   
+    }
     
     public void updateFITS(int index) {
+    	switch (index) {
+    	case  2: updateFITS2(index); break;
+    	case 15: updateFITS15(index);
+    	}
+    }
+    
+    public void updateFITS2(int index) {
        
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         
@@ -800,6 +1042,31 @@ public class ECcalib extends DetectorMonitor {
        }
     }
     
+    public void updateFITS15(int index) {
+    	
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+    	GraphErrors g = null;
+        
+        int    is = getActiveSector();
+        
+        c.divide(3, 5);
+        
+        int[] np = {0,3,6,9,10,11,12,13,14};      
+        
+       	for (int n : np) {
+       		if(Fits.hasItem(is,n,0,getRunNumber())) {
+       			g=Fits.getItem(is,n,0,getRunNumber()).getGraph(); 
+       			g.setMarkerColor(1); g.setLineColor(1);g.setMarkerSize(3); g.getFunction().setOptStat("110"); g.getFunction().setLineWidth(2);
+       			H2F h = (H2F) this.getDataGroup().getItem(is,1,15,getRunNumber()).getData(n).get(0);
+       			if(g.getDataSize(0)>0) {       				 
+       				c.getPad(n).getAxisX().setRange(h.getXAxis().min(),h.getXAxis().max());
+       				c.getPad(n).getAxisY().setRange(h.getYAxis().min(),h.getYAxis().max());
+       				c.cd(n); c.draw(g,"same");
+       			}
+       		}       	
+       	}            	
+    }
+    
     @Override
     public void plotEvent(DataEvent de) {
     	analyze();
@@ -808,6 +1075,7 @@ public class ECcalib extends DetectorMonitor {
     public void analyze() {    
     	System.out.println(getDetectorName()+".analyze() ");
         fitGraphs(1,7,0,3,0,(dropSummary)?0:3);
+        analyzeGraphs();
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
@@ -845,6 +1113,29 @@ public class ECcalib extends DetectorMonitor {
                     }   
                }
             }
+        }
+    }
+    
+    public void analyzeGraphs() {
+    	
+    	ParallelSliceFitter fitter1, fitter2;
+        GraphErrors g = new GraphErrors();
+        
+        int run=getRunNumber(); 
+        
+        int[] np = {0,3,6,9,10,11,12,13,14};      
+        int[] xy = {0,0,0,0, 0, 0, 0, 0, 0};
+        int[] fl = {35,56,56,52,15,15,52,15,15};
+        
+        for (int is=1; is<7; is++) {
+        	for (int i=0; i<np.length; i++ ) {
+        		H2F h = (H2F) this.getDataGroup().getItem(is,1,15,run).getData(np[i]).get(0);
+        		fitter1 = new ParallelSliceFitter(h);
+        		fitter1.setRange(0,62); 
+        		if(xy[i]==0) {fitter1.fitSlicesX(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleX()); g.setTitleY(h.getTitleY());}
+        		if(xy[i]==1) {fitter1.fitSlicesY(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleY()); g.setTitleY(h.getTitleX());}
+        		Fits.add(fitEngine(g,6,0,fl[i]), is,np[i],0,run);        		
+        	}        	       	
         }
     }
     
@@ -888,9 +1179,9 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public boolean varcut(int id, int il, int ip) {
-    	if (id==0&&il==0&&ip<5&&ip>67) return false;
-    	if (id==0&&il>0&&ip<5&&ip>61) return false;
-    	if (id>0&&ip<5&&ip>35) return false;
+    	if (id==0 && il==0 && ip<5 && ip>67) return false;
+    	if (id==0 && il>0  && ip<5 && ip>61) return false;
+    	if (id>0  && ip<5  && ip>35)         return false;
     	return true;
     }
     
@@ -908,8 +1199,7 @@ public class ECcalib extends DetectorMonitor {
             H1F plot1 = VarSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber());
             H1F plot2 = VarSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?5:7,getRunNumber());
 
-            plot1.setFillColor(2) ; plot2.setFillColor(38); plot1.getAttributes().setOptStat("1100");plot2.getAttributes().setOptStat("1100");
-           
+            plot1.setFillColor(2) ; plot2.setFillColor(38); plot1.getAttributes().setOptStat("1100");plot2.getAttributes().setOptStat("1100");           
            
             c.cd(n); c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16); c.getPad(n).setStatBoxFontSize(18);
             plot2.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" MEAN/MIP");
@@ -1137,6 +1427,45 @@ public class ECcalib extends DetectorMonitor {
    
     }
     
+    public void plotAlignSummary(int index) {
+    	
+      	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+      	List<GraphErrors> gl = new ArrayList<GraphErrors>();
+      	
+      	int[]  np = {0,3,6,9,10,11,12,13,14};
+//      int[] ncd = {0,3,1, 4,2, 5,6, 9,7,10,8,11,12,15,13,16,14,17}; //p0 alternate with p1  
+      	int[] ncd = {0,9,1,10,2,11,3,12,4,13,5,14, 6,15, 7,16, 8,17}; //p0 first, then p1  
+      	int[] col = {1,3,2}; int[] ms = {4,3,3};
+      	float[] p1bw = {379.254f,379.413f,379.254f,379.095f,379.254f,379.096f};
+      	float[]  pcw = {4.529f,4.517f,4.518f,4.526f,4.524f,4.528f};        
+      	String opt,tit=" "; int nn = 0;
+      	
+      	GraphErrors rat = new GraphErrors(); rat.setMarkerColor(4); rat.setMarkerSize(4);
+      	for (int iis=0; iis<6; iis++) rat.addPoint(iis+1, p1bw[iis]/pcw[iis]/62, 0, 0);
+      	
+      	c.clear(); c.divide(3, 6);
+      	
+  		for (int ip=0; ip<np.length; ip++) {int inp = np[ip];
+  			for (int in=0; in<2; in++) {gl.clear(); float ysum=0; int nsum=0;float ymn=1000,ymx=-1000;
+  			for (int ir=0; ir<runlist.size(); ir++) { int run = runlist.get(ir);
+  				if(ir==0) tit =  ((H2F) this.getDataGroup().getItem(1,1,15,run).getData(inp).get(0)).getTitle();
+ 				gl.add(new GraphErrors()); gl.get(ir).setMarkerColor(col[ir]);gl.get(ir).setLineColor(col[ir]);gl.get(ir).setMarkerSize(ms[ir]);    
+      	      	for (int is=1; is<7; is++)	{
+      				float  y = (float) Fits.getItem(is,inp,0,run).graph.getFunction().parameter(in).value();  
+      				float ye = (float) Fits.getItem(is,inp,0,run).graph.getFunction().parameter(in).error();
+      				ysum+=y; ymx=y>ymx?y:ymx; ymn=y<ymn?y:ymn;    				
+      				gl.get(ir).addPoint(is+ir*0.1, y, 0, ye); 
+      				nsum++;
+      			}
+      		}  			
+  			float ymid = ysum/nsum;
+  	      	c.cd(ncd[nn]); c.getPad(ncd[nn]).getAxisY().setRange(ymid-(ymx-ymn)*1.2,ymid+(ymx-ymn)*1.2); 
+  	      	gl.get(0).setTitleY("P"+in); gl.get(0).setTitle("BLACK: "+tit+" GREEN: rga_fall2018 RED: default");
+  	      	opt=" "; for(GraphErrors g : gl) {c.draw(g,opt); opt="same";} if(ncd[nn]==9) c.draw(rat,opt); nn++;
+  			}
+      	}
+    }
+    
     public void plotMIP(int index) {
     	int pc = getActivePC()==0?2:1;
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),pc,index,getRunNumber()));
@@ -1244,12 +1573,12 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(il+1),1f,"Sector "+is+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il,0,getRunNumber());
+    		fd = tl.fitData.getItem(is,il,0,getRunNumber()); H1F h = fd.getHist().histClone("");
     		
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
-            fd.getHist().getAttributes().setOptStat("1000100");
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
+            h.getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mipc[il],-50,mipc[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
-            c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
+            c.draw(h); c.draw(fd.getGraph(),"same");  c.draw(line6);            
         }
     }
      
@@ -1278,12 +1607,12 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,3*il+iv+1,1f,"Sector "+is+v[iv]+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber());
+    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()); H1F h = fd.getHist().histClone("");
     		
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
-            fd.getHist().getAttributes().setOptStat("1000100");
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
+            h.getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mipp[il],-50,mipp[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
-            c.draw(fd.getHist()); c.draw(fd.getGraph(),"same");  c.draw(line6);
+            c.draw(h); c.draw(fd.getGraph(),"same");  c.draw(line6);       
         }    	
     }
     
