@@ -89,7 +89,7 @@ public class ECsf extends DetectorMonitor {
     public void createHistos(int run) {        
         histosExist = true;
         System.out.println("ECsf.createHistos("+run+")");
-        readSF(outPath+"electron_sf_"+run);
+        readSF(outPath+"ECsf/electron_sf/electron_sf_"+run);
         EB = getBeamEnergy(run);
         System.out.println("ECsf: EB="+EB);
 	    DataGroup dg = null;
@@ -804,7 +804,7 @@ public class ECsf extends DetectorMonitor {
 		String line = new String();
 		
 		try { 
-			File outputFile = new File(outPath+table+"_"+getRunNumber());
+			File outputFile = new File(outPath+"ECsf/electron_sf/"+table+"_"+getRunNumber());
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			

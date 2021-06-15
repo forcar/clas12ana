@@ -883,7 +883,7 @@ public class ECpi0 extends DetectorMonitor{
     	String line = new String();
     		
     	try { 
-    		File outputFile = new File(outPath+table+"_"+getRunNumber());
+    		File outputFile = new File(outPath+"ECpi0/photon_sf/"+table+"_"+getRunNumber());
     		FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
     		BufferedWriter outputBw = new BufferedWriter(outputFw);
     			
