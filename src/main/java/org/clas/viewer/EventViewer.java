@@ -191,11 +191,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-   		monitors[n] = new ECperf("ECperf"); 
+//   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
-//    	    monitors[n] = new ECt("ECt"); 
+    	    monitors[n] = new ECt("ECt"); 
 //      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -224,7 +224,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu     = new JMenu("Options");  
         co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0);  co0.doClick();
         co1  = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
-        co2  = new JCheckBoxMenuItem("DropBanks");     co2.addItemListener(this);       menu.add(co2);
+        co2  = new JCheckBoxMenuItem("ECEngine");      co2.addItemListener(this);       menu.add(co2);
         co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
         co4  = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
         co4b = new JCheckBoxMenuItem("DumpFiles");    co4b.addItemListener(this);       menu.add(co4b);
