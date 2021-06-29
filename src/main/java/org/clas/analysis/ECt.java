@@ -159,11 +159,13 @@ public class ECt extends DetectorMonitor {
 	    System.out.println("ECt.createHistos("+run+")");
         setRunNumber(run);
         runlist.add(run);        
-        this.setNumberOfEvents(0);        
-        int t1=-70, t2=150, t3=50, t4=200;
-        createTLHistos(tlnum,t1,t2,t3,t4);
-        createBETAHistos(22);
+        this.setNumberOfEvents(0);  
+        
+        int t1=-70, t2=150, t3=50, t4=250;
         createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
+        createBETAHistos(22);
+        createTLHistos(tlnum,t1,t2,t3,t4);
+        
         if(dropSummary) return;
         createTDCHistos(0,t3,t4,"TIME (ns)");
         createTDCHistos(1,t3,t4,"TIME (ns)");
@@ -266,10 +268,10 @@ public class ECt extends DetectorMonitor {
         DataGroup dg = new DataGroup(6,2);
         
         for (int is=1; is<7; is++) {
-        	h = new H1F("TL1_"+k+"_"+is+"_"+run,"TL1_"+k+"_"+is+"_"+run,200,-70,150);
+        	h = new H1F("TL1_"+k+"_"+is+"_"+run,"TL1_"+k+"_"+is+"_"+run,200,t1,t2);
         	h.setTitleX("Sector "+is+" Start Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");
             dg.addDataSet(h,is-1);    	
-        	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,100,50,200);
+        	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,100,t3,t4);
         	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");     
             dg.addDataSet(h,is+5);
         }
@@ -825,7 +827,7 @@ public class ECt extends DetectorMonitor {
         	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,tlnum,run).getData(is-1).get(0)),0,70,200,75,200,1.5,2.5),is,0,100,run); 
         	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)),0,190,230,190,130,2.0,2.0),is,1,100,run); 
         	for (int il=0; il<9; il++) {
-        		double f1 = il<3?2:5 ; double f2 = il<3?2:5;
+        		double f1 = il<3 ? 2.2:2 ; double f2 = il<3 ? 1.4:1.1;
             	tl.fitData.add(fitEngine(((H1F)this.getDataGroup().getItem(is,0,tlnum,run).getData(il).get(0)),0,-2,4,-10,10,f1,f2),is,10+il,100,run);    
         	}
         }
