@@ -144,6 +144,16 @@ public class DataGroupManager {
     	if(isH2(eff)) getH2F(eff).add(H2F.divide(getH2F(numer), getH2F(denom)));
     }
     
+    public class H2FF extends H2F {
+   	 
+   	 public H2FF(String str1, String str2, int nbx, double x1, double x2, int nby, double y1, double y2) {
+   		 super("H2FF");
+   		 setName(str1); setTitle(str2);
+   		 set(nbx,x1,x2,nby,y1,y2);
+   	 }
+   	 
+    }
+        
     public void makeH1(String name) { //use this to force zone based display of H1 created with overlap tag f=-2
     	dg.addDataSet(getH1F(name),n++);
     }
