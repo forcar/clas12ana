@@ -625,13 +625,13 @@ public class DetectorMonitor implements ActionListener {
     public void setLogY(boolean flag) {
 	    detectorLogY = flag;
 	    dgm.detectorLogY = flag;
-	    plotHistos(getRunNumber());
+	    if(histosExist) plotHistos(getRunNumber());
     }   
     
     public void setLogZ(boolean flag) {
 	    detectorLogZ = flag;
 	    dgm.detectorLogZ = flag;
-	    plotHistos(getRunNumber());
+	    if(histosExist) plotHistos(getRunNumber());
     }
     
     public Boolean getLogY() {
@@ -909,7 +909,15 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getBeamEnergy(int run) { 
+    	if (run==11)    return  2.2f;
     	if (run<=100)   return 10.6041f;
+    	if (run<=2360)  return 10.731f;
+    	if (run<=2597)  return  2.2219f;
+    	if (run<=3002)  return 10.731f;
+    	if (run<=3120)  return  6.523f;
+    	if (run<=3818)  return 10.594f;
+    	if (run<=3861)  return  6.423f;
+    	if (run<=4326)  return 10.594f;
     	if (run<=5699)  return 10.6041f;
     	if (run<=5875)  return  7.54626f;
     	if (run<=6000)  return  6.53536f;
@@ -948,12 +956,26 @@ public class DetectorMonitor implements ActionListener {
     	return getTorusColor("0");
     }
     
+    public float getSolenoidCurrent(int run) {
+    	if (run<100) return 1.00f;    	
+    	if (run>=2379&&run<=2432) return -1.00f;
+    	if (run>=2433&&run<=2449) return -0.60f;
+    	if (run>=2450&&run<=2488) return +0.60f;
+    	if (run>=2489&&run<=2552) return +1.00f;
+    	if (run>=2556&&run<=2571) return +0.60f;
+    	if (run>=2572&&run<=2597) return -0.60f;
+    	return 0.00f;
+    }
+    
     public float getTorusCurrent(int run) {
     	if (run<100) return 1.00f;
-    	if (run>=3029&&run<=3065) return -1.00f;
-    	if (run>=3072&&run<=3087) return -0.75f;
-    	if (run>=3097&&run<=3105) return +0.75f;
-    	if (run>=3131&&run<=3293) return +1.00f;
+    	if (run>=2379&&run<=2394) return +1.00f;
+     	if (run>=2394&&run<=2500) return +0.60f;
+    	if (run>=2526&&run<=2635) return -0.60f;
+    	if (run>=2636&&run<=3065) return -1.00f;
+    	if (run>=3066&&run<=3095) return -0.75f;
+    	if (run>=3096&&run<=3107) return +0.75f;
+    	if (run>=3129&&run<=3293) return +1.00f;
     	if (run>=3304&&run<=3817) return -1.00f;
     	if (run>=3819&&run<=3834) return +0.75f;
     	if (run>=3839&&run<=3987) return +1.00f;
@@ -1017,7 +1039,7 @@ public class DetectorMonitor implements ActionListener {
 	    int n=0;
         for (int col : color) {
     	    if(n==0) h1.setLineColor(col); 
-    	    if(n==1) h1.setFillColor(col);
+    	    if(n==1) h1.setFillColor(col); h1.setOptStat("1000000");
     	    if(n==2 && col==1) h1.setOptStat("1000000");
     	    if(n==2 && col==2) h1.setOptStat("1000100");
     	    n++;
@@ -1266,7 +1288,7 @@ public class DetectorMonitor implements ActionListener {
     	return hnew;
     }
     
-    //FITTING HELPERS
+    //FIT HELPERS
     
     public FitData fitEngine(GraphErrors g, int ff, int fmin) {
         FitData fd = new FitData(g);        
