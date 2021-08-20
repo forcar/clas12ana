@@ -187,8 +187,8 @@ public class ECpi0 extends DetectorMonitor{
  	   int run = getRunNumber();
 
        int is=0, n=0;
-       String tag = is+"_"+n+"_"+k+"_"+run;
-       h1 = new H1F("pi0_pcal_u_"+tag,"pi0_pcal_u_"+tag, 100, 0., 2.);
+       String tag = is+"-"+n+"-"+k+"-"+run;
+       h1 = new H1F("pi0-pcal-u-"+tag,"pi0-pcal-u-"+tag, 100, 0., 2.);
        dg = new DataGroup(1,1);
        dg.addDataSet(h1, 0);
        this.getDataGroup().add(dg,is,n,k,run);        	
@@ -199,35 +199,35 @@ public class ECpi0 extends DetectorMonitor{
 	   int run = getRunNumber();
        GStyle.getH1FAttributes().setOptStat("1000000");
        for (int is=1; is<7; is++) {
-           String tag = is+"_"+n+"_"+k+"_"+run;
+           String tag = is+"-"+n+"-"+k+"-"+run;
            dg = new DataGroup(3,3);
-           h2 = new H2F("pi0_pcal_u_"+tag,"pi0_pcal_u_"+tag, nch, x1, x2, 68, 1., 69.);
+           h2 = new H2F("pi0-pcal-u-"+tag,"pi0-pcal-u-"+tag, nch, x1, x2, 68, 1., 69.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL U Strips"); 
            dg.addDataSet(h2,0);  
-           h2 = new H2F("pi0_pcal_v_"+tag,"pi0_pcal_v_"+tag, nch, x1, x2, 62, 1., 63.);
+           h2 = new H2F("pi0-pcal-v-"+tag,"pi0-pcal-v-"+tag, nch, x1, x2, 62, 1., 63.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL V Strips");        
            dg.addDataSet(h2,1);            
-           h2 = new H2F("pi0_pcal_w_"+tag,"pi0_pcal_w_"+tag, nch, x1, x2, 62, 1., 63.);
+           h2 = new H2F("pi0-pcal-w-"+tag,"pi0-pcal-w-"+tag, nch, x1, x2, 62, 1., 63.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL W Strips");  
            dg.addDataSet(h2,2); 
        
-           h2 = new H2F("pi0_ecin_u_"+tag,"pi0_ecin_u_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecin-u-"+tag,"pi0-ecin-u-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN U Strips");    
            dg.addDataSet(h2,3);  
-           h2 = new H2F("pi0_ecin_v_"+tag,"pi0_ecin_v_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecin-v-"+tag,"pi0-ecin-v-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN V Strips");        
            dg.addDataSet(h2,4);            
-           h2 = new H2F("pi0_ecin_w_"+tag,"pi0_ecin_w_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecin-w-"+tag,"pi0-ecin-w-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN W Strips");  
            dg.addDataSet(h2,5); 
        
-           h2 = new H2F("pi0_ecou_u_"+tag,"pi0_ecou_u_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecou-u-"+tag,"pi0-ecou-u-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU U Strips");    
            dg.addDataSet(h2,6);  
-           h2 = new H2F("pi0_ecou_v_"+tag,"pi0_ecou_v_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecou-v-"+tag,"pi0-ecou-v-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU V Strips");        
            dg.addDataSet(h2,7);            
-           h2 = new H2F("pi0_ecou_w_"+tag,"pi0_ecou_w_"+tag, nch, x1, x2, 36, 1., 37.);
+           h2 = new H2F("pi0-ecou-w-"+tag,"pi0-ecou-w-"+tag, nch, x1, x2, 36, 1., 37.);
            h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU W Strips");  
            dg.addDataSet(h2,8);   
            this.getDataGroup().add(dg,is,n,k,run);
@@ -241,8 +241,8 @@ public class ECpi0 extends DetectorMonitor{
         GStyle.getH1FAttributes().setOptStat("1000000");
         
         for (int is=1; is<7; is++) {
-            String tag = var+"_"+is+"_"+k+"_"+run;
-            h1 = new H1F("pi0_"+tag,"pi0_"+tag, nch, x1, x2);
+            String tag = var+"-"+is+"-"+k+"-"+run;
+            h1 = new H1F("pi0-"+tag,"pi0-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" "+txt);  
             dg.addDataSet(h1,is-1);   
         }
@@ -255,8 +255,8 @@ public class ECpi0 extends DetectorMonitor{
         DataGroup dg = new DataGroup(3,2);
         
         for (int is=1; is<7; is++) {
-            String tag = var+"_"+is+"_"+k+"_"+run;
-            h2 = new H2F("pi0_"+tag,"pi0_"+tag, nchx, x1, x2, nchy, y1, y2);
+            String tag = var+"-"+is+"-"+k+"-"+run;
+            h2 = new H2F("pi0-"+tag,"pi0-"+tag, nchx, x1, x2, nchy, y1, y2);
             h2.setTitleX("Sector "+is+" "+txtx); h2.setTitleY(txty); 
             dg.addDataSet(h2,is-1);   
         }
@@ -272,7 +272,7 @@ public class ECpi0 extends DetectorMonitor{
         for (int i=0; i<3; i++) {
            DataGroup dg = new DataGroup(3,2);
            for (int d=0; d<3; d++) {
-              h2 = new H2F("pi0_"+det[d]+"_xy_"+t[i]+"_"+n+"_"+k+"_"+run,"hi_"+det[d]+"_xy_"+t[i]+"_"+k+"_"+run,nb,-bmx,bmx,nb,-bmx,bmx);
+              h2 = new H2F("pi0-"+det[d]+"-xy-"+t[i]+"-"+n+"-"+k+"-"+run,"hi-"+det[d]+"-xy-"+t[i]+"-"+k+"-"+run,nb,-bmx,bmx,nb,-bmx,bmx);
               h2.setTitleX("Photon "+n+" X(cm)"); h2.setTitleY("Photon "+n+" Y(cm)");
               dg.addDataSet(h2,d);  
 	       }
@@ -283,7 +283,7 @@ public class ECpi0 extends DetectorMonitor{
     public void addFunctions(int k, String fnam, String f, double x1, double x2, int lcol, int lwid) {
     	
 	    int run = getRunNumber();
-	    String tag = "_"+run;
+	    String tag = "-"+run;
 	    this.getDataGroup().getItem(0,0,k,run);
         F1D f1 = new F1D(fnam+tag,f,x1,x2); f1.setLineColor(lcol); f1.setLineWidth(lwid);
     	for (int is=1; is<7; is++) {
@@ -301,8 +301,8 @@ public class ECpi0 extends DetectorMonitor{
         
         for (int is=1; is<7; is++) {   
             for (int j=is+1; j<7; j++) {
-                String tag = var+"_"+is+"_"+j+"_"+k+"_"+run;
-                h1 = new H1F("pi0_"+tag,"pi0_"+tag, nch, x1, x2);
+                String tag = var+"-"+is+"-"+j+"-"+k+"-"+run;
+                h1 = new H1F("pi0-"+tag,"pi0-"+tag, nch, x1, x2);
                 h1.setTitleX("Sector Pair "+is+j+" "+txt);  
                 dg.addDataSet(h1,n);  n++; 
                 smap.put(is+"_"+j,n);
@@ -315,42 +315,42 @@ public class ECpi0 extends DetectorMonitor{
  	   int run = getRunNumber();
        double xmin=-20, xmax=20.;
        double ymin= 5.,ymax=35.;
-       String tag = k+"_"+run;
+       String tag = k+"-"+run;
        for (int idet=0; idet<3; idet++) {
            DataGroup dg = new DataGroup(4,2);
     	   if (idet==0) {
-              h2 = new H2F("pi0_mc80_"+det[idet]+"_"+tag, 50, 2*xmin,2*xmax, 3, 1., 4.);  
+              h2 = new H2F("pi0-mc80-"+det[idet]+"-"+tag, 50, 2*xmin,2*xmax, 3, 1., 4.);  
               dg.addDataSet(h2, 0);
-              h2 = new H2F("pi0_mc81_"+det[idet]+"_"+tag, 100, xmin,xmax,200, ymin,ymax);  
+              h2 = new H2F("pi0-mc81-"+det[idet]+"-"+tag, 100, xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 1);
-              h2 = new H2F("pi0_mc82_"+det[idet]+"_"+tag, 100, xmin,xmax,200, ymin,ymax);  
+              h2 = new H2F("pi0-mc82-"+det[idet]+"-"+tag, 100, xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 2);
-              h2 = new H2F("pi0_mc83_"+det[idet]+"_"+tag, 100, 2*xmin,2*xmax,200, ymin,ymax);  
+              h2 = new H2F("pi0-mc83-"+det[idet]+"-"+tag, 100, 2*xmin,2*xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 3);
-              h2 = new H2F("pi0_mc84_"+det[idet]+"_"+tag, 100, 0.*xmin,xmax,200, ymin,ymax);  
+              h2 = new H2F("pi0-mc84-"+det[idet]+"-"+tag, 100, 0.*xmin,xmax,200, ymin,ymax);  
               dg.addDataSet(h2, 4);
     	   }
-           h2 = new H2F("pi0_mc85_"+det[idet]+"_"+tag, 50, -1.5, 1.5,3, 1., 4.);  
+           h2 = new H2F("pi0-mc85-"+det[idet]+"-"+tag, 50, -1.5, 1.5,3, 1., 4.);  
            dg.addDataSet(h2, 5);
-           h2 = new H2F("pi0_mc86_"+det[idet]+"_"+tag, 100, -0.5, 0.5, 200, ymin,ymax);  
+           h2 = new H2F("pi0-mc86-"+det[idet]+"-"+tag, 100, -0.5, 0.5, 200, ymin,ymax);  
            dg.addDataSet(h2, 6);
-           h2 = new H2F("pi0_mc87_"+det[idet]+"_"+tag, 50, 0., 3.5, 40, 0.15, 0.35);  
+           h2 = new H2F("pi0-mc87-"+det[idet]+"-"+tag, 50, 0., 3.5, 40, 0.15, 0.35);  
            dg.addDataSet(h2, 7);
-           h2 = new H2F("pi0_mc88_"+det[idet]+"_"+tag, 50, 0.98, 1.004, 50, 699.,720.);  
+           h2 = new H2F("pi0-mc88-"+det[idet]+"-"+tag, 50, 0.98, 1.004, 50, 699.,720.);  
            dg.addDataSet(h2, 8);
-           h2 = new H2F("pi0_mc89_"+det[idet]+"_"+tag, 50, 0.96, 1.01, 50, 699.,704.);  
+           h2 = new H2F("pi0-mc89-"+det[idet]+"-"+tag, 50, 0.96, 1.01, 50, 699.,704.);  
            dg.addDataSet(h2, 9);
-           h1 = new H1F("pi0_mc810_"+det[idet]+"_"+tag, 200,580.,680.);  
+           h1 = new H1F("pi0-mc810-"+det[idet]+"-"+tag, 200,580.,680.);  
            dg.addDataSet(h1, 10);
-           h1 = new H1F("pi0_mc811_"+det[idet]+"_"+tag, 200,580.,680.);  
+           h1 = new H1F("pi0-mc811-"+det[idet]+"-"+tag, 200,580.,680.);  
            dg.addDataSet(h1, 11);
-           h2 = new H2F("pi0_mc812_"+det[idet]+"_"+tag, 50,700,730,50,700,703);  
+           h2 = new H2F("pi0-mc812-"+det[idet]+"-"+tag, 50,700,730,50,700,703);  
            dg.addDataSet(h2, 12);
-           h2 = new H2F("pi0_mc813_"+det[idet]+"_"+tag, 50,23,24,60,23,24.5);  
+           h2 = new H2F("pi0-mc813-"+det[idet]+"-"+tag, 50,23,24,60,23,24.5);  
            dg.addDataSet(h2, 13);
-           h2 = new H2F("pi0_mc814_"+det[idet]+"_"+tag, 50,695,703,60,23,24.5);  
+           h2 = new H2F("pi0-mc814-"+det[idet]+"-"+tag, 50,695,703,60,23,24.5);  
            dg.addDataSet(h2, 14);
-           h2 = new H2F("pi0_mc815_"+det[idet]+"_"+tag, 50, 0, 1, 50, 699.,720.);  
+           h2 = new H2F("pi0-mc815-"+det[idet]+"-"+tag, 50, 0, 1, 50, 699.,720.);  
            dg.addDataSet(h2, 15);
            this.getDataGroup().add(dg,0,idet,k,run);
        }
