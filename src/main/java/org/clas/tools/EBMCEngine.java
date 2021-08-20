@@ -49,18 +49,18 @@ public class EBMCEngine extends EBEngine {
     IndexedList<List<DetectorResponse>>         singleNeutrals = new IndexedList<>(1);
     IndexedList<List<DetectorResponse>>             singleMIPs = new IndexedList<>(1);
     
-    DetectorParticle p1 = new DetectorParticle();
-    DetectorParticle p2 = new DetectorParticle();
+//    DetectorParticle p1 = new DetectorParticle();
+//    DetectorParticle p2 = new DetectorParticle();
     
     public List<Particle> pmc = new ArrayList<>();
     public List<Vector3>  pmv = new ArrayList<>();
     
     public double distance11,distance12,distance21,distance22;
-    public double e1,e2,e1c,e2c,cth,cth1,cth2;
-    public double X,tpi2,cpi0,ppx1,ppy1,ppz1,refE,refP,refTH,refPH;
-    public double x1,y1,x2,y2;
+//    public double e1,e2,e1c,e2c,cth,cth1,cth2;
+//    public double X,tpi2,cpi0,ppx1,ppy1,ppz1,refE,refP,refTH,refPH;
+//    public double x1,y1,x2,y2;
     public double epc,eec1,eec2;
-    public LorentzVector VG1,VG2;
+//    public LorentzVector VG1,VG2;
 //    public static int[] ip1,ip2,is1,is2;
     public int[]    iis = new int[2];
     public int[][]  iip = new int[2][3];
@@ -80,10 +80,11 @@ public class EBMCEngine extends EBEngine {
     public boolean isMC = true, hasStartTime = false;
     public H1F h5,h6,h7,h8;
   
-    public int n2mc=0, MCpid=11;
+    public int n2mc=0, MCpid=11, MCsec=2;
 
     public int[] mip = {0,0,0,0,0,0};
     public int runNumber=11;
+    public float starttime=0;
     
     int photonMult = 12;
     
@@ -118,6 +119,10 @@ public class EBMCEngine extends EBEngine {
     
 	public void setMCpid(int val) {
 		MCpid = val;
+	}
+	
+	public void setMCsec(int val) {
+		MCsec = val;
 	}
     
     public void setTrackType(String trackType) {
@@ -166,8 +171,17 @@ public class EBMCEngine extends EBEngine {
     	return (pid==11 || pid==-11 || pid==-211 || pid==211);
     }
     
+    public float getStartTime(DataEvent event) { 
+    	float time=0;
+    	if(event.hasBank("REC::Event")) {
+    		DataBank bank = event.getBank("REC::Event");
+    		time = bank.getFloat("startTime", 0);	
+    	}
+    	return time;
+    }
+    
     public boolean readMC(DataEvent event) {    	
-        pmc.clear(); pmv.clear();
+        pmc.clear(); pmv.clear(); hasStartTime=false;
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
             for (int i=0; i<bank.rows(); i++) {
@@ -180,7 +194,7 @@ public class EBMCEngine extends EBEngine {
             	int   pid = bank.getInt("pid",i);
             	
                 if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
-                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid);} 
+                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid); starttime = getStartTime(event);} 
             }
             n2mc++;
             return true;
@@ -239,6 +253,10 @@ public class EBMCEngine extends EBEngine {
             de.appendBanks(bankCal);
         }
     	
+    }
+        
+    public double getSF(DetectorParticle dp) {
+    	return SamplingFractions.getMean(22, dp, ccdb);
     }
     
     public List<DetectorParticle> getNeutralPart() {
@@ -312,7 +330,7 @@ public class EBMCEngine extends EBEngine {
      
     public double getTwoPhotonInvMass(int sector){
         iis[0]=0;iis[1]=-1;
-        return processTwoPhotons(doHitMatching(getNeutralParticles(sector)));
+        return processTwoPhotons(doHitMatching(getNeutralParticles(sector))).get(3);
 //        return processTwoPhotons(getNeutralPart());
     }   
     
@@ -392,40 +410,85 @@ public class EBMCEngine extends EBEngine {
         
         return distance;        
     }
+    
+    public List<Float> getPizeroKinematics(List<Particle> list) {
+
+    	List<Float> out = new ArrayList<Float>();
+    	
+    	if(list.size()<2) return out;
+
+    	Particle p1 = list.get(0);  //Photon 1
+        Particle p2 = list.get(1);  //Photon 2
+    	
+    	Vector3 n1 = p1.vector().vect(); n1.unit();
+        Vector3 n2 = p2.vector().vect(); n2.unit();
+                
+        double e1 = p1.e();
+        double e2 = p2.e();           
+       
+        Particle g1 = new Particle(22,n1.x()*e1,n1.y()*e1,n1.z()*e1);                        
+        Particle g2 = new Particle(22,n2.x()*e2,n2.y()*e2,n2.z()*e2);
+       
+        double cth1 = Math.cos(g1.theta());
+        double cth2 = Math.cos(g2.theta());
+        double  cth = g1.cosTheta(g2);         
+        double    X = (e1-e2)/(e1+e2);
+        double tpi2 = 2*mpi0*mpi0/(1-cth)/(1-X*X);
+        double cpi0 = (e1*cth1+e2*cth2)/Math.sqrt(e1*e1+e2*e2+2*e1*e2*cth);
         
-    public double processTwoPhotons(List<DetectorParticle> particles) {
+        g1.combine(g2, +1);  
         
-        if (particles.size()<2) return 0.0;
+        int n=0;
+        out.add(n++,(float) Math.sqrt(tpi2));
+        out.add(n++,(float) Math.toDegrees(Math.acos(cpi0)));
+        out.add(n++,(float)(1e3*Math.sqrt(g1.mass2())));
+        out.add(n++,(float) Math.toDegrees(Math.acos(cth)));
+        out.add(n++,(float) Math.abs(X));
+        out.add(n++,(float) Math.sqrt(e1*e2));
         
-        p1 = particles.get(0);  //Photon 1
-        p2 = particles.get(1);  //Photon 2
+        return out;
+    }
+        
+    public List<Float> processTwoPhotons(List<DetectorParticle> particles) {
+        
+    	List<Float> out = new ArrayList<Float>();
+    	
+        if (particles.size()<2) return out;
+        
+        DetectorParticle p1 = particles.get(0);  //Photon 1
+        DetectorParticle p2 = particles.get(1);  //Photon 2
        
         Vector3 n1 = p1.vector(); n1.unit();
         Vector3 n2 = p2.vector(); n2.unit();
                 
-        e1 = p1.getEnergy(DetectorType.ECAL);
-        e2 = p2.getEnergy(DetectorType.ECAL);
-        
-        SF1db = SamplingFractions.getMean(22, p1, this.ccdb);
-        e1c = e1/SF1db;
+        double e1 = p1.getEnergy(DetectorType.ECAL);
+        double e2 = p2.getEnergy(DetectorType.ECAL);
+               
+        double e1c = e1/getSF(p1);
         Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);        
-        VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
+        LorentzVector VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
         
-        SF2db = SamplingFractions.getMean(22, p2, this.ccdb);
-        e2c = e2/SF2db;
+        double e2c = e2/getSF(p2);
         Particle g2 = new Particle(22,n2.x()*e2c,n2.y()*e2c,n2.z()*e2c);
-        VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
+        LorentzVector VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
        
-        cth1 = Math.cos(g1.theta());
-        cth2 = Math.cos(g2.theta());
-         cth = g1.cosTheta(g2);         
-           X = (e1c-e2c)/(e1c+e2c);
-        tpi2 = 2*mpi0*mpi0/(1-cth)/(1-X*X);
-        cpi0 = (e1c*cth1+e2c*cth2)/Math.sqrt(e1c*e1c+e2c*e2c+2*e1c*e2c*cth);
+        double cth1 = Math.cos(g1.theta());
+        double cth2 = Math.cos(g2.theta());
+        double  cth = g1.cosTheta(g2);         
+        double    X = (e1c-e2c)/(e1c+e2c);
+        double tpi2 = 2*mpi0*mpi0/(1-cth)/(1-X*X);
+        double cpi0 = (e1c*cth1+e2c*cth2)/Math.sqrt(e1c*e1c+e2c*e2c+2*e1c*e2c*cth);
         
         g1.combine(g2, +1);
+        
+        int n=0;
+        out.add(n++,(float) Math.sqrt(tpi2));
+        out.add(n++,(float) cpi0);
+        out.add(n++,(float) (goodPhotons(photonMult,p1,p2) ? g1.mass2():0.0));
+        out.add(n++,(float) cth);
+        out.add(n++,(float) X);
                                
-        return goodPhotons(photonMult,p1,p2) ? g1.mass2():0.0;
+        return out;
     }
     
     public boolean goodPhotons(int test, DetectorParticle pp1, DetectorParticle pp2) {
