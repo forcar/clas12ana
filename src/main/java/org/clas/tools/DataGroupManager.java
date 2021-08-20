@@ -39,7 +39,7 @@ public class DataGroupManager {
 		dg = new DataGroup(row,col); 
 		int k = detectorTabNames.indexOf(name);
 		ilist = new int[4]; ilist[0]=is; ilist[1]=st; ilist[2]=k; ilist[3]=run;
-		tag = "_"+is+"_"+st+"_"+k+"_"+run;
+		tag = "-"+is+"-"+st+"-"+k+"-"+run;
 		System.out.println("dgm.add("+name+tag+")");
 		detectorData.add(dg,ilist);
 		System.out.println("Done");
@@ -171,7 +171,7 @@ public class DataGroupManager {
     	    nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
-	    if(f>=0)  dg.addDataSet(makeF1D("f"+n+tag,x1,x2,f), n-1); 	   
+	    if(f>=0)  dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1); 	   
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }
     
@@ -188,7 +188,7 @@ public class DataGroupManager {
    	        nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
-	    if(f>=0)  dg.addDataSet(makeF1D("f"+n+tag,x1,x2,f), n-1);
+	    if(f>=0)  dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1);
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }    
     
@@ -197,12 +197,12 @@ public class DataGroupManager {
 	    if(tit!="") h2.setTitle(tit);
 	    h2.setTitleX(titx); h2.setTitleY(tity);
 	    dg.addDataSet(h2, n++);
-	    if(f!=-1) dg.addDataSet(makeF1D("f"+n+tag,x1,x2,f), n-1);
+	    if(f!=-1) dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1);
 	    System.out.println("makeH2("+hmap.get(name)+" "+n+")");
     }
     
     public F1D makeF1D(String name, double x1, double x2, double val) {
-    	F1D f1 = new F1D("p1","[a]",x1,x2); f1.setParameter(0,val);
+    	F1D f1 = new F1D(name,"[a]",x1,x2); f1.setParameter(0,val);
     	return f1;
     }
     
@@ -235,7 +235,7 @@ public class DataGroupManager {
 		Object[] can = map.get(name);            
 		canvas.getPad().getAxisY().setLog((Boolean)can[0]);               
 		canvas.getPad().getAxisZ().setLog((Boolean)can[1]);            
-		float ymin=(float)can[2], ymax=(float)can[3], zmin=(float)can[4], zmax=(float)can[5];            
+		float ymin=(float)can[2], ymax=(float)can[3], zmin=(float)can[4], zmax=(float)can[5];  
 		if(ymin!=ymax) canvas.getPad().getAxisY().setRange(ymin,ymax);                
 		if(zmin!=zmax) canvas.getPad().getAxisZ().setRange(zmin,zmax);                
 		return true;
