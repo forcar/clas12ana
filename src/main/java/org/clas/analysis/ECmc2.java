@@ -32,9 +32,11 @@ public class ECmc2 extends DetectorMonitor {
 	Event          ev = new Event();
 	EBMCEngine  ebmce = new EBMCEngine();
 	
-	List<DetectorParticle> np = new ArrayList<DetectorParticle>();    
-	List<Float>           GEN = new ArrayList<Float>();
-	List<Float>           REC = new ArrayList<Float>();   
+	List<Float>           GEN   = new ArrayList<Float>();
+	List<Float>           REC   = new ArrayList<Float>();   
+	List<Float>           GENPZ = new ArrayList<Float>();
+	List<Float>           RECPZ = new ArrayList<Float>(); 
+	
 	HipoDataSync       writer = null;		
 	List<Particle>       phot = new ArrayList<Particle>();
 	List<Particle>       neut = new ArrayList<Particle>();
@@ -46,7 +48,7 @@ public class ECmc2 extends DetectorMonitor {
         super(name);
         
         dgmActive=true; 
-        setDetectorTabNames("PHOTONS","CLUSTERS","GENREC","EFFICIENCY");
+        setDetectorTabNames("PHOTONS","CLUSTERS","GENREC","EFFICIENCY","PIZERO");
 
         this.use123Buttons(true);
         this.useSliderPane(true);
@@ -98,6 +100,7 @@ public class ECmc2 extends DetectorMonitor {
     	runlist.add(run);    	
     	histosExist = true;  
     	createPHOTONS(0);
+    	createPHOTONS(1);
     	createCLUSTERS(0);
     	createCLUSTERS(1);
     	createGENREC(0);
@@ -105,6 +108,7 @@ public class ECmc2 extends DetectorMonitor {
     	createGENREC(2);
        	createEFFICIENCY(0);
        	createEFFICIENCY(1);
+       	createPIZERO(0);
     }
     
     public void createPHOTONS(int st) {
@@ -112,15 +116,17 @@ public class ECmc2 extends DetectorMonitor {
     	switch (st) {
     	case 0:
     		dgm.add("PHOTONS", 4,2,0,st,getRunNumber());
-    		dgm.makeH1("p00",100,0.8,1.3,-1,             "N#gamma>1","#gamma1 #beta","",1,1);
-    		dgm.makeH1("p01",100,0.8,1.3,-1,             "N#gamma>1","#gamma2 #beta","",1,1);
-    		dgm.makeH1("p02",100,0.8,1.3,-1,             "N#gamma=2","#gamma1 #beta","",1,1);
-    		dgm.makeH1("p03",100,0.8,1.3,-1,             "N#gamma=2","#gamma2 #beta","",1,1);
-    		dgm.makeH2("p04",100,0.8,1.3,16,-0.5,15.5,-1,"N#gamma>1","#gamma1 #beta","Photons");
-    		dgm.makeH2("p05",100,0.8,1.3,16,-0.5,15.5,-1,"N#gamma>1","#gamma2 #beta","Photons");
-    		dgm.makeH2("p06",100,0.8,1.3,50,0., 5.0,-1,  "N#gamma>1","#gamma1 #beta","Energy (GeV)");
-    		dgm.makeH2("p07",100,0.8,1.3,50,0., 5.0,-1,  "N#gamma>1","#gamma2 #beta","Energy (GeV)");
+    		dgm.makeH2("p00",100,0.9,1.3,9,0.5,9.5,-1,"","#gamma1 #beta","Photons");
+    		dgm.makeH2("p01",100,0.9,1.3,9,0.5,9.5,-1,"","#gamma2 #beta","Photons");
+    		dgm.makeH2("p02",100,0,5,9,0.5,9.5,-1,    "","#gamma1 Energy (GeV)","Photons");
+    		dgm.makeH2("p03",100,0,5,9,0.5,9.5,-1,    "","#gamma2 Energy (GeV)","Photons");
     		break;
+    	case 1:
+    		dgm.add("PHOTONS",2,2,0,st,getRunNumber());
+    		dgm.makeH2("p10", 50, 2, 9, 50,  0, 1, -1, "GEN", "Pizero Energy (GeV)", "X");
+    		dgm.makeH2("p11", 50, 0, 1, 50,  0, 10,-1, "GEN", "X", "OPA (DEG)");    		
+    		dgm.makeH2("p12", 50, 2, 9, 50,  0, 1, -1, "REC", "Pizero Energy (GeV)", "X");
+    		dgm.makeH2("p13", 50, 0, 1, 50,  0, 10,-1, "REC", "X", "OPA (DEG)");    		
     	}
     }
     
@@ -134,17 +140,22 @@ public class ECmc2 extends DetectorMonitor {
             dgm.makeH2("c02",16,-0.5,15.5, 16,-0.5,15.5,-1,"opa>1.95","ECo Clusters","Photons"); 
             dgm.makeH2("c03",16,-0.5,15.5, 80,0.4,1.6,1,"",          "Photons",     "REC (E1+E2)/2E");
             dgm.makeH2("c04",16,-0.5,15.5, 80,0.4,1.6,1,"OPA>1.95",  "Photons",     "REC (E1+E2)/2E");
-            dgm.makeH2("c20",50,0,5.2,     16,-0.5,15.5,-1,"",         "GEN #theta12 (deg))","Photons"); 
-            dgm.makeH2("c21",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec=0","GEN #theta12 (deg))","Photons"); 
-            dgm.makeH2("c22",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec=1","GEN #theta12 (deg))","Photons"); 
-            dgm.makeH2("c23",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec>1","GEN #theta12 (deg))","Photons"); 
-            dgm.makeH2("c24",50,0,5.2,     16,-0.5,15.5,-1,"pc=1 ec>1","GEN #theta12 (deg))","Photons");  
+            dgm.makeH2("c20",50,0,5.2,     16,-0.5,15.5,-1,"",         "GEN #theta12 (deg)","Photons"); 
+            dgm.makeH2("c21",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec=0","GEN #theta12 (deg)","Photons"); 
+            dgm.makeH2("c22",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec=1","GEN #theta12 (deg)","Photons"); 
+            dgm.makeH2("c23",50,0,5.2,     16,-0.5,15.5,-1,"pc=2 ec>1","GEN #theta12 (deg)","Photons"); 
+            dgm.makeH2("c24",50,0,5.2,     16,-0.5,15.5,-1,"pc=1 ec>1","GEN #theta12 (deg)","Photons");  
             break;
         case 1:
         	dgm.add("CLUSTERS", 5,3,0,st,getRunNumber());
-            dgm.makeH2("c05",16,-0.5,15.5, 16,-0.5,15.5,-1,"",       "PC Clusters" ,"Photons"); 
-            dgm.makeH2("c06",16,-0.5,15.5, 16,-0.5,15.5,-1,"",       "ECi Clusters","Photons"); 
-            dgm.makeH2("c07",16,-0.5,15.5, 16,-0.5,15.5,-1,"",       "ECo Clusters","Photons");             
+            dgm.makeH2("c05",16,-0.5,15.5, 16,-0.5,15.5,-1,"","PC Clusters" ,"Photons"); 
+            dgm.makeH2("c06",16,-0.5,15.5, 16,-0.5,15.5,-1,"","ECi Clusters","Photons"); 
+            dgm.makeH2("c07",16,-0.5,15.5, 16,-0.5,15.5,-1,"","ECo Clusters","Photons");  
+            dgm.makeH2("c08",50,0,4,50,   0,  4,-1,"",         "E #gamma 1 / E #gamma 2 (PCAL)","E #gamma 1 / E #gamma 2 (ECIN)");
+            dgm.makeH2("c09",80,0,4,80,-1.0,1.0,-1,"pc=2 ec=2","E #gamma 1 / E #gamma 2 (PCAL)","T #gamma 1 - T #gamma 2 (ns)");
+            dgm.makeH2("c10",80,0,4,80,-1.5,1.5,-1,"pc=2 ec=2","E #gamma 1 / E #gamma 2 (ECIN)","T #gamma 1 - T #gamma 2 (ns)");
+            dgm.makeH2("c11",80,0,4,80,-1.5,1.5,-1,"pc=2 ec=2","E #gamma 1 / E #gamma 2 (ECOU)","T #gamma 1 - T #gamma 2 (ns)");
+            dgm.makeH2("c12",80,0,1,80,  18, 27,-1,"pc=2 ec=2","E #gamma1 (PCAL)","T #gamma1 (ns)");
     	}       
     }
     
@@ -158,50 +169,50 @@ public class ECmc2 extends DetectorMonitor {
             dgm.makeH2("d10",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E2/E #gamma2");
             dgm.makeH2("d02",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E1/E #gamma1"); 
             dgm.makeH2("d12",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E2/E #gamma2"); 
-            dgm.makeH2("d03",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E1/E #gamma1");  
-            dgm.makeH2("d13",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E2/E #gamma2");  
+            dgm.makeH2("d03",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E1/E #gamma1");  
+            dgm.makeH2("d13",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E2/E #gamma2");  
                                                  tit = "pc>1 ec=1";
             dgm.makeH2("d20",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E1/E #gamma1"); 
             dgm.makeH2("d30",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E2/E #gamma2");  
             dgm.makeH2("d22",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E1/E #gamma1");   
             dgm.makeH2("d32",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E2/E #gamma2");  
-            dgm.makeH2("d23",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E1/E #gamma1");   
-            dgm.makeH2("d33",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E2/E #gamma2");
+            dgm.makeH2("d23",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E1/E #gamma1");   
+            dgm.makeH2("d33",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E2/E #gamma2");
                                                  tit = "pc>1 ec>1";
             dgm.makeH2("d40",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E1/E #gamma1"); 
             dgm.makeH2("d50",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E2/E #gamma2"); 
             dgm.makeH2("d42",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E1/E #gamma1"); 
             dgm.makeH2("d52",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "E2/E #gamma2");  
-            dgm.makeH2("d43",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E1/E #gamma1");  
-            dgm.makeH2("d53",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "E2/E #gamma2");              
+            dgm.makeH2("d43",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E1/E #gamma1");  
+            dgm.makeH2("d53",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "E2/E #gamma2");              
                                                  tit = "pc=2 ec=1"; 
             dgm.makeH2("d60",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","(E1+E2)/2E"); 
             dgm.makeH2("d70",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","SQRT(E1*E2)/E");   
             dgm.makeH2("d62",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "(E1+E2)/2E");    
             dgm.makeH2("d72",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "SQRT(E1*E2)/E");  
-            dgm.makeH2("d63",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "(E1+E2)/2E");  
-            dgm.makeH2("d73",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "SQRT(E1*E2)/E");  
+            dgm.makeH2("d63",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "(E1+E2)/2E");  
+            dgm.makeH2("d73",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "SQRT(E1*E2)/E");  
                                                  tit = "pc>1 ec>1";
             dgm.makeH2("d80",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","(E1+E2)/2E"); 
             dgm.makeH2("d90",50,10,20,  50,0,2,1,tit,"GEN #theta #gamma2 (deg)","SQRT(E1*E2)/E");   
             dgm.makeH2("d82",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "(E1+E2)/2E");    
             dgm.makeH2("d92",50,0,70,   50,0,2,1,tit,"Distance (cm)",           "SQRT(E1*E2)/E");  
-            dgm.makeH2("d83",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "(E1+E2)/2E");  
-            dgm.makeH2("d93",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg))",     "SQRT(E1*E2)/E");  
+            dgm.makeH2("d83",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "(E1+E2)/2E");  
+            dgm.makeH2("d93",50,0,5.2,  50,0,2,1,tit,"GEN #theta12 (deg)",     "SQRT(E1*E2)/E");  
                                                  tit = "pc=2 ec=2";
             dgm.makeH2("d100",50,10,20, 50,0,2,1,tit,"GEN #theta #gamma2 (deg)","(E1+E2)/2E"); 
             dgm.makeH2("d110",50,10,20, 50,0,2,1,tit,"GEN #theta #gamma2 (deg)","SQRT(E1*E2)/E");   
             dgm.makeH2("d102",50,0,70,  50,0,2,1,tit,"Distance (cm)",           "(E1+E2)/2E");    
             dgm.makeH2("d112",50,0,70,  50,0,2,1,tit,"Distance (cm)",           "SQRT(E1*E2)/E");  
-            dgm.makeH2("d103",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg))",     "(E1+E2)/2E");  
-            dgm.makeH2("d113",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg))",     "SQRT(E1*E2)/E");  
+            dgm.makeH2("d103",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg)",     "(E1+E2)/2E");  
+            dgm.makeH2("d113",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg)",     "SQRT(E1*E2)/E");  
             									 tit = "pc=2 ec=2";
             dgm.makeH2("d120",50,10,20, 50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E1/E #gamma1"); 
             dgm.makeH2("d130",50,10,20, 50,0,2,1,tit,"GEN #theta #gamma2 (deg)","E2/E #gamma2"); 
             dgm.makeH2("d122",50,0,70,  50,0,2,1,tit,"Distance (cm)",           "E1/E #gamma1"); 
             dgm.makeH2("d132",50,0,70,  50,0,2,1,tit,"Distance (cm)",           "E2/E #gamma2");  
-            dgm.makeH2("d123",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg))",     "E1/E #gamma1");  
-            dgm.makeH2("d133",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg))",     "E2/E #gamma2");              
+            dgm.makeH2("d123",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg)",     "E1/E #gamma1");  
+            dgm.makeH2("d133",50,0,5.2, 50,0,2,1,tit,"GEN #theta12 (deg)",     "E2/E #gamma2");              
 
             break;
     	case 1:
@@ -211,30 +222,30 @@ public class ECmc2 extends DetectorMonitor {
             dgm.makeH2("dt10",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta #gamma2");
             dgm.makeH2("dt02",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma1"); 
             dgm.makeH2("dt12",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma2"); 
-            dgm.makeH2("dt03",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma1");  
-            dgm.makeH2("dt13",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma2");  
+            dgm.makeH2("dt03",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma1");  
+            dgm.makeH2("dt13",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma2");  
                                                    tit = "pc>1 ec=1";
             dgm.makeH2("dt20",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta #gamma1"); 
             dgm.makeH2("dt30",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta #gamma2");  
             dgm.makeH2("dt22",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma1");   
             dgm.makeH2("dt32",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma2");  
-            dgm.makeH2("dt23",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma1");   
-            dgm.makeH2("dt33",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma2");
+            dgm.makeH2("dt23",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma1");   
+            dgm.makeH2("dt33",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma2");
                                                    tit = "pc>1 ec>1";
             dgm.makeH2("dt40",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta #gamma1"); 
             dgm.makeH2("dt50",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta #gamma2"); 
             dgm.makeH2("dt42",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma1"); 
             dgm.makeH2("dt52",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta #gamma2");  
-            dgm.makeH2("dt43",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma1");  
-            dgm.makeH2("dt53",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta #gamma2"); 
+            dgm.makeH2("dt43",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma1");  
+            dgm.makeH2("dt53",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta #gamma2"); 
                                                     tit = "pc>1 ec>0";            
             dgm.makeH2("dt60",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta12 (deg)"); 
             dgm.makeH2("dt62",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta12 (deg)");    
-            dgm.makeH2("dt63",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta12 (deg)");  
+            dgm.makeH2("dt63",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta12 (deg)");  
                                                    tit = "pc=1 ec>1"; 
             dgm.makeH2("dt70",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#theta12 (deg)");   
             dgm.makeH2("dt72",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#theta12 (deg)");  
-            dgm.makeH2("dt73",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#theta12 (deg)");  
+            dgm.makeH2("dt73",50,0,5.5, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#theta12 (deg)");  
             break;
     	case 2:
     		dgm.add("GENREC",6,4,0,st,getRunNumber()); y1=-3; y2=3;
@@ -243,22 +254,22 @@ public class ECmc2 extends DetectorMonitor {
             dgm.makeH2("df10",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#phi #gamma2");
             dgm.makeH2("df02",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma1"); 
             dgm.makeH2("df12",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma2"); 
-            dgm.makeH2("df03",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma1");  
-            dgm.makeH2("df13",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma2");  
+            dgm.makeH2("df03",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma1");  
+            dgm.makeH2("df13",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma2");  
                                                    tit = "pc>1 ec=1";
             dgm.makeH2("df20",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#phi #gamma1"); 
             dgm.makeH2("df30",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#phi #gamma2");  
             dgm.makeH2("df22",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma1");   
             dgm.makeH2("df32",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma2");  
-            dgm.makeH2("df23",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma1");   
-            dgm.makeH2("df33",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma2");
+            dgm.makeH2("df23",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma1");   
+            dgm.makeH2("df33",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma2");
                                                    tit = "pc>1 ec>1";
             dgm.makeH2("df40",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#phi #gamma1"); 
             dgm.makeH2("df50",50,10,20, 50,y1,y2,0,tit,"GEN #theta #gamma2 (deg)","#Delta#phi #gamma2"); 
             dgm.makeH2("df42",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma1"); 
             dgm.makeH2("df52",50,0,70,  50,y1,y2,0,tit,"Distance (cm)",           "#Delta#phi #gamma2");  
-            dgm.makeH2("df43",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma1");  
-            dgm.makeH2("df53",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg))",     "#Delta#phi #gamma2");    		            
+            dgm.makeH2("df43",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma1");  
+            dgm.makeH2("df53",50,0,5.2, 50,y1,y2,0,tit,"GEN #theta12 (deg)",     "#Delta#phi #gamma2");    		            
     	}        
    	   
     }   
@@ -308,6 +319,22 @@ public class ECmc2 extends DetectorMonitor {
     	
      }
     
+    public void createPIZERO(int st) {
+    	
+    	switch (st) {
+    	case 0:
+    		dgm.add("PIZERO",5,3,0,st,getRunNumber());
+    		dgm.makeH2("pz0", 50,0,10,50,0,5, -1,   "","Opening Angle (deg)", "SQRT(E1E2)");
+    		dgm.makeH2("pz1", 50,4, 8,50,100,200,-1,"","Pizero Energy (GeV)","#gamma#gamma Invariant Mass (MeV)");   
+    		dgm.makeH2("pz2", 50,4, 8,50,-1,1,-1,   "","Pizero Energy (GeV)","Pizero Energy Error (GeV)"); 
+    		dgm.makeH2("pz3", 50,4, 8,50,-1,1,-1,   "","Pizero Energy (GeV)","Pizero Theta Error (deg)"); 
+    		dgm.makeH2("pz4", 50,0,10,50,-1,1,-1,   "","Opening Angle (deg)","Pizero Energy Error (GeV)"); 
+    		dgm.makeH2("pz5", 50,0,10,50,-12,12,-1,   "","Opening Angle (deg)","Invariant Mass Error (MeV)"); 
+    		break;
+    	case 1:
+    	}
+    }
+    
     @Override       
     public void plotHistos(int run) {
     	if(!histosExist) return;
@@ -336,51 +363,52 @@ public class ECmc2 extends DetectorMonitor {
     	List<Float> out = new ArrayList<Float>();
     	int n=0;
     	for (Particle p : list) {
-		    out.add(n++,(float) p.e());
+    		out.add(n++,(float) p.e());
 		    out.add(n++,(float) Math.toDegrees(p.theta())); 
 		    out.add(n++,(float) Math.toDegrees(p.phi()));
     	}
 		return out;
     }
     
-    public double getSF(DetectorParticle dp) {
-    	return SamplingFractions.getMean(22, dp, ebmce.ccdb);
-    }
-    
     @Override
     public void processEvent(DataEvent de) {
 		
-    	GEN.clear();  REC.clear();
+    	GEN.clear();  REC.clear();  GENPZ.clear(); RECPZ.clear();
     	
     	DetectorParticle p1 = new DetectorParticle();
     	DetectorParticle p2 = new DetectorParticle();
 		
 		int npart=0;
-		double e1,e2;
 		
-		boolean debug = false, correct=true;
+		boolean correct=false;
 						
 		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==2;
 				
         if (goodev) { 
         	
-        	GEN = getkin(ebmce.pmc);   
+        	GEN   = getkin(ebmce.pmc);
+        	GENPZ = ebmce.getPizeroKinematics(ebmce.pmc);
         	
-	    	double  opa = ebmce.pmv.get(0).theta(ebmce.pmv.get(1));
+        	float opa = GENPZ.get(3); float x = GENPZ.get(4);
+	    	
+	    	dgm.fill("p10",GENPZ.get(0),GENPZ.get(4)); dgm.fill("p11",GENPZ.get(4),GENPZ.get(3));
+	    	
 	    	Vector3 ggc = ebmce.pmv.get(0).cross(ebmce.pmv.get(1));
 	    	double ggp = Math.toDegrees(Math.atan2(ggc.y(),ggc.x()));
 	    	if(ggp<0) ggp=-ggp;
 	    	ggp=ggp-90;
 	    	if(ggp<0) ggp=ggp+180;	  
 	    	
-	    	if(!ebmce.hasStartTime) engine.processDataEvent(de);  
+	    	if(!ebmce.hasStartTime) dropBanks(de);  //drop ECAL banks and re-run ECEngine
             
-        	if (!ebmce.processDataEvent(de)) return;
+        	if(!ebmce.processDataEvent(de)) return;
         	
-        	np.clear(); np = ebmce.eb.getEvent().getParticles();  
+        	float stt = ebmce.starttime;
         	
+            List<DetectorParticle> par = ebmce.eb.getEvent().getParticles();  
         	List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList(); 
-/*        	
+
+        	/*
         	System.out.println(" ");        	
             for(int iresp = 0; iresp < cal.size(); iresp++){
                CalorimeterResponse r = (CalorimeterResponse)cal.get(iresp);
@@ -389,25 +417,25 @@ public class ECmc2 extends DetectorMonitor {
                     +r.getDescriptor().getSector()+" "+r.getDescriptor().getLayer());
                 }            
             }
-*/        	
+        	*/
+        	
         	if(dumpFiles) {ebmce.getRECBanks(de,ebmce.eb); writer.writeEvent(de);}
        
-        	List<Particle> plist = new ArrayList<Particle>(); 
-        	
-//        	System.out.println("PART ");
-        	
         	int trsec = -1; int trpid = -211;
-        	for (DetectorParticle dp: np) {
-        		DetectorResponse dr = dp.getHit(DetectorType.ECAL);
-//        		System.out.println(dp.getPid()+" "+dp.getSector(DetectorType.ECAL));
+        	for (DetectorParticle dp: par) {
         		int pid = dp.getPid(); int sec = dp.getSector(DetectorType.ECAL);
-        		if(trsec==-1 && pid==trpid) trsec=sec;
+        		if(trsec==-1 && sec>0 && pid==trpid) trsec=sec;
         	}
         	
-        	for (DetectorParticle dp : np) { // make list of neutral Particle objects 
+        	if(trsec==-1) return;
+        	
+        	List<Particle> plist = new ArrayList<Particle>(); 
+        	
+        	for (DetectorParticle dp : par) { // make list of neutral Particle objects 
+//        		System.out.println(trsec+" "+dp.getSector(DetectorType.ECAL)+" "+ebmce.hasStartTime+" "+dp.getPid()+" "+dp.getBeta()+" "+dp.getEnergy(DetectorType.ECAL));
 		        if(dp.getSector(DetectorType.ECAL)!=trsec && dp.getPid()==22) { npart++;
 			    if(!ebmce.hasStartTime && dp.getPid()==2112) {// this repairs zero momentum neutrons from non-PCAL seeded neutrals
-	 				double e = dp.getEnergy(DetectorType.ECAL)/getSF(dp); 		
+	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
 			    	Vector3D vec = dp.getHit(DetectorType.ECAL).getPosition(); vec.unit(); 			    		
  			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
  			    	dp.setPid(22);
@@ -425,6 +453,7 @@ public class ECmc2 extends DetectorMonitor {
  			    	double dist=0, du=0;
  					int[]     npc = new int[50];       int[] neci = new int[50];       int[] neco = new int[50]; 
  					double[]  epc = new double[50]; double[]  eci = new double[50]; double[]  eco = new double[50]; 
+ 					double[]  tpc = new double[50]; double[]  tci = new double[50]; double[]  tco = new double[50]; 
  					 
 					Vector3D[] r1 = new Vector3D[50]; Vector3[] c1 = new Vector3[50];
 					Vector3D[] r4 = new Vector3D[50]; Vector3[] c4 = new Vector3[50]; 
@@ -434,36 +463,26 @@ public class ECmc2 extends DetectorMonitor {
                     double dopa = opa-nopa;  //GEN-REC               
  			    	
  			    	int npp = 0, ipp = 0;
- 			    	for (DetectorParticle dp : np) {
- 			    		if(dp.getSector(DetectorType.ECAL)==2 && dp.getPid()==22) {
+ 			    	for (DetectorParticle dp : par) {
+ 			    		if(dp.getSector(DetectorType.ECAL)!=trsec && dp.getPid()==22) {
  			    		if(npp==0) p1 = dp; //Photon 1
  			    		if(npp==1) p2 = dp; //Photon 2
  			            for(int iresp = 0; iresp < cal.size(); iresp++){
  			               CalorimeterResponse dr = (CalorimeterResponse)cal.get(iresp); 			              
- 			    		   int lay = dr.getDescriptor().getLayer(); int index = dr.getAssociation(0); 			    		  
- 			    		   if (index==ipp && dr.getDescriptor().getType()==DetectorType.ECAL) {
+ 			    		   int lay = dr.getDescriptor().getLayer(); 			    		  
+ 			    		   if (dr.getAssociation(0)==ipp && dr.getDescriptor().getType()==DetectorType.ECAL) {
 // 			            for (DetectorResponse dr : dp.getDetectorResponses()) { 			            	
-// 			            	int lay = dr.getDescriptor().getType()==DetectorType.ECAL ? dr.getDescriptor().getLayer():0; 			           
- 			            	if(lay==1) { npc[0]++ ; npc[npp+1]++ ; epc[npp+1]=dr.getEnergy() ; r1[npp+1]=dr.getPosition(); c1[npp+1]=dr.getCoordUVW();}    					
- 			            	if(lay==4) {neci[0]++ ;neci[npp+1]++ ; eci[npp+1]=dr.getEnergy() ; r4[npp+1]=dr.getPosition(); c4[npp+1]=dr.getCoordUVW();}    					
- 			            	if(lay==7) {neco[0]++ ;neco[npp+1]++ ; eco[npp+1]=dr.getEnergy() ; r7[npp+1]=dr.getPosition(); c7[npp+1]=dr.getCoordUVW();}
- 			                }
+// 			            	int lay = dr.getDescriptor().getType()==DetectorType.ECAL ? dr.getDescriptor().getLayer():0; 	
+ 			    			double dre=dr.getEnergy(); Vector3D drp=dr.getPosition(); Vector3 drc=dr.getCoordUVW(); double drt = dr.getTime()-stt;
+ 			            	if(lay==1) { npc[0]++ ; npc[npp+1]++ ; epc[npp+1]=dre ; tpc[npp+1]=drt ; r1[npp+1]=drp; c1[npp+1]=drc; }    					
+ 			            	if(lay==4) {neci[0]++ ;neci[npp+1]++ ; eci[npp+1]=dre ; tci[npp+1]=drt ; r4[npp+1]=drp; c4[npp+1]=drc; }    					
+ 			            	if(lay==7) {neco[0]++ ;neco[npp+1]++ ; eco[npp+1]=dre ; tco[npp+1]=drt ; r7[npp+1]=drp; c7[npp+1]=drc; }
+ 			               }
  			            } 			    		   
  			            npp++;
  			    		}
  			    		ipp++;
 			    	}
- 			    	
- 			    	e1=p1.getEnergy(DetectorType.ECAL)/getSF(p1); 
- 			    	e2=p2.getEnergy(DetectorType.ECAL)/getSF(p2); 
- 			    	
- 			    	if (opa>1.95) {
- 			    	float b1 = (float) p1.getBeta(); float b2 = (float) p2.getBeta();
- 			    	if(npart>1)  {dgm.fill("p00",b1);       dgm.fill("p01",b2); 
- 			    	              dgm.fill("p04",b1,npart); dgm.fill("p05",b2,npart);
- 			    	              dgm.fill("p06",b1,e1);    dgm.fill("p07",b2,e2);}
- 			    	if(npart==2) {dgm.fill("p02",b1);dgm.fill("p03",b2);}
- 			    	}
 		    	
  			    	if(npc[0]>=2)                            {r1[2].sub(r1[1]); dist=r1[2].mag(); c1[2].sub(c1[1]); du=c1[2].x();}
  			    	if(npc[1]==1 && npc[2]==0 && neci[2]>=1) {r4[2].sub(r1[1]); dist=r4[2].mag(); c4[2].sub(c1[1]); du=c4[2].x();}
@@ -473,18 +492,28 @@ public class ECmc2 extends DetectorMonitor {
  			    		//Merged cluster associated with photon 2 	
  	 			    	if (p1.countResponses(DetectorType.ECAL,4)==0 && p2.countResponses(DetectorType.ECAL,4)==1) {
  	 			    		double rat12 = 0.5*epc[1]/epc[2]; double rat21 = 0.5*epc[2]/epc[1]; rat12=0.5;rat21=0.5;
- 	 			    		plist.get(0).setP((epc[1]+eci[2]*rat21+eco[1])/getSF(p2));
- 	 			    		plist.get(1).setP((epc[2]+eci[2]*rat12+eco[2])/getSF(p2)); 	 			    		
+ 	 			    		plist.get(0).setP((epc[1]+eci[2]*rat21+eco[1])/ebmce.getSF(p2));
+ 	 			    		plist.get(1).setP((epc[2]+eci[2]*rat12+eco[2])/ebmce.getSF(p2)); 	 			    		
  	 			    	}
  	 			        //Merged cluster associated with photon 1 	
  	 	 			    if (p1.countResponses(DetectorType.ECAL,4)==1 && p2.countResponses(DetectorType.ECAL,4)==0) {
 	 			    		double rat12 = 0.5*epc[1]/epc[2]; double rat21 = 0.5*epc[2]/epc[1]; rat12=0.5; rat21=0.5;
- 	 	 			    	plist.get(0).setP((epc[1]+eci[1]*rat21+eco[1])/getSF(p1));
- 	 	 			    	plist.get(1).setP((epc[2]+eci[1]*rat12+eco[2])/getSF(p1));	 	 			    	
+ 	 	 			    	plist.get(0).setP((epc[1]+eci[1]*rat21+eco[1])/ebmce.getSF(p1));
+ 	 	 			    	plist.get(1).setP((epc[2]+eci[1]*rat12+eco[2])/ebmce.getSF(p1));	 	 			    	
  	 	 			    }	 	 			    
  			    	} 	
  			    	
- 	 			    REC=getkin(plist); 
+ 	 			    REC   = getkin(plist);
+ 	 			    RECPZ = ebmce.getPizeroKinematics(plist);
+ 	 			    
+ 	 		    	dgm.fill("p12",GENPZ.get(0),RECPZ.get(4)); dgm.fill("p13",RECPZ.get(4),RECPZ.get(3));
+ 	 		    	
+ 	 		    	dgm.fill("pz0",RECPZ.get(3),RECPZ.get(5)); 
+ 	 		    	dgm.fill("pz1",GENPZ.get(0),RECPZ.get(2));
+ 	 		    	dgm.fill("pz2",GENPZ.get(0),GENPZ.get(0)-RECPZ.get(0));
+ 	 		    	dgm.fill("pz3",GENPZ.get(0),GENPZ.get(1)-RECPZ.get(1));
+ 	 		    	dgm.fill("pz4",RECPZ.get(3),GENPZ.get(0)-RECPZ.get(0));
+ 	 		    	dgm.fill("pz5",RECPZ.get(3),GENPZ.get(2)-RECPZ.get(2));
  	 			    
      				dgm.fill("h11",opa);
      	       	    dgm.fill("h17",ggp);
@@ -503,38 +532,42 @@ public class ECmc2 extends DetectorMonitor {
  	 			    double delesum =          (REC.get(0)+REC.get(3))/(GEN.get(0)+GEN.get(3));    	
  	 			    double delepro = Math.sqrt(REC.get(0)*REC.get(3))/Math.sqrt(GEN.get(0)*GEN.get(3)); 	 			    
  	 			    
- 	 			   //Debug 
-     				if(debug && neci[0]==1 && opa>1.8 && opa<2.5) {
-     				System.out.println(" ");
+ 			    	float e1 = (float) (p1.getEnergy(DetectorType.ECAL)/ebmce.getSF(p1)), b1 = (float) p1.getBeta();
+ 			    	float e2 = (float) (p2.getEnergy(DetectorType.ECAL)/ebmce.getSF(p2)), b2 = (float) p2.getBeta();			    	 
+
+ 	 			    //Debug 
+//     				if(debug && neci[0]==1 && opa>1.8 && opa<2.5) {
+     				if(dbgAnalyzer && npc[0]>1 && neci[0]>1 && opa>2.5) {
+     				System.out.println(" "); int scaf = 2;
      				System.out.println(getEventNumber());
-     				
-     				double sf = getSF(p1);
-     				
+     				     				
 			        System.out.println(p1.getEnergy(DetectorType.ECAL)+" "+epc[1]+" "+eci[1]+" "+eco[1]);
 			        System.out.println(p2.getEnergy(DetectorType.ECAL)+" "+epc[2]+" "+eci[2]+" "+eco[2]);
      				
-     				System.out.println(p1.getEnergy(DetectorType.ECAL)+" "+(epc[1]+eci[1]/2+eco[1])/sf);
-     				System.out.println(p2.getEnergy(DetectorType.ECAL)+" "+(epc[2]+eci[1]/2+eco[2])/sf);
+     				System.out.println(p1.getEnergy(DetectorType.ECAL)+" "+(epc[1]+eci[1]/scaf+eco[1])/ebmce.getSF(p1));
+     				System.out.println(p2.getEnergy(DetectorType.ECAL)+" "+(epc[2]+eci[1]/scaf+eco[2])/ebmce.getSF(p2));
+     				
 			    	System.out.println(npart+" "+npc[0]+" "+neci[0]+" "+neco[0]);
  	 			    System.out.println("Photon 1: "+p1.getMass()+" "+e1+" "+npc[1]+" "+neci[1]); 
  	 			    System.out.println("Photon 2: "+p2.getMass()+" "+e2+" "+npc[2]+" "+neci[2]); 
  	 			    
-     				System.out.println("GEN,REC EN1,EN2 "+GEN.get(0)+" "+ REC.get(0)+" "+GEN.get(3)+" "+ REC.get(3));
-     				System.out.println("GEN,REC TH1,TH2 "+GEN.get(1)+" "+ REC.get(1)+" "+GEN.get(4)+" "+ REC.get(4));
-     				System.out.println("GEN,REC PH1,PH2 "+GEN.get(2)+" "+ REC.get(2)+" "+GEN.get(5)+" "+ REC.get(5));
+     				System.out.println("GEN,REC EN1,EN2 "+GEN.get(0)+" "+ REC.get(swap?3:0)+" "+GEN.get(3)+" "+ REC.get(swap?0:3));
+     				System.out.println("GEN,REC TH1,TH2 "+GEN.get(1)+" "+ REC.get(swap?4:1)+" "+GEN.get(4)+" "+ REC.get(swap?1:4));
+     				System.out.println("GEN,REC PH1,PH2 "+GEN.get(2)+" "+ REC.get(swap?5:2)+" "+GEN.get(5)+" "+ REC.get(swap?2:5));
  			    	System.out.println("GEN,REC opa "+opa+" "+nopa + " "+dist);
  		
     				System.out.println("Phot 1 "+swap+" "+delE1+" "+delTH1+" "+delPH1);
      				System.out.println("Phot 2 "+swap+" "+delE2+" "+delTH2+" "+delPH2);   
      				}
-     				
-     				if (opa>1.95) {
-     				dgm.fill("c00", npc[0],npart);        dgm.fill("c01", neci[0],npart);        dgm.fill("c02", neco[0],npart);
-     				dgm.fill("e10", npc[0],npart,delesum);dgm.fill("e11", neci[0],npart,delesum);dgm.fill("e12", neco[0],npart,delesum);
-     				}
+ 			    	 			    	
+ 			    	if (opa>1.95) {
+     					dgm.fill("c00", npc[0],npart);        dgm.fill("c01", neci[0],npart);        dgm.fill("c02", neco[0],npart);
+     					dgm.fill("e10", npc[0],npart,delesum);dgm.fill("e11", neci[0],npart,delesum);dgm.fill("e12", neco[0],npart,delesum);
+ 			    	}     				
+
      				if (opa>2.40) {
-     				dgm.fill("c05", npc[0],npart);        dgm.fill("c06", neci[0],npart);        dgm.fill("c07", neco[0],npart);
-     				dgm.fill("e13", npc[0],npart,delesum);dgm.fill("e14", neci[0],npart,delesum);dgm.fill("e15", neco[0],npart,delesum);
+     					dgm.fill("c05", npc[0],npart);        dgm.fill("c06", neci[0],npart);        dgm.fill("c07", neco[0],npart);
+     					dgm.fill("e13", npc[0],npart,delesum);dgm.fill("e14", neci[0],npart,delesum);dgm.fill("e15", neco[0],npart,delesum);
      				}
      				
      			    if (npc[0]>=2 && neci[0]==0) {
@@ -597,6 +630,7 @@ public class ECmc2 extends DetectorMonitor {
      				if (opa>1.95) dgm.fill("c04",npart,delesum);
      				
      				if (npc[0]>=2 && neci[0]>=2) {
+ 			    	    if(opa>2.5) {dgm.fill("p00",b1,npart);dgm.fill("p01",b2,npart);dgm.fill("p02",e1,npart);dgm.fill("p03",e2,npart);}
      			    	dgm.fill("c23",opa,npart);
      					dgm.fill("d40",GEN.get(4),delE1);
      					dgm.fill("d42",dist,      delE1);        			
@@ -650,10 +684,15 @@ public class ECmc2 extends DetectorMonitor {
      					dgm.fill("d123",opa,       delE1);        			
      					dgm.fill("d130",GEN.get(4),delE2);
      					dgm.fill("d132",dist,      delE2);        			     				
-     					dgm.fill("d133",opa,       delE2);     					
+     					dgm.fill("d133",opa,       delE2);  
+     					dgm.fill("c08", epc[1]/epc[2],eci[1]/eci[2]);
+     					dgm.fill("c09", epc[1]/epc[2],tpc[1]-tpc[2]);
+     					dgm.fill("c10", eci[1]/eci[2],tci[1]-tci[2]);
+     					dgm.fill("c11", eco[1]/eco[2],tco[1]-tco[2]);
+     					dgm.fill("c12", epc[1],tpc[1]);
      				}
    				
-     				if (npc[0]==1 && neci[0]>=2) {
+     				if (npc[0]==1 && neci[0]>1) {
      			    	dgm.fill("c24",opa,npart);
      					dgm.fill("dt70",GEN.get(4),dopa);
      					dgm.fill("dt72",dist,      dopa);        			
@@ -662,16 +701,20 @@ public class ECmc2 extends DetectorMonitor {
      			}    			     			
      		     		
        	    }   
-    }
-  
+    } 
    
     public void plotMCHistos() {  
     	plot("PHOTONS");
         plot("CLUSTERS");
         plot("GENREC");
         plot("EFFICIENCY");   
+        plot("PIZERO");
     }
-    
+
+	public void plot(String tabname) {     
+    	dgm.drawGroup(tabname,0,getActive123(), getRunNumber());
+    } 
+	
     @Override
     public void plotEvent(DataEvent de) {
        // analyze();         
@@ -694,10 +737,6 @@ public class ECmc2 extends DetectorMonitor {
 		dgm.geteff("ef16",  "h17", "h16");
 		
     }
-    
-    public void plot(String tabname) {     
-    	dgm.drawGroup(tabname,0,getActive123(), getRunNumber());
-    } 
   
     @Override
     public void timerUpdate() {  
