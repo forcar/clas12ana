@@ -520,7 +520,7 @@ public class ECsf extends DetectorMonitor {
             FitSummary.add(fitter.getMeanSlices(),is, 0, 7, run); 
           
     	    GraphErrors MeanGraph = fitter.getMeanSlices();
-    	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,2.5,0.3,2.0),is,0,5,run); 
+    	    tl.fitData.add(fitEngine(MeanGraph,14,0.3,EB*0.23,0.3,EB*0.23),is,0,5,run); 
     	    
     	    // E/P vs. tracking momentum
     		fitter = new ParallelSliceFitter((H2F) getDG(0,0,"E/P",run).getData(is-1+6).get(0));
