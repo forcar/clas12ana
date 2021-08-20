@@ -430,7 +430,7 @@ public class Event {
     }
 	
 	//Recreate particle class for tpid from partMap and partBank and store in IndexedList<List<Particle>> partmap with ip index	
-	public void getRECparticle(int tpid) {		
+	private void getRECparticle(int tpid) {		
 		if(partMap.containsKey(tpid)) {
 			for(int ipart : partMap.get(tpid)){  
 				int      pid = partBank.getInt("pid",  ipart);              
@@ -545,14 +545,14 @@ public class Event {
 			 boolean good_g = pid==22;
 			 boolean good_neut = good_n || good_g;
 			 boolean good_char = pid!=0 && !good_neut;
-		     int ipid=0;
+		     int ipid=-1;
 			 if(good_char&&is==e_sect) ipid=4;
 			 if(good_n   &&is==e_sect) ipid=0;
 			 if(good_g   &&is==e_sect) ipid=1;
 			 if(good_char&&is!=e_sect) ipid=5;
 			 if(good_n   &&is!=e_sect) ipid=2;
 			 if(good_g   &&is!=e_sect) ipid=3;
-			 out[ipid][il][is-1]++;
+			 if(ipid != -1) out[ipid][il][is-1]++;
 		}
 		return out;		
 	}
