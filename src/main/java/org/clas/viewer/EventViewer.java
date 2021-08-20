@@ -88,11 +88,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     DataSourceProcessorPane   processorPane = null;
     
-    JCheckBoxMenuItem co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
+    JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6,cf7,cf8 = null;   
-    JCheckBoxMenuItem                              ctr = null;  
-    JRadioButtonMenuItem               ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5 = null;  
+    JCheckBoxMenuItem                                   ctr = null;  
+    JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
+    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
     
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
@@ -194,9 +194,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmc1("ECmc1");
-//    		monitors[n] = new ECmc2("ECmc2");
-    	    monitors[n] = new ECt("ECt"); 
-//      		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECmc2("ECmc2");
+//    	    monitors[n] = new ECt("ECt"); 
+//          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
@@ -303,6 +303,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr3 = new JRadioButtonMenuItem("Neutron");  ctr3.addItemListener(this);       group.add(ctr3); menu.add(ctr3);
         ctr4 = new JRadioButtonMenuItem("Muon");     ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
+        ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
         
         menuBar.add(menu);
     
@@ -376,7 +377,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf4)   yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf5)   zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf6) unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf7) dbgECEngine  = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf7)  dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf8)  dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
@@ -388,6 +389,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
 		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
 		if (source==ctr5)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
+		if (source==ctr6)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2212:11; 
 				
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
