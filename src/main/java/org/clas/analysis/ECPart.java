@@ -162,6 +162,9 @@ public class ECPart extends EBTBEngine {
             	int   pid = bank.getInt("pid",i);  
                 pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
                 if(i==0) vtx.setXYZ(vx, vy, vz);
+                refE  = pmc.get(0).e();
+                refTH = Math.toDegrees(pmc.get(0).theta());
+                refPH = Math.toDegrees(pmc.get(0).phi());
             }
             n2mc++;
             return true;
@@ -374,12 +377,12 @@ public class ECPart extends EBTBEngine {
         SF1db = SamplingFractions.getMean(22, p1, this.ccdb);
         e1c = e1/SF1db;
         Particle g1 = new Particle(22,n1.x()*e1c,n1.y()*e1c,n1.z()*e1c);        
-        VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
+//        VG1 = new LorentzVector(n1.x()*e1c,n1.y()*e1c,n1.z()*e1c,e1c);
         
         SF2db = SamplingFractions.getMean(22, p2, this.ccdb);
         e2c = e2/SF2db;
         Particle g2 = new Particle(22,n2.x()*e2c,n2.y()*e2c,n2.z()*e2c);
-        VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
+//        VG2 = new LorentzVector(n2.x()*e2c,n2.y()*e2c,n2.z()*e2c,e2c);
        
         cth1 = Math.cos(g1.theta());
         cth2 = Math.cos(g2.theta());
@@ -1592,8 +1595,8 @@ public class ECPart extends EBTBEngine {
     public static void main(String[] args){
         ECPart part = new ECPart();  
         part.initGraphics();
-//     	part.pizeroDemo(args);
-     	part.photonDist(args);
+     	part.pizeroDemo(args);
+ //    	part.photonDist(args);
 //     	part.photonDemo(args);
 //     	part.neutronDemo(args);
 //        part.electronDemo(args);
