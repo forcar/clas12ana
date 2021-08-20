@@ -162,7 +162,7 @@ public class ECt extends DetectorMonitor {
         this.setNumberOfEvents(0);  
         
         int t1=-70, t2=150, t3=50, t4=250;
-        createTDCHistos(10,-10.,10.,"T-TVERT-PATH/c (ns)"); 
+        createTDCHistos(10,-10.,10.,"T-TVERT-PATH/#beta*c (ns)"); 
         createBETAHistos(22);
         createTLHistos(tlnum,t1,t2,t3,t4);
         
@@ -251,7 +251,7 @@ public class ECt extends DetectorMonitor {
         for (int id=1; id<4; id++) {
     	for (int il=1; il<4; il++) {
         for (int is=1; is<7 ; is++) {
-           h = new H1F("beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,"beta_"+k+"_"+is+"_"+il+"_"+id+"_"+run,100,0.4,1.5);
+           h = new H1F("beta-"+k+"-"+is+"-"+il+"-"+id+"-"+run,"beta-"+k+"-"+is+"-"+il+"-"+id+"-"+run,100,0.4,1.5);
            h.setTitleX(pid[id-1]+" "+det[il-1]+" beta "); h.setTitleY("Counts"); h.setLineColor(is==6?9:is);
            dg.addDataSet(h,id*3+il-4);
         }
@@ -268,15 +268,15 @@ public class ECt extends DetectorMonitor {
         DataGroup dg = new DataGroup(6,2);
         
         for (int is=1; is<7; is++) {
-        	h = new H1F("TL1_"+k+"_"+is+"_"+run,"TL1_"+k+"_"+is+"_"+run,200,t1,t2);
+        	h = new H1F("TL1_"+k+"-"+is+"-"+run,"TL1_"+k+"-"+is+"-"+run,200,t1,t2);
         	h.setTitleX("Sector "+is+" Start Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");
             dg.addDataSet(h,is-1);    	
-        	h = new H1F("TL2_"+k+"_"+is+"_"+run,"TL2_"+k+"_"+is+"_"+run,100,t3,t4);
+        	h = new H1F("TL2_"+k+"-"+is+"-"+run,"TL2_"+k+"-"+is+"-"+run,100,t3,t4);
         	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");     
             dg.addDataSet(h,is+5);
         }
         this.getDataGroup().add(dg,0,0,k,run);  
-        createTDC1DHistos(k,-10.,10.,"T-TVERT-PATH/c (ns)"); 
+        createTDC1DHistos(k,-10.,10.,"T-TVERT-PATH/#beta*c (ns)"); 
     }
     
     public void createUVWHistos(int k, int xbins, int ybins, double xmin, double xmax, double ymin, double ymax, String xtxt, String ytxt) {
@@ -295,16 +295,16 @@ public class ECt extends DetectorMonitor {
             f1 = new F1D("p0"+is+1+k,"[a]",xmin,xmax); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);          
             for (int ip=1; ip<npmts[0]+1; ip++) {int uvw = (ip>52)?(52+(ip-52)*2):ip; double ymx=(scaly)?2*uvw*4.5*0.51:ymax;int ybns=(scaly)?((ip>6)?ybins*ip/npmts[0]:5):ybins;
                 if(scaly2) {ymx=ymax*(1-0.4*ip/npmt[0]);}
-                h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin,xmax,ybns,ymin,ymx);
+                h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin,xmax,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"U"+ip);       
                 dg1.addDataSet(h,ip-1); dg1.addDataSet(f1,ip-1);
                 uvw = (ip>15)?(30+(ip-15)):2*ip;
                 ymx=(scaly)?uvw*4.5*1.23:ymax;
                 if(scaly2) {ymx=0.82*ymax*(0.75+0.25*ip/npmt[1]) ;}
-                h = new H2F("uvw_pcal_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_v"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin,xmax,ybns,ymin,ymx);
+                h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin,xmax,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"V"+ip);
                 dg2.addDataSet(h,ip-1); dg2.addDataSet(f1,ip-1);
-                h = new H2F("uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin,xmax,ybns,ymin,ymx);
+                h = new H2F("uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin,xmax,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"W"+ip); 
                 dg3.addDataSet(h,ip-1); dg3.addDataSet(f1,ip-1);
      	    }
@@ -314,14 +314,14 @@ public class ECt extends DetectorMonitor {
             f1 = new F1D("p0"+is+2+k,"[a]",xmin*sca1-xoff,xmax*sca1-xoff); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[1]+1; ip++) {double ymx=(scaly)?ymax*ip/npmts[1]:ymax;int ybns=(scaly)?((ip>4)?ybins*ip/npmts[1]:5):ybins;
                 if(scaly2) {ymx=0.75*ymax*(1-0.47*ip/npmts[1]);}
-                h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt);  h.setTitleY(ytxt+"U"+ip); 
                 dg4.addDataSet(h,ip-1); dg4.addDataSet(f1,ip-1);
                 if(scaly2) {ymx=0.55*ymax*(0.63+0.37*ip/npmts[1]) ;}
-                h = new H2F("uvw_ecin_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_v"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt); h.setTitleY(ytxt+"V"+ip); 
                 dg5.addDataSet(h,ip-1); dg5.addDataSet(f1,ip-1);
-                h = new H2F("uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt); h.setTitleY(ytxt+"W"+ip);
                 dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);
                 
@@ -332,14 +332,14 @@ public class ECt extends DetectorMonitor {
             f1 = new F1D("p0"+is+3+k,"[a]",xmin*sca2-xoff,xmax*sca2-xoff); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
      	    for (int ip=1; ip<npmts[2]+1; ip++) {double ymx=(scaly)?ymax*ip/npmts[2]:ymax;int ybns=(scaly)?((ip>4)?ybins*ip/npmts[2]:5):ybins;
                 if(scaly2) {ymx=0.75*ymax*(1-0.47*ip/npmts[2]);}
-                h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt); h.setTitleY(ytxt+"U"+ip);
                 dg7.addDataSet(h,ip-1); dg7.addDataSet(f1,ip-1);
                 if(scaly2) {ymx=0.5*ymax*(0.63+0.37*ip/npmts[2]) ;}
-                h = new H2F("uvw_ecou_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_v"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt);  h.setTitleY(ytxt+"V"+ip);
                 dg8.addDataSet(h,ip-1); dg8.addDataSet(f1,ip-1);
-                h = new H2F("uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
+                h = new H2F("uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt); h.setTitleY(ytxt+"W"+ip);
                 dg9.addDataSet(h,ip-1); dg9.addDataSet(f1,ip-1);    
      	    }
@@ -354,33 +354,33 @@ public class ECt extends DetectorMonitor {
         
         for (int is=1; is<7; is++) {
             DataGroup dg = new DataGroup(3,3);
-            h = new H2F("tdc_pcal_u_"+is+"_"+k+"_"+run,"tdc_pcal_u_"+is+"_"+k+"_"+run,100, tmin, tmax, 68, 1., 69.);
+            h = new H2F("tdc-pcal-u-"+is+"-"+k+"-"+run,"tdc-pcal-u-"+is+"-"+k+"-"+run,100, tmin, tmax, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("U"); 
             dg.addDataSet(h,0);  
-            h = new H2F("tdc_pcal_v_"+is+"_"+k+"_"+run,"tdc_pcal_v_"+is+"_"+k+"_"+run,100, tmin, tmax, 62, 1., 63.);
+            h = new H2F("tdc-pcal-v-"+is+"-"+k+"-"+run,"tdc-pcal-v-"+is+"-"+k+"-"+run,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("V");        
             dg.addDataSet(h,1);            
-            h = new H2F("tdc_pcal_w_"+is+"_"+k+"_"+run,"tdc_pcal_w_"+is+"_"+k+"_"+run,100, tmin, tmax, 62, 1., 63.);
+            h = new H2F("tdc-pcal-w-"+is+"-"+k+"-"+run,"tdc-pcal-w-"+is+"-"+k+"-"+run,100, tmin, tmax, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL "+txt); h.setTitleY("W");  
             dg.addDataSet(h,2); 
             
-            h = new H2F("tdc_ecin_u_"+is+"_"+k+"_"+run,"tdc_ecin_u_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc-ecin-u_"+is+"-"+k+"-"+run,"tdc-ecin-u-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("U");    
             dg.addDataSet(h,3);  
-            h = new H2F("tdc_ecin_v_"+is+"_"+k+"_"+run,"tdc_ecin_v_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc-ecin-v-"+is+"-"+k+"-"+run,"tdc-ecin-v-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("V");        
             dg.addDataSet(h,4);            
-            h = new H2F("tdc_ecin_w_"+is+"_"+k+"_"+run,"tdc_ecin_w_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc-ecin-w-"+is+"-"+k+"-"+run,"tdc-ecin-w-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN "+txt); h.setTitleY("W");  
             dg.addDataSet(h,5); 
             
-            h = new H2F("tdc_ecou_u_"+is+"_"+k+"_"+run,"tdc_ecou_u_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc-ecou-u-"+is+"-"+k+"-"+run,"tdc-ecou]-u-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("U");    
             dg.addDataSet(h,6);  
-            h = new H2F("tdc_ecou_v_"+is+"_"+k+"_"+run,"tdc_ecou_v_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc_ecou_v_"+is+"-"+k+"-"+run,"tdc-ecou-v-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("V");        
             dg.addDataSet(h,7);            
-            h = new H2F("tdc_ecou_w_"+is+"_"+k+"_"+run,"tdc_ecou_w_"+is+"_"+k+"_"+run,100, tmin, tmax, 36, 1., 37.);
+            h = new H2F("tdc-ecou-w-"+is+"-"+k+"-"+run,"tdc-ecou-w-"+is+"-"+k+"-"+run,100, tmin, tmax, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU "+txt); h.setTitleY("W");  
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,0,k,run);
@@ -395,33 +395,33 @@ public class ECt extends DetectorMonitor {
         
         for (int is=1; is<7; is++) {
             DataGroup dg = new DataGroup(3,3);
-            h = new H1F("tdc1_pcal_u_"+is+"_"+k+"_"+run,"tdc1_pcal_u_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-pcal-u-"+is+"-"+k+"-"+run,"tdc1-pcal-u-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" PCAL U "+txt);
             dg.addDataSet(h,0);  
-            h = new H1F("tdc1_pcal_v_"+is+"_"+k+"_"+run,"tdc1_pcal_v_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-pcal-v-"+is+"-"+k+"-"+run,"tdc1-pcal-v-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" PCAL V "+txt);       
             dg.addDataSet(h,1);            
-            h = new H1F("tdc1_pcal_w_"+is+"_"+k+"_"+run,"tdc1_pcal_w_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-pcal-w-"+is+"-"+k+"-"+run,"tdc1-pcal-w-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" PCAL W "+txt);  
             dg.addDataSet(h,2); 
             
-            h = new H1F("tdc1_ecin_u_"+is+"_"+k+"_"+run,"tdc1_ecin_u_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecin-u-"+is+"-"+k+"-"+run,"tdc1-ecin-u-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECIN U "+txt);  
             dg.addDataSet(h,3);  
-            h = new H1F("tdc1_ecin_v_"+is+"_"+k+"_"+run,"tdc1_ecin_v_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecin-v-"+is+"-"+k+"-"+run,"tdc1-ecin-v-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECIN V "+txt);        
             dg.addDataSet(h,4);            
-            h = new H1F("tdc1_ecin_w_"+is+"_"+k+"_"+run,"tdc1_ecin_w_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecin-w-"+is+"-"+k+"-"+run,"tdc1-ecin-w-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECIN W "+txt);   
             dg.addDataSet(h,5); 
             
-            h = new H1F("tdc1_ecou_u_"+is+"_"+k+"_"+run,"tdc_ecou_u_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecou-u-"+is+"-"+k+"-"+run,"tdc1-ecou-u-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECOU U "+txt);   
             dg.addDataSet(h,6);  
-            h = new H1F("tdc1_ecou_v_"+is+"_"+k+"_"+run,"tdc1_ecou_v_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecou-v-"+is+"-"+k+"-"+run,"tdc1-ecou-v-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECOU V "+txt);      
             dg.addDataSet(h,7);            
-            h = new H1F("tdc1_ecou_w_"+is+"_"+k+"_"+run,"tdc1_ecou_w_"+is+"_"+k+"_"+run,100, tmin, tmax);
+            h = new H1F("tdc1-ecou-w-"+is+"-"+k+"-"+run,"tdc1-ecou-w-"+is+"-"+k+"-"+run,100, tmin, tmax);
             h.setTitleX("Sector "+is+" ECOU W "+txt); 
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,0,k,run);
@@ -575,7 +575,7 @@ public class ECt extends DetectorMonitor {
        if(dropBanks) dropBanks(event);
        
        List<ECStrip>     strips = engine.getStrips();
-       List<ECPeak>       peaks = engine.getPeaks();
+       List<ECPeak>       peaks = engine.getPeaks(); 
        List<ECCluster> clusters = engine.getClusters();
        
        if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
@@ -673,16 +673,16 @@ public class ECt extends DetectorMonitor {
                          adc   = 10000*add[i]/(float)gain.getDoubleValue("gain", is, il+i, ip);
                 	   }
                 	   
-                       float vel=c; 
-                       if(Math.abs(pid)==211) vel=Math.abs(beta*c); //use EB beta for pion calibration residuals
-                       
                 	   float vcorr = STT - phase + TVOffset;  // phase=0 unless STT is not phase corrected (early engineering runs)
-                	   float pcorr = path/vel;
                        float tvcor = tu  - vcorr;
+                       float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots and neutral residuals
+              	   
+                       float vel=c; 
+                       if(Math.abs(pid)==211 || Math.abs(pid)==2212) vel=Math.abs(beta*c); //use EB beta for pion or proton calibration residuals                       
+                       
+                	   float pcorr = path/vel;
                        float resid = tvcor - pcorr; 
-                       
-                       float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots
-                       
+                                               
                 	   float  radc = (float) Math.sqrt(adc);                	   
                        float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                                               
@@ -718,7 +718,7 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET+(isMC?50:0),leff);  	
                        } 
-                       if(pid==11)                     ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)).get(is-1)).fill(mybet);  
+                       if(pid==11)                     ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet);  
                        if(Math.abs(pid)==211)          ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
                        if(pid==22||pid==2112)          ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet);                         
                    } 
@@ -916,7 +916,7 @@ public class ECt extends DetectorMonitor {
                   fitter.setRange(-10,10); fitter.fitSlicesY(); 
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
                   g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
-                  GraphErrors mean = new GraphErrors("RESIDUAL_"+is+"_"+il+" "+iv,g1.getVectorX().getArray(),
+                  GraphErrors mean = new GraphErrors("RESIDUAL_"+is+"-"+il+" "+iv,g1.getVectorX().getArray(),
                 		                                                          g1.getVectorY().getArray(),
                 		                                                          new double[g1.getDataSize(0)],
                 		                                                          g2.getVectorY().getArray()); 
@@ -1046,7 +1046,7 @@ public class ECt extends DetectorMonitor {
                   fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,8,run).getData(3*il+iv).get(0));
                   fitter.setRange(-20,15); fitter.fitSlicesY();
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
-                  GraphErrors mean = new GraphErrors("TMF_"+is+"_"+il+" "+iv,g1.getVectorX().getArray(),
+                  GraphErrors mean = new GraphErrors("TMF-"+is+"-"+il+" "+iv,g1.getVectorX().getArray(),
                 		                                                     g1.getVectorY().getArray(),
                 		                                                     new double[g1.getDataSize(0)],
                 		                                                     new double[g1.getDataSize(0)]); 
