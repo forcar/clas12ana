@@ -29,6 +29,7 @@ public class FitData {
 	public int integral;
 	public int intmin=30;
 	public int fitcol=4;
+	public String f_optstat="1110";
 	public String g_optstat="1100";
 	public String h_optstat="100";
 	public Boolean doFit = false;
@@ -43,7 +44,8 @@ public class FitData {
 			                       "[a]+[b]*cos(x*[c])",
 			                       "[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])",
 			                       "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5",
-			                       "[sf1]*(1+[sf3]/x+[sf4]/x/x)"};
+                                   "[sf1]*(1+[sf3]/x+[sf4]/x/x)",
+                                   "[sf1]*(1+[sf3]*0.1/x+[sf4]*0.001/x/x)"};
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
@@ -120,7 +122,7 @@ public class FitData {
 	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3) ; graph.getFunction().setRange(fmin, fmax);}
 	    if (func==13) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ; graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
 	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
-//	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.020,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
+	    if (func==15) {initFunc(0,0.27); initFunc(1,-0.146); initFunc(2,0.117); graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
 	}
 	
 	public void initFunc(int par, double val) {
@@ -142,6 +144,8 @@ public class FitData {
                       p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
 	    if (func==14) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
                       p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
+	    if (func==15) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
+                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
 	                  
 	    if (func<5) {
 	       amp   = graph.getFunction().getParameter(0);
@@ -151,6 +155,7 @@ public class FitData {
 	      sigmae = graph.getFunction().parameter(2).error();  
 	    }
 	    graph.getFunction().setLineColor(fitcol);
+//	    graph.getAttributes().setOptStat(g_optstat);
 	    graph.getFunction().setOptStat(opt=="Q"?"0":g_optstat);
 	}
 
