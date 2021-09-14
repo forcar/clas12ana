@@ -184,18 +184,18 @@ public class ECperf extends DetectorMonitor {
     public void dstinit(int run) {
     	System.out.println("ECperf:dstinit("+run+")");
 		Mp = 0.93827f;
-        Eb = EB = getBeamEnergy(run);
-        System.out.println("Eb="+Eb+" run="+runNum);
+		Eb = EB = getBeamEnergy(run);
+		System.out.println("Eb="+Eb+" run="+runNum);
 		rfPeriod = 4.008f;       
 		rf_large_integer = 1000;    	
-        rfTable = ebcm.getConstants(run,"/calibration/eb/rf/config");
-        if (rfTable.hasEntry(1, 1, 1)){
-            System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
-            rfPeriod = (float) rfTable.getDoubleValue("clock",1,1,1);
-        }
-        VB = new LorentzVector(0,0,Eb,Eb);
-        VT = new LorentzVector(0,0,0,Mp);    
-    	System.out.println("ECperf:dstinit complete");
+		rfTable = ebcm.getConstants(run,"/calibration/eb/rf/config");
+		if (rfTable.hasEntry(1, 1, 1)){
+			System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
+			rfPeriod = (float) rfTable.getDoubleValue("clock",1,1,1);
+			}
+		VB = new LorentzVector(0,0,Eb,Eb);
+		VT = new LorentzVector(0,0,0,Mp);    
+		System.out.println("ECperf:dstinit complete");	
     }
     
     @Override    
@@ -267,42 +267,41 @@ public class ECperf extends DetectorMonitor {
         fillECtrig(1); 
         
     	e_ecal    = ev.getPART(0.1, 11);      nE = e_ecal.size();
-    	p_ecal    = ev.getPART(0.1, 12);      nP = p_ecal.size();    	
-	    pim_ecal  = ev.getPART(0.005, 212); nPIM = pim_ecal.size(); 
+    	p_ecal    = ev.getPART(0.1, 12);      nP = p_ecal.size();
+    	pim_ecal  = ev.getPART(0.005, 212); nPIM = pim_ecal.size(); 
 	    
-	    if (nE==1)            fillECtrig(2);
-	    if (nE==0)            fillECtrig(3);
-	    if (nPIM>0)           fillECtrig(4);
+    	if (nE==1)            fillECtrig(2);
+    	if (nE==0)            fillECtrig(3);
+    	if (nPIM>0)           fillECtrig(4);
 //	    if (nPIM>0 && nE==0) {fillECtrig(5); fillECpim();} //USE FOR DATA
-	    if (nPIM>0 && nE>0) {fillECtrig(5); fillECpim();}  //USE FOR MC
+    	if (nPIM>0 && nE>0) {fillECtrig(5); fillECpim();}  //USE FOR MC
 	    
-	    if (!makeELEC()) return;
+    	if (!makeELEC()) return;
         
-	    prot_ecal = ev.getPART(0.2,2212);    nPROT = prot_ecal.size();
-	    pbar_ecal = ev.getPART(0.2,2213);    nPBAR = pbar_ecal.size();
-	    pip_ecal  = ev.getPART(0.2, 211);     nPIP = pip_ecal.size();
-	    neut_ecal = ev.getPART(0.001,2112);  nNEUT = neut_ecal.size(); 
-	    phot_ecal = ev.getPART(0.001,22);    nPHOT = phot_ecal.size();
+    	prot_ecal = ev.getPART(0.2,2212);    nPROT = prot_ecal.size();
+    	pbar_ecal = ev.getPART(0.2,2213);    nPBAR = pbar_ecal.size();
+    	pip_ecal  = ev.getPART(0.2, 211);     nPIP = pip_ecal.size();
+    	neut_ecal = ev.getPART(0.001,2112);  nNEUT = neut_ecal.size(); 
+    	phot_ecal = ev.getPART(0.001,22);    nPHOT = phot_ecal.size();
 	    
-        neut_ecal.addAll(phot_ecal); //add photons to neutron list to get beta>0.9 neutrons
-
-		DataGroup ECnm0   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpi0"),getRunNumber());
-        if (ev.pmc.size()==2) {
-	    	double  opa = ev.pmv.get(0).theta(ev.pmv.get(1));
-	    	Vector3 ggc = ev.pmv.get(0).cross(ev.pmv.get(1));
-	    	nm_ggp = (float) Math.toDegrees(Math.atan2(ggc.y(),ggc.x()));  
-	    	if(nm_ggp<0) nm_ggp=-nm_ggp;
-	    	nm_ggp=nm_ggp-90;
-	    	if(nm_ggp<0) nm_ggp=nm_ggp+180;
-	    	
-
-	    	for (Particle p : phot_ecal) {
+    	neut_ecal.addAll(phot_ecal); //add photons to neutron list to get beta>0.9 neutrons
+    	
+    	DataGroup ECnm0   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpi0"),getRunNumber());
+    	if (ev.pmc.size()==2) {
+    		double  opa = ev.pmv.get(0).theta(ev.pmv.get(1));
+    		Vector3 ggc = ev.pmv.get(0).cross(ev.pmv.get(1));
+    		nm_ggp = (float) Math.toDegrees(Math.atan2(ggc.y(),ggc.x()));  
+    		if(nm_ggp<0) nm_ggp=-nm_ggp;
+    		nm_ggp=nm_ggp-90;
+    		if(nm_ggp<0) nm_ggp=nm_ggp+180;
+    		
+    		for (Particle p : phot_ecal) {
 	    		((H1F)ECnm0.getData(4).get(0)).fill(p.getProperty("beta"));    	
-	    	}
-        }
-	    
-	    filterEvent();	
-	    fillHists();
+	    	}	
+    	}
+    	
+    	filterEvent();
+    	fillHists();	
     } 
   
     void filterEvent() {
