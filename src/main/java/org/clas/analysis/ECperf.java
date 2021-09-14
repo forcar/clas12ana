@@ -183,19 +183,19 @@ public class ECperf extends DetectorMonitor {
     
     public void dstinit(int run) {
     	System.out.println("ECperf:dstinit("+run+")");
-		Mp = 0.93827f;
-		Eb = EB = getBeamEnergy(run);
-		System.out.println("Eb="+Eb+" run="+runNum);
-		rfPeriod = 4.008f;       
-		rf_large_integer = 1000;    	
-		rfTable = ebcm.getConstants(run,"/calibration/eb/rf/config");
-		if (rfTable.hasEntry(1, 1, 1)){
-			System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
-			rfPeriod = (float) rfTable.getDoubleValue("clock",1,1,1);
-			}
-		VB = new LorentzVector(0,0,Eb,Eb);
-		VT = new LorentzVector(0,0,0,Mp);    
-		System.out.println("ECperf:dstinit complete");	
+    	Mp = 0.93827f;
+    	Eb = EB = getBeamEnergy(run);
+    	System.out.println("Eb="+Eb+" run="+runNum);
+    	rfPeriod = 4.008f;       
+    	rf_large_integer = 1000;    	
+    	rfTable = ebcm.getConstants(run,"/calibration/eb/rf/config");
+    	if (rfTable.hasEntry(1, 1, 1)){
+    		System.out.println(String.format("RF period from ccdb for run %d: %f",runNum,rfTable.getDoubleValue("clock",1,1,1)));
+    		rfPeriod = (float) rfTable.getDoubleValue("clock",1,1,1);
+    	}
+    	VB = new LorentzVector(0,0,Eb,Eb);
+    	VT = new LorentzVector(0,0,0,Mp);    
+    	System.out.println("ECperf:dstinit complete");
     }
     
     @Override    
