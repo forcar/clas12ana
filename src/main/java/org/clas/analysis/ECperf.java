@@ -1637,25 +1637,26 @@ public class ECperf extends DetectorMonitor {
 		int run = getRunNumber();
 		DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECpip"),run);
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpip"),run);
-		float rmpi = 0.13957f;
 		
 		if (nPIP==1) {
-	        pip_mom  = (float) pip_ecal.get(0).p();
-	        pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
-	        pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
-	        pip_vz   = (float) pip_ecal.get(0).vz();
-	        pip_beta = (float) pip_ecal.get(0).getProperty("beta");
+			pip_mom  = (float) pip_ecal.get(0).p();
+			pip_the  = (float) Math.toDegrees(pip_ecal.get(0).theta());
+			pip_phi  = (float) Math.toDegrees(pip_ecal.get(0).phi());
+			pip_vz   = (float) pip_ecal.get(0).vz();
+			pip_beta = (float) pip_ecal.get(0).getProperty("beta");
+			
+			Vpip           = pip_ecal.get(0).vector();
+			epip_dPhi      = pip_phi - e_phi + 180f;
+			while(epip_dPhi> 180f)epip_dPhi -= 360f;
+			while(epip_dPhi<-180f)epip_dPhi += 360f;
 
-	        Vpip           = pip_ecal.get(0).vector();
-	        epip_dPhi      = pip_phi - e_phi + 180f;
-	        while(epip_dPhi> 180f)epip_dPhi -= 360f;
-	        while(epip_dPhi<-180f)epip_dPhi += 360f;
 			LorentzVector VmissN = new LorentzVector(0,0,0,0); 
 			VmissN.add(VT);
 			VmissN.add(VB);
 			VmissN.sub(Ve);
 			VmissN.sub(Vpip);
 			epip_MM = (float)VmissN.mass2();
+
 			((H2F) dg0.getData(e_sect-1  ).get(0)).fill(epip_MM,e_W);    
 			((H1F) dg0.getData(e_sect-1+6).get(0)).fill(epip_MM);
 			
