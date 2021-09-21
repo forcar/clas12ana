@@ -1,6 +1,0 @@
-#!/bin/sh -f
-
-mvn install:install-file -Dfile=/Users/colesmith/coatjava/lib/services/clas12detector-ec-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-ec -Dpackaging=jar -Dversion=1.0-SNAPSHOT
-mvn install:install-file -Dfile=/Users/colesmith/coatjava/lib/services/clas12detector-eb-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-eb -Dpackaging=jar -Dversion=1.0-SNAPSHOT
-mvn install:install-file -Dfile=/Users/colesmith/coatjava/lib/clas/coat-libs-6.6.5-SNAPSHOT.jar -DgroupId=org.jlab.coat -DartifactId=coat-libs -Dpackaging=jar -Dversion=6.6.5-SNAPSHOT
- 
