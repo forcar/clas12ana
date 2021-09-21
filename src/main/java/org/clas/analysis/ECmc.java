@@ -53,7 +53,6 @@ public class ECmc extends DetectorMonitor {
         engine.setCalRun(10);  
         
         eb.getCCDB(10);
-        eb.setThresholds("Pizero",engine);
         eb.setGeom("2.5");
         eb.isMC = true;
         
@@ -68,7 +67,7 @@ public class ECmc extends DetectorMonitor {
     	Fits.clear();
     	FitSummary.clear();
     	tl.Timeline.clear();
-    	slider.setValue(0);
+    	runslider.setValue(0);
     }  
     
     @Override

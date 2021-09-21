@@ -43,7 +43,7 @@ public class ECmc1 extends DetectorMonitor {
         setDetectorTabNames("CLUSTERS","RECGEN","EFFICIENCY","SF");
 
         this.use123Buttons(true);
-        this.useSliderPane(true);
+        this.useZSliderPane(true);
 
         this.init();
         this.localinit();
@@ -60,7 +60,6 @@ public class ECmc1 extends DetectorMonitor {
         engine.setCalRun(11);  
         
         ebmce.getCCDB(11);
-        ebmce.setThresholds("Pizero",engine);
         ebmce.setGeom("2.5");
         ebmce.setGoodPhotons(12);
         ebmce.setMCpid(22);
@@ -80,7 +79,7 @@ public class ECmc1 extends DetectorMonitor {
     	Fits.clear();
     	FitSummary.clear();
     	tl.Timeline.clear();
-    	slider.setValue(0);
+    	runslider.setValue(0);
     }  
     
     @Override
@@ -287,10 +286,11 @@ public class ECmc1 extends DetectorMonitor {
  	
 //	    	if(!ebmce.hasStartTime) dropBanks(de);  //drop ECAL banks and re-run ECEngine            
         	if(!ebmce.processDataEvent(de)) return;
+        	
         	float stt = ebmce.starttime;  
         	
             List<DetectorParticle> par = ebmce.eb.getEvent().getParticles(); 
-        	List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList(); //needed for calorimeter specific responses
+        	List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList(); 
         	
         	if(dumpFiles) {ebmce.getRECBanks(de,ebmce.eb); writer.writeEvent(de);}
         	
@@ -322,24 +322,27 @@ public class ECmc1 extends DetectorMonitor {
         	}
         	       	
         	List<Particle> plist = new ArrayList<Particle>(); 
-        	
+      	
         	for (DetectorParticle dp : par) { // make list of neutral Particle objects 
-		        if(dp.getSector(DetectorType.ECAL)==2) {
-			    	if(!ebmce.hasStartTime && dp.getPid()==2112) {// this repairs zero momentum neutrons from non-PCAL seeded neutrals
-			    		double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
-			    		Vector3D vec = dp.getHit(DetectorType.ECAL).getPosition(); vec.unit(); 			    		
-			    		dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
-			    		dp.setPid(22);
-			    	}
-			    	//SF corrected Particle energy from DetectorParticle
-			    	if (dp.getPid()==22) {Particle p = dp.getPhysicsParticle(22); p.setProperty("beta",dp.getBeta()); plist.add(p); npart++;}
+//        		System.out.println(trsec+" "+dp.getSector(DetectorType.ECAL)+" "+ebmce.hasStartTime+" "+dp.getPid()+" "+dp.getBeta()+" "+dp.getEnergy(DetectorType.ECAL));
+		        if(dp.getSector(DetectorType.ECAL)!=trsec && dp.getPid()==22) { npart++;
+			    if(!ebmce.hasStartTime && dp.getPid()==2112) {// this repairs zero momentum neutrons from non-PCAL seeded neutrals
+	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
+			    	Vector3D vec = new Vector3D() ; vec.copy(dp.getHit(DetectorType.ECAL).getPosition()); vec.unit(); 			    		
+ 			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
+ 			    	dp.setPid(22);
+ 			    }
+		    	//SF corrected Particle energy from DetectorParticle
+			    Particle p = dp.getPhysicsParticle(22); p.setProperty("beta",dp.getBeta()); plist.add(p);
 		        }
- 			}        	
+ 			}
         	
         	for (DetectorParticle dp : par) { // make list of neutral Particle objects 
         		float em = (float) (dp.getEnergy(DetectorType.ECAL));
         		float  e = (float) (em/ebmce.getSF(dp));
-        		if(dp.getSector(DetectorType.ECAL)==2 && e>ethresh && dp.getPid()==22) { npp++; dgm.fill("sf1", em, em/refP); if(refTH<8) {dgm.fill("sf2", em, em/refP);}
+        		if(dp.getSector(DetectorType.ECAL)==2 && e>ethresh && dp.getPid()==22) {
+        			npp++; dgm.fill("sf1", em, em/refP); if(refTH<8) {dgm.fill("sf2", em, em/refP);
+        		}
         			for (DetectorResponse dr : dp.getDetectorResponses()) {
         				if(dr.getDescriptor().getType()==DetectorType.ECAL && dr.getDescriptor().getSector()==2) {		        		
         					if(e>ethresh) {

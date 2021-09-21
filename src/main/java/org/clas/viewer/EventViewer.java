@@ -48,8 +48,10 @@ import org.clas.analysis.ECmc2;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
+import org.clas.analysis.ECscaler;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
+import org.clas.tools.DataSourceProcessorPane;
 import org.clas.analysis.ECcalib;
 
 import org.jlab.detector.decode.CLASDecoder4;
@@ -71,7 +73,7 @@ import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
 import org.jlab.io.task.DataSourceProcessor;
-import org.jlab.io.task.DataSourceProcessorPane;
+//import org.jlab.io.task.DataSourceProcessorPane;
 import org.jlab.io.task.IDataEventListener;
 import org.jlab.utils.groups.IndexedTable;
 import org.jlab.utils.system.ClasUtilsFile;
@@ -89,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6,cf7,cf8 = null;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6,cf7,cf8,cf9 = null;   
     JCheckBoxMenuItem                                   ctr = null;  
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
@@ -137,6 +139,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean       TLflag = false;
     public Boolean        clear = true; 
     public Integer        TRpid = 11;
+    public Boolean       isNorm = false;
     
     public JFileChooser      fc = null; 
     
@@ -169,32 +172,36 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	createPanels();
    	    String dir = ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4");
         schemaFactory.initFromDirectory(dir);
+        System.out.println("EventViewer init complete");
     }
     
     public void createMonitors(String[] args) {
-    	
         workDir = FileSystemView.getFileSystemView().getHomeDirectory().toString()+"/CLAS12ANA/";
+    	System.out.println("EventViewer.createMonitors: workDir="+workDir);
      	monitors = new DetectorMonitor[args.length==0 ? 1:args.length];
         int n = 0;
     	if (args.length != 0) {
         	for(String s : args) { 
         	   switch (s) {
-      	         case     "ECa": monitors[n++]=new ECa(s);    break;  
-    	         case    "ECsf": monitors[n++]=new ECsf(s);   break; 
-        	     case     "ECt": monitors[n++]=new ECt(s);    break;
-        	     case   "ECmip": monitors[n++]=new ECmip(s);  break; 
-        	     case "ECcalib": monitors[n++]=new ECcalib(s);break; 
-        	     case   "ECpi0": monitors[n++]=new ECpi0(s);  break;
-        	     case  "ECperf": monitors[n++]=new ECperf(s); break;
-        	     case    "ECmc": monitors[n++]=new ECmc(s);   break;
-        	     case  "ECelas": monitors[n++]=new ECelas(s); 
+      	         case      "ECa": monitors[n++]=new ECa(s);    break;  
+    	         case     "ECsf": monitors[n++]=new ECsf(s);   break; 
+        	     case      "ECt": monitors[n++]=new ECt(s);    break;
+        	     case    "ECmip": monitors[n++]=new ECmip(s);  break; 
+        	     case  "ECcalib": monitors[n++]=new ECcalib(s);break; 
+        	     case    "ECpi0": monitors[n++]=new ECpi0(s);  break;
+        	     case   "ECperf": monitors[n++]=new ECperf(s); break;
+        	     case     "ECmc": monitors[n++]=new ECmc(s);   break;
+        	     case "ECscaler": monitors[n++]=new ECscaler(s);   break;
+        	     case   "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
+//    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
+    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
-    		monitors[n] = new ECmc2("ECmc2");
+ //   		monitors[n] = new ECmc2("ECmc2");
 //    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -305,6 +312,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
         
+        menu   	= new JMenu("Scalers");
+        cf9 = new JCheckBoxMenuItem("Normalize");  cf9.addItemListener(this);  ; menu.add(cf9);
+
         menuBar.add(menu);
     
     }
@@ -379,6 +389,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf6) unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf7)  dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf8)  dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf9)       isNorm = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
@@ -408,6 +419,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
+                                                   this.monitors[k].isNorm      = isNorm;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);
                                                    this.monitors[k].setDbgECEngine(dbgECEngine);
@@ -551,6 +563,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         return (bank!=null) ? bank.getInt("event", 0): this.eventNumber;
     }
     
+    private int getTotalEvents() {
+    	return processorPane.getNevents();
+    }
+    
     private boolean isGoodRun(int run) {
     	if( runList.isEmpty()) {runList.add(this.runNumber); return true;}
     	if(!runList.isEmpty()) {
@@ -629,10 +645,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
            	this.monitors[k].localclear();
            	this.monitors[k].initCCDB(this.runNumber);
            	this.monitors[k].initEBCCDB(this.runNumber);
+            this.monitors[k].setTotalEvents(getTotalEvents());
         	this.monitors[k].createHistos(this.runNumber);
-            this.monitors[k].initGStyle();
+            this.monitors[k].initGStyle(18);
             this.monitors[k].plotHistos(this.runNumber);
-            this.monitors[k].arBtn.setSelected(true);         
+            this.monitors[k].arBtn.setSelected(true);    
             if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
         } 
         
@@ -806,9 +823,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
             this.monitors[k].createHistos(runNumber);  
+            this.monitors[k].initGStyle(18);
             this.monitors[k].initCCDB(runNumber);
             this.monitors[k].initEBCCDB(runNumber);
-            this.monitors[k].initGStyle();
             this.monitors[k].readDataGroup(runNumber,dir);
             if (this.monitors[k].sectorButtons) {this.monitors[k].bS2.doClick();}
             this.monitors[k].arBtn.setSelected(true);   

@@ -75,7 +75,7 @@ public class DataGroupManager {
 	    return detectorLogZ;
     }
     
-    public IndexedList<DataGroup>  getDataGroup(){
+    public IndexedList<DataGroup> getDataGroup(){
         return detectorData;
     }
     
@@ -159,7 +159,7 @@ public class DataGroupManager {
     }
     
     public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, int ... color) {
-	    H1F h1 = new H1F(getName(name),nx,x1,x2);
+	    H1F h1 = new H1F(getName(name),getName(name),nx,x1,x2);
 	    if(tit!="") h1.setTitle(tit);
 	    h1.setTitleX(titx);
 	    int nn=0;
@@ -176,7 +176,7 @@ public class DataGroupManager {
     }
     
     public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, String tity, int ... color) {
-	    H1F h1 = new H1F(getName(name),nx,x1,x2);
+	    H1F h1 = new H1F(getName(name),getName(name),nx,x1,x2);
 	    if(tit!="") h1.setTitle(tit);
 	    h1.setTitleX(titx);  h1.setTitleY(tity);
 	    int nn=0;	    
@@ -184,7 +184,7 @@ public class DataGroupManager {
     	    if(nn==0) h1.setLineColor(col); 
     	    if(nn==1) h1.setFillColor(col);
     	    if(nn==2 && col==1) h1.setOptStat("1000000");
-    	    if(nn==2 && col==2) h1.setOptStat("1000100");
+     	    if(nn==2 && col==2) h1.setOptStat("1000100");
    	        nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
@@ -193,7 +193,7 @@ public class DataGroupManager {
     }    
     
     public void makeH2(String name, int nx, double x1, double x2, int ny, double y1, double y2, int f, String tit, String titx, String tity) {
-	    H2F h2 = new H2F(getName(name),nx,x1,x2,ny,y1,y2);
+	    H2F h2 = new H2F(getName(name),getName(name),nx,x1,x2,ny,y1,y2);
 	    if(tit!="") h2.setTitle(tit);
 	    h2.setTitleX(titx); h2.setTitleY(tity);
 	    dg.addDataSet(h2, n++);

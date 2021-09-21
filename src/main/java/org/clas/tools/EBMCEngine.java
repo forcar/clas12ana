@@ -33,7 +33,7 @@ import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
 import org.jlab.service.eb.EBTBEngine;
 import org.jlab.service.eb.EventBuilder;
-import org.jlab.service.ec.ECEngine;
+import org.clas.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 
 public class EBMCEngine extends EBEngine {
@@ -95,7 +95,6 @@ public class EBMCEngine extends EBEngine {
     String particleBank     = "REC::Particle";
     String calorimeterBank  = "REC::Calorimeter";  
     
-    private EmbeddedCanvasTabbed      detectorCanvas = null;  
     private ArrayList<String>       detectorTabNames = new ArrayList();
     
     String trackType        = null;    
@@ -106,7 +105,6 @@ public class EBMCEngine extends EBEngine {
     public EBMCEngine() {  
     	super("EBMC");  
     	initBankNames();
-    	detectorCanvas = new EmbeddedCanvasTabbed();
     }
     
     @Override
@@ -140,26 +138,6 @@ public class EBMCEngine extends EBEngine {
     public void setTrajectoryType(String trajectoryType) {
         this.trajectoryType = trajectoryType;
     }    
-    
-    public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
-        detectorCanvas = canvas;
-    }
-    
-    public void setDetectorTabNames(String... names) {
-        for(String name : names) {
-            detectorTabNames.add(name);
-        }
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed(names);
-        setDetectorCanvas(canvas);
-    }
-    
-    public EmbeddedCanvasTabbed getDetectorCanvas() {
-        return detectorCanvas;
-    }
-    
-    public ArrayList<String> getDetectorTabNames() {
-        return detectorTabNames;
-    }
     
     public void getCCDB(int runno) {
     	System.out.println("EBMC.setCCDB("+runno+")");
@@ -420,8 +398,9 @@ public class EBMCEngine extends EBEngine {
     	Particle p1 = list.get(0);  //Photon 1
         Particle p2 = list.get(1);  //Photon 2
     	
-    	Vector3 n1 = p1.vector().vect(); n1.unit();
-        Vector3 n2 = p2.vector().vect(); n2.unit();
+        Vector3 n1 = new Vector3(); Vector3 n2 = new Vector3();
+        n1.copy(p1.vector().vect()); n2.copy( p2.vector().vect());
+        n1.unit(); n2.unit();
                 
         double e1 = p1.e();
         double e2 = p2.e();           
@@ -562,23 +541,6 @@ public class EBMCEngine extends EBEngine {
         }
     }
     
-    public void setThresholds(String part, ECEngine engine) {
-    	switch (part) {
-    	case "Electron_lo":engine.setStripThresholds(10,10,10);
-                           engine.setPeakThresholds(30,30,30);
-                           engine.setClusterCuts(7,15,20); break;    		
-    	case "Electron_hi":engine.setStripThresholds(20,50,50);
-                           engine.setPeakThresholds(40,80,80);
-                           engine.setClusterCuts(7,15,20); break;    		
-    	case      "Pizero":engine.setStripThresholds(10,9,8);  
-                           engine.setPeakThresholds(18,20,15); 
-                           engine.setClusterCuts(7,15,20); break;
-    	case        "Test":engine.setStripThresholds(10,9,8);  
-                           engine.setPeakThresholds(18,20,15); 
-                           engine.setClusterCuts(7,6,6); 
-    	}
-    }
-    
     public void dumpGraph(String filename, GraphErrors graph) {
     	PrintWriter writer = null;
 		try 
@@ -601,22 +563,6 @@ public class EBMCEngine extends EBEngine {
         if(event.hasBank("ECAL::calib"))    event.removeBank("ECAL::calib");
         if(event.hasBank("ECAL::moments"))  event.removeBank("ECAL::moments");  	
     }   
-    
-    public void initGraphics() {
-        GStyle.getAxisAttributesX().setTitleFontSize(18);
-        GStyle.getAxisAttributesX().setLabelFontSize(18);
-        GStyle.getAxisAttributesY().setTitleFontSize(18);
-        GStyle.getAxisAttributesY().setLabelFontSize(18);
-        GStyle.getAxisAttributesZ().setLabelFontSize(18); 
-        GStyle.getAxisAttributesX().setAxisGrid(false);
-        GStyle.getAxisAttributesY().setAxisGrid(false);
-        GStyle.getAxisAttributesX().setLabelFontName("Avenir");
-        GStyle.getAxisAttributesY().setLabelFontName("Avenir");
-        GStyle.getAxisAttributesZ().setLabelFontName("Avenir");
-        GStyle.getAxisAttributesX().setTitleFontName("Avenir");
-        GStyle.getAxisAttributesY().setTitleFontName("Avenir");
-        GStyle.getAxisAttributesZ().setTitleFontName("Avenir");
-    }
 
 }
     

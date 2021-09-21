@@ -31,10 +31,10 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataBank;
 
-import org.jlab.service.ec.ECCluster;
-import org.jlab.service.ec.ECEngine;
-import org.jlab.service.ec.ECPeak;
-import org.jlab.service.ec.ECStrip;
+import org.clas.service.ec.ECCluster;
+import org.clas.service.ec.ECEngine;
+import org.clas.service.ec.ECPeak;
+import org.clas.service.ec.ECStrip;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 
@@ -150,7 +150,7 @@ public class ECt extends DetectorMonitor {
     	Fits.clear();
     	FitSummary.clear();
     	tl.Timeline.clear();    	   	
-    	slider.setValue(0);
+    	runslider.setValue(0);
     } 
     
     @Override

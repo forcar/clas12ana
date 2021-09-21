@@ -35,6 +35,7 @@ public class ECelas extends DetectorMonitor {
     }
     
     public void localinit() {
+        System.out.println("ECelas.localinit()");      
         configEngine("elec");     	
     } 
     

@@ -31,7 +31,7 @@ import org.jlab.io.hipo.HipoDataSource;
 import org.jlab.io.hipo3.Hipo3DataSource;
 //import org.jlab.service.eb.EBConstants;
 import org.jlab.service.eb.EBEngine;
-import org.jlab.service.ec.ECEngine;
+import org.clas.service.ec.ECEngine;
 import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.rec.eb.EBCCDBConstants;

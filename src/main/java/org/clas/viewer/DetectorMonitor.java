@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -66,7 +67,7 @@ import org.jlab.io.task.IDataEventListener;
 import org.jlab.rec.eb.EBCCDBConstants;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EventBuilder;
-import org.jlab.service.ec.ECEngine;
+import org.clas.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
@@ -80,7 +81,8 @@ public class DetectorMonitor implements ActionListener {
     public  DataGroupManager                     dgm = new DataGroupManager();
     public  List<Integer>                    runlist = new ArrayList<Integer>();
     public  int                       runIndexSlider = 0;
-    public  JSlider                           slider = null;
+    public  JSlider                        runslider = null;
+    public  JSlider                          yslider = null;
     private DataGroup                detectorSummary = null;
     private DetectorOccupancy      detectorOccupancy = new DetectorOccupancy();
     private JPanel                     detectorPanel = null;
@@ -99,8 +101,10 @@ public class DetectorMonitor implements ActionListener {
     private ButtonGroup                          bG4 = null;
     private ButtonGroup                          bRO = null;
     private int                       numberOfEvents = 0;
+    private int                          totalEvents = 0;
     public  Boolean                    sectorButtons = false;
-    private Boolean                       sliderPane = false;
+    private Boolean                      YsliderPane = false;
+    private Boolean                      ZsliderPane = false;
     private int                     detectorActivePC = 1;
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
@@ -138,6 +142,7 @@ public class DetectorMonitor implements ActionListener {
     
     private int   runNumber = 0;
     public  int    runIndex = 0;
+    public  int      yIndex = 0;
     private int eventNumber = 0;
     private int     viewRun = 0;  
     
@@ -153,7 +158,7 @@ public class DetectorMonitor implements ActionListener {
     
     public ECEngine  engine = new ECEngine();  
 
-    public String variation = "rga_fall2018";
+    public String variation = "default";
     public String      geom = "2.5";
     public String    config = "phot";  //When re-running ECEngine from cooked data this should always be "phot"
 	
@@ -161,19 +166,35 @@ public class DetectorMonitor implements ActionListener {
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
     int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
-//    int[][] sthrPhot = {{10,10,10},{1,9,9},{8,8,8}};
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
     int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
-//    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
     int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
         
     double[] cerrMuon = {5.5,10.,10.};
     double[] cerrPhot = {7.0,15.,20.};
     double[] cerrElec = {10.,10.,10.};  
+    
+    String   ltcc[] = {"L","R"};
+    String   htcc[] = {"L","R"};
+    String   ftof[] = {"PANEL1A_L","PANEL1A_R","PANEL1B_L","PANEL1B_R","PANEL2_L","PANEL2_R"};
+    String   ctof[] = {"U","D"};
+    String    cnd[] = {"Inner","Middle","Outer"};
+    String   band[] = {"1L","1R","2L","2R","3L","3R","4L","4R","5L","5R"};
+    String   ecal[] = {"U","V","W","UI","VI","WI","UO","VO","WO"};
+    int     nltcc[] = {18,18};
+    int     nhtcc[] = {4,4};
+    int     nftof[] = {23,23,62,62,5,5};
+    int     nctof[] = {48,48};
+    int      ncnd[] = {2,2,2};
+    int     nband[] = {24,24,24,24,24,24,24,24,20,20};
+    int     necal[] = {68,62,62,36,36,36,36,36,36};  
+    
+    public TreeMap<String,String[]> layMap = new TreeMap<String,String[]>();
+    public TreeMap<String,int[]>   nlayMap = new TreeMap<String,int[]>();  
     
     private int[] npmt = {68,62,62,36,36,36,36,36,36};    
     
@@ -212,6 +233,7 @@ public class DetectorMonitor implements ActionListener {
     
     public String                 TLname = null;
     public Boolean                TLflag = null;
+    public Boolean                isNorm = null;
     public int                     TLmax = 800;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
@@ -248,7 +270,7 @@ public class DetectorMonitor implements ActionListener {
     
     
     public DetectorMonitor(String name){
-        initGStyle();
+    	initGStyle(18);
         detectorName   = name;
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
@@ -273,10 +295,8 @@ public class DetectorMonitor implements ActionListener {
         TimeSlice.put("HV Slot", 24);
         System.out.println(root+"outPath = "+outPath);
         System.out.println(root+"osType  = "+osType);
-        System.out.println(root+"ebcm.init");
-        ebcm.init(EBCCDBConstants.getAllTableNames());
-        System.out.println(root+"cm.init");
-     	cm.init(Arrays.asList(ccdbTables));
+        System.out.println(root+"ebcm.init"); ebcm.init(EBCCDBConstants.getAllTableNames());
+        System.out.println(root+"cm.init");     cm.init(Arrays.asList(ccdbTables));
     }
     
     public void init() {
@@ -293,6 +313,16 @@ public class DetectorMonitor implements ActionListener {
     	System.out.println(root+"initCCDB("+runNumber+")");
     }
     
+    public void initEPICS() {
+        layMap.put("LTCC",ltcc); nlayMap.put("LTCC", nltcc);
+        layMap.put("HTCC",htcc); nlayMap.put("HTCC", nhtcc);
+        layMap.put("FTOF",ftof); nlayMap.put("FTOF", nftof);
+        layMap.put("CTOF",ctof); nlayMap.put("CTOF", nctof);
+        layMap.put("BAND",band); nlayMap.put("BAND", nband);
+        layMap.put("CND",cnd);   nlayMap.put("CND",  ncnd);
+        layMap.put("ECAL",ecal); nlayMap.put("ECAL", necal);    	
+    }
+    
     public void initEBCCDB(int runNumber) {    
     	System.out.println(root+"initEBCCDB("+runNumber+")");
     	ebccdb = new EBCCDBConstants(runNumber,ebcm);
@@ -307,12 +337,13 @@ public class DetectorMonitor implements ActionListener {
     public void localclear() {    	
     }
     
-    public void initGStyle() {
-        GStyle.getAxisAttributesX().setTitleFontSize(14);
-        GStyle.getAxisAttributesX().setLabelFontSize(14);
-        GStyle.getAxisAttributesY().setTitleFontSize(14);
-        GStyle.getAxisAttributesY().setLabelFontSize(14);
-        GStyle.getAxisAttributesZ().setLabelFontSize(14); 
+    public void initGStyle(int fontsize) {
+
+        GStyle.getAxisAttributesX().setTitleFontSize(fontsize);
+        GStyle.getAxisAttributesX().setLabelFontSize(fontsize);
+        GStyle.getAxisAttributesY().setTitleFontSize(fontsize);
+        GStyle.getAxisAttributesY().setLabelFontSize(fontsize);
+        GStyle.getAxisAttributesZ().setLabelFontSize(fontsize); 
         GStyle.getAxisAttributesX().setAxisGrid(false);
         GStyle.getAxisAttributesY().setAxisGrid(false);
         GStyle.getAxisAttributesX().setLabelFontName("Avenir");
@@ -469,7 +500,10 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       {System.out.println("EVENT_STOP"); analyze(); plotHistos(getRunNumber()); if(autoSave) saveHistosToFile();}
+        case EVENT_STOP:      {processEvent(event); analyze(); 
+                                                    plotHistos(getRunNumber()); 
+                                                    if(autoSave) saveHistosToFile();
+                                                    System.out.println("EVENT_STOP"); }
 	    }
     }
 
@@ -527,7 +561,7 @@ public class DetectorMonitor implements ActionListener {
     	
     }
     
-    public void plotTimeLine(int index) {
+    public void plotTimeLine(String tab) {
     	
     }
      
@@ -582,9 +616,17 @@ public class DetectorMonitor implements ActionListener {
     	useCAL = flag;
     }
     
+    public void useZSliderPane(boolean flag) {
+	    ZsliderPane = flag;
+    } 
+    
+    public void useYSliderPane(boolean flag) {
+	    YsliderPane = flag;
+    } 
+    
     public void useSliderPane(boolean flag) {
-	    sliderPane = flag;
-    }    
+	     useZSliderPane(flag);
+    } 
     
     public void usePCCheckBox(boolean flag) {
         usePC = flag;
@@ -622,6 +664,10 @@ public class DetectorMonitor implements ActionListener {
         return numberOfEvents;
     }
     
+    public int getTotalEvents() {
+    	return totalEvents;
+    }
+    
     public void setLogY(boolean flag) {
 	    detectorLogY = flag;
 	    dgm.detectorLogY = flag;
@@ -643,8 +689,9 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public JPanel packActionPanel() {
-        if (use123||useUVW) actionPanel.add(getButtonPane()); 
-        if     (sliderPane) actionPanel.add(getSliderPane());
+        if (use123||useUVW) actionPanel.add(getButtonPane());
+        if    (YsliderPane) actionPanel.add(getYSliderPane());
+        if    (ZsliderPane) actionPanel.add(getZSliderPane());
     	return actionPanel;
     }
     
@@ -724,19 +771,20 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-                   slider = new JSlider(JSlider.HORIZONTAL, 0, TLmax-1, 0); 
+                runslider = new JSlider(JSlider.HORIZONTAL, 1, TLmax+1, 1); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
-        sliderPane.add(slider);
+        sliderPane.add(runslider);
         sliderPane.add(label);
-        slider.setPreferredSize(new Dimension(1200,10));
-        slider.addChangeListener(new ChangeListener() {
+        runslider.setPreferredSize(new Dimension(TLmax+1,10));
+        runslider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 JSlider slider = (JSlider) e.getSource(); 
                 runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size()-1:slider.getValue();
-                int run = runlist.get(runIndexSlider);
+                int run = runlist.get(runIndexSlider-1);                
                 label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
                 plotHistos(run);
+                plotScalers();
             }
         });     
         JButton button = new JButton("Blink Run");
@@ -745,9 +793,30 @@ public class DetectorMonitor implements ActionListener {
         return sliderPane;
     }
     
-    public JPanel getSliderPane() {
+    public JPanel getYSliderPane() {
         JPanel sliderPane = new JPanel();
-        JLabel xLabel = new JLabel("Z-Range:");
+        JLabel     xLabel = new JLabel("Y-Range:");    	
+                  yslider = new JSlider(JSlider.HORIZONTAL, 1, 68, 1); 
+        JLabel      label = new JLabel("" + String.format("%d", 1));
+        sliderPane.add(xLabel);
+        sliderPane.add(yslider);
+        sliderPane.add(label);        
+        yslider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                JSlider slider = (JSlider) e.getSource(); 
+                int yIndexSlider = slider.getValue();               
+                label.setText(String.valueOf(""+String.format("%d", yIndexSlider)));
+                setYIndex(yIndexSlider);
+                plotTimeLine("TimeLine");
+            }
+        });     
+
+        return sliderPane;        
+    }
+    
+    public JPanel getZSliderPane() {
+        JPanel sliderPane = new JPanel();
+        JLabel     xLabel = new JLabel("Z-Range:");
         RangeSlider rslider = new RangeSlider();
         rslider.setMinimum((int) slideMin);
         rslider.setMaximum((int) slideMax);
@@ -797,10 +866,11 @@ public class DetectorMonitor implements ActionListener {
         if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
         if(bRO!=null) detectorActiveRDIF   = Integer.parseInt(bRO.getSelection().getActionCommand());
         plotHistos(getRunNumber());
+        plotScalers();
     } 
     
     public void BlinkRunAction() {
-    	BlinkRuns.add(slider.getValue());
+    	BlinkRuns.add(runslider.getValue());
     	if(BlinkRuns.size()==2) {stopBlink=false; doBlink();}
     	if(BlinkRuns.size()==3) {stopBlink=true;  timer.cancel(); timer=null; BlinkRuns.clear();}
     }
@@ -812,7 +882,7 @@ public class DetectorMonitor implements ActionListener {
     	    public synchronized void run() {     
     	        if(!stopBlink) {
     	           ntimer=(ntimer==0)?1:0;   	          
-    	           slider.setValue(BlinkRuns.get(ntimer));
+    	           runslider.setValue(BlinkRuns.get(ntimer));
     	        }
     		}
     	};
@@ -828,6 +898,10 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void plotHistos(int run) {
+
+    }    
+    
+    public void plotScalers() {
 
     }
         
@@ -888,12 +962,20 @@ public class DetectorMonitor implements ActionListener {
        numberOfEvents = num;
     }
     
+    public void setTotalEvents(int num) {
+        totalEvents = num;
+    }
+         
     public void setEventNumber(int num) {
        eventNumber = num;
     }
 
     public void setRunNumber(int num) {
        runNumber = num;
+    }
+    
+    public void setYIndex(int num) {
+    	yIndex = num;
     }
     
     public int getEventNumber() {
@@ -906,6 +988,10 @@ public class DetectorMonitor implements ActionListener {
     
     public int getRunIndex() {
     	return runIndexSlider;
+    }
+    
+    public int getYIndex() {
+    	return yIndex;
     }
     
     public float getBeamEnergy(int run) { 
@@ -1030,6 +1116,13 @@ public class DetectorMonitor implements ActionListener {
     public void writeScript(String table) {   	
     }
     
+// CANVAS HELPERS
+    
+    public EmbeddedCanvas getCanvas(String tabname) {
+    	int index = getDetectorTabNames().indexOf(tabname);
+    	return getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+    }
+        
 // HISTO HELPERS    
     
     public H1F makeH1(String name, String tag, int nx, double x1, double x2, String tit, String titx, int ... color) {

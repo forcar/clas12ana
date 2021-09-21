@@ -29,7 +29,7 @@ import org.jlab.groot.math.F1D;
 import org.jlab.groot.tree.TreeFile;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.service.ec.ECStrip;
+import org.clas.service.ec.ECStrip;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 
@@ -108,7 +108,7 @@ public class ECpi0 extends DetectorMonitor{
     	runlist.clear();
     	Fits.clear();
     	tl.Timeline.clear();
-    	slider.setValue(0);
+    	runslider.setValue(0);
     } 
     public void initPART(int run) {
         part.setGeom("2.5");  

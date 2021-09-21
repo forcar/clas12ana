@@ -45,7 +45,7 @@ import org.jlab.service.eb.EBAnalyzer;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
 import org.jlab.service.eb.EBTBEngine;
-import org.jlab.service.ec.ECEngine;
+import org.clas.service.ec.ECEngine;
 import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.rec.eb.EBCCDBConstants;
@@ -929,13 +929,14 @@ public class ECPart extends EBTBEngine {
     	
         HipoDataSource reader = new HipoDataSource();
         ECEngine       engine = new ECEngine();
-        List<DetectorParticle> np = new ArrayList<DetectorParticle>();
+        
+        JFrame frame = new JFrame("Neutron Reconstruction");
+        frame.setSize(800,800);
+        
+        EmbeddedCanvas c = new EmbeddedCanvas(); 
         
         String evioPath = "/Users/colesmith/clas12/sim/neutron/hipo/";
-//        String evioFile = "fc-neut-80k-s2-r5424-nopcal-noftof.hipo"; 
-        String evioFile = "junkk.hipo"; 
-        
-        int sec=2;
+        String evioFile = "fc-neut-80k-s2-r5424.hipo";
         
         if (args.length == 0) { 
             reader.open(evioPath+evioFile);
@@ -944,16 +945,20 @@ public class ECPart extends EBTBEngine {
             reader.open(inputFile);
         } 
         
-        H1F  h1 = new H1F("h1",50,0.,3);   h1.setTitle("GEN"); h1.setTitleX("GEN P (GeV)");
-        H1F  h2 = new H1F("h2",50,0.,3);   h2.setTitle("REC"); h2.setTitleX("GEN P (GeV)");
-        H1F  h3 = new H1F("h3",50,0.,3);   h3.setTitle("REC NO PCAL"); h3.setTitleX("GEN P (GeV)");
-        H1F  h4 = new H1F("h4",50,0.,3);   h1.setTitleX("MC Neutron P(MeV)");
-        H1F  h5 = new H1F("h5",10,0,10);   h2.setTitleX("Number of neutrons");
-       
-        h3.setLineColor(2);
-        
+        H1F  h1 = new H1F("h1",50,0.,3);   
+        H1F  h2 = new H1F("h2",50,0.,3);  
+        H1F  h3 = new H1F("h3",50,0.,3);   
+        H1F  h4 = new H1F("h4",50,0.,3);   
+        H1F  h5 = new H1F("h5",10,0,10);          
+        H2F  h6 = new H2F("h6",50,0,3,100,0,1000); 
+        H2F  h7 = new H2F("h7",50,0,3,100,0,1000); 
+        H2F  h8 = new H2F("h8",50,0,3,10,1,11);
+        H2F  h9 = new H2F("h9",50,0,3,10,1,11);
+        H1F h10 = new H1F("h10",50,0,2200);
+        H1F h11 = new H1F("h11",50,0,2200);
+            
         engine.init();
-        engine.setOccMax(10000);
+        engine.setOccMax(100000);
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
@@ -973,35 +978,57 @@ public class ECPart extends EBTBEngine {
             
        		h1.fill(refP);
        		
-   			boolean n1=true, n2=true; np.clear();
+   			boolean n1=true, n2=true; float en=0; int np=0;
+       		boolean goodpc=false, goodeci=false, goodeco=false;
        		
-       		for (DetectorParticle neut : getNeutralPart()) {           			
+       		for (DetectorParticle neut : getNeutralPart()) { np++;          			
        			for (DetectorResponse ds : neut.getDetectorResponses()) { 
        				if (ds.getDescriptor().getType()==DetectorType.ECAL) {      					
        					if(n1 && ds.getDescriptor().getLayer()>0) {h2.fill(refP); n1=false;} //PCAL+ECAL
        					if(n2 && ds.getDescriptor().getLayer()>1) {h3.fill(refP); n2=false;} //ECAL ONLY
+       					en+=ds.getEnergy()*1e3;
+       					if(ds.getDescriptor().getLayer()==1) goodpc=true;
+       					if(ds.getDescriptor().getLayer()==4) goodeci=true;
+       					if(ds.getDescriptor().getLayer()==7) goodeco=true;       					
         			}          		
       			}
        		}       			
-       	}	
+            if(en>0)                     {h6.fill(refP,en);h8.fill(refP, np);h10.fill(1e3*(refE-0.93957));}
+            if(goodpc&&goodeci&&goodeco) {h7.fill(refP,en);h9.fill(refP, np);h11.fill(1e3*(refE-0.93957));}
+        }
         
-        JFrame frame = new JFrame("Neutron Reconstruction");
-        frame.setSize(800,800);
+        H1F h21 = H1F.divide(h2,h1); H1F h31 = H1F.divide(h3,h1);  
+
+        h1.setTitle("GRN:GEN    BLK:REC    RED:ECAL ONLY"); h1.setTitleX("GEN P (GeV)"); h1.setTitleY("COUNTS");
+        h1.setFillColor(3);h1.setLineColor(3); h2.setFillColor(1); h3.setFillColor(2); h3.setLineColor(2);        
         
-        EmbeddedCanvas canvas = new EmbeddedCanvas();
-        
-        canvas.divide(2,2);
-        canvas.cd(0);  canvas.draw(h1);  canvas.draw(h2,"same"); canvas.draw(h3,"same"); 
-        H1F h21 = H1F.divide(h2,h1); h21.setLineColor(1); h21.setTitleY("Neutron Eff"); h21.setTitleX("GEN P (GeV)");
-        H1F h31 = H1F.divide(h3,h1); h31.setLineColor(2); h31.setTitleY("Neutron Eff"); h31.setTitleX("GEN P (GeV)");      
-        canvas.cd(1);  canvas.draw(h21.getGraph()); canvas.draw(h31.getGraph(),"same");
-        
+        h21.setTitle("BLK:REC    RED:ECAL ONLY");h21.setTitleX("GEN P (GeV)"); h21.setTitleY("EFFICIENCY"); 
+        h6.setTitle("ANY LAYER");h6.setTitleX("GEN P (GeV)");h6.setTitleY("REC E (MeV)");
+        h7.setTitle("PCAL+ECIN+ECOU");h7.setTitleX("GEN P (GeV)");h7.setTitleY("REC E (MeV)");
+        h8.setTitleX("GEN P (GeV)"); h8.setTitleY("REC NEUTRONS");
+        h9.setTitleX("GEN P (GeV)"); h9.setTitleY("REC NEUTRONS");
+        h10.setTitleX("GEN K.E. (MeV)"); h11.setTitleX("GEN K.E. (MeV)");
+        GraphErrors g21 = h21.getGraph(); GraphErrors g31 = h31.getGraph();
+        g21.setTitle(h21.getTitle());g21.setTitleX(h21.getTitleX());g21.setTitleY(h21.getTitleY());
+        g21.setMarkerColor(1); g31.setMarkerColor(2); g31.setLineColor(2);
+
+        c.divide(2,4);
+        c.cd(0); c.draw(h1); c.draw(h2,"same"); c.draw(h3,"same"); 
+        c.cd(1); c.getPad().getAxisY().setRange(0, 0.85); c.draw(g21); c.draw(g31,"same");
+        c.cd(2); c.getPad().getAxisZ().setLog(true); c.draw(h6);
+        c.cd(3); c.getPad().getAxisZ().setLog(true); c.draw(h7);
+        c.cd(4); c.getPad().getAxisZ().setRange(1,1000); c.getPad().getAxisZ().setLog(true); c.draw(h8);
+        c.cd(5); c.getPad().getAxisZ().setRange(1,1000); c.getPad().getAxisZ().setLog(true); c.draw(h9);
+        c.cd(6); c.draw(h10);
+        c.cd(7); c.draw(h11);
+              
 //        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/neutronDemo_r"+run+"_h21_nopc_noftof.vec",h21.getGraph());
 //        dumpGraph("/Users/colesmith/CLAS12ANA/ECpart/files/neutronDemo_r"+run+"_h31_nopc_noftof.vec",h31.getGraph());
 
-        frame.add(canvas);
+        frame.add(c);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);  
+        System.out.println("FINISHED");
     }
     
     public void photonDist(String[] args) {
@@ -1653,10 +1680,9 @@ public class ECPart extends EBTBEngine {
             		int ie = bank.getInt("event", i);
             		int ic = bank.getInt("acount", i);
             		int it = bank.getInt("tcount", i);
-            		if(is==2) System.out.println(il+" "+ip+" "+ic+" "+it);
             		if(il>0) {
-            		ha[getLayer(il)].fill(nev, getIndex(is,il,ip),ic);
-            		ht[getLayer(il)].fill(nev, getIndex(is,il,ip),it);
+            			ha[getLayer(il)].fill(nev, getIndex(is,il,ip),ic);
+            			ht[getLayer(il)].fill(nev, getIndex(is,il,ip),it);
             		}
             	}
                 nev++;
@@ -1689,8 +1715,8 @@ public class ECPart extends EBTBEngine {
         int off[] = {0,68,130,0,36,72,0,36,72};
         int sca[] = {192,192,192,216,216,216,216,216,216};
         return is>0 ? (is-1)*sca[il-1]+off[il-1]+ip:0;
-    }
-  	 
+    }  
+    
     public static void main(String[] args){
         ECPart part = new ECPart();  
         part.initGraphics();
@@ -1698,9 +1724,9 @@ public class ECPart extends EBTBEngine {
 //     	part.pizeroDemo(args);
  //    	part.photonDist(args);
 //     	part.photonDemo(args);
-//    	part.neutronDemo(args);
+    	part.neutronDemo(args);
 //        part.electronDemo(args);
-        part.scalerdemo(args);
+//        part.scalerdemo(args);
     }
     
 }

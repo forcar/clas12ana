@@ -86,7 +86,7 @@ public class ECmip extends DetectorMonitor {
         this.useRDIFButtons(true);
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
+        this.useZSliderPane(true);
         this.init();
         this.localinit();
     }
@@ -105,7 +105,7 @@ public class ECmip extends DetectorMonitor {
     	FitSummary.clear();
     	Fits.clear();
     	tl.Timeline.clear();
-    	slider.setValue(0);
+    	runslider.setValue(0);
         engine.setCCDBGain(!defaultGain);
     }
     
