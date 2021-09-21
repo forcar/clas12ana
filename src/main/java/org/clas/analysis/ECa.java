@@ -122,7 +122,7 @@ public class ECa extends DetectorMonitor {
     	Fits.clear();
     	FitSummary.clear();
     	tl.Timeline.clear();
-    	slider.setValue(0);
+    	runslider.setValue(0);
     }
     
     @Override
