@@ -234,11 +234,10 @@ public class DetectorMonitor implements ActionListener {
     public String                 TLname = null;
     public Boolean                TLflag = null;
     public Boolean                isNorm = null;
-    public int                     TLmax = 800;
+    public int                     TLmax = 1000;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
     
-//    public CalibrationConstants    calib = null;
     public ConstantsManager           cm = new ConstantsManager();
     public ConstantsManager         ebcm = new ConstantsManager();
     public EBCCDBConstants        ebccdb = null;
@@ -247,7 +246,9 @@ public class DetectorMonitor implements ActionListener {
     public float                logParam = 2f;
     public String                   root = " ";
     public String                 osType = " ";
-    int ntimer = 0;
+    int                           ntimer = 0;
+    public int                   normrun = 0;
+    public int                   normrng = 0;
     
 	Map<String,Object[]> map = new HashMap<String,Object[]>();
     Object[] can = {false, false, 0, 0, 0, 0};
@@ -503,7 +504,7 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_STOP:      {processEvent(event); analyze(); 
                                                     plotHistos(getRunNumber()); 
                                                     if(autoSave) saveHistosToFile();
-                                                    System.out.println("EVENT_STOP"); }
+                                                    System.out.println("DectectorMonitor:EVENT_STOP"); }
 	    }
     }
 
@@ -771,25 +772,38 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-                runslider = new JSlider(JSlider.HORIZONTAL, 1, TLmax+1, 1); 
         JLabel      label = new JLabel("" + String.format("%d", 0));
+ 
+        runslider         = new JSlider(JSlider.HORIZONTAL, 1, TLmax+2, 1); 
+        runslider.setPreferredSize(new Dimension(TLmax+1,10));
+
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(runslider);
-        sliderPane.add(label);
-        runslider.setPreferredSize(new Dimension(TLmax+1,10));
+        sliderPane.add(label);       
         runslider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 JSlider slider = (JSlider) e.getSource(); 
-                runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size()-1:slider.getValue();
-                int run = runlist.get(runIndexSlider-1);                
-                label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
-                plotHistos(run);
-                plotScalers();
+                if(runlist.size()!=0) {
+                	runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size():slider.getValue();
+                	int run = runlist.get(runIndexSlider-1);
+                    label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
+                    plotScalers(run);
+                    plotHistos(run);
+                } else {
+                	runIndexSlider = slider.getValue();
+                	label.setText(String.valueOf(""+String.format("%d", runIndexSlider)));
+                }
             }
-        });     
-        JButton button = new JButton("Blink Run");
-        button.addActionListener(this);
-        sliderPane.add(button);
+        });  
+        
+        JButton button1 = new JButton("Blink Run");
+        button1.addActionListener(this);
+        sliderPane.add(button1);
+        
+        JButton button2 = new JButton("Norm Run");
+        button2.addActionListener(this);
+        sliderPane.add(button2);
+        
         return sliderPane;
     }
     
@@ -858,6 +872,7 @@ public class DetectorMonitor implements ActionListener {
     
     public void actionPerformed(ActionEvent e) {
     	if(e.getActionCommand().compareTo("Blink Run")==0)  BlinkRunAction();
+    	if(e.getActionCommand().compareTo("Norm Run")==0)   NormRunAction();
     	if(bG0!=null) detectorActivePC     = Integer.parseInt(bG0.getSelection().getActionCommand()); 
         if(bT0!=null) detectorActivePID    = Integer.parseInt(bT0.getSelection().getActionCommand()); 
         if(bG1!=null) detectorActiveSector = Integer.parseInt(bG1.getSelection().getActionCommand());
@@ -865,9 +880,19 @@ public class DetectorMonitor implements ActionListener {
         if(bG3!=null) detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
         if(bRO!=null) detectorActiveRDIF   = Integer.parseInt(bRO.getSelection().getActionCommand());
+        plotScalers(getRunNumber());
         plotHistos(getRunNumber());
-        plotScalers();
     } 
+    
+    public void NormRunAction() {
+    	normrun = runIndexSlider;
+    	normrng = (int) zMaxLab; 
+    	NormRunFunction();    	
+    }
+    
+    public void NormRunFunction() {
+    	
+    }
     
     public void BlinkRunAction() {
     	BlinkRuns.add(runslider.getValue());
@@ -901,7 +926,7 @@ public class DetectorMonitor implements ActionListener {
 
     }    
     
-    public void plotScalers() {
+    public void plotScalers(int run) {
 
     }
         
@@ -1550,7 +1575,11 @@ public class DetectorMonitor implements ActionListener {
             }
         }
     }
-
+    
+	public void drawGroup(String tabname, int is, int st, int run) {
+    	int index = getDetectorTabNames().indexOf(tabname);
+    	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(is,st,index,run));   			
+	}
     
     public void drawGroup(EmbeddedCanvas c, DataGroup group) {
     	if(group==null) return;

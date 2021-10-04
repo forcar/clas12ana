@@ -116,7 +116,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
-    public Boolean    clearHist = true;
+    public Boolean    clearHist = false;
     public Boolean     autoSave = false;
     public Boolean    dropBanks = false;
     public Boolean  dropSummary = false;
@@ -191,7 +191,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECpi0": monitors[n++]=new ECpi0(s);  break;
         	     case   "ECperf": monitors[n++]=new ECperf(s); break;
         	     case     "ECmc": monitors[n++]=new ECmc(s);   break;
-        	     case "ECscaler": monitors[n++]=new ECscaler(s);   break;
+        	     case     "ECmc1": monitors[n++]=new ECmc1(s); break;
+        	     case     "ECmc2": monitors[n++]=new ECmc2(s); break;
+        	     case "ECscaler": monitors[n++]=new ECscaler(s); break;
         	     case   "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
@@ -201,7 +203,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc2("ECmc2");
     		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
- //   		monitors[n] = new ECmc2("ECmc2");
+//    		monitors[n] = new ECmc2("ECmc2");
 //    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -229,7 +231,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
 
         menu     = new JMenu("Options");  
-        co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0);  co0.doClick();
+        co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0);  
         co1  = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
         co2  = new JCheckBoxMenuItem("ECEngine");      co2.addItemListener(this);       menu.add(co2);
         co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
@@ -239,6 +241,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co6  = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
         co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
         menuBar.add(menu);
+        
+        if(monitors[0].getDetectorName()!="ECscaler") co0.doClick(); 
         
         menu     = new JMenu("Fitting");
         cf  = new JCheckBoxMenuItem("Verbose");        cf.addItemListener(this);       menu.add(cf);
@@ -311,10 +315,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr4 = new JRadioButtonMenuItem("Muon");     ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
-        
+        menuBar.add(menu);
+       
         menu   	= new JMenu("Scalers");
         cf9 = new JCheckBoxMenuItem("Normalize");  cf9.addItemListener(this);  ; menu.add(cf9);
-
         menuBar.add(menu);
     
     }
@@ -533,18 +537,18 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         return mainPanel;
     }
     
-    public void setTriggerPhaseConstants(int run) {
-		IndexedTable   jitter = this.monitors[0].cm.getConstants(run, "/calibration/ec/time_jitter");        
-        PERIOD = jitter.getDoubleValue("period",0,0,0);
-        PHASE  = jitter.getIntValue("phase",0,0,0); 
-        CYCLES = jitter.getIntValue("cycles",0,0,0);
-    }
-    
     public long getTriggerWord(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");          
         return bank.getLong("trigger", 0);
     }
   
+    public void setTriggerPhaseConstants(int run) {
+		IndexedTable it = this.monitors[0].cm.getConstants(run, "/calibration/ec/time_jitter");        
+        PERIOD = it.getDoubleValue("period",0,0,0);
+        PHASE  = it.getIntValue("phase",0,0,0); 
+        CYCLES = it.getIntValue("cycles",0,0,0);
+    }
+    
     public int getTriggerPhase(DataEvent event) {    	
  	    DataBank bank = event.getBank("RUN::config");	        
         long timestamp = bank.getLong("timestamp",0);    
@@ -553,73 +557,40 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private int getRunNumber(DataEvent event) {
-        DataBank bank = event.getBank("RUN::config"); 
-        if(this.ccdbRunNumber >0) return this.ccdbRunNumber;
-        return (bank!=null) ? bank.getInt("run",0):this.runNumber;
+        if(this.ccdbRunNumber>0) return this.ccdbRunNumber;
+        return event.hasBank("RUN::config") ? event.getBank("RUN::config").getInt("run",0):this.runNumber;
     }
     
     private int getEventNumber(DataEvent event) {
-        DataBank bank = event.getBank("RUN::config");
-        return (bank!=null) ? bank.getInt("event", 0): this.eventNumber;
+        return event.hasBank("RUN::config") ? event.getBank("RUN::config").getInt("event",0):this.eventNumber;
     }
     
     private int getTotalEvents() {
     	return processorPane.getNevents();
     }
     
-    private boolean isGoodRun(int run) {
-    	if( runList.isEmpty()) {runList.add(this.runNumber); return true;}
-    	if(!runList.isEmpty()) {
-    		if(runList.contains(run)) return false;
-    	}
+    private boolean rejectEvent(DataEvent event) {
+    	if(event==null) return true;
+    	if(event.hasBank("RUN::scaler") || event.hasBank("RAW::scaler") || event.hasBank("HEL::flip")) return true;
+    	return false;
+    }
+    
+    private boolean isNewRun(int run) {
+    	if(runList.isEmpty()) {runList.add(this.runNumber); return true;}
+    	if(runList.contains(run)) return false;
     	runList.add(run);
     	return true;
     }
     
     @Override
-    public void dataEventAction(DataEvent event) {
-
-	    if(event!=null ) processEvent(filterEvent(decodeEvent(event)));
-
-    }
-    
-    private boolean processEvent(DataEvent event) {
-    	
-    	if(event==null) return false; 
-      
-        this.eventNumber = getEventNumber(event);
-        
-        setTriggerPhaseConstants(this.runNumber);
-
-        for(int k=0; k<this.monitors.length; k++) {
-        	this.monitors[k].setEventNumber(this.eventNumber);
-        	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
-            this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
-            this.monitors[k].dataEventAction(event);
-        }  
-        
-        return true;        
-    }
-    
-    private DataEvent filterEvent(DataEvent event) {
-    	
-        int rNum = 0; 
-        
-        rNum = getRunNumber(event);
-       
-        if(rNum!=0 && this.runNumber!=rNum && clear) {  
-        	System.out.println("EventViewer: Processing Run "+rNum);
-        	this.runNumber = rNum;
-            if(!clearHist) clear=false;
-        	return isGoodRun(rNum)? initRun(rNum,event):null;
-        }
-        
-        return event;
+    public void dataEventAction(DataEvent event) {   	       	
+	   if(!rejectEvent(event))  processEvent(filterEvent(decodeEvent(event)));
     }
     
     private DataEvent decodeEvent(DataEvent event) {
     	
     	DataEvent hipo = null;
+    	
         if(event instanceof EvioDataEvent){
          	Event    dump = clasDecoder.getDataEvent(event);    
             Bank   header = clasDecoder.createHeaderBank(this.ccdbRunNumber, getEventNumber(event), (float) 0, (float) 0);
@@ -630,9 +601,33 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }   
         else {            	
         	hipo = event; 
-        } 
-        
+        }         
         return hipo;
+    }  
+    
+    private DataEvent filterEvent(DataEvent event) {
+
+    	int rNum = getRunNumber(event);
+       
+        if(rNum!=0 && isNewRun(rNum) && clear) {  //clear is initialized true and reset true by readFiles()
+        	System.out.println("EventViewer: Processing Run "+rNum);
+        	this.runNumber = rNum;
+            if(!clearHist) clear=false; //bypass initRun after first run is analyzed
+        	return initRun(rNum,event);
+        }        
+        return event;
+    }
+    
+    private void processEvent(DataEvent event) {
+    	
+        setTriggerPhaseConstants(this.runNumber);
+
+        for(int k=0; k<this.monitors.length; k++) {
+        	this.monitors[k].setEventNumber(getEventNumber(event));
+        	this.monitors[k].setTriggerPhase(getTriggerPhase(event));
+            this.monitors[k].setTriggerWord(getTriggerWord(event));        	    
+            this.monitors[k].dataEventAction(event);
+        }  
     }
     
     private DataEvent initRun(int runno, DataEvent event) {
@@ -651,8 +646,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].plotHistos(this.runNumber);
             this.monitors[k].arBtn.setSelected(true);    
             if(this.monitors[k].sectorButtons) this.monitors[k].bS2.doClick();
-        } 
-        
+        }         
         return event;
     }
     
@@ -679,7 +673,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                         while (hasFinished==false) {
                         	for (int i=1 ; i<=50 ; i++) {
                         		boolean status = dataProcessor.processNextEvent(eventDelay,DataEventType.EVENT_ACCUMULATE);
-                        		if(status==false&&hasFinished==false){
+                        		if(status==false && hasFinished==false){
                         			hasFinished = true;
                         			System.out.println("[DataProcessingPane] ----> task is done...");
                         		}
