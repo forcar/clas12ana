@@ -139,7 +139,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean       TLflag = false;
     public Boolean        clear = true; 
     public Integer        TRpid = 11;
-    public Boolean       isNorm = false;
+    public Boolean    useATDATA = false;
     
     public JFileChooser      fc = null; 
     
@@ -317,8 +317,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
         menuBar.add(menu);
        
-        menu   	= new JMenu("Scalers");
-        cf9 = new JCheckBoxMenuItem("Normalize");  cf9.addItemListener(this);  ; menu.add(cf9);
+        menu   	= new JMenu("ECscaler");
+        cf9 = new JCheckBoxMenuItem("ATDATA");  cf9.addItemListener(this);  ; menu.add(cf9);
         menuBar.add(menu);
     
     }
@@ -393,7 +393,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf6) unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf7)  dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf8)  dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf9)       isNorm = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
+		if (source==cf9)    useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
 		if (source==ct0)       TLname = ct0.getText();
 		if (source==ct1)       TLname = ct1.getText();
 		if (source==ct2)       TLname = ct2.getText();
@@ -423,7 +423,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
-                                                   this.monitors[k].isNorm      = isNorm;
+                                                   this.monitors[k].useATDATA   = useATDATA;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);
                                                    this.monitors[k].setDbgECEngine(dbgECEngine);

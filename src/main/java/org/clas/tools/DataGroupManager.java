@@ -42,7 +42,6 @@ public class DataGroupManager {
 		tag = "-"+is+"-"+st+"-"+k+"-"+run;
 		System.out.println("dgm.add("+name+tag+")");
 		detectorData.add(dg,ilist);
-		System.out.println("Done");
 		n=0;
 	}
 	
@@ -91,6 +90,10 @@ public class DataGroupManager {
     	return ilist;
     }
     
+    public int getRun() {
+    	return ilist[3];
+    }
+    
     public String getName(String name) {
 		imap.put(name,get_ilist());
 		hmap.put(name,name+tag);		
@@ -99,15 +102,15 @@ public class DataGroupManager {
     
     public void printMap(String name, int i) {
     	int[] dum = imap.get(name); System.out.println(i+" "+name+" "+dum[0]+" "+dum[1]+" "+dum[2]+" "+dum[3]);
-    	System.out.println(detectorData.hasItem(imap.get(name))+" "+ hmap.get(name));     	
+    	System.out.println(getDataGroup().hasItem(imap.get(name))+" "+ hmap.get(name));     	
     }
     
     public boolean isH1(String name) {
-    	return (detectorData.getItem(imap.get(name)).getData(hmap.get(name)) instanceof H1F);
+    	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof H1F);
    }
     
     public boolean isH2(String name) {
-    	return (detectorData.getItem(imap.get(name)).getData(hmap.get(name)) instanceof H2F);
+    	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof H2F);
    }
     
    
@@ -115,26 +118,36 @@ public class DataGroupManager {
 // HISTO HELPERS  
     
     public void fill(String name, double ... val) {    	
-    	if(!imap.containsKey(name))               {System.out.println(name+" missing from imap"); return;} 
-    	if(!detectorData.hasItem(imap.get(name))) {System.out.println(imap.get(name)+" missing from detectorData"); return;} 
-    	if(!hmap.containsKey(name))               {System.out.println(name+" missing from hmap"); return;}     	
-    	if(val.length==1)               detectorData.getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0]);
-    	if(val.length==2 && isH1(name)) detectorData.getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0],val[1]);
-        if(val.length==2 && isH2(name)) detectorData.getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1]);
-    	if(val.length==3)               detectorData.getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1],val[2]);
+        if(!goodName(name)) return;   	
+    	if(val.length==1)               getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0]);
+    	if(val.length==2 && isH1(name)) getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0],val[1]);
+        if(val.length==2 && isH2(name)) getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1]);
+    	if(val.length==3)               getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1],val[2]);
     	return;
     }
     
+    public void draw(String name, EmbeddedCanvas c, int is, int st, int i) {      
+        int index = getDetectorTabNames().indexOf(name);
+        drawGroupItem(getDataGroup().getItem(is,st,index,getRun()),c,i);        
+    }
+    
+    public boolean goodName(String name) {
+    	if(!imap.containsKey(name))                 {System.out.println(name+" missing from imap"); return false;} 
+    	if(!getDataGroup().hasItem(imap.get(name))) {System.out.println(imap.get(name)+" missing from detectorData"); return false;} 
+    	if(!hmap.containsKey(name))                 {System.out.println(name+" missing from hmap"); return false;} 
+    	return true;
+    }
+    
     public H1F getH1F(String name) {
-    	return detectorData.getItem(imap.get(name)).getH1F(hmap.get(name));
+    	return getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name));
     }
     
     public H2F getH2F(String name) {
-    	return detectorData.getItem(imap.get(name)).getH2F(hmap.get(name));
+    	return getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name));
     }
     
     public GraphErrors getGraph(String name) {
-    	return detectorData.getItem(imap.get(name)).getGraph(hmap.get(name));    	
+    	return getDataGroup().getItem(imap.get(name)).getGraph(hmap.get(name));    	
     }
     
     public void geteff(String eff, String numer, String denom) {
@@ -242,7 +255,7 @@ public class DataGroupManager {
 	}
 	
 	public void drawGroup(String tabname, int is, int st, int run) {
-    	int index = getDetectorTabNames().indexOf(tabname);
+		int index = getDetectorTabNames().indexOf(tabname);
     	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(is,st,index,run));   			
 	}
     
@@ -253,24 +266,28 @@ public class DataGroupManager {
         c.clear(); c.divide(ncols, nrows); 	    
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
-            List<IDataSet> dsList = group.getData(i);           
-            c.cd(i);  String opt = " ";                  
-            if(dsList.size()>0) {	               
-          	    IDataSet ds0 = dsList.get(0);                   
-            	if(!config(ds0.getName(),c)) {                      
-            		if (ds0 instanceof H1F) {
-            			c.getPad().getAxisY().setAutoScale(true);
-            			c.getPad().getAxisY().setLog(getLogY());
-            		}                
-            		if (ds0 instanceof H2F) {
-            			c.getPad().getAxisZ().setLog(getLogZ());
-            			if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
-            			if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
-            		}            		
-            	}
-            	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
-            }
+          c.cd(i); drawGroupItem(group, c, i);                 
         } 	       	
-    } 
+    }
+    
+    public void drawGroupItem(DataGroup group, EmbeddedCanvas c, int i) {
+    	String opt = " "; 
+    	List<IDataSet> dsList = group.getData(i); 
+        if(dsList.size()>0) {	                       	
+      	    IDataSet ds0 = dsList.get(0);                   
+        	if(!config(ds0.getName(),c)) {                      
+        		if (ds0 instanceof H1F) {
+        			c.getPad().getAxisY().setAutoScale(true);
+        			c.getPad().getAxisY().setLog(getLogY());
+        		}                
+        		if (ds0 instanceof H2F) {
+        			c.getPad().getAxisZ().setLog(getLogZ());
+        			if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
+        			if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
+        		}            		
+        	}
+        	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
+        }   	
+    }
 	
 }

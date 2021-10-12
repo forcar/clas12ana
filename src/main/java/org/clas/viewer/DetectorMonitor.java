@@ -99,6 +99,7 @@ public class DetectorMonitor implements ActionListener {
     private ButtonGroup                          bG2 = null;
     private ButtonGroup                          bG3 = null;
     private ButtonGroup                          bG4 = null;
+    private ButtonGroup                          bG5 = null;
     private ButtonGroup                          bRO = null;
     private int                       numberOfEvents = 0;
     private int                          totalEvents = 0;
@@ -111,6 +112,7 @@ public class DetectorMonitor implements ActionListener {
     private int                  detectorActiveLayer = 0;
     private int                    detectorActivePID = 0;
     private int                    detectorActive123 = 1;
+    private int                   detectorActiveSCAL = 0;
     private int                   detectorActiveRDIF = 0;
     private Boolean                     detectorLogY = false;
     private Boolean                     detectorLogZ = true;
@@ -119,6 +121,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                           usePID = false;
     private Boolean                           useUVW = false;
     private Boolean                           use123 = false;
+    private Boolean                        useSCALER = false;
     private Boolean                           useCAL = false;
     private Boolean                           useSEC = false;
     private Boolean                          useRDIF = false;
@@ -126,8 +129,7 @@ public class DetectorMonitor implements ActionListener {
     Timer                                      timer = null;
     
     public JRadioButton bEL,bPI,bPH,bP,bC,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
-    private JCheckBox tbBtn;
-    public  JCheckBox arBtn;
+    public  JCheckBox arBtn,arBtn2;
     
     public int        bitsec = 0;
     public long      trigger = 0;
@@ -151,7 +153,8 @@ public class DetectorMonitor implements ActionListener {
     
     public double lMin=0, lMax=500, zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
     public double slideMin=1, slideMax=500;
-    public  Boolean doAutoRange = false;
+    public Boolean doAutoRange = false;
+    public Boolean dNorm = false;
     
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
@@ -233,7 +236,7 @@ public class DetectorMonitor implements ActionListener {
     
     public String                 TLname = null;
     public Boolean                TLflag = null;
-    public Boolean                isNorm = null;
+    public Boolean             useATDATA = false;
     public int                     TLmax = 1000;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
@@ -307,7 +310,7 @@ public class DetectorMonitor implements ActionListener {
     
     public void initTimeLine(String name) {
     	TLname = name;
-    	if(getRunNumber()!=0) plotHistos(getRunNumber());
+    	if(getRunNumber()!=0) {plotHistos(getRunNumber()) ; plotScalers(getRunNumber());}
     }
     
     public void initCCDB(int runNumber) {    	
@@ -495,17 +498,20 @@ public class DetectorMonitor implements ActionListener {
     } 
     
     public void dataEventAction(DataEvent event) {
-        if (!testTriggerMask()) return;
         setNumberOfEvents(getNumberOfEvents()+1);
         switch (event.getType())  {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:      {processEvent(event); analyze(); 
-                                                    plotHistos(getRunNumber()); 
-                                                    if(autoSave) saveHistosToFile();
-                                                    System.out.println("DectectorMonitor:EVENT_STOP"); }
+        case EVENT_STOP:       doEVENT_STOP();
 	    }
+    }
+    
+    public void doEVENT_STOP() {
+    	analyze(); 
+        plotHistos(getRunNumber()); 
+        if(autoSave) saveHistosToFile();
+        System.out.println("DectectorMonitor:doEVENT_STOP");    	
     }
 
     public void drawDetector() {    
@@ -595,6 +601,10 @@ public class DetectorMonitor implements ActionListener {
     	use123 = flag;
     }
     
+    public void useSCALERButtons(boolean flag) {
+    	useSCALER = flag;
+    }
+    
     public void useSECButtons(boolean flag) {
     	useSEC = flag;
     }
@@ -657,6 +667,10 @@ public class DetectorMonitor implements ActionListener {
 	    return detectorActive123;
     }
     
+    public int getActiveSCAL() {
+	    return detectorActiveSCAL;
+    }  
+    
     public int getActiveRDIF() {
     	return detectorActiveRDIF;
     }
@@ -672,13 +686,13 @@ public class DetectorMonitor implements ActionListener {
     public void setLogY(boolean flag) {
 	    detectorLogY = flag;
 	    dgm.detectorLogY = flag;
-	    if(histosExist) plotHistos(getRunNumber());
+	    if(histosExist) {plotHistos(getRunNumber()); plotScalers(getRunNumber());}
     }   
     
     public void setLogZ(boolean flag) {
 	    detectorLogZ = flag;
 	    dgm.detectorLogZ = flag;
-	    if(histosExist) plotHistos(getRunNumber());
+	    if(histosExist) {plotHistos(getRunNumber()); plotScalers(getRunNumber());}
     }
     
     public Boolean getLogY() {
@@ -724,9 +738,19 @@ public class DetectorMonitor implements ActionListener {
         bPH = new JRadioButton("ph"); buttonPane.add(bPH); bPH.setActionCommand("3"); bPH.addActionListener(this); 
         bT0 = new ButtonGroup(); bT0.add(bEL); bT0.add(bPI); bT0.add(bPH);
         bEL.setSelected(true);
-        }   
+        }
+
+        if(useSCALER) {
+        bG5 = new ButtonGroup();
+        bS0 = new JRadioButton("C"); buttonPane.add(bS0); bS0.setActionCommand("0"); bS0.addActionListener(this);
+        bS1 = new JRadioButton("D"); buttonPane.add(bS1); bS1.setActionCommand("2"); bS1.addActionListener(this); 
+        bS2 = new JRadioButton("T"); buttonPane.add(bS2); bS2.setActionCommand("4"); bS2.addActionListener(this);
+        bG5.add(bS0);bG5.add(bS1);bG5.add(bS2);
+        bS0.setSelected(true);        		
+        }
        
         if(use123) {
+        bG4 = new ButtonGroup();
         bS0 = new JRadioButton("0"); buttonPane.add(bS0); bS0.setActionCommand("0"); bS0.addActionListener(this);
         bS1 = new JRadioButton("1"); buttonPane.add(bS1); bS1.setActionCommand("1"); bS1.addActionListener(this); 
         bS2 = new JRadioButton("2"); buttonPane.add(bS2); bS2.setActionCommand("2"); bS2.addActionListener(this); 
@@ -735,7 +759,7 @@ public class DetectorMonitor implements ActionListener {
         bS5 = new JRadioButton("5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this); 
         bS6 = new JRadioButton("6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
         bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
-   	    bG4 = new ButtonGroup(); bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
+   	     bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
    	                             bG4.add(bS4);bG4.add(bS5);bG4.add(bS6);bG4.add(bS7);
         bS0.setSelected(true);         	
         }
@@ -804,6 +828,16 @@ public class DetectorMonitor implements ActionListener {
         button2.addActionListener(this);
         sliderPane.add(button2);
         
+        arBtn2 = new JCheckBox("Normalize");
+        arBtn2.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                dNorm = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;                
+                plotScalers(getRunNumber());
+            }
+        });         
+        arBtn2.setSelected(false);         
+        sliderPane.add(arBtn2); 
+        
         return sliderPane;
     }
     
@@ -854,6 +888,7 @@ public class DetectorMonitor implements ActionListener {
                 zMaxLab = Math.pow(10, zMax/10); zMinLab = Math.pow(2, zMin/10); 
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
+                plotScalers(getRunNumber());
                 plotHistos(getRunNumber());
             }
         });  
@@ -862,6 +897,7 @@ public class DetectorMonitor implements ActionListener {
             public void itemStateChanged(ItemEvent e) {
                 doAutoRange = (e.getStateChange() == ItemEvent.SELECTED) ? true:false;
                 dgm.doAutoRange = doAutoRange;
+                plotScalers(getRunNumber());
                 plotHistos(getRunNumber());
             }
         });         
@@ -879,6 +915,7 @@ public class DetectorMonitor implements ActionListener {
         if(bG2!=null) detectorActiveLayer  = Integer.parseInt(bG2.getSelection().getActionCommand());
         if(bG3!=null) detectorActiveView   = Integer.parseInt(bG3.getSelection().getActionCommand());
         if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
+        if(bG5!=null) detectorActiveSCAL   = Integer.parseInt(bG5.getSelection().getActionCommand());
         if(bRO!=null) detectorActiveRDIF   = Integer.parseInt(bRO.getSelection().getActionCommand());
         plotScalers(getRunNumber());
         plotHistos(getRunNumber());
@@ -915,11 +952,11 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void processEvent(DataEvent event) {
-        // process event
+        
     }
     
     public void plotEvent(DataEvent event) {
-        // process event
+       
     }
     
     public void plotHistos(int run) {
@@ -1025,7 +1062,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=2360)  return 10.731f;
     	if (run<=2597)  return  2.2219f;
     	if (run<=3002)  return 10.731f;
-    	if (run<=3120)  return  6.523f;
+    	if (run<=3120)  return  6.423f;
     	if (run<=3818)  return 10.594f;
     	if (run<=3861)  return  6.423f;
     	if (run<=4326)  return 10.594f;
@@ -1314,7 +1351,8 @@ public class DetectorMonitor implements ActionListener {
     	
     	GraphErrors g2 = null;
     	
-		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem(i,0)),((H2F)tl.Timeline.getItem(i,1)),is-1); 
+		List<GraphErrors> gglist = getGraph(((H2F)tl.Timeline.getItem(i,0)),((H2F)tl.Timeline.getItem(i,1)),is-1);
+
     	DataLine line = new DataLine(-0.5,norm,runIndex,norm); line.setLineColor(3); line.setLineWidth(2);
         
 		for (int ii=1; ii<gglist.size(); ii++) {    

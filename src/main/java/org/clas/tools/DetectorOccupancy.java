@@ -20,10 +20,13 @@ public class DetectorOccupancy {
     DetectorCollection<DetectorMeasurement>  occupancyCollection = 
             new DetectorCollection<DetectorMeasurement>();
     
+    DetectorCollection<DetectorMeasurement>  valueCollection = 
+            new DetectorCollection<DetectorMeasurement>();
+    
     private int maxLayers     = 9;
     private int maxComponents = 72;
-    public  int ADCThreshold  = 100;
-    private int TDCThreshold  = 100;
+    public  int[] ADCWindow = {10,100};
+    public  int[] TDCWindow = {200,300};
     
     public DetectorOccupancy(){
         
@@ -40,16 +43,23 @@ public class DetectorOccupancy {
             int    sector = bank.getByte(  "sector",    row);
             int     layer = bank.getByte(  "layer",     row);
             int component = bank.getShort( "component", row);
-            int       adc = bank.getInt("ADC", row);
-            if(adc>this.ADCThreshold){
+            int       adc = (int)(bank.getInt("ADC", row)*0.1f);
+            if(adc>this.ADCWindow[0] && adc<this.ADCWindow[1]){
                 if(occupancyCollection.hasEntry(sector, layer, component)==true){
-                    this.occupancyCollection.get(sector, layer, component).incrementADC();
+                    this.occupancyCollection.get(sector, layer, component).incrementADC(adc);                
                 } else {
                     DetectorMeasurement measure = new DetectorMeasurement();
-                    measure.incrementADC();
+                    measure.incrementADC(adc);
                     this.occupancyCollection.add(sector, layer, component, measure);
                 }
             }
+            if(valueCollection.hasEntry(sector, layer, component)==true){
+               this.valueCollection.get(sector, layer, component).storeADCV(adc);
+            } else {
+               DetectorMeasurement measure = new DetectorMeasurement();
+               measure.storeADCV(adc);
+               this.valueCollection.add(sector, layer, component, measure);
+            }                            
         }
     }
     
@@ -59,12 +69,22 @@ public class DetectorOccupancy {
             int    sector = bank.getByte(  "sector",    row);
             int     layer = bank.getByte(  "layer",     row);
             int component = bank.getShort( "component", row);
-            if(occupancyCollection.hasEntry(sector, layer, component)==true){
-                this.occupancyCollection.get(sector, layer, component).incrementTDC();
+            int       tdc = (int)(bank.getInt("TDC", row)*0.02345f);
+            if(tdc>this.TDCWindow[0] && tdc<this.TDCWindow[1]){
+            	if(occupancyCollection.hasEntry(sector, layer, component)==true){
+            		this.occupancyCollection.get(sector, layer, component).incrementTDC(tdc);                
+            	} else {
+            		DetectorMeasurement measure = new DetectorMeasurement();
+            		measure.incrementTDC(tdc);
+            		this.occupancyCollection.add(sector, layer, component, measure);
+            	}
+            }
+            if(valueCollection.hasEntry(sector, layer, component)==true){
+                this.valueCollection.get(sector, layer, component).storeTDCV(tdc);
             } else {
                 DetectorMeasurement measure = new DetectorMeasurement();
-                measure.incrementTDC();
-                this.occupancyCollection.add(sector, layer, component, measure);
+                measure.storeTDCV(tdc);
+                this.valueCollection.add(sector, layer, component, measure);
             }
         }
     }
@@ -80,6 +100,30 @@ public class DetectorOccupancy {
             return 0;
         return this.occupancyCollection.get(sector, layer, component).ADCCount;
     }
+    
+    public int getTDCV(int sector, int layer, int component){
+        if(this.valueCollection.hasEntry(sector, layer, component)==false)
+            return 0;
+        return this.valueCollection.get(sector, layer, component).TDCValue;
+    }
+    
+    public int getADCV(int sector, int layer, int component){
+        if(this.valueCollection.hasEntry(sector, layer, component)==false)
+            return 0;
+        return this.valueCollection.get(sector, layer, component).ADCValue;
+    }
+    
+    public int getTDCVC(int sector, int layer, int component){
+        if(this.occupancyCollection.hasEntry(sector, layer, component)==false)
+            return 0;
+        return this.occupancyCollection.get(sector, layer, component).TDCVCount;
+    }
+    
+    public int getADCVC(int sector, int layer, int component){
+        if(this.occupancyCollection.hasEntry(sector, layer, component)==false)
+            return 0;
+        return this.occupancyCollection.get(sector, layer, component).ADCVCount;
+    }   
     
     public int getMaxADC(){
         int max = 0;
@@ -109,6 +153,13 @@ public class DetectorOccupancy {
             m.reset();
         }
     }
+    
+    public void resetValue(){
+        List<DetectorMeasurement> measures = this.valueCollection.getList();
+        for(DetectorMeasurement m : measures){
+            m.reset();
+        }
+    }        
     
     public GraphErrors  getOccupancyGraph(){
         int maxADC = this.getMaxADC();
@@ -162,10 +213,16 @@ public class DetectorOccupancy {
     
     public DetectorCollection getCollection(){ return this.occupancyCollection;}
     
+    public DetectorCollection getValueCollection(){ return this.valueCollection;}
+    
     public static class DetectorMeasurement {
         
-        int ADCCount = 0;
-        int TDCCount = 0;
+        int  ADCCount = 0;
+        int  TDCCount = 0;
+        int  ADCValue = 0;
+        int  TDCValue = 0;
+        int ADCVCount = 0;
+        int TDCVCount = 0;
         
         public DetectorMeasurement(){
             
@@ -174,14 +231,28 @@ public class DetectorOccupancy {
         public void reset(){
             this.ADCCount = 0;
             this.TDCCount = 0;
+            this.ADCValue = 0;
+            this.TDCValue = 0;
+            this.ADCVCount = 0;
+            this.TDCVCount = 0;
         }
         
-        public void incrementADC(){
+        public void incrementADC(int val){
             this.ADCCount++;
+            this.ADCVCount+=val;
         }
         
-        public void incrementTDC(){
+        public void incrementTDC(int val){
             this.TDCCount++;
+            this.TDCVCount+=val;
+        }
+        
+        public void storeADCV(int val){
+            this.ADCValue = val;
+        }
+        
+        public void storeTDCV(int val){
+            this.TDCValue = val;
         }
         
     }
