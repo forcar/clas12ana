@@ -50,7 +50,7 @@ public class ECEngine extends ReconstructionEngine {
             DataBank bank = de.getBank("RUN::config");
             runNo = bank.getInt("run", 0);
             evtNo = bank.getInt("event", 0);
-            ECCommon.occCounts++;
+//            ECCommon.occCounts++;
             if (runNo<=0) {
                 System.err.println("ECEngine:  got run <= 0 in RUN::config, skipping event.");
                 return false;
@@ -68,7 +68,7 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.shareClustersEnergy(ecClusters); // Repair cluster pairs which share the same peaks
 	    
         this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
-        if(ECCommon.occCounts>=ECCommon.occMax) this.writeScalerBank(de, ECCommon.occupancyECAL.getCollection());
+//        if(ECCommon.occCounts>=ECCommon.occMax) this.writeScalerBank(de, ECCommon.occupancyECAL.getCollection());
         
         if (debug) {
         	if (ecClusters.size()<5) {
@@ -108,7 +108,7 @@ public class ECEngine extends ReconstructionEngine {
     public List<ECCluster> getClusters() {
 	    return ECCommon.getMyClusters();    
     }
-    
+/*    
     private void writeScalerBank(DataEvent de, DetectorCollection dc) {
     	
     	Set<Integer>  sectors = dc.getSectors(); 
@@ -135,7 +135,7 @@ public class ECEngine extends ReconstructionEngine {
     	ECCommon.occCounts = 0;
     	de.appendBanks(bank);
     }
-        
+*/        
     private void writeHipoBanks(DataEvent de, 
                                 List<ECStrip>   strips, 
                                 List<ECPeak>    peaks, 
@@ -271,10 +271,10 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.useCCDBGain = val;    	
     }
     
-    public void setOccMax(int val) {
-        System.out.println("ECEngine: OccMax = "+val);
-        ECCommon.occMax = val;    	
-    }  
+//    public void setOccMax(int val) {
+//        System.out.println("ECEngine: OccMax = "+val);
+//        ECCommon.occMax = val;    	
+//    }  
     
     public void setLogWeight(boolean val) {
         System.out.println("ECEngine: useLogWeight = "+val);

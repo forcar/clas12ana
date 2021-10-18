@@ -47,8 +47,8 @@ public class ECCommon {
     public static String          variation = "default";
     public static String      geomVariation = "default";
     public static int       pcTrackingPlane = 9;
-    public static int             occCounts = 0;
-    public static int                occMax = 1000000;
+//    public static int             occCounts = 0;
+//    public static int                occMax = 1000000;
    
     private static double[] AtoE  = {15,10,10};   // SCALED ADC to Energy in MeV
     private static double[] AtoE5 = {15,5,5};     // For Sector 5 ECAL
@@ -56,7 +56,7 @@ public class ECCommon {
     public static DetectorCollection<H1F> H1_ecEng = new DetectorCollection<H1F>();
     public static DetectorCollection<H2F> H2_ecEng = new DetectorCollection<H2F>();
     
-    public static DetectorOccupancy  occupancyECAL = new DetectorOccupancy();
+//    public static DetectorOccupancy  occupancyECAL = new DetectorOccupancy();
     
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     static float               tps = 0.02345f;
@@ -218,7 +218,7 @@ public class ECCommon {
 
         if(event.hasBank("ECAL::tdc")==true){
             DataBank  bank = event.getBank("ECAL::tdc");
-            occupancyECAL.addTDCBank(bank);
+//            occupancyECAL.addTDCBank(bank);
             for(int i = 0; i < bank.rows(); i++){
                 int  is = bank.getByte("sector",i);
                 int  il = bank.getByte("layer",i);
@@ -236,7 +236,7 @@ public class ECCommon {
         
         if(event.hasBank("ECAL::adc")==true){
             DataBank bank = event.getBank("ECAL::adc");
-            occupancyECAL.addADCBank(bank);
+//            occupancyECAL.addADCBank(bank);
             for(int i = 0; i < bank.rows(); i++){
                 int  is = bank.getByte("sector", i);
                 int  il = bank.getByte("layer", i); 
@@ -329,16 +329,16 @@ public class ECCommon {
         }
         return selected;
     }
-    
+
     public static void shareClustersEnergy(List<ECCluster> clusters){
-       
+        
         for(int i = 0; i < clusters.size() - 1; i++){
             for(int k = i+1 ; k < clusters.size(); k++){
                 byte sharedView = (byte) clusters.get(i).sharedView(clusters.get(k)); // 0,1,2 <=> U,V,W
-                if(sharedView>=0){
+                if(sharedView>=0&&sharedView<6){
                 	clusters.get(i).setSharedCluster(k); clusters.get(i).setSharedView(sharedView+1);
                 	clusters.get(k).setSharedCluster(i); clusters.get(k).setSharedView(sharedView+1);                  
-                    ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView);
+                    ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView+1);
                 }
             }
         }        
