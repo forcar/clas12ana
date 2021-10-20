@@ -118,8 +118,7 @@ public class ECCluster {
 				 (this.getRawADC(1) > this.getRawADC(2))) return this.getTime(1);
 		else                                              return this.getTime(2);
 	} 
-	
-	
+		
 	public double getUnsharedRawADCTime() {
 		// Use only U,V,W peaks with unshared views for cluster timing
 		switch (sharedView) {
@@ -196,25 +195,7 @@ public class ECCluster {
         
         return -1;
     }
-     
-/*    
-    public int sharedView(ECCluster cluster){
-
-        if(cluster.getPeak(0).getOrder()==getPeak(0).getOrder()){ //if U sharing found V,W ignored
-           cluster.getPeak(0).setStatus(1); 
-            return 0;
-        }
-        if(cluster.getPeak(1).getOrder()==getPeak(1).getOrder()){ //if V sharing found W ignored
-           cluster.getPeak(1).setStatus(1);
-            return 1;
-        }
-        if(cluster.getPeak(2).getOrder()==getPeak(2).getOrder()){ //found only if U,V not sharing
-           cluster.getPeak(2).setStatus(1);
-            return 2;
-        }
-        return -1;
-    }  
-*/   
+    
     public final void intersection(){
         Line3D uLine  = this.clusterPeaks.get(0).getLine();
         Line3D vLine  = this.clusterPeaks.get(1).getLine();

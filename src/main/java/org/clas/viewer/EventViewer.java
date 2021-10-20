@@ -191,8 +191,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECpi0": monitors[n++]=new ECpi0(s);  break;
         	     case   "ECperf": monitors[n++]=new ECperf(s); break;
         	     case     "ECmc": monitors[n++]=new ECmc(s);   break;
-        	     case     "ECmc1": monitors[n++]=new ECmc1(s); break;
-        	     case     "ECmc2": monitors[n++]=new ECmc2(s); break;
+        	     case    "ECmc1": monitors[n++]=new ECmc1(s);  break;
+        	     case    "ECmc2": monitors[n++]=new ECmc2(s);  break;
         	     case "ECscaler": monitors[n++]=new ECscaler(s); break;
         	     case   "ECelas": monitors[n++]=new ECelas(s); 
         	   }
@@ -200,8 +200,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
-//    		monitors[n] = new ECmc2("ECmc2");
-    		monitors[n] = new ECscaler("ECscaler");
+    		monitors[n] = new ECmc2("ECmc2");
+//    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    	    monitors[n] = new ECt("ECt"); 
@@ -242,7 +242,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
         menuBar.add(menu);
         
-        if(monitors[0].getDetectorName()!="ECscaler") co0.doClick(); 
+        if(!monitors[0].getDetectorName().equals("ECscaler")) co0.doClick(); //must use .equals here
         
         menu     = new JMenu("Fitting");
         cf  = new JCheckBoxMenuItem("Verbose");        cf.addItemListener(this);       menu.add(cf);

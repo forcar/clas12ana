@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jlab.detector.base.DetectorCollection;
-import org.jlab.detector.base.DetectorLayer;
-import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.geom.base.Detector;
 import org.jlab.geom.base.Layer;
@@ -47,16 +45,12 @@ public class ECCommon {
     public static String          variation = "default";
     public static String      geomVariation = "default";
     public static int       pcTrackingPlane = 9;
-//    public static int             occCounts = 0;
-//    public static int                occMax = 1000000;
    
     private static double[] AtoE  = {15,10,10};   // SCALED ADC to Energy in MeV
     private static double[] AtoE5 = {15,5,5};     // For Sector 5 ECAL
     
     public static DetectorCollection<H1F> H1_ecEng = new DetectorCollection<H1F>();
     public static DetectorCollection<H2F> H2_ecEng = new DetectorCollection<H2F>();
-    
-//    public static DetectorOccupancy  occupancyECAL = new DetectorOccupancy();
     
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     static float               tps = 0.02345f;
@@ -123,9 +117,8 @@ public class ECCommon {
         IndexedTable      ggs = manager.getConstants(run, "/calibration/ec/global_gain_shift");
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable       ev = manager.getConstants(run, "/calibration/ec/effective_velocity");
-        IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");
-		
-        IndexedTable   r2gain = manager.getConstants(2, "/calibration/ec/gain");
+        IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");		
+        IndexedTable   r2gain = manager.getConstants(2,   "/calibration/ec/gain");
     
         if (singleEvent) resetHistos();        
         
@@ -139,10 +132,10 @@ public class ECCommon {
         
         for(ECStrip strip : ecStrips){
             int sector    = strip.getDescriptor().getSector();
-            int layer     = strip.getDescriptor().getLayer();  //1,2,3=PCAL 4,5,6=ECIN 7,8,9=ECOU
+            int layer     = strip.getDescriptor().getLayer();     //1,2,3=PCAL 4,5,6=ECIN 7,8,9=ECOU
             int component = strip.getDescriptor().getComponent();
-            int superlayer = (int) ((layer-1)/3); //0=PCAL 1=ECIN 2=ECOU
-            int localLayer = (layer-1)%3; //0=U 1=V 2=W
+            int superlayer = (int) ((layer-1)/3);                 //0=PCAL 1=ECIN 2=ECOU
+            int localLayer = (layer-1)%3;                         //0=U 1=V 2=W
            
 //            int off = (superlayer==0)?DetectorLayer.PCAL_Z:0;
             int off = (superlayer==0)?pcTrackingPlane:0; //pcTrackingPlane = 9 (in the sequence 0-14 of 15 scintillator planes in PCAL)
@@ -183,7 +176,6 @@ public class ECCommon {
                             time.getDoubleValue("a3", sector, layer, component),
                             time.getDoubleValue("a4", sector, layer, component));
             strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
-
         }
             
         return ecStrips;
@@ -218,7 +210,6 @@ public class ECCommon {
 
         if(event.hasBank("ECAL::tdc")==true){
             DataBank  bank = event.getBank("ECAL::tdc");
-//            occupancyECAL.addTDCBank(bank);
             for(int i = 0; i < bank.rows(); i++){
                 int  is = bank.getByte("sector",i);
                 int  il = bank.getByte("layer",i);
@@ -236,7 +227,6 @@ public class ECCommon {
         
         if(event.hasBank("ECAL::adc")==true){
             DataBank bank = event.getBank("ECAL::adc");
-//            occupancyECAL.addADCBank(bank);
             for(int i = 0; i < bank.rows(); i++){
                 int  is = bank.getByte("sector", i);
                 int  il = bank.getByte("layer", i); 

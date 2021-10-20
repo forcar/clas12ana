@@ -8,6 +8,7 @@ import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 
+
 /**
  *
  * @author gavalian
@@ -107,6 +108,10 @@ public class ECPeak {
         return false;
     }
     
+    public List<ECStrip> getStrips(){
+        return this.peakStrips;
+    }  
+    
     public int getADC(){
         int adc = 0;
         for(ECStrip s : this.peakStrips){
@@ -132,8 +137,6 @@ public class ECPeak {
             
             double energy = this.peakStrips.get(i).getEnergy();
             double energyMev = energy*1000.0;
-            
-            this.peakStrips.get(i).getDescriptor().getLayer();
  
             double le = ECCommon.useLogWeight?(Math.max(0,ECCommon.logParam+Math.log(energyMev/peakEnergy))):energy;
             this.peakDistanceEdge += peakStrips.get(i).getDistanceEdge()*le;

@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorCollection;
-import org.jlab.detector.base.DetectorOccupancy;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.geom.base.Detector;
@@ -16,7 +14,6 @@ import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.io.hipo.HipoDataSource;
 
 /**
  *
@@ -26,12 +23,10 @@ public class ECEngine extends ReconstructionEngine {
     
     Detector              ecDetector = null;
     public Boolean             debug = false;
-    public Boolean       debug_split = false;
     public Boolean  isSingleThreaded = false;
     public Boolean       singleEvent = false;
     public Boolean              isMC = false;
     int                       calrun = 2;
-    int                        evtNo = 0;
     
     public ECEngine(){
         super("EC","gavalian","1.0");
@@ -49,8 +44,6 @@ public class ECEngine extends ReconstructionEngine {
         if(de.hasBank("RUN::config")==true){
             DataBank bank = de.getBank("RUN::config");
             runNo = bank.getInt("run", 0);
-            evtNo = bank.getInt("event", 0);
-//            ECCommon.occCounts++;
             if (runNo<=0) {
                 System.err.println("ECEngine:  got run <= 0 in RUN::config, skipping event.");
                 return false;
@@ -68,7 +61,6 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.shareClustersEnergy(ecClusters); // Repair cluster pairs which share the same peaks
 	    
         this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
-//        if(ECCommon.occCounts>=ECCommon.occMax) this.writeScalerBank(de, ECCommon.occupancyECAL.getCollection());
         
         if (debug) {
         	if (ecClusters.size()<5) {
@@ -108,34 +100,7 @@ public class ECEngine extends ReconstructionEngine {
     public List<ECCluster> getClusters() {
 	    return ECCommon.getMyClusters();    
     }
-/*    
-    private void writeScalerBank(DataEvent de, DetectorCollection dc) {
-    	
-    	Set<Integer>  sectors = dc.getSectors(); 
-    	System.out.println("Event "+evtNo);
-    	DataBank bank = de.createBank("ECAL::scaler", 2448); 
-
-    	int n=0;
-    	for(Integer sector : sectors){
-    		Set<Integer> layers = dc.getLayers(sector);
-    		for(Integer layer : layers){   		
-    			Set<Integer> components = dc.getComponents(sector, layer);
-    			for(Integer component : components){  
-    				bank.setByte("sector",     n, (byte) (int) sector);
-    				bank.setByte("layer",      n, (byte) (int) layer);
-    				bank.setShort("component", n, (short)(int) component);
-    				bank.setInt("acount",      n, ECCommon.occupancyECAL.getADC(sector, layer, component));
-    				bank.setInt("tcount",      n, ECCommon.occupancyECAL.getTDC(sector, layer, component));
-    				n++;
-    			}
-    		}
-    	}
-    	
-    	ECCommon.occupancyECAL.reset();
-    	ECCommon.occCounts = 0;
-    	de.appendBanks(bank);
-    }
-*/        
+         
     private void writeHipoBanks(DataEvent de, 
                                 List<ECStrip>   strips, 
                                 List<ECPeak>    peaks, 
@@ -270,12 +235,7 @@ public class ECEngine extends ReconstructionEngine {
         System.out.println("ECEngine: useCCDBGain = "+val);
         ECCommon.useCCDBGain = val;    	
     }
-    
-//    public void setOccMax(int val) {
-//        System.out.println("ECEngine: OccMax = "+val);
-//        ECCommon.occMax = val;    	
-//    }  
-    
+
     public void setLogWeight(boolean val) {
         System.out.println("ECEngine: useLogWeight = "+val);
     	ECCommon.useLogWeight = val;
