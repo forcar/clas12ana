@@ -935,7 +935,7 @@ public class ECPart extends EBTBEngine {
         
         EmbeddedCanvas c = new EmbeddedCanvas(); 
         
-        String evioPath = "/Users/colesmith/clas12/sim/neutron/hipo/";
+        String evioPath = "/Users/colesmith/clas12/sim/neutron/";
         String evioFile = "fc-neut-80k-s2-r5424.hipo";
         
         if (args.length == 0) { 
@@ -958,7 +958,7 @@ public class ECPart extends EBTBEngine {
         H1F h11 = new H1F("h11",50,0,2200);
             
         engine.init();
-        engine.setOccMax(100000);
+//        engine.setOccMax(100000);
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
@@ -1487,7 +1487,7 @@ public class ECPart extends EBTBEngine {
         hview[3] = new H1F("Shared View UVW",50,100,200);         
         hview[3].setTitleX("Invariant Mass (MeV)");
                 
-        String evioPath = "/Users/colesmith/clas12/sim/pizero/";
+        String evioPath = "/Users/colesmith/clas12/sim/2gamma/";
 //        String evioPath = "/Users/colesmith/clas12/sim/";
         
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
@@ -1495,7 +1495,8 @@ public class ECPart extends EBTBEngine {
 //    String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35-r5716.hipo"; int sec=2;
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35-r5716.hipo"; int sec=2;
         
-        String evioFile = "fc-pizero-100k-s2-newgeom-15-1.0-12.0.hipo"; int sec=2;
+//        String evioFile = "fc-pizero-100k-s2-newgeom-15-1.0-12.0.hipo"; int sec=2;
+        String evioFile = "out-pim-pizero.hipo"; int sec=2;
 //        String evioFile = "rga_fall2018_s2-pizero.hipo"; int sec=2;
 //        String evioFile = "fc-pizero-s2-new-4.4.0.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
@@ -1544,8 +1545,8 @@ public class ECPart extends EBTBEngine {
  //           	np.clear(); np = getNeutralPart(); hmp.fill(refE,np.size());            	
             	double   invmass = 1e3*Math.sqrt(getTwoPhotonInvMass(sec));            
             	boolean goodmass = invmass>0 && invmass<200;            
-            	boolean    pcec1 = goodPhotons(121,p1,p2);
-            	boolean    pcec2 = goodPhotons(122,p1,p2);
+            	boolean    pcec1 = goodPhotons(12,p1,p2);
+            	boolean    pcec2 = goodPhotons(12,p1,p2);
            
 //            h9.fill(part.p1.getBeta(DetectorType.ECAL,1,0.),part.p1.getHit(DetectorType.ECAL).getPosition().z());  
 //            h10.fill(part.p2.getBeta(DetectorType.ECAL,1,0.),part.p2.getHit(DetectorType.ECAL).getPosition().z());
@@ -1638,7 +1639,7 @@ public class ECPart extends EBTBEngine {
     public void scalerdemo(String[] args) {
         HipoDataSource reader = new HipoDataSource();
         ECEngine       engine = new ECEngine();    	
-        String evioPath = "/Users/colesmith/clas12/sim/neutron/hipo/";
+        String evioPath = "/Users/colesmith/clas12/sim/neutron/";
         String evioFile = "junk.hipo"; 
      
         if (args.length == 0) { 
@@ -1658,7 +1659,7 @@ public class ECPart extends EBTBEngine {
         ht[2] = new H2F("ecosct",9,1,10,648,1,649);
         
         engine.init();
-        engine.setOccMax(10000);
+//        engine.setOccMax(10000);
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
