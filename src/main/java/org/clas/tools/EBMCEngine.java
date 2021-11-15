@@ -16,9 +16,9 @@ import org.jlab.clas.detector.ScintillatorResponse;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
-import org.jlab.clas.reco.ReconstructionEngine;
+
 import org.jlab.detector.base.DetectorType;
-import org.jlab.groot.base.GStyle;
+
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.math.Func1D;
@@ -31,9 +31,9 @@ import org.jlab.rec.eb.SamplingFractions;
 import org.jlab.service.eb.EBAnalyzer;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
-import org.jlab.service.eb.EBTBEngine;
+
 import org.jlab.service.eb.EventBuilder;
-import org.clas.service.ec.ECEngine;
+
 import org.jlab.utils.groups.IndexedList;
 
 public class EBMCEngine extends EBEngine {
@@ -112,7 +112,7 @@ public class EBMCEngine extends EBEngine {
         setTrackType("TimeBasedTrkg::TBTracks");
         setTrajectoryType("TimeBasedTrkg::Trajectory");
         setCovMatrixType("TimeBasedTrkg::TBCovMat");   	
-        setFTOFHitsType("FTOF::hits");    
+        setFTOFHitsType("FTOF::clusters");    
     }
     
 	public void setMCpid(int val) {
@@ -140,7 +140,7 @@ public class EBMCEngine extends EBEngine {
     }    
     
     public void getCCDB(int runno) {
-    	System.out.println("EBMC.setCCDB("+runno+")");
+    	System.out.println("EBMCEngine.getCCDB("+runno+")");
     	ebe.init();
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
     }
@@ -179,6 +179,18 @@ public class EBMCEngine extends EBEngine {
         }                  
         return false;
     }
+    
+    
+    public List<Float> getkin(List<Particle> list) {
+    	List<Float> out = new ArrayList<Float>();
+    	int n=0;
+    	for (Particle p : list) {
+    		out.add(n++,(float) p.p());
+		    out.add(n++,(float) Math.toDegrees(p.theta())); 
+		    out.add(n++,(float) Math.toDegrees(p.phi()));
+    	}
+		return out;
+    }    
     
 	//Copies relevant parts of EBEngine.processDataEvent  
     

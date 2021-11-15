@@ -81,12 +81,10 @@ public class ECscaler extends DetectorMonitor {
     	System.out.println("ECscaler.localclear()");
     	isAnalyzeDone = false;
     	getDataGroup().clear();
-    	runlist.clear();
-    	evnlist.clear();
     	Fits.clear();
     	FitSummary.clear();
     	tl.Timeline.clear();
-    	runslider.setValue(1);
+    	runslider.setValue(0);
     }
     
     public void openOutput(String file) {
@@ -289,7 +287,6 @@ public class ECscaler extends DetectorMonitor {
     	
     	setRunNumber(run);
     	singleRun = prevRun==run;    	
-    	
         if(de.hasBank("ECAL::scaler")) {processRUNCONFIG(de); fillFifoFromBank(de); return;}
         
         if(occCounts>=occMax || run!=prevRun) {
@@ -315,7 +312,6 @@ public class ECscaler extends DetectorMonitor {
     public void processRUNCONFIG(DataEvent de) {
     	int  evn = de.getBank("RUN::config").getInt("event", 0);
     	long tim = de.getBank("RUN::config").getLong("timestamp",0);
-    	
     	int ev_rate = (int) (0.25e9*(evn-evn_last)/(tim-tim_last));
         runlist.add(occCounts,getRunNumber()); 
         evnlist.add(occCounts,evn);evrlist.add(occCounts,evn_last>0?ev_rate:0); 
@@ -655,11 +651,11 @@ public class ECscaler extends DetectorMonitor {
     	DataLine line3 = new DataLine(runIndexSlider,  as==4?-0.5:1,  runIndexSlider,  (as==4?31.5:npmt[sl-1])+1);  line3.setLineColor(5);
     	DataLine line4 = new DataLine(runIndexSlider+1,as==4?-0.5:1,  runIndexSlider+1,(as==4?31.5:npmt[sl-1])+1);  line4.setLineColor(5);  
     	
-    	String tit1 = "RUN "+runlist.get(runIndexSlider-1)+"   EVENT "+evnlist.get(runIndexSlider-1);
-    	String tit2 = "   EV/SEC "+evrlist.get(runIndexSlider-1);
+    	String tit1 = "RUN "+runlist.get(runIndexSlider)+"   EVENT "+evnlist.get(runIndexSlider);
+    	String tit2 = "   EV/SEC "+evrlist.get(runIndexSlider);
     	
-    	h1a = ATData.getItem(is,sl,it+0).get(runIndexSlider-1); h1a.setTitle(tit1+(singleRun?tit2:" ")); h1a.setFillColor(21); h1a.setOptStat(opstat);
-    	if(as<4) h1t = ATData.getItem(is,sl,it+1).get(runIndexSlider-1); h1t.setTitle(" ");              h1t.setFillColor(21); h1t.setOptStat(opstat); 
+    	h1a = ATData.getItem(is,sl,it+0).get(runIndexSlider); h1a.setTitle(tit1+(singleRun?tit2:" ")); h1a.setFillColor(21); h1a.setOptStat(opstat);
+    	if(as<4) h1t = ATData.getItem(is,sl,it+1).get(runIndexSlider); h1t.setTitle(" ");              h1t.setFillColor(21); h1t.setOptStat(opstat); 
     		
     	float amax = (float) h1a.getMax()*1.3f, tmax = (float) h1t.getMax()*1.3f, amin=0, tmin=0;
     	

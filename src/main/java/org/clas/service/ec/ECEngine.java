@@ -137,7 +137,7 @@ public class ECEngine extends ReconstructionEngine {
             bankC.setShort("status", c, (short) clusters.get(c).getStatus());
             bankC.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
             bankC.setFloat("energy", c, (float) clusters.get(c).getEnergy());           
-            bankC.setFloat("time",   c, (float) clusters.get(c).getTime());
+            bankC.setFloat("time",   c, (float) clusters.get(c).getTime()); //System.out.println(c+" "+clusters.get(c).getTime());
             bankC.setByte("idU",     c,  (byte) clusters.get(c).UVIEW_ID);
             bankC.setByte("idV",     c,  (byte) clusters.get(c).VVIEW_ID);
             bankC.setByte("idW",     c,  (byte) clusters.get(c).WVIEW_ID);
@@ -225,6 +225,16 @@ public class ECEngine extends ReconstructionEngine {
         System.out.println("ECEngine: useNewTimeCal = "+val);
     	ECCommon.useNewTimeCal = val;
     }
+    
+    public void setUseUnsharedEnergy(boolean val) {
+    	System.out.println("ECengine: useUnsharedEnergy = "+val);
+    	ECCommon.useUnsharedEnergy = val;
+    } 
+    
+    public void setUnsharedEnergyCut(int val) {
+    	System.out.println("ECengine: UnsharedEnergyCut = "+val);   	
+    	ECCommon.UnsharedEnergyCut = val;
+    } 
     
     public void setUseUnsharedTime(boolean val) {
     	System.out.println("ECengine: useUnsharedTime = "+val);

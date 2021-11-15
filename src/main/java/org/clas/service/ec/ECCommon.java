@@ -38,6 +38,8 @@ public class ECCommon {
     public static Boolean  isSingleThreaded = false;
     public static Boolean       singleEvent = false;
     public static Boolean     useNewTimeCal = true;
+    public static Boolean useUnsharedEnergy = true;
+    public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = false;
     public static Boolean      useLogWeight = true;
     public static Boolean       useCCDBGain = true;
@@ -324,11 +326,11 @@ public class ECCommon {
         
         for(int i = 0; i < clusters.size() - 1; i++){
             for(int k = i+1 ; k < clusters.size(); k++){
-                byte sharedView = (byte) clusters.get(i).sharedView(clusters.get(k)); // 0,1,2 <=> U,V,W
-                if(sharedView>=0&&sharedView<6){
+                byte sharedView = (byte) clusters.get(i).sharedView(clusters.get(k)); // 0,1,2,3,4,5 <=> U,V,W,UV,UW,VW
+                if(sharedView>=0&&sharedView<UnsharedEnergyCut){
                 	clusters.get(i).setSharedCluster(k); clusters.get(i).setSharedView(sharedView+1);
                 	clusters.get(k).setSharedCluster(i); clusters.get(k).setSharedView(sharedView+1);                  
-                    ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView+1);
+                	if(useUnsharedEnergy) ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView+1);
                 }
             }
         }        

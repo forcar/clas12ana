@@ -129,21 +129,22 @@ public class ECpi0 extends DetectorMonitor{
     	histosExist = true;
 	    System.out.println("ECpi0:createHistos("+run+")");
         setRunNumber(run);
+        float EB = getBeamEnergy(run);
         runlist.add(run);
         createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
     	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
     	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
     	createSIJHistos(2,130,5.,700.,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
-    	create2DHistos(3,50,0.,20.,50,0.,5.0,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
+    	create2DHistos(3,50,0.,20.,50,0.,5*EB/10.6,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
     	addFunctions(3,"IM1","0.13495*0.13495/2/(1-cos(x*3.14159/180.))",3.65,20.,1,2);
     	addFunctions(3,"IM2","0.12495*0.12495/2/(1-cos(x*3.14159/180.))",3.4,20.,5,2);
     	addFunctions(3,"IM3","0.14495*0.14495/2/(1-cos(x*3.14159/180.))",4.0,20.,5,2);
     	create2DHistos(4,40,0.,20.,50,-1.,1.,      "opax",   "Two Photon Opening Angle (deg)","X:(E1-E2)/(E1+E2)");
     	create2DHistos(5,60,-150.,150.,60,1.,20.,  "imopa",  "Inv. Mass Error (MeV)",         "Two Photon Opening Angle (deg)");
-    	create2DHistos(6,60,-150.,150.,60,0.,8.,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
-    	create2DHistos(7,60,-150.,150.,60,0.,10.,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
+    	create2DHistos(6,60,-150.,150.,60,0.,5*EB/10.6,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
+    	create2DHistos(7,60,-150.,150.,60,0.,10*EB/10.6,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
     	create2DHistos(8,60,-150.,150.,60,-15.,15.,"tij",    "Inv. Mass Error (MeV)",         "Time Difference (Phot1-Phot2) (ns)");
-    	create2DHistos(9,60,3.,32.,60,0.,10.,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
+    	create2DHistos(9,60,3.,32.,60,0.,10*EB/10.6,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
     	createXYHistos(10,1,60,410);
     	createXYHistos(10,2,60,410);
     	create1DHistos(11,100,0.,50.,"ftof","Energy (MeV)");
@@ -273,7 +274,7 @@ public class ECpi0 extends DetectorMonitor{
            DataGroup dg = new DataGroup(3,2);
            for (int d=0; d<3; d++) {
               h2 = new H2F("pi0-"+det[d]+"-xy-"+t[i]+"-"+n+"-"+k+"-"+run,"hi-"+det[d]+"-xy-"+t[i]+"-"+k+"-"+run,nb,-bmx,bmx,nb,-bmx,bmx);
-              h2.setTitleX("Photon "+n+" X(cm)"); h2.setTitleY("Photon "+n+" Y(cm)");
+              h2.setTitleX("Photon "+n+" X (cm)"); h2.setTitleY("Photon "+n+" Y (cm)");
               dg.addDataSet(h2,d);  
 	       }
            this.getDataGroup().add(dg,i,n,k,run);
@@ -867,7 +868,7 @@ public class ECpi0 extends DetectorMonitor{
     }
     
     public void plotUVW(int index) {    	
-      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),2,index,getRunNumber()));
+      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),getActivePC()==0?2:1,index,getRunNumber()));
     }   
     
     public void plotPI0Summary(int index) {

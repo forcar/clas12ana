@@ -22,6 +22,7 @@ public class DataGroupManager {
 	Map<String,Object[]>                         map = new HashMap<>();
 	public Map<String,int[]>                    imap = new HashMap<>();
 	public Map<String,String>                   hmap = new HashMap<>();
+	public Map<String,Boolean>                  tmap = new HashMap<>();
 	
 	DataGroup dg = null;
 	String   tag = null;
@@ -96,8 +97,13 @@ public class DataGroupManager {
     
     public String getName(String name) {
 		imap.put(name,get_ilist());
-		hmap.put(name,name+tag);		
+		hmap.put(name,name+tag);
+		tmap.put(name,true);
 		return hmap.get(name);
+    }
+    
+    public void setTest(String name,boolean val) {
+    	tmap.put(name,val);    	
     }
     
     public void printMap(String name, int i) {
@@ -118,7 +124,8 @@ public class DataGroupManager {
 // HISTO HELPERS  
     
     public void fill(String name, double ... val) {    	
-        if(!goodName(name)) return;   	
+        if(!goodName(name)) return; 
+        if(!tmap.get(name)) return;
     	if(val.length==1)               getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0]);
     	if(val.length==2 && isH1(name)) getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0],val[1]);
         if(val.length==2 && isH2(name)) getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1]);
@@ -219,12 +226,13 @@ public class DataGroupManager {
     	return f1;
     }
     
-    public void makeGraph(String name, int f, int ... options) {
+    public void makeGraph(String name, int f, String tit, String titx, String tity, int ... options) {
     	GraphErrors graph = new GraphErrors();
     	graph.setName(getName(name)); 
+    	graph.setTitle(tit); graph.setTitleX(titx); graph.setTitleY(tity);
     	int nn=0;
     	for (int opt : options) {
-    		if(nn==0) graph.setMarkerColor(opt); 
+    		if(nn==0) {graph.setMarkerColor(opt); graph.setLineColor(opt);}
     		if(nn==1) graph.setMarkerSize(opt); 
     		if(nn==2) graph.setMarkerStyle(opt);
     		nn++;
@@ -238,11 +246,13 @@ public class DataGroupManager {
     
     //DATAGROUP HELPERS	    
 
+    // custom configuration: associates canvas based drawing options with IDataSet object name
 	public void cc(String name, boolean linlogy, boolean linlogz, float ymin, float ymax, float zmin, float zmax) {
 		Object[] obj = {linlogy,linlogz,ymin,ymax,zmin,zmax};
 		map.put(hmap.get(name),obj);  
 	}
 	
+	//custom configuration: unpacks IDataSet object map and performs canvas operations at draw time
 	public Boolean config(String name, EmbeddedCanvas canvas) {
 		if(!map.containsKey(name)) return false;                  
 		Object[] can = map.get(name);            
@@ -261,8 +271,7 @@ public class DataGroupManager {
     
     public void drawGroup(EmbeddedCanvas c, DataGroup group) {
     	if(group==null) return;
-        int nrows = group.getRows();
-        int ncols = group.getColumns();
+        int nrows = group.getRows(), ncols = group.getColumns();
         c.clear(); c.divide(ncols, nrows); 	    
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {

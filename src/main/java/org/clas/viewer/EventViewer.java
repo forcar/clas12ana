@@ -45,6 +45,7 @@ import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmc;
 import org.clas.analysis.ECmc1;
 import org.clas.analysis.ECmc2;
+import org.clas.analysis.ECmcn;
 import org.clas.analysis.ECmip;
 import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
@@ -91,7 +92,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6,cf7,cf8,cf9 = null;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf7,cf8,cf9 = null;   
     JCheckBoxMenuItem                                   ctr = null;  
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
@@ -105,7 +106,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int           TVOffset = 0;
     private float         logParam = 0;
     private int analysisUpdateEvnt = 100;
-    private int          runNumber = 0;
+    private int          runNumber = 1;
     private int        eventNumber = 0;
     private int      ccdbRunNumber = 0;
    
@@ -116,30 +117,31 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public String outPath = "/Users/cole/CLAS12ANA/";
     public String workDir = outPath;
     
-    public Boolean    clearHist = false;
-    public Boolean     autoSave = false;
-    public Boolean    dropBanks = false;
-    public Boolean  dropSummary = false;
-    public Boolean   dumpGraphs = false;
-    public Boolean    dumpFiles = false;
-    public Boolean  defaultGain = false;
-    public Boolean     fiduCuts = false;
-    public Boolean    dropEsect = false;
-    public Boolean   cfitEnable = false;
-    public Boolean   sfitEnable = false;
-    public Boolean   dfitEnable = false;
-    public Boolean  gdfitEnable = false;
-    public Boolean   yLogEnable = false;
-    public Boolean   zLogEnable = true;
-    public Boolean  dbgECEngine = false;
-    public Boolean  dbgAnalyzer = false;
-    public Boolean unsharedTime = false;
-    public Boolean   fitVerbose = false;
-    public String        TLname = "UVW";
-    public Boolean       TLflag = false;
-    public Boolean        clear = true; 
-    public Integer        TRpid = 11;
-    public Boolean    useATDATA = false;
+    public Boolean      clearHist = false;
+    public Boolean       autoSave = false;
+    public Boolean      dropBanks = false;
+    public Boolean    dropSummary = false;
+    public Boolean     dumpGraphs = false;
+    public Boolean      dumpFiles = false;
+    public Boolean    defaultGain = false;
+    public Boolean       fiduCuts = false;
+    public Boolean      dropEsect = false;
+    public Boolean     cfitEnable = false;
+    public Boolean     sfitEnable = false;
+    public Boolean     dfitEnable = false;
+    public Boolean    gdfitEnable = false;
+    public Boolean     yLogEnable = false;
+    public Boolean     zLogEnable = true;
+    public Boolean    dbgECEngine = false;
+    public Boolean    dbgAnalyzer = false;
+    public Boolean   unsharedTime = false;
+    public Boolean unsharedEnergy = true;
+    public Boolean     fitVerbose = false;
+    public String          TLname = "UVW";
+    public Boolean         TLflag = false;
+    public Boolean          clear = true; 
+    public Integer          TRpid = 11;
+    public Boolean      useATDATA = false;
     
     public JFileChooser      fc = null; 
     
@@ -156,7 +158,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int                  eventDelay    = 0;
    
     public static void main(String[] args){
-
         JFrame frame = new JFrame("CLAS12Ana");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         EventViewer viewer = new EventViewer(args);
@@ -191,6 +192,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECpi0": monitors[n++]=new ECpi0(s);  break;
         	     case   "ECperf": monitors[n++]=new ECperf(s); break;
         	     case     "ECmc": monitors[n++]=new ECmc(s);   break;
+        	     case    "ECmcn": monitors[n++]=new ECmcn(s);  break;
         	     case    "ECmc1": monitors[n++]=new ECmc1(s);  break;
         	     case    "ECmc2": monitors[n++]=new ECmc2(s);  break;
         	     case "ECscaler": monitors[n++]=new ECscaler(s); break;
@@ -200,10 +202,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	} else {
 //   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
-    		monitors[n] = new ECmc2("ECmc2");
-//    		monitors[n] = new ECscaler("ECscaler");
+//    		monitors[n] = new ECmc2("ECmc2");
+    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
+//    		monitors[n] = new ECmcn("ECmcn");
 //    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -255,9 +258,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu     = new JMenu("Settings");       
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
-        cf4      = new JCheckBoxMenuItem("log Y");                    cf4.addItemListener(this);   menu.add(cf4);  
-        cf5      = new JCheckBoxMenuItem("log Z");                    cf5.addItemListener(this);   menu.add(cf5);  cf5.doClick();
-        cf6      = new JCheckBoxMenuItem("RejectSharedPeakTime");     cf6.addItemListener(this);   menu.add(cf6); 
+        cf4      = new JCheckBoxMenuItem("log Y");                      cf4.addItemListener(this); menu.add(cf4);  
+        cf5      = new JCheckBoxMenuItem("log Z");                      cf5.addItemListener(this); menu.add(cf5);   cf5.doClick();
+        cf6a     = new JCheckBoxMenuItem("RejectSharedTime");          cf6a.addItemListener(this); menu.add(cf6a);  
+        cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");        cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
@@ -374,37 +378,38 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 	public void itemStateChanged(ItemEvent e) {
 		Object source = e.getItemSelectable();	
 		
-		if (source==co0)    clearHist = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==co1)     autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==co2)    dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co3)  dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co4)   dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co4b)   dumpFiles = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co5)  defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co6)     fiduCuts = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co7)    dropEsect = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==cf )   fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf0)   cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf1)   sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf2)   dfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf3)  gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf4)   yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf5)   zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf6) unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf7)  dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf8)  dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf9)    useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ct0)       TLname = ct0.getText();
-		if (source==ct1)       TLname = ct1.getText();
-		if (source==ct2)       TLname = ct2.getText();
-		if (source==ct3)       TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ctr0)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   11:11; 
-		if (source==ctr1)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  211:11; 
-		if (source==ctr2)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   22:11; 
-		if (source==ctr3)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
-		if (source==ctr4)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
-		if (source==ctr5)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
-		if (source==ctr6)       TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2212:11; 
+		if (source==co0)       clearHist = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==co1)        autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==co2)       dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co3)     dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co4)      dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co4b)      dumpFiles = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co5)     defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co6)        fiduCuts = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==co7)       dropEsect = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
+		if (source==cf )      fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf0)      cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf1)      sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf2)      dfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf3)     gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf4)      yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf5)      zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf6a)   unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf6b) unsharedEnergy = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf7)     dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf8)     dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf9)       useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
+		if (source==ct0)          TLname = ct0.getText();
+		if (source==ct1)          TLname = ct1.getText();
+		if (source==ct2)          TLname = ct2.getText();
+		if (source==ct3)          TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
+		if (source==ctr0)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   11:11; 
+		if (source==ctr1)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  211:11; 
+		if (source==ctr2)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   22:11; 
+		if (source==ctr3)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
+		if (source==ctr4)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
+		if (source==ctr5)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
+		if (source==ctr6)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2212:11; 
 				
 		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
 		                                           this.monitors[k].dropSummary = dropSummary; 
@@ -420,6 +425,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].gdfitEnable = gdfitEnable;
                                                    this.monitors[k].setLogY(yLogEnable);                                                  
                                                    this.monitors[k].setLogZ(zLogEnable);
+                                                   this.monitors[k].setUseUnsharedEnergy(unsharedEnergy); 
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
@@ -576,14 +582,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private boolean isNewRun(int run) {
-    	if(runList.isEmpty()) {runList.add(this.runNumber); return true;}
+    	if(runList.isEmpty()) {runList.add(this.runNumber); return false;}
     	if(runList.contains(run)) return false;
     	runList.add(run);
     	return true;
     }
     
     @Override
-    public void dataEventAction(DataEvent event) {   	       	
+    public void dataEventAction(DataEvent event) {   	
 	   if(!rejectEvent(event))  processEvent(filterEvent(decodeEvent(event)));
     }
     

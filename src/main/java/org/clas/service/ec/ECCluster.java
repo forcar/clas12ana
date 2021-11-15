@@ -122,12 +122,12 @@ public class ECCluster {
 	public double getUnsharedRawADCTime() {
 		// Use only U,V,W peaks with unshared views for cluster timing
 		switch (sharedView) {
-		case 1: return getRawADC(1)>getRawADC(2) ? getTime(1):getTime(2);
-		case 2: return getRawADC(0)>getRawADC(2) ? getTime(0):getTime(2);
-		case 3: return getRawADC(0)>getRawADC(1) ? getTime(0):getTime(1);
-		case 4: return getTime(2);
-		case 5: return getTime(1);
-		case 6: return getTime(0);	
+		case 1: return getRawADC(1)>getRawADC(2) ? getTime(1):getTime(2); //U peak overlap, use V or W peak time
+		case 2: return getRawADC(0)>getRawADC(2) ? getTime(0):getTime(2); //V peak overlap, use U or W peak time
+		case 3: return getRawADC(0)>getRawADC(1) ? getTime(0):getTime(1); //W peak overlap, use U or V peak time
+		case 4: return getTime(2);                                        //U,V peak overlap, use W time
+		case 5: return getTime(1);                                        //U,W peak overlap, use V time
+		case 6: return getTime(0);	                                      //V,W peak overlap, use U time
 		}
 		return getRawADCTime();
 	}

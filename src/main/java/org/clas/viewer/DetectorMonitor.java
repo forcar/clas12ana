@@ -226,6 +226,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean        histosExist = false;
     public Boolean          dgmActive = false;
     public Boolean    useUnsharedTime = false;
+    public Boolean  useUnsharedEnergy = true;
     public Boolean        dbgECEngine = false;
     public Boolean        dbgAnalyzer = false;
     
@@ -399,6 +400,10 @@ public class DetectorMonitor implements ActionListener {
     	engine.setUseUnsharedTime(val);
     }
     
+    public void setUseUnsharedEnergy(Boolean val) {
+    	engine.setUseUnsharedEnergy(val);
+    }  
+    
     public void setDbgECEngine(Boolean val) {
     	dbgECEngine = val;
     	engine.debug = val;
@@ -503,15 +508,15 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       doEVENT_STOP();
+        case EVENT_STOP:       processEVENT_STOP();
 	    }
     }
     
-    public void doEVENT_STOP() {
+    public void processEVENT_STOP() {
     	analyze(); 
         plotHistos(getRunNumber()); 
         if(autoSave) saveHistosToFile();
-        System.out.println("DectectorMonitor:doEVENT_STOP");    	
+        System.out.println(root+"processEVENT_STOP");    	
     }
 
     public void drawDetector() {    
@@ -798,7 +803,7 @@ public class DetectorMonitor implements ActionListener {
         JPanel sliderPane = new JPanel();
         JLabel      label = new JLabel("" + String.format("%d", 0));
  
-        runslider         = new JSlider(JSlider.HORIZONTAL, 1, TLmax+2, 1); 
+        runslider         = new JSlider(JSlider.HORIZONTAL, 0, TLmax+2, 1); 
         runslider.setPreferredSize(new Dimension(TLmax+1,10));
 
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
@@ -809,7 +814,7 @@ public class DetectorMonitor implements ActionListener {
                 JSlider slider = (JSlider) e.getSource(); 
                 if(runlist.size()!=0) {
                 	runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size():slider.getValue();
-                	int run = runlist.get(runIndexSlider-1);
+                	int run = runlist.get(runIndexSlider);
                     label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
                     plotScalers(run);
                     plotHistos(run);
@@ -972,7 +977,7 @@ public class DetectorMonitor implements ActionListener {
         TDirectory dir = new TDirectory();
         writeDataGroup(dir);
         dir.writeFile(outPath+fileName);
-        System.out.println("Saving histograms to file " + outPath+fileName); 
+        System.out.println(root+"saveHistosToFile():" + outPath+fileName); 
     }
     
     public void printCanvas(String dir) {
@@ -987,7 +992,7 @@ public class DetectorMonitor implements ActionListener {
     }   
     
     public void resetEventListener() {
-        System.out.println("Resetting " +  getDetectorName() + " histogram for run "+ getRunNumber());
+        System.out.println(root+"resetEventListener():" +  getDetectorName() + " histogram for run "+ getRunNumber());
         createHistos(getRunNumber());
         plotHistos(getRunNumber());
     }
