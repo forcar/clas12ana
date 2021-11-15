@@ -136,7 +136,7 @@ public class ECmc extends DetectorMonitor {
         dgm.makeH2("h51",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h52",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h53",50,0.0,2.5, 60,0.0,0.31,-1,"","ECAL Electron Energy (GeV)","Sampling Fraction E/P");
-        dgm.makeGraph("g53",-2,1); SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
+        dgm.makeGraph("g53",-2,"","","",1); SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
         dgm.makeH1("h60a",50,0,10,-1,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,3);
         dgm.makeH1("h60b",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,5);
         dgm.makeH1("h60c",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,2);
@@ -301,7 +301,7 @@ public class ECmc extends DetectorMonitor {
         }
         
         dropBanks(event);
-        engine.processDataEvent(event);  
+ //       engine.processDataEvent(event);  
         eb.processDataEvent(event);  
         eb.getUnmatchedResponses();
         List<DetectorResponse> rPC = eb.getPCResponses(mcsec);
