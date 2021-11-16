@@ -19,7 +19,7 @@ import org.jlab.utils.groups.IndexedList;
 public class ECscaler extends DetectorMonitor {
 
     static int              occCounts = 0;
-    static int                 occMax = 10002;
+    static int                 occMax = 10002, counter=0;
     static int                 occLo  =  1;
     static int                 occHi  =  100;
     static int                 occHL  = occHi-occLo+1;
@@ -29,6 +29,7 @@ public class ECscaler extends DetectorMonitor {
     static int                prevRun = 0;
     static DataEvent        prevEvent = null;
     static boolean          singleRun = false;
+    static boolean        scalerEvent = false;
     
     static DetectorOccupancy               occupancyECAL = new DetectorOccupancy(); 
     
@@ -116,7 +117,7 @@ public class ECscaler extends DetectorMonitor {
     	if(dumpFiles) openOutput(outPath+"ECscaler/ECscaler-"+run+".hipo");
     	setRunNumber(run);    	   	
     	histosExist = true;  
-    	TLmax = getTotalEvents()>occMax?getTotalEvents()/occMax:getTotalEvents();    
+    	TLmax = getTotalEvents()>occMax ? getTotalEvents()/occMax : getTotalEvents();    
     	if(useATDATA) createATDATA();
     	createTIMELINE(0,TLmax);
     	createTIMELINE(1,TLmax); 
@@ -151,8 +152,8 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         				int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
-        				dgm.makeH2("ADC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
-        				dgm.makeH2("TDC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
+        				dgm.makeH2("ADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
+        				dgm.makeH2("TDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
         			}
         		}
         	}
@@ -165,9 +166,9 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
-        	    		dgm.makeH2("NADC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"NORM ADC COUNTS", "RUN INDEX", tity);
+        	    		dgm.makeH2("NADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC COUNTS", "RUN INDEX", tity);
         	    		dgm.cc("NADC"+hl, false, false, 0, 0, -3, 3);
-        	    		dgm.makeH2("NTDC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"NORM TDC COUNTS", "RUN INDEX", tity);
+        	    		dgm.makeH2("NTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM TDC COUNTS", "RUN INDEX", tity);
         	    		dgm.cc("NTDC"+hl, false, false, 0, 0, -3, 3);
         			}
         		}
@@ -181,9 +182,9 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         				int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
-        				dgm.makeH2("VADC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"ADC VALUES", "RUN INDEX", tity);    	    		
+        				dgm.makeH2("VADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC VALUES", "RUN INDEX", tity);    	    		
         				dgm.cc("VADC"+hl, false, false, 0, 0, 0, 100);
-        				dgm.makeH2("VTDC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"TDC VALUES", "RUN INDEX", tity);	
+        				dgm.makeH2("VTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC VALUES", "RUN INDEX", tity);	
         				dgm.cc("VTDC"+hl, false, false, 0, 0, 200, 300);
         			}
         		}
@@ -197,9 +198,9 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
-        	    		dgm.makeH2("NVADC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"NORM ADC VALUE", "RUN INDEX", tity);
+        	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC VALUE", "RUN INDEX", tity);
         	    		dgm.cc("NVADC"+hl, false, false, 0, 0, 0.5f,1.5f);
-        	    		dgm.makeH2("NVTDC"+hl, nx,1,nx+1,ny,1,ny+1, -1,"NORM TDC VALUES", "RUN INDEX", tity);
+        	    		dgm.makeH2("NVTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM TDC VALUES", "RUN INDEX", tity);
         	    		dgm.cc("NVTDC"+hl, false, false, 0, 0, -3, 3);
         			}
         		}
@@ -207,11 +208,11 @@ public class ECscaler extends DetectorMonitor {
         	break;
     	case 4:
     		dgm.add("TIMELINE", 1, 2, 0, st, getRunNumber());
-    		dgm.makeH2("TRIG",  nx, 1, nx+1, 32,-0.5,31.5, -1, "TRIGGER COUNTS", "RUN INDEX", "TRIGGER BITS");        	
+    		dgm.makeH2("TRIG",  nx, 0, nx, 32,-0.5,31.5, -1, "TRIGGER COUNTS", "RUN INDEX", "TRIGGER BITS");        	
     		break;
     	case 5:
     		dgm.add("TIMELINE", 1, 2, 0, st, getRunNumber());
-    		dgm.makeH2("NTRIG", nx, 1, nx+1, 32,-0.5,31.5, -1, "NORM TRIGGER COUNTS", "RUN INDEX", "TRIGGER BITS");    	        	        	
+    		dgm.makeH2("NTRIG", nx, 0, nx, 32,-0.5,31.5, -1, "NORM TRIGGER COUNTS", "RUN INDEX", "TRIGGER BITS");    	        	        	
     		dgm.cc("NTRIG", false, false, 0, 0, -3, 3);	
     	}
     	
@@ -279,30 +280,54 @@ public class ECscaler extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent de) {	 
     	
-        if (!testTriggerMask()) return;
-
-    	prevRun = getRunNumber(); 
-    	int run = de.hasBank("RUN::config") ? de.getBank("RUN::config").getInt("run", 0):-1;
+        if (!testTriggerMask()) {System.out.println("TriggerMask Fail Run "+getRunNumber()); return;}
+        
+        int run = getNewRunNumber(de);
+    	
     	if(run<1) return;
     	
     	setRunNumber(run);
-    	singleRun = prevRun==run;    	
-        if(de.hasBank("ECAL::scaler")) {processRUNCONFIG(de); fillFifoFromBank(de); return;}
+    	singleRun = prevRun==run;   
+    	
+        if (de.hasBank("ECAL::scaler")) {doScalerEvent(de); return;}
         
-        if(occCounts>=occMax || run!=prevRun) {
+        if(occCounts>=occMax || (prevRun>0 && run!=prevRun)) {       	
         	fillFifoFromData();
-        	if(dumpFiles) {fillBankFromData(prevEvent); writer.writeEvent(prevEvent);}
+        	doWriteEvent();
         	occupancyECAL.reset(); dgm.getH1F("trigmon").reset(); occCounts = 0;
         } 
         
         if(de.hasBank("ECAL::adc")) occupancyECAL.addADCBank(de.getBank("ECAL::adc"));
         if(de.hasBank("ECAL::tdc")) occupancyECAL.addTDCBank(de.getBank("ECAL::tdc"));
+        
         fillTRIGGER(); 
                 
         occCounts++;
         prevEvent = de;
         
         if(useATDATA) {fillATDATA(de); occupancyECAL.resetValue();}
+    }
+    
+    public int getNewRunNumber(DataEvent de) {
+    	prevRun = getRunNumber(); 
+    	return de.hasBank("RUN::config") ? de.getBank("RUN::config").getInt("run", 0):-1;  
+    }
+    
+    public void doScalerEvent(DataEvent de) {
+    	processRUNCONFIG(de); fillFifoFromBank(de);     	
+    }
+    
+    public void doWriteEvent() {
+    	if(dumpFiles) {fillBankFromData(prevEvent); writer.writeEvent(prevEvent);}
+    }
+    
+    @Override
+    public void doSTOPEvent(DataEvent de) {
+    	doWriteEvent();
+    	if (de.hasBank("ECAL::scaler")) {
+    		setRunNumber(getNewRunNumber(de)); 
+    		doScalerEvent(de);
+    	}
     }
     
     public boolean inNormWindow() {
@@ -448,23 +473,23 @@ public class ECscaler extends DetectorMonitor {
     				fifotv.get(is, il, ic).toArray(ftv);
     				for (int it=0; it<fa.length; it++) {
     					float y = (float)((float)(fa[it]-getNorm(0,is,il,ic))/Math.sqrt(fa[it]));
-    					dgm.fill( "ADC"+hl,it+1,ic,fa[it]);     					
-    					dgm.fill("NADC"+hl,it+1,ic,y);
+    					dgm.fill( "ADC"+hl,it,ic,fa[it]);     					
+    					dgm.fill("NADC"+hl,it,ic,y);
     				}   				
     				for (int it=0; it<ft.length; it++) {
     					float y = (float)((float)(ft[it]-getNorm(1,is,il,ic))/Math.sqrt(ft[it]));
-    					dgm.fill( "TDC"+hl,it+1,ic,ft[it]); 
-    					dgm.fill("NTDC"+hl,it+1,ic,y);
+    					dgm.fill( "TDC"+hl,it,ic,ft[it]); 
+    					dgm.fill("NTDC"+hl,it,ic,y);
     				}
     				for (int it=0; it<fav.length; it++) {
     					float y = (float)((float)(fav[it]/getNorm(20,is,il,ic)));    					
-    					dgm.fill( "VADC"+hl,it+1,ic,fav[it]);
-    					dgm.fill("NVADC"+hl,it+1,ic,y);
+    					dgm.fill( "VADC"+hl,it,ic,fav[it]);
+    					dgm.fill("NVADC"+hl,it,ic,y);
     				}
     				for (int it=0; it<ftv.length; it++) {
     					float y = (float)((float)(ftv[it]-getNorm(21,is,il,ic)));    					
-    					dgm.fill( "VTDC"+hl,it+1,ic,ftv[it]);
-    					dgm.fill("NVTDC"+hl,it+1,ic,y);
+    					dgm.fill( "VTDC"+hl,it,ic,ftv[it]);
+    					dgm.fill("NVTDC"+hl,it,ic,y);
     				} 	
     			}
     		}

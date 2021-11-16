@@ -581,8 +581,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	return false;
     }
     
+    private boolean isFirstRun(int run) {
+    	return runList.isEmpty();
+    }
+    
     private boolean isNewRun(int run) {
-    	if(runList.isEmpty()) {runList.add(this.runNumber); return false;}
+    	if(isFirstRun(run)) {runList.add(this.runNumber); return true;}
     	if(runList.contains(run)) return false;
     	runList.add(run);
     	return true;
@@ -614,7 +618,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private DataEvent filterEvent(DataEvent event) {
 
     	int rNum = getRunNumber(event);
-       
+    	
         if(rNum!=0 && isNewRun(rNum) && clear) {  //clear is initialized true and reset true by readFiles()
         	System.out.println("EventViewer: Processing Run "+rNum);
         	this.runNumber = rNum;

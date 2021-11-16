@@ -508,15 +508,20 @@ public class DetectorMonitor implements ActionListener {
         case EVENT_START:      processEvent(event); break;
         case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
-        case EVENT_STOP:       processEVENT_STOP();
+        case EVENT_STOP:       processEVENT_STOP(event);
 	    }
     }
     
-    public void processEVENT_STOP() {
+    public void processEVENT_STOP(DataEvent de) {
+    	doSTOPEvent(de);
     	analyze(); 
         plotHistos(getRunNumber()); 
         if(autoSave) saveHistosToFile();
         System.out.println(root+"processEVENT_STOP");    	
+    }
+    
+    public void doSTOPEvent(DataEvent de) {
+    	
     }
 
     public void drawDetector() {    
@@ -802,9 +807,9 @@ public class DetectorMonitor implements ActionListener {
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
         JLabel      label = new JLabel("" + String.format("%d", 0));
- 
-        runslider         = new JSlider(JSlider.HORIZONTAL, 0, TLmax+2, 1); 
-        runslider.setPreferredSize(new Dimension(TLmax+1,10));
+        System.out.println("DetectorMonitor.getRunSliderPanel: TLmax="+TLmax);
+        runslider         = new JSlider(JSlider.HORIZONTAL, 0, TLmax, 1); 
+        runslider.setPreferredSize(new Dimension(TLmax,10));
 
         sliderPane.add(new JLabel("Run Index,Run",JLabel.CENTER));
         sliderPane.add(runslider);
@@ -813,7 +818,7 @@ public class DetectorMonitor implements ActionListener {
             public void stateChanged(ChangeEvent e) {
                 JSlider slider = (JSlider) e.getSource(); 
                 if(runlist.size()!=0) {
-                	runIndexSlider = (slider.getValue()>=runlist.size())?runlist.size():slider.getValue();
+                	runIndexSlider = (slider.getValue()>runlist.size()-1)?runlist.size()-1:slider.getValue();
                 	int run = runlist.get(runIndexSlider);
                     label.setText(String.valueOf(""+String.format("%d", runIndexSlider)+" "+String.format("%d", run)));
                     plotScalers(run);
