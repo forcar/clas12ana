@@ -179,9 +179,19 @@ public class ECcalib extends DetectorMonitor {
      public void plotAnalysis(int run) {
     	 setRunNumber(run);
     	 if(!isAnalyzeDone) return;
-    	 if(!dropSummary) {updateFITS(2); updateFITS(15); if(TLname=="UVW") {/*plotMean()*/;plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);}else{plotMeanHWSummary(3); plotRmsHWSummary(4);}}
+    	 if(!dropSummary) {
+    		 updateFITS(2); 
+ //   		 updateFITS(15); 
+    		 if(TLname=="UVW") {
+    			 /*plotMean()*/;plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
+    			 } else {
+    				 plotMeanHWSummary(3); plotRmsHWSummary(4);
+             }	 
+    	 }
 //    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
-    	 updateUVW(1);   plotAlignSummary(16); plotTimeLines(11);  	    
+    	 updateUVW(1);   
+//    	 plotAlignSummary(16); 
+    	 plotTimeLines(11);  	    
      }
      
      public void plotMean() {

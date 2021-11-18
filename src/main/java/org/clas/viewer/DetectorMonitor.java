@@ -1090,8 +1090,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=12447) return  2.1864f;
     	if (run<=12616) return 10.1967f;
     	if (run<=12716) return 10.3394f;
-    	if (run<=12955) return 10.4057f;    	
-    	if (run<=50000) return 10.2129f;
+    	if (run<=12955) return 10.4057f;    
+    	if (run<=50000) return  5.986f;
     	return 0.0f;
     }
     
