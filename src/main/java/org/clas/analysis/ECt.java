@@ -124,7 +124,6 @@ public class ECt extends DetectorMonitor {
         this.variation = "default";
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
-        engine.setPCALTrackingPlane(0);
         tlnum = getDetectorTabNames().indexOf("TL");
         this.init();
         this.localinit();
@@ -455,17 +454,19 @@ public class ECt extends DetectorMonitor {
        if(!goodSector) return;
        
        phase  = getTriggerPhase(); 
+       
        STT = event.hasBank("REC::Event") ? 
     		 (isHipo3Event ? 
     		 event.getBank("REC::Event").getFloat("STTime", 0):
              event.getBank("REC::Event").getFloat("startTime", 0)):
              0; 
+    		 
        isGoodTL = event.hasBank("REC::Event")&&
     		      event.hasBank("REC::Particle")&&
     		      event.hasBank("REC::Calorimeter")&&
     		      STT>0;
     		     	   
-       if(isGoodTL)     processTL(event); 
+       if(isGoodTL)     processTL(event); // TimeLine analysis for TL tab
        if(!dropSummary) processRaw(event);
        
        processRec(event);       
@@ -475,17 +476,17 @@ public class ECt extends DetectorMonitor {
     public void processTL(DataEvent event) {
     	
   	   int  run = getRunNumber();
+  	   
   	   ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(trigger_sect-1).get(0)).fill(STT-FTOFFSET);
   	   
-
   	   if(event.hasBank("ECAL::clusters")){       
-       DataBank  bank1 = event.getBank("ECAL::clusters");
-       for(int loop = 0; loop < bank1.rows(); loop++){
-           int is = bank1.getByte("sector", loop);
-           int il = bank1.getByte("layer", loop);
-           if (is==trigger_sect&&il==1){
-               float    t = bank1.getFloat("time",loop);
-               int iU = (bank1.getInt("coordU", loop)-4)/8+1;
+       DataBank  bank = event.getBank("ECAL::clusters");
+       for(int loop = 0; loop < bank.rows(); loop++){
+           int is = bank.getByte("sector", loop);
+           int il = bank.getByte("layer", loop);
+           if (is==trigger_sect && il==1){
+               float    t = bank.getFloat("time",loop);
+               int iU = (bank.getInt("coordU", loop)-4)/8+1;
                if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET-FTOFFSET);
             }
        }
@@ -493,7 +494,7 @@ public class ECt extends DetectorMonitor {
       
     }
     
-    public void processRaw(DataEvent event) { //To cross-check ECengine for consistency
+    public void processRaw(DataEvent event) { //duplicates ECEngine process flow to check consistency
     	
  	   int  run = getRunNumber();
  	  
@@ -507,11 +508,11 @@ public class ECt extends DetectorMonitor {
                int  ip = bank.getShort("component",i);   
                float tdcd  = bank.getInt("TDC",i)*tps; // raw time
                float tdcdc = tdcd-phase; // phase corrected time
-               if(is>0&&is<7&&tdcd>0) {
+               if(is>0 && is<7 && tdcd>0) {
                    if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
               	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd-FTOFFSET, ip); 
               	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc-FTOFFSET,ip); 
-                       if (is==trigger_sect||isMC) {
+                       if (is==trigger_sect || isMC) {
                     	       tdcs.getItem(is,il,ip).add((float)tdcdc);
                   	       ((H2F) this.getDataGroup().getItem(is,0,2,run).getData(il-1).get(0)).fill(tdcdc-FTOFFSET,ip); // triggered time
                        }
@@ -547,13 +548,13 @@ public class ECt extends DetectorMonitor {
         	       double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm-FTOFFSET,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
-          	       if(isGoodTL&&il==1&&ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
+          	       if(isGoodTL && il==1 && ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
                }
            }
        }    	
     }
     
-    public void processRec(DataEvent event) {
+    public void processRec(DataEvent event) { // process reconstructed timing
   	   
        float rftime = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
 
@@ -572,13 +573,13 @@ public class ECt extends DetectorMonitor {
        
        int run = getRunNumber(); 
         
-       if(dropBanks) dropBanks(event);
+       if(dropBanks) dropBanks(event); // rerun ECEngine with updated CCDB constants
        
        List<ECStrip>     strips = engine.getStrips();
        List<ECPeak>       peaks = engine.getPeaks(); 
        List<ECCluster> clusters = engine.getClusters();
        
-       if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
+//       if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
        
        if(!dropSummary) {
        if(event.hasBank("ECAL::hits")){
@@ -593,60 +594,64 @@ public class ECt extends DetectorMonitor {
        }
        }
        
-       if(!(event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter"))) return;
+       if(!(event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter") && event.hasBank("ECAL::clusters"))) return;
        
        IndexedList<Integer> pathlist = new IndexedList<Integer>(3);    
        
-       DataBank bankc = event.getBank("REC::Calorimeter");
+       DataBank bankc = event.getBank("REC::Calorimeter"); //entries ordered by pindex,layer
        DataBank bankp = event.getBank("REC::Particle");
       
        Map<Integer,List<Integer>> caloMap = loadMapByIndex(bankc,"pindex");
        Map<Integer,List<Integer>> partMap = loadMapByIndex(bankp,"pid");    
+       System.out.println(" ");
        
-       for(int loop = 0; loop < bankc.rows(); loop++){
+       for(int loop = 0; loop < bankc.rows(); loop++){ //loop over REC::Calorimeter
           int   is = bankc.getByte("sector", loop);
           int   il = bankc.getByte("layer", loop);
-          int   in = bankc.getShort("index", loop);
+          int   in = bankc.getShort("index", loop); // index to old ECAL::clusters (now replaced by rerun version)
           int  det = bankc.getByte("detector", loop);
-          if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in);                 
+          float path = bankc.getFloat("path",loop);
+          System.out.println(is+" "+il+" "+in+" "+loop+" "+path);
+          if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in); // associate ECAL::cluster index to REC::Calorimeter index               
        }
        
-       int[] iip = new int[3];int[] iid = new int[3];
-       float[] tid = new float[3]; float[] lef = new float[3]; float[] add = new float[3];
+       int[] iip = new int[3], iid = new int[3];
+       float[] tid = new float[3], lef = new float[3], add = new float[3];
        float x=0,y=0,z=0;
-       
-       if(event.hasBank("ECAL::clusters")){       
-       DataBank  bank1 = event.getBank("ECAL::clusters");
+             
+       DataBank  bank1 = event.getBank("ECAL::clusters"); //entries ordered by sector,layer
        DataBank  bank2 = event.getBank("ECAL::calib");
        DataBank  bank3 = event.getBank("ECAL::peaks");
-       for(int loop = 0; loop < bank1.rows(); loop++){
+       
+       for(int loop = 0; loop < bank1.rows(); loop++){ //loop over new ECAL::clusters
            int is = bank1.getByte("sector", loop);
              if (true) {
                int     il =  bank1.getByte("layer", loop);
                float ener =  bank1.getFloat("energy",loop)*1000;
                float    t =  bank1.getFloat("time",loop);
-               iip[0]     = (bank1.getInt("coordU", loop)-4)/8+1;
-               iip[1]     = (bank1.getInt("coordV", loop)-4)/8+1;
-               iip[2]     = (bank1.getInt("coordW", loop)-4)/8+1;
-               iid[0]     =  bank1.getInt("idU",loop)-1;
-               iid[1]     =  bank1.getInt("idV",loop)-1;
-               iid[2]     =  bank1.getInt("idW",loop)-1;	
+               iip[0]     = (bank1.getInt("coordU", loop)-4)/8+1; //strip number of peak U
+               iip[1]     = (bank1.getInt("coordV", loop)-4)/8+1; //strip number of peak V
+               iip[2]     = (bank1.getInt("coordW", loop)-4)/8+1; //strip number of peak W
+               iid[0]     =  bank1.getInt("idU",loop)-1; //peak index U
+               iid[1]     =  bank1.getInt("idV",loop)-1; //peak index V
+               iid[2]     =  bank1.getInt("idW",loop)-1; //peak index W	
                
                Point3D  pc = new Point3D(bank1.getFloat("x",loop),
             		                     bank1.getFloat("y",loop),
             		                     bank1.getFloat("z",loop));
-               lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3));
-               lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3));
-               lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3));
-               tid[0] = bank3.getFloat("time",iid[0])-lef[0]/(float)veff.getDoubleValue("veff", is,il+0,iip[0]);
-               tid[1] = bank3.getFloat("time",iid[1])-lef[1]/(float)veff.getDoubleValue("veff", is,il+1,iip[1]);
-               tid[2] = bank3.getFloat("time",iid[2])-lef[2]/(float)veff.getDoubleValue("veff", is,il+2,iip[2]);
-               add[0] = bank3.getFloat("energy",iid[0]);
-               add[1] = bank3.getFloat("energy",iid[1]);
-               add[2] = bank3.getFloat("energy",iid[2]);
+               lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
+               lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
+               lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
+               tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)veff.getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
+               tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)veff.getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
+               tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)veff.getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+               add[0] = bank3.getFloat("energy",iid[0]); //peak energy U
+               add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
+               add[2] = bank3.getFloat("energy",iid[2]); //peak energy W
+               System.out.println(is+" "+il+" "+loop+" "+pathlist.hasItem(is,il,loop));
                if (pathlist.hasItem(is,il,loop)) {
                    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
-                   float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop));
+                   float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); System.out.println(path);
                    int    pid = bankp.getInt("pid",pin);
                    float beta = bankp.getFloat("beta",pin);  
                    int   stat = Math.abs(bankp.getInt("status",pin));
@@ -724,7 +729,6 @@ public class ECt extends DetectorMonitor {
                    } 
                }
            }
-       }
        }
    	
     }

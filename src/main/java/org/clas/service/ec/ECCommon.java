@@ -47,6 +47,7 @@ public class ECCommon {
     public static String          variation = "default";
     public static String      geomVariation = "default";
     public static int       pcTrackingPlane = 9;
+    public static int       ecTrackingPlane = 0;
    
     private static double[] AtoE  = {15,10,10};   // SCALED ADC to Energy in MeV
     private static double[] AtoE5 = {15,5,5};     // For Sector 5 ECAL
@@ -140,7 +141,8 @@ public class ECCommon {
             int localLayer = (layer-1)%3;                         //0=U 1=V 2=W
            
 //            int off = (superlayer==0)?DetectorLayer.PCAL_Z:0;
-            int off = (superlayer==0)?pcTrackingPlane:0; //pcTrackingPlane = 9 (in the sequence 0-14 of 15 scintillator planes in PCAL)
+            int off = (superlayer==0)?pcTrackingPlane:ecTrackingPlane; //pcTrackingPlane = 9 (in the sequence 0-14 of 15 scintillator planes in PCAL)
+
             Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
             ScintillatorPaddle      paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
             ScintillatorPaddle firstPaddle = (ScintillatorPaddle) detLayer.getComponent(0);
@@ -243,6 +245,7 @@ public class ECCommon {
                 
                 strip.setADC(adc);
                 strip.setTriggerPhase(triggerPhase);
+                strip.setID(i+1);
                 
                 double sca = (is==5)?AtoE5[ind[il-1]]:AtoE[ind[il-1]]; 
                 if (variation=="clas6") sca = 1.0;     

@@ -1,4 +1,4 @@
- package org.clas.service.ec;
+package org.clas.service.ec;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,9 +58,24 @@ public class ECEngine extends ReconstructionEngine {
         ecClusters.addAll(ECCommon.createClusters(ecPeaks,4)); //ECinner 
         ecClusters.addAll(ECCommon.createClusters(ecPeaks,7)); //ECouter
         
-        ECCommon.shareClustersEnergy(ecClusters); // Repair cluster pairs which share the same peaks
-	    
-        this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
+        ECCommon.shareClustersEnergy(ecClusters); // Repair 2 clusters which share the same peaks
+        
+        for (int iCl = 0; iCl < ecClusters.size(); iCl++) {
+            // As clusters are already defined at this point, we can fill the clusterID of ECStrips belonging to the given cluster
+            // === U strips ===
+            for (ECStrip curStrip : ecClusters.get(iCl).getPeak(0).getStrips()) {
+                curStrip.setClusterId(iCl + 1);
+            }
+            // === V strips ===
+            for (ECStrip curStrip : ecClusters.get(iCl).getPeak(1).getStrips()) {
+                curStrip.setClusterId(iCl + 1);
+            }
+            // === W strips ===
+            for (ECStrip curStrip : ecClusters.get(iCl).getPeak(2).getStrips()) {
+                curStrip.setClusterId(iCl + 1);
+            }
+        }
+        
         
         if (debug) {
         	if (ecClusters.size()<5) {
@@ -78,6 +93,8 @@ public class ECEngine extends ReconstructionEngine {
             System.out.println("\nEND\n");
         	}
         }
+        
+        this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
         
         if (isSingleThreaded) {
         	ECCommon.clearMyStructures();
@@ -108,12 +125,14 @@ public class ECEngine extends ReconstructionEngine {
 /*	    
         DataBank bankS = de.createBank("ECAL::hits", strips.size());
         for(int h = 0; h < strips.size(); h++){
-            bankS.setByte("sector",  h,  (byte) strips.get(h).getDescriptor().getSector());
-            bankS.setByte("layer",   h,  (byte) strips.get(h).getDescriptor().getLayer());
-            bankS.setByte("strip",   h,  (byte) strips.get(h).getDescriptor().getComponent());
-            bankS.setByte("peakid",  h,  (byte) strips.get(h).getPeakId());
-            bankS.setFloat("energy", h, (float) strips.get(h).getEnergy());
-            bankS.setFloat("time",   h, (float) strips.get(h).getTime());                
+            bankS.setByte("sector",     h,  (byte) strips.get(h).getDescriptor().getSector());
+            bankS.setByte("layer",      h,  (byte) strips.get(h).getDescriptor().getLayer());
+            bankS.setByte("strip",      h,  (byte) strips.get(h).getDescriptor().getComponent());
+            bankS.setByte("peakid",     h,  (byte) strips.get(h).getPeakId());
+            bankS.setShort("id",        h, (short) strips.get(h).getID());
+            bankS.setShort("clusterId", h, (short) strips.get(h).getClusterId());
+            bankS.setFloat("energy",    h, (float) strips.get(h).getEnergy());
+            bankS.setFloat("time",      h, (float) strips.get(h).getTime());                
         }
 */       
         DataBank  bankP =  de.createBank("ECAL::peaks", peaks.size());
@@ -216,10 +235,15 @@ public class ECEngine extends ReconstructionEngine {
     	ECCommon.veff = val;
     }
     
-    public void setPCALTrackingPlane(int val) {
-        System.out.println("ECEngine: PCAL tracking plane = "+val);
+    public void setPCTrackingPlane(int val) {
+        System.out.println("ECEngine: PC tracking plane = "+val);
     	ECCommon.pcTrackingPlane = val;
     }
+    
+    public void setECTrackingPlane(int val) {
+        System.out.println("ECEngine: EC tracking plane = "+val);
+    	ECCommon.ecTrackingPlane = val;
+    } 
     
     public void setNewTimeCal(boolean val) {
         System.out.println("ECEngine: useNewTimeCal = "+val);
@@ -325,6 +349,12 @@ public class ECEngine extends ReconstructionEngine {
         setPeakThresholds(18,20,15);
         setClusterThresholds(0,0,0);
         setClusterCuts(7,15,20);
+        
+        this.registerOutputBank("ECAL::hits");
+        this.registerOutputBank("ECAL::peaks");
+        this.registerOutputBank("ECAL::clusters");
+        this.registerOutputBank("ECAL::calib");
+        this.registerOutputBank("ECAL::moments"); 
         
         if (isSingleThreaded) ECCommon.initHistos();
         return true;

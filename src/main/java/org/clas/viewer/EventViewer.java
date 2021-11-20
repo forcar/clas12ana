@@ -92,7 +92,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf7,cf8,cf9 = null;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf7,cf8,cf9,cf10 = null;   
     JCheckBoxMenuItem                                   ctr = null;  
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
@@ -105,6 +105,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int   canvasUpdateTime = 2000;
     private int           TVOffset = 0;
     private float         logParam = 0;
+    private int    PCTrackingPlane = 9;
+    private int    ECTrackingPlane = 9;
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 1;
     private int        eventNumber = 0;
@@ -203,13 +205,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
-    		monitors[n] = new ECscaler("ECscaler");
+//    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//    	    monitors[n] = new ECt("ECt"); 
+    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
-//    		monitors[n] = new ECcalib("ECcalib"); 
+//  		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
 
@@ -236,7 +238,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu     = new JMenu("Options");  
         co0  = new JCheckBoxMenuItem("ClearHist");     co0.addItemListener(this);       menu.add(co0);  
         co1  = new JCheckBoxMenuItem("AutoSave");      co1.addItemListener(this);       menu.add(co1);
-        co2  = new JCheckBoxMenuItem("ECEngine");      co2.addItemListener(this);       menu.add(co2);
         co3  = new JCheckBoxMenuItem("DropSummary");   co3.addItemListener(this);       menu.add(co3);
         co4  = new JCheckBoxMenuItem("DumpGraphs");    co4.addItemListener(this);       menu.add(co4);
         co4b = new JCheckBoxMenuItem("DumpFiles");    co4b.addItemListener(this);       menu.add(co4b);
@@ -256,12 +257,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
               
         menu     = new JMenu("Settings");       
-        menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         cf4      = new JCheckBoxMenuItem("log Y");                      cf4.addItemListener(this); menu.add(cf4);  
         cf5      = new JCheckBoxMenuItem("log Z");                      cf5.addItemListener(this); menu.add(cf5);   cf5.doClick();
-        cf6a     = new JCheckBoxMenuItem("RejectSharedTime");          cf6a.addItemListener(this); menu.add(cf6a);  
-        cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");        cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
@@ -324,7 +322,16 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu   	= new JMenu("ECscaler");
         cf9 = new JCheckBoxMenuItem("ATDATA");  cf9.addItemListener(this);  ; menu.add(cf9);
         menuBar.add(menu);
-    
+        
+        menu    = new JMenu("ECEngine");
+        co2  = new JCheckBoxMenuItem("Enable");                  co2.addItemListener(this);  menu.add(co2);;
+        menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
+        cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a);  
+        cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
+        menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
+        menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
+        menuBar.add(menu);
+         
     }
     
     public void createPanels() {
@@ -427,6 +434,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].setLogZ(zLogEnable);
                                                    this.monitors[k].setUseUnsharedEnergy(unsharedEnergy); 
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
+                                                   this.monitors[k].setPCTrackingPlane(PCTrackingPlane);
+                                                   this.monitors[k].setECTrackingPlane(ECTrackingPlane);
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].useATDATA   = useATDATA;
@@ -445,6 +454,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Analyze Histos"):              this.readHistos(); break;
           case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
           case("Set logParam"):                this.chooseLogParam(); break;
+          case("Set PC Z plane"):              this.setPCZplane(); break;
+          case("Set EC Z plane"):              this.setECZplane(); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
           case("Open histograms file"):        this.histoChooser(); break;
           case("Save histograms to file"):     this.histoSaver(); break;
@@ -520,7 +531,44 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.setLogParam(val);
         }
     } 
-      
+    public void setPCZplane() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "ECEngine pcTrackingPlane",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            int val = 0;
+            try { 
+                val= Integer.parseInt(s);
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setPCTrackingPlane(val);
+        }
+    } 
+    public void setECZplane() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "ECEngine ecTrackingPlane",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            int val = 0;
+            try { 
+                val= Integer.parseInt(s);
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setECTrackingPlane(val);
+        }
+    } 
     private JLabel getImage(String path,double scale) {
         JLabel label = null;
         Image image = null;
@@ -867,6 +915,21 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         this.logParam = val;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setLogParam(val);
+        }
+    }
+    public void setPCTrackingPlane(int val) {
+        System.out.println("EventViwer.setPCTrackingPlane("+val+")");
+        this.PCTrackingPlane = val;
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setPCTrackingPlane(val);
+        }
+    }
+    
+    public void setECTrackingPlane(int val) {
+        System.out.println("EventViwer.setECTrackingPlane("+val+")");
+        this.ECTrackingPlane = val;
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setECTrackingPlane(val);
         }
     }
     

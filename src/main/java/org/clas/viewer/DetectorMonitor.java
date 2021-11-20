@@ -247,7 +247,9 @@ public class DetectorMonitor implements ActionListener {
     public EBCCDBConstants        ebccdb = null;
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
-    public float                logParam = 2f;
+    public float                logParam = 0f;
+    public int           PCTrackingPlane = 9;
+    public int           ECTrackingPlane = 0;
     public String                   root = " ";
     public String                 osType = " ";
     int                           ntimer = 0;
@@ -392,7 +394,7 @@ public class DetectorMonitor implements ActionListener {
         engine.setVariation(variation);
         engine.init();
         engine.isMC = false;
-        engine.setLogParam(0.);
+        engine.setLogParam(logParam); // 0 corresponds to default coatjava peak log E weighting 
         setEngineThresholds(config);
    }
     
@@ -402,6 +404,21 @@ public class DetectorMonitor implements ActionListener {
     
     public void setUseUnsharedEnergy(Boolean val) {
     	engine.setUseUnsharedEnergy(val);
+    }
+    
+    public void setPCTrackingPlane(int val) {
+    	engine.setPCTrackingPlane(val);
+    	PCTrackingPlane = val;
+    } 
+    
+    public void setECTrackingPlane(int val) {
+    	engine.setECTrackingPlane(val);
+    	ECTrackingPlane = val;
+    }  
+    
+    public void setLogParam(float val) {
+    	engine.setLogParam(val);
+    	logParam = val;
     }  
     
     public void setDbgECEngine(Boolean val) {
@@ -1012,11 +1029,7 @@ public class DetectorMonitor implements ActionListener {
     	TVOffset = time;
     }
     
-    public void setLogParam(float val) {
-    	logParam = val;
-    }   
-    
-    public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
+    void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
         detectorCanvas = canvas;
     }
     

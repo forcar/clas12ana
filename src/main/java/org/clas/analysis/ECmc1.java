@@ -56,7 +56,7 @@ public class ECmc1 extends DetectorMonitor {
         engine.init();
         engine.isMC = true;
         engine.setVariation("default");
-        engine.setPCALTrackingPlane(9);
+        engine.setPCTrackingPlane(9);
         engine.setCalRun(11);  
         
         ebmce.getCCDB(11);
