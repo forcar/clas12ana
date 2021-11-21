@@ -611,7 +611,6 @@ public class ECt extends DetectorMonitor {
           int   in = bankc.getShort("index", loop); // index to old ECAL::clusters (now replaced by rerun version)
           int  det = bankc.getByte("detector", loop);
           float path = bankc.getFloat("path",loop);
-          System.out.println(is+" "+il+" "+in+" "+loop+" "+path);
           if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in); // associate ECAL::cluster index to REC::Calorimeter index               
        }
        
@@ -649,7 +648,6 @@ public class ECt extends DetectorMonitor {
                add[0] = bank3.getFloat("energy",iid[0]); //peak energy U
                add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
                add[2] = bank3.getFloat("energy",iid[2]); //peak energy W
-               System.out.println(is+" "+il+" "+loop+" "+pathlist.hasItem(is,il,loop));
                if (pathlist.hasItem(is,il,loop)) {
                    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
                    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); System.out.println(path);
