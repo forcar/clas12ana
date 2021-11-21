@@ -579,7 +579,7 @@ public class ECt extends DetectorMonitor {
        List<ECPeak>       peaks = engine.getPeaks(); 
        List<ECCluster> clusters = engine.getClusters();
        
-//       if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
+       if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
        
        if(!dropSummary) {
        if(event.hasBank("ECAL::hits")){
@@ -603,7 +603,6 @@ public class ECt extends DetectorMonitor {
       
        Map<Integer,List<Integer>> caloMap = loadMapByIndex(bankc,"pindex");
        Map<Integer,List<Integer>> partMap = loadMapByIndex(bankp,"pid");    
-       System.out.println(" ");
        
        for(int loop = 0; loop < bankc.rows(); loop++){ //loop over REC::Calorimeter
           int   is = bankc.getByte("sector", loop);
@@ -650,7 +649,7 @@ public class ECt extends DetectorMonitor {
                add[2] = bank3.getFloat("energy",iid[2]); //peak energy W
                if (pathlist.hasItem(is,il,loop)) {
                    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
-                   float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); System.out.println(path);
+                   float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); 
                    int    pid = bankp.getInt("pid",pin);
                    float beta = bankp.getFloat("beta",pin); 
                    
