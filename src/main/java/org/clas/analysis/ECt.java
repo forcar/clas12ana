@@ -623,7 +623,7 @@ public class ECt extends DetectorMonitor {
        DataBank  bank2 = event.getBank("ECAL::calib");
        DataBank  bank3 = event.getBank("ECAL::peaks");
        
-       for(int loop = 0; loop < bank1.rows(); loop++){ //loop over new ECAL::clusters
+       for(int loop = 0; loop < bank1.rows(); loop++){ //loop over ECAL::clusters
            int is = bank1.getByte("sector", loop);
              if (true) {
                int     il =  bank1.getByte("layer", loop);
@@ -639,6 +639,7 @@ public class ECt extends DetectorMonitor {
                Point3D  pc = new Point3D(bank1.getFloat("x",loop),
             		                     bank1.getFloat("y",loop),
             		                     bank1.getFloat("z",loop));
+               
                lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
                lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
                lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
@@ -653,11 +654,19 @@ public class ECt extends DetectorMonitor {
                    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
                    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); System.out.println(path);
                    int    pid = bankp.getInt("pid",pin);
-                   float beta = bankp.getFloat("beta",pin);  
+                   float beta = bankp.getFloat("beta",pin); 
+                   
+//                   Point3D  vc = new Point3D(bankp.getFloat("vx",pin),
+//                                             bankp.getFloat("vy",pin),
+//                                             bankp.getFloat("vz",pin));
+ 
+//                   if(pid==22 || pid==2112) path = (float) pc.distance(vc);
+                   
                    int   stat = Math.abs(bankp.getInt("status",pin));
-                   for (int i=0; i<3; i++) {  
+                   
+                   for (int i=0; i<3; i++) { //loop over U,V,W
                 	   float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
-                	   if (clusters.size()>0) {
+                	   if (clusters.size()>0) { // use ECEngine structure clusters
                          tu    = (float) clusters.get(loop).getTime(i); 
                          ip    =         clusters.get(loop).getPeak(i).getMaxStrip();
                          adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
@@ -671,7 +680,7 @@ public class ECt extends DetectorMonitor {
 //                         System.out.println("P Layer "+il+" "+peaks.get(iid[i]).getLine().toString());
 //                         System.out.println("P Layer "+il+" "+getPeakline(iid[i],pc,bank3).toString());
 //                         System.out.println("Layer "+il+" "+tu+" "+tid[i]+" "+leff+ " "+lef[i]);
-                	   } else {
+                	   } else { // use ECAL::clusters bank
                 		 tu    = tid[i];
                 		 ip    = iip[i];
                 		 leff  = lef[i];

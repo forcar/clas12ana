@@ -106,7 +106,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int           TVOffset = 0;
     private float         logParam = 0;
     private int    PCTrackingPlane = 9;
-    private int    ECTrackingPlane = 9;
+    private int    ECTrackingPlane = 0;
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 1;
     private int        eventNumber = 0;
