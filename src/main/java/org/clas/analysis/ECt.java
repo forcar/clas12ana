@@ -74,7 +74,7 @@ public class ECt extends DetectorMonitor {
     static float  TOFFSETER = 305;
     static float   RFPERIOD = 4.008f;    
     static float          c = 29.98f;
-    static float   A0offset = 0;
+    static float   A0offset = -0.3f;  //RGM pass0 only
     static float   A0sector = 0;
     
     float               tps =  (float) 0.02345;
@@ -233,7 +233,7 @@ public class ECt extends DetectorMonitor {
     	    if(!isAnalyzeDone) return;
 	    	if(isResidualDone) {plotResidualSummary(23);}
     	    if(!dropSummary) {
-    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26);updateFITS(27);plotEVSummary(30);plotT0Summary(31);}
+    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26); updateFITS(27); plotEVSummary(30); plotT0Summary(31);}
 //    	    	if(isResidualDone) plotResidualSummary(23);
     	    	if(isTMFDone)      plotTMFSummary(24);
     	    	if(isGTMFDone)     plotGTMFSummary(25);
@@ -1151,7 +1151,7 @@ public class ECt extends DetectorMonitor {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
 							case "A0offset":           line =  getNewA0(is,il,iv,ip); break;
-							case "timing_update":      line =  getA0(is,il,iv,ip);  break;
+							case "timing_update":      line =  getA0(is,il,iv,ip,il==il1 ? 0 : A0offset);  break; //RGM pass0 EC Z-plane compensation
 							case "timing":             line =  getTW(is,il,iv,ip);  break;
 							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
 							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
@@ -1177,7 +1177,7 @@ public class ECt extends DetectorMonitor {
 
 	}
 	
-	public String getTW(int is, int il, int iv, int ip) {
+	public String getTW(int is, int il, int iv, int ip) { //Absolution residual calibration
 		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0
@@ -1191,11 +1191,11 @@ public class ECt extends DetectorMonitor {
 		
 	}
 	
-	public String getA0(int is, int il, int iv, int ip) {
+	public String getA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip))+" "  //residuals
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residuals
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
