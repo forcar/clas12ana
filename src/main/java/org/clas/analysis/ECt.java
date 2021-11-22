@@ -74,7 +74,7 @@ public class ECt extends DetectorMonitor {
     static float  TOFFSETER = 305;
     static float   RFPERIOD = 4.008f;    
     static float          c = 29.98f;
-    static float   A0offset = -0.3f;  //RGM pass0 only
+    static float   A0offset = 0.3f;  //RGM pass0 only
     static float   A0sector = 0;
     
     float               tps =  (float) 0.02345;
@@ -199,52 +199,52 @@ public class ECt extends DetectorMonitor {
     }
       
     public void plotSummary(int run) {  
-    	    setRunNumber(run);
-    	    plotTLHistos(tlnum);  	
-    	    plotTLHistos(22);
-    	    plotTDCHistos(10); 
-            if(dropSummary) return;
-    	    plotTDCHistos(0);
-    	    plotTDCHistos(1);    	    	    
-    	    plotTDCHistos(2);    	    	    
-    	    plotTDCHistos(3);    	    	    
-    	    plotTDCHistos(4);    	    	    
-    	    plotTDCHistos(8);    	    	    
-    	    plotTDCHistos(5);    	    	    
-    	    plotTDCHistos(6);    	    	    
-    	    plotTDCHistos(7);    	    	    
-    	    plotTDCHistos(8);    	    	    
-    	    plotTDCHistos(9);    	    	    
-     	    plotUVWHistos(11);
-    	    plotUVWHistos(12);
-    	    plotUVWHistos(13);
-    	    plotUVWHistos(14);
-    	    plotUVWHistos(15);
-    	    plotUVWHistos(16);
-    	    plotUVWHistos(17);
-    	    plotUVWHistos(18);
-    	    plotUVWHistos(19);
-    	    plotUVWHistos(20);
-    	    plotUVWHistos(21);
+        setRunNumber(run);
+        plotTLHistos(tlnum);  	
+        plotTLHistos(22);
+        plotTDCHistos(10); 
+        if(dropSummary) return;
+        plotTDCHistos(0);
+        plotTDCHistos(1);    	    	    
+        plotTDCHistos(2);    	    	    
+        plotTDCHistos(3);    	    	    
+        plotTDCHistos(4);    	    	    
+        plotTDCHistos(8);    	    	    
+        plotTDCHistos(5);    	    	    
+        plotTDCHistos(6);    	    	    
+    	plotTDCHistos(7);    	    	    
+        plotTDCHistos(8);    	    	    
+   	    plotTDCHistos(9);    	    	    
+        plotUVWHistos(11);
+        plotUVWHistos(12);
+        plotUVWHistos(13);
+        plotUVWHistos(14);
+        plotUVWHistos(15);
+        plotUVWHistos(16);
+        plotUVWHistos(17);
+        plotUVWHistos(18);
+        plotUVWHistos(19);
+        plotUVWHistos(20);
+        plotUVWHistos(21);
     }
     
     public void plotAnalysis(int run) {
-    	    setRunNumber(run);
-    	    if(!isAnalyzeDone) return;
-	    	if(isResidualDone) {plotResidualSummary(23);}
-    	    if(!dropSummary) {
-    	    	if(isAnalyzeDone) {/*updateUVW(22)*/; updateFITS(26); updateFITS(27); plotEVSummary(30); plotT0Summary(31);}
-//    	    	if(isResidualDone) plotResidualSummary(23);
-    	    	if(isTMFDone)      plotTMFSummary(24);
-    	    	if(isGTMFDone)     plotGTMFSummary(25);
-    	    }
-    	    if(!isTimeLineFitsDone) return;
-    	    if(!isMC) plotTimeLines(29);
+        setRunNumber(run);
+        if(!isAnalyzeDone) return;
+	    if(isResidualDone) plotResidualSummary(23);
+        if(!dropSummary) {
+        	updateFITS(26); updateFITS(27); plotEVSummary(30); plotT0Summary(31);
+        	if(isTMFDone)      plotTMFSummary(24);
+        	if(isGTMFDone)     plotGTMFSummary(25);
+    	}
+        if(!isTimeLineFitsDone) return;
+        if(!isMC) plotTimeLines(29);
     }
     
     public void createBETAHistos(int k) {
-        H1F h;
+
         int run = getRunNumber();
+        H1F h;
    
         DataGroup dg = new DataGroup(3,3);
         for (int id=1; id<4; id++) {
@@ -261,11 +261,12 @@ public class ECt extends DetectorMonitor {
     }
     
     public void createTLHistos(int k, int t1, int t2, int t3, int t4) {
-        H1F h;
+
         int run = getRunNumber(); 
+        H1F h;
         
         DataGroup dg = new DataGroup(6,2);
-        
+
         for (int is=1; is<7; is++) {
         	h = new H1F("TL1_"+k+"-"+is+"-"+run,"TL1_"+k+"-"+is+"-"+run,200,t1,t2);
         	h.setTitleX("Sector "+is+" Start Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");
@@ -480,16 +481,16 @@ public class ECt extends DetectorMonitor {
   	   ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(trigger_sect-1).get(0)).fill(STT-FTOFFSET);
   	   
   	   if(event.hasBank("ECAL::clusters")){       
-       DataBank  bank = event.getBank("ECAL::clusters");
-       for(int loop = 0; loop < bank.rows(); loop++){
-           int is = bank.getByte("sector", loop);
-           int il = bank.getByte("layer", loop);
-           if (is==trigger_sect && il==1){
-               float    t = bank.getFloat("time",loop);
-               int iU = (bank.getInt("coordU", loop)-4)/8+1;
-               if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET-FTOFFSET);
-            }
-       }
+  		   DataBank  bank = event.getBank("ECAL::clusters");
+  		   for(int loop = 0; loop < bank.rows(); loop++){
+  			   int is = bank.getByte("sector", loop);
+  			   int il = bank.getByte("layer", loop);
+  			   if (is==trigger_sect && il==1){
+  				   float    t = bank.getFloat("time",loop);
+  				   int iU = (bank.getInt("coordU", loop)-4)/8+1;
+  				   if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET-FTOFFSET);
+  			   }
+  		   }
        }
       
     }
@@ -534,18 +535,18 @@ public class ECt extends DetectorMonitor {
                float tmax = 1000; float tdcm = 1000;
               
                if (tdcs.hasItem(is,il,ip)) { // sector,layer,component FADC/TDC match
-                 float radc = (float)Math.sqrt(adc);
-                 for (float tdc : tdcs.getItem(is,il,ip)) {
-                	    float tdif = tdc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - t;
-             	      ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
-            	          if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
+            	   float radc = (float)Math.sqrt(adc);
+                   for (float tdc : tdcs.getItem(is,il,ip)) {
+                	   float tdif = tdc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - t;
+                	   ((H2F) this.getDataGroup().getItem(is,0,8,run).getData(il-1).get(0)).fill(tdif,ip); // FADC t - TDC time
+                	   if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
                    }
-        	       double a0 = time.getDoubleValue("a0", is, il, ip); 
-        	       double a1 = time.getDoubleValue("a1", is, il, ip);
-        	       double a2 = time.getDoubleValue("a2", is, il, ip);
-        	       double a3 = time.getDoubleValue("a3", is, il, ip);
-        	       double a4 = time.getDoubleValue("a4", is, il, ip);
-        	       double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
+                   double a0 = time.getDoubleValue("a0", is, il, ip); 
+                   double a1 = time.getDoubleValue("a1", is, il, ip);
+                   double a2 = time.getDoubleValue("a2", is, il, ip);
+                   double a3 = time.getDoubleValue("a3", is, il, ip);
+                   double a4 = time.getDoubleValue("a4", is, il, ip);
+                   double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm-FTOFFSET,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
           	       if(isGoodTL && il==1 && ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
