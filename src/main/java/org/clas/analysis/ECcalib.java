@@ -70,11 +70,11 @@ public class ECcalib extends DetectorMonitor {
     
 	public boolean goodELEC,goodPROT,goodPBAR,goodPIP,goodPIM,goodMIP,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
 	
-	public List<Particle> elec_ecal  = new ArrayList<Particle>();
-	public List<Particle>  pim_ecal  = new ArrayList<Particle>();
-	public List<Particle>  pip_ecal  = new ArrayList<Particle>();	
-	public List<Particle>  mip_ecal  = new ArrayList<Particle>();	
-	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
+//	public List<Particle> elec_ecal  = new ArrayList<Particle>();
+//	public List<Particle>  pim_ecal  = new ArrayList<Particle>();
+//	public List<Particle>  pip_ecal  = new ArrayList<Particle>();	
+//	public List<Particle>  mip_ecal  = new ArrayList<Particle>();	
+//	public List<Particle>  prot_ecal = new ArrayList<Particle>();	
 
     Event     ev = new Event();
 	H1F       h1 = null;
@@ -212,7 +212,7 @@ public class ECcalib extends DetectorMonitor {
          for (int i=0; i<3; i++) {
         	 dg = new DataGroup(3,2);
         	 for (int d=0; d<3; d++) {
-        		 h = new H2F("hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyc_"+t[i]+"_"+k+"_"+run,nb,bx1,bx2,nb,by1,by2);
+        		 h = new H2F("hi-"+det[d]+"-xyc-"+t[i]+"-"+k+"-"+run,"hi-"+det[d]+"-xyc-"+t[i]+"-"+k+"-"+run,nb,bx1,bx2,nb,by1,by2);
                  dg.addDataSet(h,d);  
 	    	 }
              this.getDataGroup().add(dg,i,2,k,run);
@@ -222,7 +222,7 @@ public class ECcalib extends DetectorMonitor {
         	 dg = new DataGroup(3,3);
         	 for (int j=0; j<3; j++) {
         		 for (int d=0; d<3; d++) {
-        			 h = new H2F("hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,"hi_"+det[d]+"_xyp_"+v[j]+t[i]+"_"+k+"_"+run,nb,bx1,bx2,nb,by1,by2);
+        			 h = new H2F("hi-"+det[d]+"-xyp-"+v[j]+t[i]+"-"+k+"-"+run,"hi-"+det[d]+"-xyp-"+v[j]+t[i]+"-"+k+"-"+run,nb,bx1,bx2,nb,by1,by2);
                      dg.addDataSet(h,j+d*3);                      
         	     } 
         	 }
@@ -242,13 +242,13 @@ public class ECcalib extends DetectorMonitor {
              f1 = new F1D("p0"+is+1+k,"[a]",1,68); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
             
              for (int ip=1; ip<npmts[0]+1; ip++) {
-                 h = new H2F("uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_u"+ip+"_s"+is+"_"+k+"_"+run,68,1,69,ybins,ymin,ymax);
+                 h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL W"); h.setTitleY(ytxt+"U"+ip);       
                  dg1.addDataSet(h,ip-1); dg1.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_pcal_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_v"+ip+"_s"+is+"_"+k+"_"+run,68,1,69,ybins,ymin,ymax);
+                 h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL U"); h.setTitleY(ytxt+"V"+ip);
                  dg2.addDataSet(h,ip-1); dg2.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_pcal_w"+ip+"_s"+is+"_"+k+"_"+run,68,1,69,ybins,ymin,ymax);
+                 h = new H2F("uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL V"); h.setTitleY(ytxt+"W"+ip); 
                  dg3.addDataSet(h,ip-1); dg3.addDataSet(f1,ip-1);
       	     }
@@ -257,13 +257,13 @@ public class ECcalib extends DetectorMonitor {
              DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
              f1 = new F1D("p0"+is+2+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
       	     for (int ip=1; ip<npmts[1]+1; ip++) {
-                 h = new H2F("uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN W");  h.setTitleY(ytxt+"U"+ip); 
                  dg4.addDataSet(h,ip-1); dg4.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_ecin_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_v"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN U"); h.setTitleY(ytxt+"V"+ip); 
                  dg5.addDataSet(h,ip-1); dg5.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecin_w"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECIN V"); h.setTitleY(ytxt+"W"+ip);
                  dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);                 
       	     }
@@ -272,13 +272,13 @@ public class ECcalib extends DetectorMonitor {
              DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
              f1 = new F1D("p0"+is+3+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
       	     for (int ip=1; ip<npmts[2]+1; ip++) {
-                 h = new H2F("uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_u"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU W"); h.setTitleY(ytxt+"U"+ip);
                  dg7.addDataSet(h,ip-1); dg7.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_ecou_v"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_v"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU U");  h.setTitleY(ytxt+"V"+ip);
                  dg8.addDataSet(h,ip-1); dg8.addDataSet(f1,ip-1);
-                 h = new H2F("uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,"uvw_ecou_w"+ip+"_s"+is+"_"+k+"_"+run,36,1,37,ybins,ymin,ymax);
+                 h = new H2F("uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" ECOU V"); h.setTitleY(ytxt+"W"+ip);
                  dg9.addDataSet(h,ip-1); dg9.addDataSet(f1,ip-1);    
       	     }
@@ -291,35 +291,35 @@ public class ECcalib extends DetectorMonitor {
 	    int run = getRunNumber();
     
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+n+"_"+k+"_"+run;
+            String tag = is+"-"+n+"-"+k+"-"+run;
             dg = new DataGroup(3,3);
-            h = new H2F("mip_pcal_u_"+tag,"mip_pcal_u_"+tag, nch, x1, x2, 68, 1., 69.);
+            h = new H2F("mip-pcal-u-"+tag,"mip-pcal-u-"+tag, nch, x1, x2, 68, 1., 69.);
             h.setTitleX("Sector "+is+" PCAL U"+txt); h.setTitleY("U"); 
             dg.addDataSet(h,0);  
-            h = new H2F("mip_pcal_v_"+tag,"mip_pcal_v_"+tag, nch, x1, x2, 62, 1., 63.);
+            h = new H2F("mip-pcal-v-"+tag,"mip-pcal-v-"+tag, nch, x1, x2, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL V"+txt); h.setTitleY("V");        
             dg.addDataSet(h,1);            
-            h = new H2F("mip_pcal_w_"+tag,"mip_pcal_w_"+tag, nch, x1, x2, 62, 1., 63.);
+            h = new H2F("mip-pcal-w-"+tag,"mip-pcal-w-"+tag, nch, x1, x2, 62, 1., 63.);
             h.setTitleX("Sector "+is+" PCAL W"+txt); h.setTitleY("W");  
             dg.addDataSet(h,2); 
         
-            h = new H2F("mip_ecin_u_"+tag,"mip_ecin_u_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecin-u-"+tag,"mip-ecin-u-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN U"+txt); h.setTitleY("U");    
             dg.addDataSet(h,3);  
-            h = new H2F("mip_ecin_v_"+tag,"mip_ecin_v_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecin-v-"+tag,"mip-ecin-v-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN V"+txt); h.setTitleY("V");        
             dg.addDataSet(h,4);            
-            h = new H2F("mip_ecin_w_"+tag,"mip_ecin_w_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecin-w-"+tag,"mip-ecin-w-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECIN W"+txt); h.setTitleY("W");  
             dg.addDataSet(h,5); 
         
-            h = new H2F("mip_ecou_u_"+tag,"mip_ecou_u_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecou-u-"+tag,"mip-ecou-u-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU U"+txt); h.setTitleY("U");    
             dg.addDataSet(h,6);  
-            h = new H2F("mip_ecou_v_"+tag,"mip_ecou_v_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecou-v-"+tag,"mip-ecou-v-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU V"+txt); h.setTitleY("V");        
             dg.addDataSet(h,7);            
-            h = new H2F("mip_ecou_w_"+tag,"mip_ecou_w_"+tag, nch, x1, x2, 36, 1., 37.);
+            h = new H2F("mip-ecou-w-"+tag,"mip-ecou-w-"+tag, nch, x1, x2, 36, 1., 37.);
             h.setTitleX("Sector "+is+" ECOU W"+txt); h.setTitleY("W");  
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,n,k,run);
@@ -332,58 +332,58 @@ public class ECcalib extends DetectorMonitor {
 	    String lab1=" FTOF1B BAR";
     
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+n+"_"+k+"_"+run;
+            String tag = is+"-"+n+"-"+k+"-"+run;
             dg = new DataGroup(3,5);
             int nch=62, x1=1, x2=63;
             		
-            h = new H2F("ftof_pcal_u_"+tag,"ftof_pcal_u_"+tag, nch, x1, x2, 68, 1, 69);
+            h = new H2F("ftof-pcal-u-"+tag,"ftof-pcal-u-"+tag, nch, x1, x2, 68, 1, 69);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL U Strip"); 
             dg.addDataSet(h,0);  
-            h = new H2F("ftof_pcal_v_"+tag,"ftof_pcal_v_"+tag, nch, x1, x2, 62, 1, 63);
+            h = new H2F("ftof-pcal-v-"+tag,"ftof-pcal-v-"+tag, nch, x1, x2, 62, 1, 63);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL V Strip");        
             dg.addDataSet(h,1);            
-            h = new H2F("ftof_pcal_w_"+tag,"ftof_pcal_w_"+tag, nch, x1, x2, 62, 1, 63);
+            h = new H2F("ftof-pcal-w-"+tag,"ftof-pcal-w-"+tag, nch, x1, x2, 62, 1, 63);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("PCAL W Strip");  
             dg.addDataSet(h,2); 
         
-            h = new H2F("ftof_ecin_u_"+tag,"ftof_ecin_u_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecin-u-"+tag,"ftof-ecin-u-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN U Strip");    
             dg.addDataSet(h,3);  
-            h = new H2F("ftof_ecin_v_"+tag,"ftof_ecin_v_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecin-v-"+tag,"ftof-ecin-v-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN V Strip");        
             dg.addDataSet(h,4);            
-            h = new H2F("ftof_ecin_w_"+tag,"ftof_ecin_w_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecin-w-"+tag,"ftof-ecin-w-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECIN W Strip");  
             dg.addDataSet(h,5); 
         
-            h = new H2F("ftof_ecou_u_"+tag,"ftof_ecou_u_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecou-u-"+tag,"ftof-ecou-u-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU U Strip");    
             dg.addDataSet(h,6);  
-            h = new H2F("ftof_ecou_v_"+tag,"ftof_ecou_v_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecou-v-"+tag,"ftof-ecou-v-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU V Strip");        
             dg.addDataSet(h,7);            
-            h = new H2F("ftof_ecou_w_"+tag,"ftof_ecou_w_"+tag, nch, x1, x2, 36, 1, 37);
+            h = new H2F("ftof-ecou-w-"+tag,"ftof-ecou-w-"+tag, nch, x1, x2, 36, 1, 37);
             h.setTitleX("Sector "+is+lab1); h.setTitleY("ECOU W Strip");  
             dg.addDataSet(h,8);   
             
             nch=36; x1=1; x2=37;
-            h = new H2F("pcal_ecin_u_"+tag,"pcal_ecin_u_"+tag, 68, 1, 69, nch, x1, x2);
+            h = new H2F("pcal-ecin-u-"+tag,"pcal-ecin-u-"+tag, 68, 1, 69, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECIN U Strip"); h.setTitleX("PCAL U Strip"); 
             dg.addDataSet(h,9);  
-            h = new H2F("pcal_ecin_v_"+tag,"pcal_ecin_v_"+tag, 62, 1, 63, nch, x1, x2);
+            h = new H2F("pcal-ecin-v-"+tag,"pcal-ecin-v-"+tag, 62, 1, 63, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECIN V Strip"); h.setTitleX("PCAL V Strip");        
             dg.addDataSet(h,10);            
-            h = new H2F("pcal_ecin_w_"+tag,"pcal_ecin_w_"+tag, 62, 1, 63, nch, x1, x2);
+            h = new H2F("pcal-ecin-w-"+tag,"pcal-ecin-w-"+tag, 62, 1, 63, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECIN W Strip"); h.setTitleX("PCAL W Strip");  
             dg.addDataSet(h,11);
             
-            h = new H2F("pcal_ecou_u_"+tag,"pcal_ecou_u_"+tag, 68, 1, 69, nch, x1, x2);
+            h = new H2F("pcal-ecou-u-"+tag,"pcal-ecou-u-"+tag, 68, 1, 69, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECOU U Strip"); h.setTitleX("PCAL U Strip"); 
             dg.addDataSet(h,12);  
-            h = new H2F("pcal_ecou_v_"+tag,"pcal_ecou_v_"+tag, 62, 1, 63, nch, x1, x2);
+            h = new H2F("pcal-ecou-v-"+tag,"pcal-ecou-v-"+tag, 62, 1, 63, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECOU V Strip"); h.setTitleX("PCAL V Strip");        
             dg.addDataSet(h,13);            
-            h = new H2F("pcal_ecou_w_"+tag,"pcal_ecou_w_"+tag, 62, 1, 63, nch, x1, x2);
+            h = new H2F("pcal-ecou-w-"+tag,"pcal-ecou-w-"+tag, 62, 1, 63, nch, x1, x2);
             h.setTitleY("Sector "+is+" ECOU W Strip"); h.setTitleX("PCAL W Strip");  
             dg.addDataSet(h,14);
             
@@ -396,35 +396,35 @@ public class ECcalib extends DetectorMonitor {
 	    int run = getRunNumber();
     
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+n+"_"+k+"_"+run;
+            String tag = is+"-"+n+"-"+k+"-"+run;
             dg = new DataGroup(3,3);
-            h1 = new H1F("mip_pcal_u_"+tag,"mip_pcal_u_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-pcal-u-"+tag,"mip-pcal-u-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" PCAL U"+txt);
             dg.addDataSet(h,0);  
-            h1 = new H1F("mip_pcal_v_"+tag,"mip_pcal_v_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-pcal-v-"+tag,"mip-pcal-v-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" PCAL V"+txt);      
             dg.addDataSet(h,1);            
-            h1 = new H1F("mip_pcal_w_"+tag,"mip_pcal_w_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-pcal-w-"+tag,"mip-pcal-w-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" PCAL W"+txt);
             dg.addDataSet(h,2); 
         
-            h1 = new H1F("mip_ecin_u_"+tag,"mip_ecin_u_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecin-u-"+tag,"mip-ecin-u-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECIN U"+txt);    
             dg.addDataSet(h,3);  
-            h1 = new H1F("mip_ecin_v_"+tag,"mip_ecin_v_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecin-v-"+tag,"mip-ecin-v-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECIN V"+txt);      
             dg.addDataSet(h,4);            
-            h1 = new H1F("mip_ecin_w_"+tag,"mip_ecin_w_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecin-w-"+tag,"mip-ecin-w-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECIN W"+txt);   
             dg.addDataSet(h,5); 
         
-            h1 = new H1F("mip_ecou_u_"+tag,"mip_ecou_u_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecou-u-"+tag,"mip-ecou-u-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECOU U"+txt); 
             dg.addDataSet(h,6);  
-            h1 = new H1F("mip_ecou_v_"+tag,"mip_ecou_v_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecou-v-"+tag,"mip-ecou-v-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECOU V"+txt);         
             dg.addDataSet(h,7);            
-            h1 = new H1F("mip_ecou_w_"+tag,"mip_ecou_w_"+tag, nch, x1, x2);
+            h1 = new H1F("mip-ecou-w-"+tag,"mip-ecou-w-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" ECOU W"+txt);  
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,n,k,run);
@@ -437,12 +437,12 @@ public class ECcalib extends DetectorMonitor {
        for (int il=0; il<4; il++) {
            dg = new DataGroup(3,4); 
        for (int is=1; is<7; is++) {
-           String tag = is+"_"+il+"_"+k+"_"+run;
-           h = new H2F("hi_pcal_path1_"+tag,"hi_pcal_path1_"+tag,20,0.,2.,118,21.,35.);
+           String tag = is+"-"+il+"-"+k+"-"+run;
+           h = new H2F("hi-pcal-path1-"+tag,"hi-pcal-path1-"+tag,20,0.,2.,118,21.,35.);
            h.setTitleX("Sector "+is+" PCAL/MIP");
            h.setTitleY("Path12 (cm)");
            dg.addDataSet(h, is-1);  
-           h = new H2F("hi_pcal_path2_"+tag,"hi_pcal_path2_"+tag,20,0.,2.,70,40.,60.);
+           h = new H2F("hi-pcal-path2-"+tag,"hi-pcal-path2-"+tag,20,0.,2.,70,40.,60.);
            h.setTitleX("Sector "+is+" PCAL/MIP");
            h.setTitleY("Path13 (cm)");
            dg.addDataSet(h, is+5);  
@@ -453,12 +453,12 @@ public class ECcalib extends DetectorMonitor {
         for (int il=0; il<4; il++) {
             dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+il+"_"+k+"_"+run;
-            h = new H2F("hi_ecin_path1_"+tag,"hi_ecin_path1_"+tag,20,0.,2.,70,40.,60.);
+            String tag = is+"-"+il+"-"+k+"-"+run;
+            h = new H2F("hi-ecin-path1-"+tag,"hi-ecin-path1-"+tag,20,0.,2.,70,40.,60.);
             h.setTitleX("Sector "+is+" ECIN/MIP");
             h.setTitleY("Path13 (cm)");
             dg.addDataSet(h, is-1);  
-            h = new H2F("hi_ecin_path2_"+tag,"hi_ecin_path2_"+tag,20,0.,2.,66,18.4,30.);
+            h = new H2F("hi-ecin-path2-"+tag,"hi-ecin-path2-"+tag,20,0.,2.,66,18.4,30.);
             h.setTitleX("Sector "+is+" ECIN/MIP");
             h.setTitleY("Path23 (cm)");
             dg.addDataSet(h, is+5);    
@@ -469,12 +469,12 @@ public class ECcalib extends DetectorMonitor {
         for (int il=0; il<4; il++) {
             dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {        
-            String tag = is+"_"+il+"_"+k+"_"+run;
-            h = new H2F("hi_ecou_path1_"+tag,"hi_ecou_path1_"+tag,20,0.,2.,70,40.,60.);
+            String tag = is+"-"+il+"-"+k+"-"+run;
+            h = new H2F("hi-ecou-path1-"+tag,"hi-ecou-path1-"+tag,20,0.,2.,70,40.,60.);
             h.setTitleX("Sector "+is+" ECOU/MIP");
             h.setTitleY("Path13 (cm)");
             dg.addDataSet(h, is-1);  
-            h = new H2F("hi_ecou_path2_"+tag,"hi_ecou_path2_"+tag,20,0.,2.,66,18.4,30.);
+            h = new H2F("hi-ecou-path2-"+tag,"hi-ecou-path2-"+tag,20,0.,2.,66,18.4,30.);
             h.setTitleX("Sector "+is+" ECOU/MIP");
             h.setTitleY("Path23 (cm)");
             dg.addDataSet(h, is+5);      
@@ -490,12 +490,12 @@ public class ECcalib extends DetectorMonitor {
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_pcal_pix1_"+tag,"hi_pcal_pix1_"+tag,50,1.,200.,12,3.,15.);
+            String tag = is+"-"+k+"-"+run;
+            h = new H2F("hi-pcal-pix1-"+tag,"hi-pcal-pix1-"+tag,50,1.,200.,12,3.,15.);
             h.setTitleX("Sector "+is+" PCAL (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_pcal_pix2_"+tag,"hi_pcal_pix2_"+tag,100,21.,35.,12,3.,15.);
+            h = new H2F("hi-pcal-pix2-"+tag,"hi-pcal-pix2-"+tag,100,21.,35.,12,3.,15.);
             h.setTitleX("Sector "+is+" Path12 (cm)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
@@ -504,12 +504,12 @@ public class ECcalib extends DetectorMonitor {
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_ecin_pix_"+tag,"hi_ecin_pix_"+tag,50,1.,200.,12,3.,15.);
+            String tag = is+"-"+k+"-"+run;
+            h = new H2F("hi-ecin-pix-"+tag,"hi-ecin-pix-"+tag,50,1.,200.,12,3.,15.);
             h.setTitleX("Sector "+is+" ECin (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_ecin_pix2_"+tag,"hi_ecin_pix2_"+tag,100,21.,35.,12,3.,15.);
+            h = new H2F("hi-ecin-pix2-"+tag,"hi-ecin-pix2-"+tag,100,21.,35.,12,3.,15.);
             h.setTitleX("Sector "+is+" Path12 (cm)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
@@ -518,12 +518,12 @@ public class ECcalib extends DetectorMonitor {
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_ecou_pix_"+tag,"hi_ecou_pix_"+tag,50,1.,200.,12,3.,15.);
+            String tag = is+"-"+k+"-"+run;
+            h = new H2F("hi-ecou-pix-"+tag,"hi-ecou-pix-"+tag,50,1.,200.,12,3.,15.);
             h.setTitleX("Sector "+is+" ECou (MeV)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_ecou_pix2_"+tag,"hi_ecou_pix2_"+tag,100,21.,35.,12,3.,15.);
+            h = new H2F("hi-ecou-pix2-"+tag,"hi-ecou-pix2-"+tag,100,21.,35.,12,3.,15.);
             h.setTitleX("Sector "+is+" Path12 (cm)");
             h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
@@ -536,27 +536,27 @@ public class ECcalib extends DetectorMonitor {
     
  	    int run = getRunNumber();
 	    int is  = 0;
-        String tag = is+"_"+run;
+        String tag = is+"-"+run;
         
         dg = new DataGroup(4,2);
         
-        F1D f1 = new F1D("f_1"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f1.setParameter(0,0.13957); f1.setLineColor(1); f1.setLineStyle(1);    
-        F1D f2 = new F1D("f_2"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f2.setParameter(0,0.93827); f2.setLineColor(1); f2.setLineStyle(1);   
-        h = new H2F("pid_pos_"+tag,"pid_pos_"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        F1D f1 = new F1D("f-1"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f1.setParameter(0,0.13957); f1.setLineColor(1); f1.setLineStyle(1);    
+        F1D f2 = new F1D("f-2"+tag,"1/(1+[a]^2/x^2)^0.5", 0.41,3.5); f2.setParameter(0,0.93827); f2.setLineColor(1); f2.setLineStyle(1);   
+        h = new H2F("pid-pos-"+tag,"pid-pos-"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 0); dg.addDataSet(f1,0); dg.addDataSet(f2,0); 
-        h = new H2F("pid_neg_"+tag,"pid_neg_"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid-neg-"+tag,"pid-neg-"+tag,100,0.,3.5,100,0.4,1.5);       h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 4); dg.addDataSet(f1,4); 
-        h = new H2F("pid_fc_pos_"+tag,"pid_fc_pos_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid-fc-pos-"+tag,"pid-fc-pos-"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 1); dg.addDataSet(f1,1); dg.addDataSet(f2,1); 
-        h = new H2F("pid_fc_neg_"+tag,"pid_fc_neg_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid-fc-neg-"+tag,"pid-fc-neg-"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 5); dg.addDataSet(f1,5); 
-        h = new H2F("pid_fc_ppi_"+tag,"pid_fc_ppi_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid-fc-ppi-"+tag,"pid-fc-ppi-"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 2); dg.addDataSet(f1,2); dg.addDataSet(f2,2); 
-        h = new H2F("pid_fc_npi_"+tag,"pid_fc_npi_"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
+        h = new H2F("pid-fc-npi-"+tag,"pid-fc-npi-"+tag,100,0.,3.5,100,0.4,1.5); h.setTitleX("Momentum (GeV)"); h.setTitleY("BETA");
         dg.addDataSet(h, 6); dg.addDataSet(f1,6); 
-        h1 = new H1F("pid_fc1_ppi_"+tag,"pid_fc1_ppi_"+tag,100,-0.5,1.1); h1.setTitleX("Mass^2 (GeV)"); 
+        h1 = new H1F("pid-fc1-ppi-"+tag,"pid-fc1-ppi-"+tag,100,-0.5,1.1); h1.setTitleX("Mass^2 (GeV)"); 
         dg.addDataSet(h1, 3);  
-        h1 = new H1F("pid_fc1_npi_"+tag,"pid_fc1_npi_"+tag,100,-0.5,1.1); h1.setTitleX("Mass^2 (GeV)");  
+        h1 = new H1F("pid-fc1-npi-"+tag,"pid-fc1-npi-"+tag,100,-0.5,1.1); h1.setTitleX("Mass^2 (GeV)");  
         dg.addDataSet(h1, 7);  
        
         this.getDataGroup().add(dg,is,0,k,run);
@@ -567,12 +567,12 @@ public class ECcalib extends DetectorMonitor {
         
         dg = new DataGroup(3,4); 
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_pcal_dedx_pm"+tag,"hi_pcal_dedx_pm"+tag,50,0.3,6.,30,0.5,2);
+            String tag = is+"-"+k+"-"+run;
+            h = new H2F("hi-pcal-dedx-pm"+tag,"hi-pcal-dedx-pm"+tag,50,0.3,6.,30,0.5,2);
             h.setTitleX("Sector "+is+" P (GeV)");
             h.setTitleY("MEAN/MIP");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi_pcal_dedx_pp"+tag,"hi_pcal_dedx_pp"+tag,100,0.3,6.,30,0.5,2);
+            h = new H2F("hi-pcal-dedx-pp"+tag,"hi-pcal-dedx-pp"+tag,100,0.3,6.,30,0.5,2);
             h.setTitleX("Sector "+is+" P (GeV)");
             h.setTitleY("MEAN/MIP");
             dg.addDataSet(h, is+5);   
@@ -1155,10 +1155,10 @@ public class ECcalib extends DetectorMonitor {
         double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
         double[]     xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
         double[]  yMean = new double[np]; double[] yMeanc = new double[np]; double[]  ymeanc = new double[np];
-        H1F h1 = new H1F("VAR1_"+is+"_"+id+" "+il,20,0.7,1.7);
-        H1F h5 = new H1F("VAR5_"+is+"_"+id+" "+il,20,0.7,1.7);
-        H1F h6 = new H1F("VAR6_"+is+"_"+id+" "+il,20,0.7,1.7);
-        H1F h7 = new H1F("VAR7_"+is+"_"+id+" "+il,20,0.7,1.7);
+        H1F h1 = new H1F("VAR1-"+is+"-"+id+" "+il,20,0.7,1.7);
+        H1F h5 = new H1F("VAR5-"+is+"-"+id+" "+il,20,0.7,1.7);
+        H1F h6 = new H1F("VAR6-"+is+"-"+id+" "+il,20,0.7,1.7);
+        H1F h7 = new H1F("VAR7-"+is+"-"+id+" "+il,20,0.7,1.7);
         for (int i=0; i<np; i++) {
             x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0; 
             fd = tl.fitData.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); 
@@ -1175,11 +1175,11 @@ public class ECcalib extends DetectorMonitor {
         }
 //       fd = fitEngine(h5,0.5,1.5,0.5,1.5); tl.fitData.add(fd,is,id+100*pc*(il+1),0,run); 
 //       fd = fitEngine(h7,0.5,1.5,0.5,1.5); tl.fitData.add(fd,is,id+100*pc*(il+1),0,run); 
-        GraphErrors  mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymean,xe,ymeane);                   
-        GraphErrors  Mean = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMean,xe,ymeane);                   
-        GraphErrors meanc = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,ymeanc,xe,ymeane);                   
-        GraphErrors Meanc = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yMeanc,xe,ymeane);                   
-        GraphErrors   rms = new GraphErrors("MIP_"+is+"_"+id+" "+il,x,yrms,xe,ye);                  
+        GraphErrors  mean = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,ymean,xe,ymeane);                   
+        GraphErrors  Mean = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yMean,xe,ymeane);                   
+        GraphErrors meanc = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,ymeanc,xe,ymeane);                   
+        GraphErrors Meanc = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yMeanc,xe,ymeane);                   
+        GraphErrors   rms = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yrms,xe,ye);                  
         FitSummary.add(mean,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run); VarSummary.add(h1,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run);
         FitSummary.add(rms,   is,id+10*(pc+1)*(pc+1)*(il+1),2,run);                    
         FitSummary.add(Mean,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run); VarSummary.add(h5,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run);       	        
@@ -1470,7 +1470,7 @@ public class ECcalib extends DetectorMonitor {
       		}  			
   			float ymid = ysum/nsum;
   	      	c.cd(ncd[nn]); c.getPad(ncd[nn]).getAxisY().setRange(ymid-(ymx-ymn)*1.2,ymid+(ymx-ymn)*1.2); 
-  	      	gl.get(0).setTitleY("P"+in); gl.get(0).setTitle("BLACK: "+tit+" GREEN: rga_fall2018 RED: default");
+  	      	gl.get(0).setTitleY("P"+in); gl.get(0).setTitle("BLACK: "+tit+" GREEN: rga-fall2018 RED: default");
   	      	opt=" "; for(GraphErrors g : gl) {c.draw(g,opt); opt="same";} if(ncd[nn]==9) c.draw(rat,opt); nn++;
   			}
       	}
@@ -1815,12 +1815,12 @@ public class ECcalib extends DetectorMonitor {
         c = this.summary.getCanvas("PCAL/ECTOT");
         c.divide(3,4);
         for (int is=1; is<7; is++) {
-            h2 =dg4.getH2F("hi_"+id+"_path1_"+is);   
+            h2 =dg4.getH2F("hi-"+id+"-path1-"+is);   
             c.cd(is-1); c.getPad(is-1).getAxisZ().setLog(true);       
             c.draw(h2);   
         }
         for (int is=1; is<7; is++) {
-            h2 =dg4.getH2F("hi_"+id+"_path2_"+is);   
+            h2 =dg4.getH2F("hi-"+id+"-path2-"+is);   
             c.cd(is-1+6); c.getPad(is-1+6).getAxisZ().setLog(true);       
             c.draw(h2);   
         }
@@ -1835,13 +1835,13 @@ public class ECcalib extends DetectorMonitor {
         EmbeddedCanvas c = null; 
         c = this.summary.getCanvas("PvsE");
         c.divide(2,2);
-        h2 =dg4.getH2F("hi_pcal_1");   
+        h2 =dg4.getH2F("hi-pcal-1");   
         c.cd(0); c.getPad(0).getAxisZ().setLog(true); c.draw(h2);
-        h2 =dg4.getH2F("hi_ecali_1");   
+        h2 =dg4.getH2F("hi-ecali-1");   
         c.cd(1); c.getPad(1).getAxisZ().setLog(true); c.draw(h2);
-        h2 =dg4.getH2F("hi_ecalo_1");   
+        h2 =dg4.getH2F("hi-ecalo-1");   
         c.cd(2); c.getPad(2).getAxisZ().setLog(true); c.draw(h2);
-        h2 =dg4.getH2F("hi_etot_1");   
+        h2 =dg4.getH2F("hi-etot-1");   
         c.cd(3); c.getPad(3).getAxisZ().setLog(true); c.draw(h2);
         
         c.repaint();
