@@ -105,8 +105,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     private int   canvasUpdateTime = 2000;
     private int           TVOffset = 0;
     private float         logParam = 0;
-    private int    PCTrackingPlane = 9;
-    private int    ECTrackingPlane = 0;
+
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 1;
     private int        eventNumber = 0;
@@ -434,8 +433,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].setLogZ(zLogEnable);
                                                    this.monitors[k].setUseUnsharedEnergy(unsharedEnergy); 
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
-                                                   this.monitors[k].setPCTrackingPlane(PCTrackingPlane);
-                                                   this.monitors[k].setECTrackingPlane(ECTrackingPlane);
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].useATDATA   = useATDATA;
@@ -531,6 +528,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.setLogParam(val);
         }
     } 
+    
     public void setPCZplane() {
         String s = (String)JOptionPane.showInputDialog(
                     null,
@@ -550,6 +548,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.setPCTrackingPlane(val);
         }
     } 
+    
     public void setECZplane() {
         String s = (String)JOptionPane.showInputDialog(
                     null,
@@ -569,6 +568,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.setECTrackingPlane(val);
         }
     } 
+    
     private JLabel getImage(String path,double scale) {
         JLabel label = null;
         Image image = null;
@@ -903,7 +903,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setTVOffset(int time) {
-        System.out.println("Setting Tvertex offset " + time + " ns");
+        System.out.println("EventViewer.setTVOffset("+time+")");
         this.TVOffset = time;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setTVOffset(time);
@@ -911,23 +911,22 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void setLogParam(float val) {
-        System.out.println("EventViwer.setLogParam("+val+")");
+        System.out.println("EventViewer.setLogParam("+val+")");
         this.logParam = val;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setLogParam(val);
         }
     }
+    
     public void setPCTrackingPlane(int val) {
-        System.out.println("EventViwer.setPCTrackingPlane("+val+")");
-        this.PCTrackingPlane = val;
+        System.out.println("EventViewer.setPCTrackingPlane("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setPCTrackingPlane(val);
         }
     }
     
     public void setECTrackingPlane(int val) {
-        System.out.println("EventViwer.setECTrackingPlane("+val+")");
-        this.ECTrackingPlane = val;
+        System.out.println("EventViewer.setECTrackingPlane("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setECTrackingPlane(val);
         }
@@ -985,7 +984,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private void startProcessorTimer(){
-        //System.out.println(" starting timer ");
         class CrunchifyReminder extends TimerTask {
             boolean hasFinished = false;
             public void run() {

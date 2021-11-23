@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jlab.detector.base.DetectorCollection;
+import org.jlab.detector.base.DetectorLayer;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.geom.base.Detector;
 import org.jlab.geom.base.Layer;
@@ -46,8 +47,8 @@ public class ECCommon {
     public static double           logParam = 4.0;
     public static String          variation = "default";
     public static String      geomVariation = "default";
-    public static int       pcTrackingPlane = 9;
-    public static int       ecTrackingPlane = 0;
+    public static int       pcTrackingPlane = -1;
+    public static int       ecTrackingPlane = -1;
    
     private static double[] AtoE  = {15,10,10};   // SCALED ADC to Energy in MeV
     private static double[] AtoE5 = {15,5,5};     // For Sector 5 ECAL
@@ -140,8 +141,11 @@ public class ECCommon {
             int superlayer = (int) ((layer-1)/3);                 //0=PCAL 1=ECIN 2=ECOU
             int localLayer = (layer-1)%3;                         //0=U 1=V 2=W
            
-//            int off = (superlayer==0)?DetectorLayer.PCAL_Z:0;
-            int off = (superlayer==0)?pcTrackingPlane:ecTrackingPlane; //pcTrackingPlane = 9 (in the sequence 0-14 of 15 scintillator planes in PCAL)
+            int pcalz = pcTrackingPlane!=-1 ? pcTrackingPlane:DetectorLayer.PCAL_Z;
+            int ecinz = ecTrackingPlane!=-1 ? ecTrackingPlane:DetectorLayer.EC_INNER_Z;
+            int ecouz = ecTrackingPlane!=-1 ? ecTrackingPlane:DetectorLayer.EC_OUTER_Z;
+            
+            int off = superlayer==0 ? pcalz : (superlayer==1 ? ecinz : ecouz);
 
             Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
             ScintillatorPaddle      paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);

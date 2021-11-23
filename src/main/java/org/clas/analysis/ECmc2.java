@@ -54,7 +54,6 @@ public class ECmc2 extends DetectorMonitor {
                 
         engine.isMC = true;        
         engine.setGeomVariation("rga_fall2018");
-        engine.setPCTrackingPlane(9);
         engine.setCalRun(10);  
         engine.debug = false;
         

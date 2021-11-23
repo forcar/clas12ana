@@ -359,6 +359,7 @@ public class ECpi0 extends DetectorMonitor{
     }
     
     public void initCCDB(int runno) {
+    	System.out.println(getDetectorName()+":initCCDB("+runno+")");
         photon_sf = ebcm.getConstants(runno, "/calibration/eb/photon_sf");    
     }    
     
