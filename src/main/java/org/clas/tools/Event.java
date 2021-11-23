@@ -356,7 +356,7 @@ public class Event {
 	public float newBeta(Particle p, boolean newtime) {
 		double path = p.getProperty("path");
 		double time = newtime?p.getProperty("newtime"):p.getProperty("time");
-		return (float) (path/(time-starttime-timeshift)/29.97f);
+		return (float) (path/(time-starttime-timeshift)/29.979f);
 	}	
 	
     public int     getFDTrigger()            {return (int)(trigger)&0x000000000ffffffff;}

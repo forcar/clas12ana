@@ -124,6 +124,7 @@ public class ECt extends DetectorMonitor {
         this.variation = "default";
         engine.setVeff(18.1f);
         engine.setNewTimeCal(true);
+        engine.setECTrackingPlane(0); // until RGM starts cooking with 7.0.2
         tlnum = getDetectorTabNames().indexOf("TL");
         this.init();
         this.localinit();

@@ -1522,6 +1522,7 @@ public class ECPart extends EBTBEngine {
         engine.isMC = isMC;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setVeff(16); //GEMC default
+        engine.setPCTrackingPlane(9);
         
         getCCDB(10);
         setThresholds("Pizero",engine);
