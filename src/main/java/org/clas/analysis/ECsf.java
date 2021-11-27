@@ -415,6 +415,7 @@ public class ECsf extends DetectorMonitor {
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+6).get(0)).fill(e_mom,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+18).get(0)).fill(e_ecal_TH[0],sf); 
+            System.out.println(getSFcorr(e_sect,e_ecal_EL[3]));
             ((H1F) getDG(0,0,"PID Fits",run).getData(e_sect-1).get(0)).fill(sf/getSFcorr(e_sect,e_ecal_EL[3]));
        }
     	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1   ).get(0)).fill(e_ecal_EL[3], sf);
@@ -856,8 +857,9 @@ public class ECsf extends DetectorMonitor {
 	public void readSF(String fname) {
 		
         try{
-            FileReader       file = new FileReader(fname);
-            BufferedReader reader = new BufferedReader(file);
+            File f = new File(fname); 
+            if (!f.exists()) return;
+            BufferedReader reader = new BufferedReader(new FileReader(f));
 			System.out.println("ECsf.readSF("+fname+")");
             int n = 0 ;
             while (n<7) {		
@@ -868,8 +870,7 @@ public class ECsf extends DetectorMonitor {
                 sfpar[is][1] = Float.parseFloat(col[6]);
                 n++;
             }
-            reader.close();
-            file.close();    
+            reader.close();   
         }
         catch(FileNotFoundException ex) {
             ex.printStackTrace();            
