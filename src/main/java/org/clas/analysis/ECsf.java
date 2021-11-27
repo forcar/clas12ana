@@ -415,7 +415,6 @@ public class ECsf extends DetectorMonitor {
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+6).get(0)).fill(e_mom,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+18).get(0)).fill(e_ecal_TH[0],sf); 
-            System.out.println(getSFcorr(e_sect,e_ecal_EL[3]));
             ((H1F) getDG(0,0,"PID Fits",run).getData(e_sect-1).get(0)).fill(sf/getSFcorr(e_sect,e_ecal_EL[3]));
        }
     	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1   ).get(0)).fill(e_ecal_EL[3], sf);
