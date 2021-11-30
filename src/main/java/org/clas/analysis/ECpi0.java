@@ -114,7 +114,7 @@ public class ECpi0 extends DetectorMonitor{
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212); 
-        part.getCCDB(run);
+        part.setCCDB(run);
         isPARTReady = true;
     }
     
@@ -162,7 +162,7 @@ public class ECpi0 extends DetectorMonitor{
    	    if(dropSummary) return;
         setRunNumber(run);
         plotUVW(0);
-        if(isAnalyzeDone) {updateUVW(1);}else{plotPI0Summary(1);}
+        if(isAnalyzeDone) {updateUVW(1); }else{ plotPI0Summary(1);}
         plotPI0Summary(2);    	
         plotPI0Summary(3);    	
         plotPI0Summary(4);   
@@ -186,7 +186,6 @@ public class ECpi0 extends DetectorMonitor{
     public void createPHOTHistos(int k) {
     	
  	   int run = getRunNumber();
-
        int is=0, n=0;
        String tag = is+"-"+n+"-"+k+"-"+run;
        h1 = new H1F("pi0-pcal-u-"+tag,"pi0-pcal-u-"+tag, 100, 0., 2.);
@@ -503,7 +502,7 @@ public class ECpi0 extends DetectorMonitor{
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
-        if(event.hasBank("MC::Particle")==true) {processMC(event, ecBank); return;}
+        if(event.hasBank("MC::Particle")) {processMC(event, ecBank); return;}
         
         double[]  esum = {0,0,0,0,0,0};
         int[][]  nesum = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};    
@@ -533,20 +532,6 @@ public class ECpi0 extends DetectorMonitor{
             DataBank bank = event.getBank("MIP::event");
             for(int i=0; i < bank.rows(); i++) part.mip[i]=bank.getByte("mip", i);   
             
-        } else if (event.hasBank("FTOF::adc")) {
-            paddleList = DataProvider.getPaddleList(event);          
-            double[] thresh = {500,1000,1000}; 
-            for (int i=0; i<6; i++) part.mip[i]=0;       
-            if (paddleList!=null) {
-                for (TOFPaddle paddle : paddleList){           
-                    int toflay = paddle.getDescriptor().getLayer();            
-                    int   isec = paddle.getDescriptor().getSector();   
-                    double gmean = paddle.geometricMean();
-                    if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(gmean); 
-                    part.mip[isec-1] = (gmean>thresh[toflay-1]) ? 1:0;
-                }
-            }
-            
         } else if (event.hasBank("REC::Scintillator")) {
             double[] thresh = {7,8,8}; 
             for (int i=0; i<6; i++) part.mip[i]=0;       
@@ -561,15 +546,27 @@ public class ECpi0 extends DetectorMonitor{
                }
             } 
             
+        } else if (event.hasBank("FTOF::adc")) {
+            paddleList = DataProvider.getPaddleList(event);          
+            double[] thresh = {500,1000,1000}; 
+            for (int i=0; i<6; i++) part.mip[i]=0;       
+            if (paddleList!=null) {
+                for (TOFPaddle paddle : paddleList){           
+                    int toflay = paddle.getDescriptor().getLayer();            
+                    int   isec = paddle.getDescriptor().getSector();   
+                    double gmean = paddle.geometricMean();
+                    if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(gmean); 
+                    part.mip[isec-1] = (gmean>thresh[toflay-1]) ? 1:0;
+                }
+            }
+            
         } else if (event.hasBank("REC::Calorimeter")) {        	
             for (int i=0; i<6; i++) part.mip[i]=0;       
             DataBank bank = event.getBank("REC::Calorimeter");
             for (int i=0; i<bank.rows(); i++) {
             }
         }
-
         
-//        part.setGoodPhotons(120);
         part.getNeutralResponses();
         
         int trigger_sect = getElecTriggerSector();
@@ -582,9 +579,10 @@ public class ECpi0 extends DetectorMonitor{
                 double    invd = (invmass-part.mpi0)*1e3;
                 double     opa = Math.acos(part.cth)*180/3.14159;
                 
-                boolean    ivmcut = inv3>pmin && inv3<pmax;
-                boolean badPizero = part.X>1 || opa<0;
-                boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;
+                boolean     ivmcut = inv3>pmin && inv3<pmax;
+                boolean  badPizero = part.X>1 || opa<0;
+                boolean goodSector = dropEsect ? is!=trigger_sect : is==trigger_sect;
+                
                 if(invmass>0 && part.iis[0]>0 && part.iis[1]>0 && !badPizero && goodSector) {                                                    
                     if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);   
                     
@@ -599,10 +597,12 @@ public class ECpi0 extends DetectorMonitor{
                         if(nesum[0][is-1]>1 && nesum[1][is-1]>0) {
                     	   ((H2F) this.getDataGroup().getItem(0,0,3,run).getData(part.iis[0]-1).get(0)).fill(opa,part.e1c*part.e2c);
                        	   ((H2F) this.getDataGroup().getItem(0,0,4,run).getData(part.iis[0]-1).get(0)).fill(opa,part.X);
-                        }                                   
+                        } 
+                        
                         if (ivmcut) {
-                        	((H2F) this.getDataGroup().getItem(0,0,9,run).getData(part.iis[0]-1).get(0)).fill(Math.acos(part.cpi0)*180/Math.PI,Math.sqrt(part.tpi2));                    
+                           ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(part.iis[0]-1).get(0)).fill(Math.acos(part.cpi0)*180/Math.PI,Math.sqrt(part.tpi2));                    
                         }  
+                        
                         for (int id=0; id<3; id++) {
                             for (int im=0; im<2; im++) {
                                 if(ecBank!=null) {
@@ -1025,9 +1025,7 @@ public class ECpi0 extends DetectorMonitor{
     		drawTimeLine(c,is,10*(pc+1),1f,"Sector "+is+((pc==0)?" Pi0 Mean/Mass":" Pi0 #sigma(E)/E"));
     	}
     }
-    
-    
-    
+
     @Override 
     public void timerUpdate() {
     	

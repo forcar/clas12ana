@@ -142,7 +142,7 @@ public class ECPart extends EBTBEngine {
         return detectorTabNames;
     }
     
-    public void getCCDB(int runno) {
+    public void setCCDB(int runno) {
     	System.out.println("ECpart.setCCDB("+runno+")");
     	ebe.init();
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
@@ -563,7 +563,7 @@ public class ECPart extends EBTBEngine {
         engine.isMC = true;
         engine.setVariation("default");
         engine.setCalRun(10);                
-        getCCDB(10);
+        setCCDB(10);
         setThresholds("Pizero",engine);
         setGeom("2.5");
         
@@ -962,7 +962,7 @@ public class ECPart extends EBTBEngine {
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
-        getCCDB(2);
+        setCCDB(2);
         
         setThresholds("Pizero",engine);
         setGeom("2.5");
@@ -1089,7 +1089,7 @@ public class ECPart extends EBTBEngine {
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
         
-        getCCDB(2);
+        setCCDB(2);
         setThresholds("Test",engine);
         setGeom("2.5");
         setGoodPhotons(12);
@@ -1322,7 +1322,7 @@ public class ECPart extends EBTBEngine {
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
         
-        getCCDB(2);
+        setCCDB(2);
         setThresholds("Pizero",engine);
         setGeom("2.5");
         setGoodPhotons(12);
@@ -1524,7 +1524,7 @@ public class ECPart extends EBTBEngine {
         engine.setVeff(16); //GEMC default
         engine.setPCTrackingPlane(9);
         
-        getCCDB(10);
+        setCCDB(10);
         setThresholds("Pizero",engine);
         setGeom("2.5");
         setGoodPhotons(12);
@@ -1661,7 +1661,7 @@ public class ECPart extends EBTBEngine {
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setCalRun(2);
-        getCCDB(2);
+        setCCDB(2);
         
         int nev=1;
         
