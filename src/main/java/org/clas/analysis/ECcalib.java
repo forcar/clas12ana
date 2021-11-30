@@ -148,6 +148,10 @@ public class ECcalib extends DetectorMonitor {
 	     createPIDHistos(6);
 	     createMIPHistos(7,1,25,0,5.0," + Momentum (GeV)");
 	     createMIPHistos(7,2,25,0,5.0," - Momentum (GeV)");
+	     createMIPHistos(7,3,25,0,5.0," + Momentum (GeV)");
+	     createMIPHistos(7,4,25,0,5.0," - Momentum (GeV)");
+	     createMIPHistos(7,5,25,0,5.0," + Momentum (GeV)");
+	     createMIPHistos(7,6,25,0,5.0," - Momentum (GeV)");
 	     createPathHistos(9);
 	     createPixHistos(10);	
 	     createUVWHistos(12,25,0.,2.," MIP ");
@@ -166,9 +170,9 @@ public class ECcalib extends DetectorMonitor {
     	 if(dropSummary) return;
     	 setRunNumber(run);
     	 plotMIP(0);      	
-    	 plotXYSummary(5); 
+    	 plotXY(5); 
     	 plotPIDSummary(6);
-    	 plotMIP(7);
+    	 plotMIPZ(7);
     	 plotPathSummary(9,getActivePC()==1?getActiveView()+1:0);
     	 plotPathSummary(10,0);
     	 plotUVW(12);    
@@ -209,19 +213,19 @@ public class ECcalib extends DetectorMonitor {
  	     
          String[] t = {"e","w","r"};
          
-         for (int i=0; i<3; i++) {
+         for (int i=0; i<3; i++) { //i=0,1,2 event,weight,ratio
         	 dg = new DataGroup(3,2);
-        	 for (int d=0; d<3; d++) {
+        	 for (int d=0; d<3; d++) { //id=0,1,2 pcal,ecin,ecou clusters
         		 h = new H2F("hi-"+det[d]+"-xyc-"+t[i]+"-"+k+"-"+run,"hi-"+det[d]+"-xyc-"+t[i]+"-"+k+"-"+run,nb,bx1,bx2,nb,by1,by2);
                  dg.addDataSet(h,d);  
 	    	 }
              this.getDataGroup().add(dg,i,2,k,run);
          }
 
-         for (int i=0; i<3; i++) {
+         for (int i=0; i<3; i++) { //i=0,1,2 event,weight,ratio
         	 dg = new DataGroup(3,3);
-        	 for (int j=0; j<3; j++) {
-        		 for (int d=0; d<3; d++) {
+        	 for (int j=0; j<3; j++) { //j=0,1,2 U,V,W peaks
+        		 for (int d=0; d<3; d++) { //id=0,1,2 pcal,ecin,ecou
         			 h = new H2F("hi-"+det[d]+"-xyp-"+v[j]+t[i]+"-"+k+"-"+run,"hi-"+det[d]+"-xyp-"+v[j]+t[i]+"-"+k+"-"+run,nb,bx1,bx2,nb,by1,by2);
                      dg.addDataSet(h,j+d*3);                      
         	     } 
@@ -720,13 +724,12 @@ public class ECcalib extends DetectorMonitor {
        	float[]  puvw = new float[3];
 		int is,il,ip,trigger=0,trig=TRpid;
 		float ecl,x,y,z,d,wu,wv,ww,wsum,pmip=0,v12mag,v13mag,v23mag,beta,mass2=0;
-		boolean isMuon = false;
 		
 		IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);
 		
 		if (ev.isPhys) {
 	        trigger = (int) ev.part.get(0).getProperty("ppid");
-			if (trigger!=trig) return;
+			if (Math.abs(trigger)!=trig) return;
 			fillPID(run,0,0);
 		}
 		
@@ -747,6 +750,8 @@ public class ECcalib extends DetectorMonitor {
             	Vector3  v2 = new Vector3(rl.get(1).x(),rl.get(1).y(),rl.get(1).z());
             	Vector3  v3 = new Vector3(rl.get(2).x(),rl.get(2).y(),rl.get(2).z());
             	Vector3 v23 = new Vector3(v2.x(),v2.y(),v2.z());
+            	
+            
     
             	v2.sub(v1); v23.sub(v3); v3.sub(v1);  
             
@@ -778,7 +783,7 @@ public class ECcalib extends DetectorMonitor {
             		ep[2]  = (float) ec.getProperty("recew")/d;
             		
             		if (ev.isPhys) {
-            			pmip   = (float) ev.part.get(ip).p()*ev.part.get(ip).charge();
+            			pmip   = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();
             			beta   = (float) ev.part.get(ip).getProperty("beta");
             			mass2  = (float) (pmip*pmip*(1f/(beta*beta)-1));
             		}
@@ -786,7 +791,7 @@ public class ECcalib extends DetectorMonitor {
             		if(ev.isPhys && il==1) fillPID(run,2,ip);
             		if(this.getDataGroup().hasItem(0,0,9,run)) fillPATH(is,il,run,ecl,ep,wsum,v12mag,v13mag,v23mag);
             		
-            		Boolean  pid = ev.isMuon ? true:pmip!=0 && Math.abs(mass2-0.0193)<0.03;
+            		Boolean  pid = ev.isMuon ? true : pmip!=0 && Math.abs(mass2-0.0193)<0.03;
             		Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3;    
             		Boolean  pix = il==1 ? wu==1 && wv==1 && ww==1 : wsum==3 || wsum==4;
             		
@@ -802,6 +807,68 @@ public class ECcalib extends DetectorMonitor {
 			}  
     	}
     }
+    
+    
+  //Target-PCAL: 6977.8 mm CCDB:/geometry/pcal/dist2tgt
+  //Target-ECAL: 7303.3 mm CCDB:/geometry/ec/dist2tgt
+  //PCAL-ECin: 325.5 mm
+  //ECin-ECou: 14*2.2+15*10.0 = 180.8 mm
+  //PCAL-ECou: 325.5+180.8= 506.3 mm
+    
+    public void fillPID(int run, int fill, int ip) {
+    	
+        if(ev.part.isEmpty()) return;
+        
+    	if(fill==0) {
+    		for (Particle p : ev.part) {
+    			if(p.getProperty("ppid")!=0 && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
+    				((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:4).get(0)).fill(p.p(),p.getProperty("beta"));
+            		float beta = (float) p.getProperty("beta");
+                    float mass2 =(float) (p.p()*p.p()*(1f/(beta*beta)-1));
+                    ((H1F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?3:7).get(0)).fill(mass2);
+            	}
+            }
+        }
+
+    	if(fill>0) {
+    		Particle p = ev.part.get(ip);
+    		float pm = (float) p.p(); float b = (float) p.getProperty("beta"); int pid = (int) p.getProperty("ppid"); int q = p.charge();
+    		if(fill==1) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(q>0?     1:5).get(0)).fill(pm,b);   		
+    		if(fill==2) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(pid==211?2:6).get(0)).fill(pm,b);
+    	}
+    }
+    
+    public void fillMIP(int is, int il, int run, float[] uvw, float[] wuv, float ec, float[] ep, float p, float x, float y) {
+    	
+    	int il3=il/3;
+    	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]?mipc[il3]:0);
+    	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]?ec:0);     	
+    	if(il==1) ((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is+(p<0?0:6)-1).get(0)).fill(Math.abs(p),ec/mipc[0]); 
+    	for (int i=0; i<3; i++) {
+    		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(ec,uvw[i]);    	
+    	    ((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]);	
+    	    ((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	
+//    	    float z1 = ep[i]<mxp[il3]?mipp[il3]:0, z2 = ep[i]<mxp[il3]?ep[i]:0;
+    	    float z1 = ep[i]<mxp[il3]?1:0, z2 = ep[i]<mxp[il3]?ep[i]/mipp[il3]:0;
+		    ((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z1);		  
+		    ((H2F) this.getDataGroup().getItem(is,p<0?4:3,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z2);		  
+		    ((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,z1);
+		    ((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,z2);
+    	} 	
+    }
+    
+    public void fillPATH(int is, int il, int run, float ec, float[] ep, float w, float v12mag, float v13mag, float v23mag) {
+    	
+    	int il3=il/3;       
+    	
+    	for (int i=0; i<4; i++) {
+    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is-1).get(0)).fill((i==0)?ec/mipc[il3]:ep[i-1]/mipp[il3],il==1?v12mag:v13mag);
+    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is+5).get(0)).fill((i==0)?ec/mipc[il3]:ep[i-1]/mipp[il3],il==1?v13mag:v23mag);
+    	}
+     
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is-1).get(0)).fill(ec,w);
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+5).get(0)).fill(v12mag,w);    	
+    }    
     
     public void getECALTDC(int run, int eis, DataEvent event) {
     	
@@ -942,64 +1009,6 @@ public class ECcalib extends DetectorMonitor {
              }
     	 }
     	
-    }
-    
-  //Target-PCAL: 6977.8 mm CCDB:/geometry/pcal/dist2tgt
-  //Target-ECAL: 7303.3 mm CCDB:/geometry/ec/dist2tgt
-  //PCAL-ECin: 325.5 mm
-  //ECin-ECou: 14*2.2+15*10.0 = 180.8 mm
-  //PCAL-ECou: 325.5+180.8= 506.3 mm
-    
-    public void fillPID(int run, int fill, int ip) {
-    	
-        if(ev.part.isEmpty()) return;
-        
-    	if(fill==0) {
-    		for (Particle p : ev.part) {
-    			if(p.getProperty("ppid")!=0 && p.getProperty("index")>0 && p.charge()!=0 && p.getProperty("status")>=2000) {
-    				((H2F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?0:4).get(0)).fill(p.p(),p.getProperty("beta"));
-            		float beta = (float) p.getProperty("beta");
-                    float mass2 =(float) (p.p()*p.p()*(1f/(beta*beta)-1));
-                    ((H1F) this.getDataGroup().getItem(0,0,6,run).getData(p.charge()>0?3:7).get(0)).fill(mass2);
-            	}
-            }
-        }
-
-    	if(fill>0) {
-    		Particle p = ev.part.get(ip);
-    		float pm = (float) p.p(); float b = (float) p.getProperty("beta"); int pid = (int) p.getProperty("ppid"); int q = p.charge();
-    		if(fill==1) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(q>0?     1:5).get(0)).fill(pm,b);   		
-    		if(fill==2) ((H2F) this.getDataGroup().getItem(0,0,6,run).getData(pid==211?2:6).get(0)).fill(pm,b);
-    	}
-    }
-    
-    public void fillMIP(int is, int il, int run, float[] uvw, float[] wuv, float ec, float[] ep, float p, float x, float y) {
-    	
-    	int il3=il/3;
-    	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]?mipc[il3]:0);
-    	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]?ec:0);     	
-    	if(il==1) ((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is+(p<0?0:6)-1).get(0)).fill(Math.abs(p),ec/mipc[0]); 
-    	for (int i=0; i<3; i++) {
-    		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(ec,uvw[i]);    	
-    	    ((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]);	
-    	    ((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);		    
-		    ((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i]);		  
-		    ((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,ep[i]<mxp[il3]?mipp[il3]:0);
-		    ((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,ep[i]<mxp[il3]?ep[i]:0);
-    	} 	
-    }
-    
-    public void fillPATH(int is, int il, int run, float ec, float[] ep, float w, float v12mag, float v13mag, float v23mag) {
-    	
-    	int il3=il/3;       
-    	
-    	for (int i=0; i<4; i++) {
-    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is-1).get(0)).fill((i==0)?ec/mipc[il3]:ep[i-1]/mipp[il3],il==1?v12mag:v13mag);
-    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is+5).get(0)).fill((i==0)?ec/mipc[il3]:ep[i-1]/mipp[il3],il==1?v13mag:v23mag);
-    	}
-     
-        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is-1).get(0)).fill(ec,w);
-        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+5).get(0)).fill(v12mag,w);    	
     }
     
     private void updateUVW(int index) {
@@ -1417,7 +1426,7 @@ public class ECcalib extends DetectorMonitor {
         }        
     } 
     
-    public void plotXYSummary(int index) {        
+    public void plotXY(int index) {        
     	
       	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));        
         int          run = getRunNumber();
@@ -1436,6 +1445,29 @@ public class ECcalib extends DetectorMonitor {
     	}
    
     }
+    
+    public void plotMIPZ(int index) {        
+    	
+      	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));        
+        int          run = getRunNumber();
+        
+        c.clear(); c.divide(3,3);
+        
+    	for (int i=1; i<3; i++) {
+    		for (int il=0; il<9; il++) {
+    			for (int is=1; is<7; is++) {
+    				H2F h1 = (H2F) this.getDataGroup().getItem(is,i,  index,run).getData(il).get(0);   
+    				H2F h2 = (H2F) this.getDataGroup().getItem(is,i+2,index,run).getData(il).get(0); 
+    				this.getDataGroup().getItem(is,i+4,index,run).getData(il).add(h2.divide(h2, h1));
+    				((H2F)this.getDataGroup().getItem(is,i+4,index,run).getData(il).get(0)).setTitle(h1.getName());           
+    			}
+    		}
+    	}
+    	
+    	int pc = getActivePC()==0?6:5;
+      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),pc,index,getRunNumber()));    	
+   
+    } 
     
     public void plotAlignSummary(int index) {
     	
