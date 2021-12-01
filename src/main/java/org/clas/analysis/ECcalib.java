@@ -1458,12 +1458,14 @@ public class ECcalib extends DetectorMonitor {
     			for (int is=1; is<7; is++) {
     				H2F h1 = (H2F) this.getDataGroup().getItem(is,i,  index,run).getData(il).get(0);   
     				H2F h2 = (H2F) this.getDataGroup().getItem(is,i+2,index,run).getData(il).get(0); 
+    				this.getDataGroup().getItem(is,i+4,index,run).getData(il).clear();
     				this.getDataGroup().getItem(is,i+4,index,run).getData(il).add(h2.divide(h2, h1));
     				((H2F)this.getDataGroup().getItem(is,i+4,index,run).getData(il).get(0)).setTitle(h1.getName());           
     			}
     		}
     	}
     	
+    	zMin=0f; zMax=0.01;
     	int pc = getActivePC()==0?6:5;
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),pc,index,getRunNumber()));    	
    
