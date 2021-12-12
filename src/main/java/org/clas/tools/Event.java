@@ -32,9 +32,9 @@ public class Event {
 	
 	public int TRpid = 0, MCpid=11;
 	private boolean isHipo3Event = false; 
-	public boolean   isMC = false;
-	public boolean isMuon = false;
-	public boolean isPhys = false;
+	public boolean     isMC = false;	
+	public boolean   isMuon = false;
+	public boolean   isPhys = false;
 	
 	public List<Particle>              part    = new ArrayList<Particle>();	
 	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
@@ -122,8 +122,8 @@ public class Event {
 	}
 	
 	public boolean isGoodEvent() {
-		isPhys = hasRUNconfig && hasRECevent && hasRECparticle;
-		isMuon = isMuon() && hasECALpeaks && hasECALcalib;
+		isPhys   = hasRUNconfig && hasRECevent && hasRECparticle;		
+		isMuon   = isMuon() && hasECALpeaks && hasECALcalib;
 		return isPhys || isMuon;		
 	}
 	
@@ -600,7 +600,7 @@ public class Event {
 		return ecalpart;
 	}
 		
-	public List<Particle> getECALPHYS(int ipart) {
+	public List<Particle> getECALPHYS(int ipart) { //for physics runs
 		List<Particle> ecalpart = new ArrayList<Particle>();
 		if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) {				
@@ -626,26 +626,30 @@ public class Event {
 				p.setProperty("dv",     caloBank.getFloat("dv",imap));
 				p.setProperty("dw",     caloBank.getFloat("dw",imap));
 				
-				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());			
+				int ical = (int) p.getProperty("index");
 				
 				if(clusBank!=null) {
-					int ical = (int) p.getProperty("index");
 					p.setProperty("cstat",  clusBank.getInt("status", ical));					
 					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
 					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
 					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
 					p.setProperty("newtime",clusBank.getFloat("time", ical));
+					p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
+					p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
+					p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
+					p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
+					p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
 				}
 				
+				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
+				
 				if(caliBank!=null) {					
-					int ical = (int) p.getProperty("index");
 					p.setProperty("receu",    caliBank.getFloat("recEU", ical)*1e3);
 					p.setProperty("recev",    caliBank.getFloat("recEV", ical)*1e3);
 					p.setProperty("recew",    caliBank.getFloat("recEW", ical)*1e3);
 				}
 				
 				if(peakBank!=null && clusBank!=null) {
-					int ical = (int) p.getProperty("index");
 					p.setProperty("ustat", peakBank.getInt("status", clusBank.getInt("idU",ical)-1));					
 					p.setProperty("vstat", peakBank.getInt("status", clusBank.getInt("idV",ical)-1));					
 					p.setProperty("wstat", peakBank.getInt("status", clusBank.getInt("idW",ical)-1));					
