@@ -433,110 +433,57 @@ public class ECcalib extends DetectorMonitor {
             dg.addDataSet(h,8);   
             this.getDataGroup().add(dg,is,n,k,run);
         }            
-    }      
+    } 
+     
     public void createPathHistos(int k) {
     	
 	   int run = getRunNumber();
        
+	   for (int id=0; id<3; id++) {
+		   String d1 = det[id], d2=" "+d1.toUpperCase()+"/MIP";
        for (int il=0; il<4; il++) {
-           dg = new DataGroup(3,4); 
+           dg = new DataGroup(6,3); 
        for (int is=1; is<7; is++) {
            String tag = is+"-"+il+"-"+k+"-"+run;
-//           h = new H2F("hi-pcal-path1-"+tag,"hi-pcal-path1-"+tag,20,0.,2.,118,21.,35.);
-           h = new H2F("hi-pcal-path1-"+tag,"hi-pcal-path1-"+tag,20,0,2,118,0.7,1.0);
-           h.setTitleX("Sector "+is+" PCAL/MIP");
-           h.setTitleY("CZ");
+           h = new H2F("hi-"+d1+"-path12-"+tag,"hi-"+d1+"-path12-"+tag,40,0,2,70,32,50);
+           h.setTitleX("Sector "+is+d2); h.setTitleY("Path12 (cm)");
            dg.addDataSet(h, is-1);  
-           h = new H2F("hi-pcal-path2-"+tag,"hi-pcal-path2-"+tag,20,0,2,70,51,75);
-           h.setTitleX("Sector "+is+" PCAL/MIP");
-           h.setTitleY("Path13 (cm)");
+           h = new H2F("hi-"+d1+"-path13-"+tag,"hi-"+d1+"-path13-"+tag,40,0,2,70,51,75);
+           h.setTitleX("Sector "+is+d2); h.setTitleY("Path13 (cm)");
            dg.addDataSet(h, is+5);  
-        }
-        this.getDataGroup().add(dg,il,0,k,run);
-        }
-       
-        for (int il=0; il<4; il++) {
-            dg = new DataGroup(3,4); 
-        for (int is=1; is<7; is++) {
-            String tag = is+"-"+il+"-"+k+"-"+run;
-//            h = new H2F("hi-ecin-path1-"+tag,"hi-ecin-path1-"+tag,20,0.,2.,70,40.,60.);
-            h = new H2F("hi-ecin-path1-"+tag,"hi-ecin-path1-"+tag,20,0,2,70,0.7,1.0);
-            h.setTitleX("Sector "+is+" ECIN/MIP");
-            h.setTitleY("CZ");
-            dg.addDataSet(h, is-1);  
-            h = new H2F("hi-ecin-path2-"+tag,"hi-ecin-path2-"+tag,20,0,2,66,18.4,35);
-            h.setTitleX("Sector "+is+" ECIN/MIP");
-            h.setTitleY("Path23 (cm)");
-            dg.addDataSet(h, is+5);    
-        }
-        this.getDataGroup().add(dg,il,1,k,run);
-        }
-        
-        for (int il=0; il<4; il++) {
-            dg = new DataGroup(3,4); 
-        for (int is=1; is<7; is++) {        
-            String tag = is+"-"+il+"-"+k+"-"+run;
-//            h = new H2F("hi-ecou-path1-"+tag,"hi-ecou-path1-"+tag,20,0.,2.,70,40.,60.);
-            h = new H2F("hi-ecou-path1-"+tag,"hi-ecou-path1-"+tag,20,0,2,70,0.7,1.0);
-            h.setTitleX("Sector "+is+" ECOU/MIP");
-            h.setTitleY("CZ");
-            dg.addDataSet(h, is-1);  
-            h = new H2F("hi-ecou-path2-"+tag,"hi-ecou-path2-"+tag,20,0,2,66,18.4,35);
-            h.setTitleX("Sector "+is+" ECOU/MIP");
-            h.setTitleY("Path23 (cm)");
-            dg.addDataSet(h, is+5);      
-        }
-        this.getDataGroup().add(dg,il,2,k,run);
-        }
-                
+           h = new H2F("hi-"+d1+"-path23-"+tag,"hi-"+d1+"-path23-"+tag,40,0,2,70,18,35);
+           h.setTitleX("Sector "+is+d2); h.setTitleY("Path23 (cm)");
+           dg.addDataSet(h, is+11);  
+       }
+        this.getDataGroup().add(dg,il,id,k,run);
+       }
+	   }                
     }
     
     public void createPixHistos(int k) {
     	
  	    int run = getRunNumber();
         
-        dg = new DataGroup(3,4); 
+ 	    for (int id=0; id<3; id++) {
+ 	    	String d1 = det[id], d2=" "+d1.toUpperCase();
+ 	    	dg = new DataGroup(6,4); 
         for (int is=1; is<7; is++) {
             String tag = is+"-"+k+"-"+run;
-            h = new H2F("hi-pcal-pix1-"+tag,"hi-pcal-pix1-"+tag,50,1,200,12,3,15);
-            h.setTitleX("Sector "+is+" PCAL (MeV)");
-            h.setTitleY("No. Strips");
+            h = new H2F("hi-"+d1+"-pix1-"+tag,"hi-"+d1+"-pix1-"+tag,50,1,200,9,3,12);
+            h.setTitleX("Sector "+is+d2+" (MeV)"); h.setTitleY("No. Strips");
             dg.addDataSet(h, is-1);   
-            h = new H2F("hi-pcal-pix2-"+tag,"hi-pcal-pix2-"+tag,100,32,50,12,3,15);
-            h.setTitleX("Sector "+is+" Path12 (cm)");
-            h.setTitleY("No. Strips");
+            h = new H2F("hi-"+d1+"-pix2-"+tag,"hi-"+d1+"-pix2-"+tag,70,32,50,9,3,12);
+            h.setTitleX("Sector "+is+" Path12 (cm)"); h.setTitleY("No. Strips");
             dg.addDataSet(h, is+5);   
-         }
-        this.getDataGroup().add(dg,0,0,k,run);
-        
-        dg = new DataGroup(3,4); 
-        for (int is=1; is<7; is++) {
-            String tag = is+"-"+k+"-"+run;
-            h = new H2F("hi-ecin-pix-"+tag,"hi-ecin-pix-"+tag,50,1,200,12,3,15);
-            h.setTitleX("Sector "+is+" ECin (MeV)");
-            h.setTitleY("No. Strips");
-            dg.addDataSet(h, is-1);   
-            h = new H2F("hi-ecin-pix2-"+tag,"hi-ecin-pix2-"+tag,100,32,50,12,3,15);
-            h.setTitleX("Sector "+is+" Path12 (cm)");
-            h.setTitleY("No. Strips");
-            dg.addDataSet(h, is+5);   
-         }
-        this.getDataGroup().add(dg,0,1,k,run);
-        
-        dg = new DataGroup(3,4); 
-        for (int is=1; is<7; is++) {
-            String tag = is+"-"+k+"-"+run;
-            h = new H2F("hi-ecou-pix-"+tag,"hi-ecou-pix-"+tag,50,1,200,12,3,15);
-            h.setTitleX("Sector "+is+" ECou (MeV)");
-            h.setTitleY("No. Strips");
-            dg.addDataSet(h, is-1);   
-            h = new H2F("hi-ecou-pix2-"+tag,"hi-ecou-pix2-"+tag,100,32,50,12,3,15);
-            h.setTitleX("Sector "+is+" Path12 (cm)");
-            h.setTitleY("No. Strips");
-            dg.addDataSet(h, is+5);   
-         }
-        this.getDataGroup().add(dg,0,2,k,run);
-    	
+            h = new H2F("hi-"+d1+"-pix3-"+tag,"hi-"+d1+"-pix3-"+tag,70,51,75,9,3,12);
+            h.setTitleX("Sector "+is+" Path13 (cm)"); h.setTitleY("No. Strips");
+            dg.addDataSet(h, is+11);   
+            h = new H2F("hi-"+d1+"-pix4-"+tag,"hi-"+d1+"-pix4-"+tag,70,18,35,9,3,12);
+            h.setTitleX("Sector "+is+" Path23 (cm)"); h.setTitleY("No. Strips");
+            dg.addDataSet(h, is+17);   
+        }
+        this.getDataGroup().add(dg,0,id,k,run);
+ 	    }    	
     }
     
     public void createPIDHistos(int k)  {
@@ -893,14 +840,16 @@ public class ECcalib extends DetectorMonitor {
     	int il3=il/3;       
     	
     	for (int i=0; i<4; i++) {
-//    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is-1).get(0)).fill((i==0)?ec/mipc[il3]:ep[i-1]/mipp[il3],il==1?v12mag:v13mag);
     		boolean t = i==0 ? fidc:!fid[i-1];
-    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is-1).get(0)).fill(i==0?(t?ec/mipc[il3]:-10):(t?ep[i-1]/mipp[il3]:-10),cz);
-    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is+5).get(0)).fill(i==0?(t?ec/mipc[il3]:-10):(t?ep[i-1]/mipp[il3]:-10),il==1?v13mag:v23mag);
+    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is- 1).get(0)).fill(i==0?(t?ec/mipc[il3]:-10):(t?ep[i-1]/mipp[il3]:-10),v12mag);
+    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is+ 5).get(0)).fill(i==0?(t?ec/mipc[il3]:-10):(t?ep[i-1]/mipp[il3]:-10),v13mag);
+    		((H2F) this.getDataGroup().getItem(i,il3,9,run).getData(is+11).get(0)).fill(i==0?(t?ec/mipc[il3]:-10):(t?ep[i-1]/mipp[il3]:-10),v23mag);
     	}
      
-        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is-1).get(0)).fill(fidc?ec:0,w);
-        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+5).get(0)).fill(v12mag,w);    	
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is- 1).get(0)).fill(fidc?ec:0,w);
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+ 5).get(0)).fill(v12mag,w);    	
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+11).get(0)).fill(v13mag,w);    	
+        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+17).get(0)).fill(v23mag,w);    	
     }    
     
     public void getECALTDC(int run, int eis, DataEvent event) {
