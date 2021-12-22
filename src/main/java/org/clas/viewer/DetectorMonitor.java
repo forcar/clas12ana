@@ -227,6 +227,8 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          dgmActive = false;
     public Boolean    useUnsharedTime = false;
     public Boolean  useUnsharedEnergy = true;
+    public Boolean          useATDATA = false;
+    public Boolean            normPix = false;
     public Boolean        dbgECEngine = false;
     public Boolean        dbgAnalyzer = false;
     
@@ -237,7 +239,6 @@ public class DetectorMonitor implements ActionListener {
     
     public String                 TLname = null;
     public Boolean                TLflag = null;
-    public Boolean             useATDATA = false;
     public int                     TLmax = 1000;
     public Map<String,Integer> TimeSlice = new HashMap<String,Integer>();  
     public List<Integer>       BlinkRuns = new ArrayList<Integer>();
@@ -415,6 +416,16 @@ public class DetectorMonitor implements ActionListener {
     	engine.setECTrackingPlane(val);
     	ECTrackingPlane = val;
     }  
+    
+    public void setStripThreshold(String val) {
+    	String[] x  = val.split(",",3); 
+    	engine.setStripThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
+    } 
+    
+    public void setPeakThreshold(String val) {
+    	String[] x  = val.split(",",3); 
+    	engine.setPeakThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
+    } 
     
     public void setLogParam(float val) {
     	engine.setLogParam(val);

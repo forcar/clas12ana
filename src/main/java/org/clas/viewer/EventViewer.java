@@ -86,14 +86,14 @@ import org.jlab.utils.system.ClasUtilsFile;
 
 public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ItemListener, ChangeListener {
     
-    JTabbedPane                  tabbedpane = null;
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;    
+    JTabbedPane                  tabbedpane = null;
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf7,cf8,cf9,cf10 = null;   
-    JCheckBoxMenuItem                                   ctr = null;  
+    JCheckBoxMenuItem                                   ctr = null;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
     
@@ -137,6 +137,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean    dbgAnalyzer = false;
     public Boolean   unsharedTime = false;
     public Boolean unsharedEnergy = true;
+    public Boolean        normPix = false;
     public Boolean     fitVerbose = false;
     public String          TLname = "UVW";
     public Boolean         TLflag = false;
@@ -171,9 +172,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public EventViewer(String[] args) {  
     	createMonitors(args);
     	createMenuBar();
-    	createPanels();
-   	    String dir = ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4");
-        schemaFactory.initFromDirectory(dir);
+    	createPanels();   	    
+        schemaFactory.initFromDirectory(ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4"));
         System.out.println("EventViewer init complete");
     }
     
@@ -208,9 +208,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-    	    monitors[n] = new ECt("ECt"); 
+//    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
-//  		monitors[n] = new ECcalib("ECcalib"); 
+  		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
 
@@ -322,6 +322,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf9 = new JCheckBoxMenuItem("ATDATA");  cf9.addItemListener(this);  ; menu.add(cf9);
         menuBar.add(menu);
         
+        menu   	= new JMenu("ECcalib");
+        cf10 = new JCheckBoxMenuItem("NormPix");  cf10.addItemListener(this);  ; menu.add(cf10);
+        menuBar.add(menu);   
+        
         menu    = new JMenu("ECEngine");
         co2  = new JCheckBoxMenuItem("Enable");                  co2.addItemListener(this);  menu.add(co2);;
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
@@ -329,6 +333,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
+        menuItem = new JMenuItem("Set Hit Thresh");              menuItem.addActionListener(this); menu.add(menuItem);   
+        menuItem = new JMenuItem("Set Peak Thresh");             menuItem.addActionListener(this); menu.add(menuItem);   
         menuBar.add(menu);
          
     }
@@ -405,6 +411,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf7)     dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf8)     dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf9)       useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
+		if (source==cf10)        normPix = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
 		if (source==ct0)          TLname = ct0.getText();
 		if (source==ct1)          TLname = ct1.getText();
 		if (source==ct2)          TLname = ct2.getText();
@@ -436,6 +443,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].useATDATA   = useATDATA;
+                                                   this.monitors[k].normPix     = normPix;
                                                    this.monitors[k].initTimeLine(TLname);
                                                    this.monitors[k].setTLflag(TLflag);
                                                    this.monitors[k].setDbgECEngine(dbgECEngine);
@@ -453,6 +461,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Set logParam"):                this.chooseLogParam(); break;
           case("Set PC Z plane"):              this.setPCZplane(); break;
           case("Set EC Z plane"):              this.setECZplane(); break;
+          case("Set Hit Thresh"):              this.setHitThresh(); break;
+          case("Set Peak Thresh"):             this.setPeakThresh(); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
           case("Open histograms file"):        this.histoChooser(); break;
           case("Save histograms to file"):     this.histoSaver(); break;
@@ -569,6 +579,45 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }
     } 
     
+    public void setHitThresh() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "ECEngine stripThresholds",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            String val = "0,0,0";
+            try { 
+                val= s;
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setStripThreshold(val);
+        }
+    } 
+    
+    public void setPeakThresh() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "ECEngine peakThresholds",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            String val = "0,0,0";
+            try { 
+                val= s;
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setPeakThreshold(val);
+        }
+    }     
     private JLabel getImage(String path,double scale) {
         JLabel label = null;
         Image image = null;
@@ -931,6 +980,20 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].setECTrackingPlane(val);
         }
     }
+    
+    public void setStripThreshold(String val) {
+        System.out.println("EventViewer.setStripThresholds("+val+")");
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setStripThreshold(val);
+        }
+    }
+    
+    public void setPeakThreshold(String val) {
+        System.out.println("EventViewer.setPeakThresholds("+val+")");
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setPeakThreshold(val);
+        }
+    } 
     
     @Override
     public void timerUpdate() {

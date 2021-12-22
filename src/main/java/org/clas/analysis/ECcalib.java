@@ -743,7 +743,7 @@ public class ECcalib extends DetectorMonitor {
                     wsum   = wu+wv+ww;
                     
             		float e_cz     = ec.hasProperty("cz")?(float) ec.getProperty("cz"):0;
-            		d      = (il>1 && ev.isMuon && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
+            		d      = (il>1 && ev.isMuon && normPix && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
             		ecl    = (float) ec.getProperty("energy")/d;	    	   
             		ep[0]  = (float) ec.getProperty("receu")/d;
             		ep[1]  = (float) ec.getProperty("recev")/d;
