@@ -186,6 +186,7 @@ public class ECcalib extends DetectorMonitor {
     	 if(!dropSummary) {
     		 updateFITS(2); 
  //   		 updateFITS(15); 
+    		 if(runlist.size()==3) dumpFiles("gain");
     		 if(TLname=="UVW") {
     			 /*plotMean()*/;plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
     			 } else {
@@ -537,7 +538,7 @@ public class ECcalib extends DetectorMonitor {
         
     public void initCCDB(int runno) {
     	System.out.println("ECcalib.initCCDB("+runno+")");
-        gain    = cm.getConstants(runno, "/calibration/ec/gain");
+        gain    = cm.getConstants(2,     "/calibration/ec/gain");       
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
@@ -708,13 +709,13 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float) v3.mag();
             	v23mag = (float) v23.mag();
             	
-            	int[][] nucut = new int[][]{{60,60,60,60,60,60},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //U near cuts
-            	int[][] nvcut = new int[][]{{67,67,67,67,67,67},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //V near cuts
-            	int[][] nwcut = new int[][]{{60,60,61,60,60,61},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //W near cuts
+            	int[][] nucut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,35,35,35,36}}; //U near cuts
+            	int[][] nvcut = new int[][]{{67,67,67,67,67,67},{36,36,35,36,36,36},{36,35,35,36,35,35}}; //V near cuts
+            	int[][] nwcut = new int[][]{{60,60,61,60,60,61},{36,36,36,35,36,36},{34,35,35,35,35,35}}; //W near cuts
             	
-            	int[][] fucut = new int[][]{{60,60,60,60,60,61},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //U far cuts
-            	int[][] fvcut = new int[][]{{60,60,60,60,60,60},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //V far cuts
-            	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,36,36,36,36,36},{36,36,36,36,36,36}}; //W far cuts
+            	int[][] fucut = new int[][]{{60,60,60,60,60,61},{35,36,35,35,36,36},{34,35,35,35,36,35}}; //U far cuts
+            	int[][] fvcut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,36,35,35,36}}; //V far cuts
+            	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,35,35,36,36,36},{36,35,35,35,35,35}}; //W far cuts
             	
             	for (Particle ec : entry.getValue()) {	//Loop over PCAL, ECIN, ECOU			
             		ip     = (int)   ec.getProperty("pindex");
@@ -1665,7 +1666,7 @@ public class ECcalib extends DetectorMonitor {
 		
     	if(!dumpFiles) return;
     	
-		String path = "/Users/colesmith/CLAS12ANA/ECmip/ccdb/";
+		String path = "/Users/colesmith/CLAS12ANA/ECcalib/ccdb/";
 		String line = new String();
 		
 		try { 
@@ -1673,16 +1674,16 @@ public class ECcalib extends DetectorMonitor {
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
-			System.out.println("ECmip.writefile("+table+")");
+			System.out.println("ECcalib.writefile("+table+")");
 
 			for (int is=is1; is<is2; is++) {
-				for (int il=il1; il<il2; il++ ) {
-					for (int iv=iv1; iv<iv2; iv++) {
+				for (int il=il1; il<il2; il++ ) { //pcal,ecin,ecou
+					for (int iv=iv1; iv<iv2; iv++) { //u,v,w
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "gain": line = getGAIN(is,il,iv,ip,getRunNumber()); break;
-							case "rdif": line = getRDIF(is,il,iv,ip,getRunNumber()); break;
-							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip,getRunNumber()); 
+							case "gain":     line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
+							case "rdif":     line = getRDIF(is,il,iv,ip); break;
+							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
 							}
 						    System.out.println(line);
 						    outputBw.write(line);
@@ -1703,8 +1704,7 @@ public class ECcalib extends DetectorMonitor {
 	}    
     
 	public String getGAIN(int is, int il, int iv, int ip, int run) {
-		int pc = 1; 
-		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
+		int pc = 1; 		
 		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
 			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
 			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
@@ -1719,7 +1719,7 @@ public class ECcalib extends DetectorMonitor {
 		
 	}
 	
-	public String getRDIF(int is, int il, int iv, int ip, int run) {	
+	public String getRDIF(int is, int il, int iv, int ip) {	
 		int pc = 1;
 		if(RDIFmap.get(pc).hasItem(is,il,iv,ip) && il>0) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
@@ -1732,9 +1732,7 @@ public class ECcalib extends DetectorMonitor {
 		}	    
 	}
 	
-	public String getRDIFGAIN(int is, int il, int iv, int ip, int run) {	
-		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
-		shift   = engine.getConstantsManager().getConstants(run, "/calibration/ec/torus_gain_shift");
+	public String getRDIFGAIN(int is, int il, int iv, int ip) {	
 		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gain",   is, 3*il+iv+1, ip+1)+" "
 				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gainErr",is, 3*il+iv+1, ip+1);    
