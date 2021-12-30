@@ -41,8 +41,6 @@ public class ECcalib extends DetectorMonitor {
 	H2F        h = null;
 	DataGroup dg = null;
 	
-    int is,la,ic,idet,nstr;
-    
     float[][][][] ecmean = new float[6][3][3][68];
     float[][][][]  ecrms = new float[6][3][3][68];
     String[]         det = new String[]{"pcal","ecin","ecou"};
@@ -667,19 +665,74 @@ public class ECcalib extends DetectorMonitor {
     	return olist;    	
     }
     
+    private class ECALdet {
+    	
+    	Particle p;
+    	
+    	int[][] nucut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,35,35,35,36}}; //U near cuts
+    	int[][] nvcut = new int[][]{{67,67,67,67,67,67},{36,36,35,36,36,36},{36,35,35,36,35,35}}; //V near cuts
+    	int[][] nwcut = new int[][]{{60,60,61,60,60,61},{36,36,36,35,36,36},{34,35,35,35,35,35}}; //W near cuts
+    	
+    	int[][] fucut = new int[][]{{60,60,60,60,60,61},{35,36,35,35,36,36},{34,35,35,35,36,35}}; //U far cuts
+    	int[][] fvcut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,36,35,35,36}}; //V far cuts
+    	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,35,35,36,36,36},{36,35,35,35,35,35}}; //W far cuts   
+    	
+    	public Vector3 rl;    	
+       	public float[]   uvw = new float[3]; float[]  wuv = new float[3]; float[] ep = new float[3];
+       	public boolean[] fid = new boolean[3];        	
+       	public int ip,il;
+       	public float x,y,z,wu,wv,ww,wsum,e_cz,d,ecl;
+       	
+    	public ECALdet (int is, Particle p) {
+    		this.p = p;
+    		rl = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+    		ip     = (int)   p.getProperty("pindex");
+    		il     = (int)   p.getProperty("layer"); int ild = getDet(il);
+    		
+    		x      = (float) p.getProperty("x");
+    		y      = (float) p.getProperty("y");
+    		z      = (float) p.getProperty("z");
+    		
+    		uvw[0] = (float) p.getProperty("iu");
+    		uvw[1] = (float) p.getProperty("iv");
+    		uvw[2] = (float) p.getProperty("iw");
+    		
+    		wuv[0] = uvw[2]; // use W strips to measure U readout distance
+    		wuv[1] = uvw[0]; // use U strips to measure V readout distance
+    		wuv[2] = uvw[1]; // use V strips to measure W readout distance 
+    		
+        	fid[0] = wuv[0]>nucut[ild][is-1] || uvw[1]>fucut[ild][is-1]; //flag near and far ends of U readout strip to reject corner clippers
+        	fid[1] = wuv[1]>nvcut[ild][is-1] || uvw[2]>fvcut[ild][is-1]; //flag near and far ends of V readout strip to reject corner clippers
+        	fid[2] = wuv[2]>nwcut[ild][is-1] || uvw[0]>fwcut[ild][is-1]; //flag near and far ends of W readout strip to reject corner clippers
+        	
+    		wu     = (float) p.getProperty("du");
+    		wv     = (float) p.getProperty("dv");
+    		ww     = (float) p.getProperty("dw");
+    		
+            wsum   = wu+wv+ww;
+            
+    		e_cz   = p.hasProperty("cz")?(float) p.getProperty("cz"):0;
+    		
+    		d      = (il>1 && ev.isMuon && normPix && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
+    		
+    		ecl    = (float) p.getProperty("energy")/d;	    	   
+    		ep[0]  = (float) p.getProperty("receu")/d;
+    		ep[1]  = (float) p.getProperty("recev")/d;
+    		ep[2]  = (float) p.getProperty("recew")/d;    	    		
+    	};
+    }
+    
     public void fillHists(int run, List<Particle> list, DataEvent event) {
     	
-    	List<Vector3> rl = new ArrayList<Vector3>();  
-		IndexGenerator ig = new IndexGenerator();
-		       	
-       	float[]   uvw = new float[3]; float[]  wuv = new float[3]; float[] ep = new float[3];
-       	float[]  puvw = new float[3];
-       	boolean[] fid = new boolean[3];
-       	
-		int is,il,ip,trigger=0,trig=TRpid;
-		float ecl,x,y,z,d,wu,wv,ww,wsum,pmip=0,v12mag,v13mag,v23mag,beta,mass2=0;
-		
+    	List<ECALdet> e = new ArrayList<ECALdet>();
 		IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);
+		
+    	IndexGenerator ig = new IndexGenerator();
+		       	
+       	float[] puvw = new float[3];       	
+		int is,trigger=0,trig=TRpid;
+	    float v12mag,v13mag,v23mag;
+		float pmip=0,beta,mass2=0;
 		
 		if (ev.isPhys) {
 	        trigger = (int) ev.part.get(0).getProperty("ppid");
@@ -690,17 +743,17 @@ public class ECcalib extends DetectorMonitor {
 		ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
     	
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
+    		
 			is = ig.getIndex(entry.getKey(), 0);
+			
             if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
-            	
-        		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
-        		
-            	rl.clear();
-            	for (Particle p : entry.getValue()) rl.add(new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));
-            	
-                Vector3  v1 = new Vector3(rl.get(0).x(),rl.get(0).y(),rl.get(0).z());
-            	Vector3  v2 = new Vector3(rl.get(1).x(),rl.get(1).y(),rl.get(1).z());
-            	Vector3  v3 = new Vector3(rl.get(2).x(),rl.get(2).y(),rl.get(2).z());
+            
+            	e.clear();
+            	for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));
+          	            	
+                Vector3  v1 = new Vector3(e.get(0).rl.x(),e.get(0).rl.y(),e.get(0).rl.z());
+            	Vector3  v2 = new Vector3(e.get(1).rl.x(),e.get(1).rl.y(),e.get(1).rl.z());
+            	Vector3  v3 = new Vector3(e.get(2).rl.x(),e.get(2).rl.y(),e.get(2).rl.z());
             	Vector3 v23 = new Vector3(v2.x(),v2.y(),v2.z());
 
             	v2.sub(v1); v23.sub(v3); v3.sub(v1);  
@@ -709,72 +762,42 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float) v3.mag();
             	v23mag = (float) v23.mag();
             	
-            	int[][] nucut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,35,35,35,36}}; //U near cuts
-            	int[][] nvcut = new int[][]{{67,67,67,67,67,67},{36,36,35,36,36,36},{36,35,35,36,35,35}}; //V near cuts
-            	int[][] nwcut = new int[][]{{60,60,61,60,60,61},{36,36,36,35,36,36},{34,35,35,35,35,35}}; //W near cuts
+//            	Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3; 
+          		            	
+            	Boolean  pixpc = e.get(0).wu==1 && e.get(0).wv==1 && e.get(0).ww==1;
+            	Boolean pixeci = e.get(1).wsum==3 || e.get(1).wsum==4;
+            	Boolean pixeco = e.get(2).wsum==3 || e.get(2).wsum==4;   
             	
-            	int[][] fucut = new int[][]{{60,60,60,60,60,61},{35,36,35,35,36,36},{34,35,35,35,36,35}}; //U far cuts
-            	int[][] fvcut = new int[][]{{60,60,60,60,60,60},{35,36,36,35,36,36},{35,36,36,35,35,36}}; //V far cuts
-            	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,35,35,36,36,36},{36,35,35,35,35,35}}; //W far cuts
-            	
-            	for (Particle ec : entry.getValue()) {	//Loop over PCAL, ECIN, ECOU			
-            		ip     = (int)   ec.getProperty("pindex");
-            		il     = (int)   ec.getProperty("layer"); int ild = getDet(il);
-            		
-            		x      = (float) ec.getProperty("x");
-            		y      = (float) ec.getProperty("y");
-            		z      = (float) ec.getProperty("z");
-            		
-            		uvw[0] = (float) ec.getProperty("iu");
-            		uvw[1] = (float) ec.getProperty("iv");
-            		uvw[2] = (float) ec.getProperty("iw");
-            		
-            		wuv[0] = uvw[2]; // use W strips to measure U readout distance
-            		wuv[1] = uvw[0]; // use U strips to measure V readout distance
-            		wuv[2] = uvw[1]; // use V strips to measure W readout distance 
-            		
-                	fid[0] = wuv[0]>nucut[ild][is-1] || uvw[1]>fucut[ild][is-1]; //flag near and far ends of U readout strip to reject corner clippers
-                	fid[1] = wuv[1]>nvcut[ild][is-1] || uvw[2]>fvcut[ild][is-1]; //flag near and far ends of V readout strip to reject corner clippers
-                	fid[2] = wuv[2]>nwcut[ild][is-1] || uvw[0]>fwcut[ild][is-1]; //flag near and far ends of W readout strip to reject corner clippers
-                	
-            		wu     = (float) ec.getProperty("du");
-            		wv     = (float) ec.getProperty("dv");
-            		ww     = (float) ec.getProperty("dw");
-            		
-                    wsum   = wu+wv+ww;
-                    
-            		float e_cz     = ec.hasProperty("cz")?(float) ec.getProperty("cz"):0;
-            		d      = (il>1 && ev.isMuon && normPix && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
-            		ecl    = (float) ec.getProperty("energy")/d;	    	   
-            		ep[0]  = (float) ec.getProperty("receu")/d;
-            		ep[1]  = (float) ec.getProperty("recev")/d;
-            		ep[2]  = (float) ec.getProperty("recew")/d;
-            		
-            		
-            		if (ev.isPhys) {
-            			pmip   = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();
-            			beta   = (float) ev.part.get(ip).getProperty("beta");
-            			mass2  = (float) (pmip*pmip*(1f/(beta*beta)-1));
-            		}
-            		
-            		if(ev.isPhys && il==1) fillPID(run,2,ip);
-            		if(this.getDataGroup().hasItem(0,0,9,run)) fillPATH(is,il,run,ecl,ep,wsum,v12mag,v13mag,v23mag,e_cz,fid);
-            		
-//            		Boolean  pid = ev.isMuon ? true : pmip!=0 && Math.abs(mass2-0.0193)<0.03;
-//            		Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3; 
-
-            		Boolean mip = true, pid = true;
-            		Boolean  pix = il==1 ? wu==1 && wv==1 && ww==1 : wsum==3 || wsum==4;
-            		
-            		if (mip && pid) fillMIP(is,il,run,uvw,wuv,fid,ecl,ep,pmip,x,y);
-            		
-            		if (pix) {
-            		for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1).get(0)).fill(bar,uvw[i]);            		
-            		if (il==1) {puvw[0]=uvw[0]; puvw[1]=uvw[1]; puvw[2]=uvw[2];}
-            		if (il==4) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1+6).get(0)).fill(puvw[i],uvw[i]);
-            		if (il==7) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+il-1+6).get(0)).fill(puvw[i],uvw[i]);
-            		}
+            	if (ev.isPhys) {
+                	int ip = e.get(0).ip;
+            		pmip   = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();
+            		beta   = (float) ev.part.get(ip).getProperty("beta");
+            		mass2  = (float) (pmip*pmip*(1f/(beta*beta)-1));
+            		fillPID(run,2,ip);
             	}
+            	
+            	Boolean  pid = ev.isMuon ? true : pmip!=0 && Math.abs(mass2-0.0193)<0.03;
+            		
+            	if(this.getDataGroup().hasItem(0,0,9,run)) {
+            		fillPATH(is,e.get(0).il,run,e.get(0).ecl,e.get(0).ep,e.get(0).wsum,v12mag,v13mag,v23mag,e.get(0).e_cz,e.get(0).fid);
+            		fillPATH(is,e.get(1).il,run,e.get(1).ecl,e.get(1).ep,e.get(1).wsum,v12mag,v13mag,v23mag,e.get(1).e_cz,e.get(1).fid);
+            		fillPATH(is,e.get(2).il,run,e.get(2).ecl,e.get(2).ep,e.get(2).wsum,v12mag,v13mag,v23mag,e.get(2).e_cz,e.get(2).fid);
+            	}
+            		
+            	fillMIP(is,1,run,e.get(0).uvw,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
+            	fillMIP(is,4,run,e.get(1).uvw,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
+            	fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y);            		
+
+        		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
+        		
+                if(pixpc) for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(0).il-1).get(0)).fill(bar,e.get(0).uvw[i]);            		
+                if(pixeci)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1).get(0)).fill(bar,e.get(1).uvw[i]);            		
+                if(pixeco)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1).get(0)).fill(bar,e.get(2).uvw[i]);  
+                
+                puvw[0]=e.get(0).uvw[0]; puvw[1]=e.get(0).uvw[1]; puvw[2]=e.get(0).uvw[2];
+                	                	
+                if(pixpc && pixeci)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1+6).get(0)).fill(puvw[i],e.get(1).uvw[i]);
+                if(pixpc && pixeco)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1+6).get(0)).fill(puvw[i],e.get(2).uvw[i]);
 			}  
     	}
     }
