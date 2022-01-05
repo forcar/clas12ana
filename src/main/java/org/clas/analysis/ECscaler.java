@@ -59,7 +59,7 @@ public class ECscaler extends DetectorMonitor {
         super(name);
         
         dgmActive=true; 
-        setDetectorTabNames("ATDATA","TIMELINE","STATUS","TRIGGER");
+        setDetectorTabNames("ATDATA","TIMELINE","STATUS","TRIGGER","SUMMARY");
 
         this.useSCALERButtons(true);
         this.useCALUVWSECButtons(true);
@@ -198,7 +198,7 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
-        	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC VALUE", "RUN INDEX", tity);
+        	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC VALUES", "RUN INDEX", tity);
         	    		dgm.cc("NVADC"+hl, false, false, 0, 0, 0.5f,1.5f);
         	    		dgm.makeH2("NVTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM TDC VALUES", "RUN INDEX", tity);
         	    		dgm.cc("NVTDC"+hl, false, false, 0, 0, -3, 3);
@@ -253,6 +253,7 @@ public class ECscaler extends DetectorMonitor {
     	setRunNumber(run);
     	plotTimeLine("TIMELINE");
     	plotStatus("STATUS");
+    	plotTLSummary("SUMMARY");
     }
     
 	public void plot(String tabname) { 		
@@ -702,6 +703,24 @@ public class ECscaler extends DetectorMonitor {
     	    	
     }
     
+    public void plotTLSummary(String tab) {
+        EmbeddedCanvas c = getCanvas(tab); c.clear(); c.divide(3, 6);
+        
+        int as = getActiveSCAL();
+        int is = getActiveSector();  
+    	int st = as +(dNorm ? 1:0); 
+    	int n = 0;
+    	for (int il = 0; il<3 ; il++) {
+    		for (int in = 0; in<2; in++) {
+    			for (int iv = 0; iv<3; iv++) {
+    				int sl = iv+3*il+1;
+    				int hl = 10*is + sl;
+    				c.cd(n); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, in); n++;
+    			}
+    		}
+    	}
+    }  
+    	
     public void analyzeNORM(String detName, int is1, int is2) {
         System.out.println("ECscaler:analyzeNORM("+detName+","+is1+","+is2+")");
     	analyzeATData(detName,is1,is2);
