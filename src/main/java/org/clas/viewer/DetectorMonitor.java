@@ -1114,7 +1114,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=12616) return 10.1967f;
     	if (run<=12716) return 10.3394f;
     	if (run<=12955) return 10.4057f;    
-    	if (run<=50000) return  5.986f;
+    	if (run<=15490) return  5.986f;
+    	if (run<=50000) return  2.0705f;
     	return 0.0f;
     }
     
@@ -1145,6 +1146,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=2489&&run<=2552) return +1.00f;
     	if (run>=2556&&run<=2571) return +0.60f;
     	if (run>=2572&&run<=2597) return -0.60f;
+    	if (run>=15000&&run<=15490) return -1.0f;
     	return 0.00f;
     }
     
@@ -1166,8 +1168,9 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5996&&run<=6000) return +0.50f;  
     	if (run>=6001&&run<=6141) return  0f;
     	if (run>=6142&&run<=6783) return -1.00f;  
-    	if (run>=11285&&run<=11285) return +1.00f;  
-    	if (run>=11286)           return -1.00f;  
+    	if (run>=11285&&run<=11285) return +1.00f; 
+    	if (run>=15000&&run<=15490) return -1.00f;
+    	if (run>=15491)             return +0.50f;  
     	return 0.00f;
     } 
     
@@ -1175,6 +1178,7 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=5674&&run<=6000) return getRGIndex("rgk");
     	if (run>=6132&&run<=6604) return getRGIndex("rgb");
     	if (run>=11000)           return getRGIndex("rgb");
+    	if (run>=15000)           return getRGIndex("rgm");
     	return getRGIndex("rga");
     }
     
@@ -1183,6 +1187,7 @@ public class DetectorMonitor implements ActionListener {
     	case "rgk": return 6;
     	case "rgb": return 3;
     	case "rga": return 1;
+    	case "rgm": return 2;
     	}
     	return 0;    	
     }
