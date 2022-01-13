@@ -293,7 +293,7 @@ public class ECsf extends DetectorMonitor {
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
         
-        if(!goodSector) return;
+//        if(!goodSector) return;
     	
     	int run = getRunNumber();
     	DataGroup dg = this.getDataGroup().getItem(0,0,0,run);
@@ -396,7 +396,7 @@ public class ECsf extends DetectorMonitor {
            }
         }		
 		
-        if(e_sect!=trigger_sect) return;	
+//        if(e_sect!=trigger_sect) return;	
       
         float[] sff = new float[4];
         
@@ -410,13 +410,13 @@ public class ECsf extends DetectorMonitor {
        
         if(!good_e)  return;
         
-        if(good_fiduc) {
+        if(goodSector) {
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1  ).get(0)).fill(e_ecal_EL[3], sf);
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+6).get(0)).fill(e_mom,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+18).get(0)).fill(e_ecal_TH[0],sf); 
             ((H1F) getDG(0,0,"PID Fits",run).getData(e_sect-1).get(0)).fill(sf/getSFcorr(e_sect,e_ecal_EL[3]));
-       }
+        }
     	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1   ).get(0)).fill(e_ecal_EL[3], sf);
     	((H2F) getDG(1,0,"E/P",run).getData(e_sect-1+ 6).get(0)).fill(e_mom,sf);
         ((H2F) getDG(1,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
