@@ -434,7 +434,7 @@ public class ECperf extends DetectorMonitor {
 		
     	switch (st) {        
         case 0: 
-        dg = new DataGroup(6,4);
+        dg = new DataGroup(6,5);
         for(int is=1;is<7;is++){    
 	        tag = is+"-"+st+"-"+k+"-"+run;
 	        dg.addDataSet(makeH2(tab+"-1-",tag,60,5.0,thmax,60,pmin,pmax,  "","#theta (deg)","p (GeV)"),is-1);
