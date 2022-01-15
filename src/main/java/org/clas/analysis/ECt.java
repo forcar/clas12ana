@@ -60,6 +60,8 @@ public class ECt extends DetectorMonitor {
     int trigger_sect = 0;
     int        phase = 0;
     float        STT = 0;
+    float         RF = 0;
+    float    RF_TIME = 124.25f;
     
     static int tlnum;
     
@@ -68,14 +70,15 @@ public class ECt extends DetectorMonitor {
     
 //    static float TOFFSET = 600; 
    
-    static float   FTOFFSET = 0;
-    static float    TOFFSET = 0;
-    static float  TOFFSETMC = 180;
-    static float  TOFFSETER = 305;
-    static float   RFPERIOD = 4.008f;    
-    static float          c = 29.98f;
-    static float   A0offset = 0.3f;  //RGM pass0 only
-    static float   A0sector = 0;
+    static float    FTOFFSET = 0;
+    static float     TOFFSET = 0;
+    static float   TOFFSETMC = 180;
+    static float   TOFFSETER = 305;
+    static float    RFPERIOD = 4.008f;
+    static float BEAM_BUCKET = 2.004f;
+    static float           c = 29.98f;
+    static float    A0offset = 0f;  //RGM pass0 only
+    static float    A0sector = 0;
     
     float               tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
@@ -264,9 +267,10 @@ public class ECt extends DetectorMonitor {
     public void createTLHistos(int k, int t1, int t2, int t3, int t4) {
 
         int run = getRunNumber(); 
-        H1F h;
+        H1F h; 
+        H2F h2;
         
-        DataGroup dg = new DataGroup(6,2);
+        DataGroup dg = new DataGroup(6,3);
 
         for (int is=1; is<7; is++) {
         	h = new H1F("TL1_"+k+"-"+is+"-"+run,"TL1_"+k+"-"+is+"-"+run,200,t1,t2);
@@ -275,6 +279,9 @@ public class ECt extends DetectorMonitor {
         	h = new H1F("TL2_"+k+"-"+is+"-"+run,"TL2_"+k+"-"+is+"-"+run,100,t3,t4);
         	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");     
             dg.addDataSet(h,is+5);
+            h2 = new H2F("TL3_"+k+"-"+is+"-"+run,"TL3_"+k+"-"+is+"-"+run,100,-2,2,62,1,63);
+            h2.setTitleX("Sector "+is+" F1B Vertex Time"); h2.setTitleY("Paddle"); 
+            dg.addDataSet(h2,is+11);
         }
         this.getDataGroup().add(dg,0,0,k,run);  
         createTDC1DHistos(k,-10.,10.,"T-TVERT-PATH/#beta*c (ns)"); 
@@ -450,19 +457,24 @@ public class ECt extends DetectorMonitor {
     	
        isMC = (getRunNumber()<100) ? true:false;
        
-       trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
-       boolean goodSector = trigger_sect>0 && trigger_sect<7; 
+       int elec_trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector();       
+       int htcc_trigger_sect = getHTCCTriggerSector()-1;
+       
+       boolean goodECALSector =      trigger_sect>0 &&      trigger_sect<7; 
+       boolean goodHTCCSector = htcc_trigger_sect>0 && htcc_trigger_sect<7; 
+       
+       if(goodHTCCSector) trigger_sect = htcc_trigger_sect;
+       if(goodECALSector) trigger_sect = elec_trigger_sect;
+       
+       boolean goodSector = goodECALSector || goodHTCCSector;
        
        if(!goodSector) return;
        
        phase  = getTriggerPhase(); 
        
-       STT = event.hasBank("REC::Event") ? 
-    		 (isHipo3Event ? 
-    		 event.getBank("REC::Event").getFloat("STTime", 0):
-             event.getBank("REC::Event").getFloat("startTime", 0)):
-             0; 
-    		 
+       STT = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("startTime", 0):0;
+       RF  = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime", 0):0;
+   		 
        isGoodTL = event.hasBank("REC::Event")&&
     		      event.hasBank("REC::Particle")&&
     		      event.hasBank("REC::Calorimeter")&&
@@ -493,6 +505,22 @@ public class ECt extends DetectorMonitor {
   			   }
   		   }
        }
+  	   
+  	   if(event.hasBank("REC::Scintillator")) {
+  		   DataBank  bank = event.getBank("REC::Scintillator");
+  		   for(int loop = 0; loop < bank.rows(); loop++){  		   
+  			   int is = bank.getByte("sector", loop);
+			   int il = bank.getByte("layer", loop);
+			   int id = bank.getByte("detector", loop);
+	           int     ip = bank.getShort("component",loop);
+ 			   if(is==trigger_sect && il==2 && id==12) {
+ 				   float  nrg = bank.getFloat("energy", loop);
+  	               float path = bank.getFloat("path", loop);
+  	               float time = bank.getFloat("time", loop);
+	               ((H2F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+11).get(0)).fill(time-STT-path/29.97,ip);
+  			   }
+  		   }
+  	   }
       
     }
     
@@ -558,7 +586,7 @@ public class ECt extends DetectorMonitor {
     
     public void processRec(DataEvent event) { // process reconstructed timing
   	   
-       float rftime = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
+       RF = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
 
        DataBank recRunRF  = null; float trf = 0;
 
@@ -700,10 +728,10 @@ public class ECt extends DetectorMonitor {
                        float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
                                               
 //                       System.out.println((tu-pcorr)+" "+STT+" "+phase+" "+TVOffset+" "+rftime);
-//                       double dt = (time - path/(beta*29.97) - trf + 120.5*this.rfPeriod)%this.rfPeriod-this.rfPeriod/2;
+//                       double dt = (time - path/(beta*29.98) - trf + 120.5*this.RF_TIME)%this.RF_TIME-this.RF_TIME/2;
                        
-                       float dt = 0;
-                       if(recRunRF!=null) dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
+//                       float dt = 0;
+//                       if(recRunRF!=null) dt = (tu-pcorr-trf+120.5f*RFPERIOD)%RFPERIOD-RFPERIOD/2;   
                        
                        boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;
                        boolean goodStatus = stat>=2000 && stat<3000; 
