@@ -679,7 +679,8 @@ public class ECcalib extends DetectorMonitor {
     	
     	public Vector3 rl;    	
        	public float[]   uvw = new float[3]; float[]  wuv = new float[3]; float[] ep = new float[3];
-       	public boolean[] fid = new boolean[3];        	
+       	public boolean[] fid = new boolean[3];
+       	public boolean wpix=false, w;
        	public int ip,il;
        	public float x,y,z,wu,wv,ww,wsum,e_cz,d,ecl;
        	
@@ -709,9 +710,10 @@ public class ECcalib extends DetectorMonitor {
     		wv     = (float) p.getProperty("dv");
     		ww     = (float) p.getProperty("dw");
     		
-            wsum   = wu+wv+ww;
+            wsum   = wu + wv + ww;           //pixel cut based on cluster strip multiplicity sum  
+            wpix   = wu==1 && wv==1 && ww==1;//pixel cut based on cluster dalitz condition
             
-    		e_cz   = p.hasProperty("cz")?(float) p.getProperty("cz"):0;
+    		e_cz   = p.hasProperty("cz")?(float) p.getProperty("cz"):1;
     		
     		d      = (il>1 && ev.isMuon && normPix && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
     		
@@ -748,8 +750,7 @@ public class ECcalib extends DetectorMonitor {
 			
             if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
             
-            	e.clear();
-            	for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));
+            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));
           	            	
                 Vector3  v1 = new Vector3(e.get(0).rl.x(),e.get(0).rl.y(),e.get(0).rl.z());
             	Vector3  v2 = new Vector3(e.get(1).rl.x(),e.get(1).rl.y(),e.get(1).rl.z());
@@ -762,11 +763,9 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float) v3.mag();
             	v23mag = (float) v23.mag();
             	
-//            	Boolean  mip = il==1?(ev.isMuon ? v12mag<35&&wsum==3 : v13mag<56&&(wsum==3||wsum==4)) : v23mag<24&&wsum==3; 
-          		            	
-            	Boolean  pixpc = e.get(0).wu==1 && e.get(0).wv==1 && e.get(0).ww==1;
-            	Boolean pixeci = e.get(1).wsum==3 || e.get(1).wsum==4;
-            	Boolean pixeco = e.get(2).wsum==3 || e.get(2).wsum==4;   
+            	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==4;
+            	Boolean pixeci = ev.isMuon? e.get(1).wpix : e.get(1).wsum==3||e.get(1).wsum==4;
+            	Boolean pixeco = ev.isMuon? e.get(2).wpix : e.get(2).wsum==3||e.get(2).wsum==4;  
             	
             	if (ev.isPhys) {
                 	int ip = e.get(0).ip;
@@ -784,9 +783,11 @@ public class ECcalib extends DetectorMonitor {
             		fillPATH(is,e.get(2).il,run,e.get(2).ecl,e.get(2).ep,e.get(2).wsum,v12mag,v13mag,v23mag,e.get(2).e_cz,e.get(2).fid);
             	}
             		
-            	fillMIP(is,1,run,e.get(0).uvw,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
-            	fillMIP(is,4,run,e.get(1).uvw,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
-            	fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y);            		
+            	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
+            	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
+            	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
+            	
+// Below are FTOF/ECAL alignment histos           	
 
         		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
         		
