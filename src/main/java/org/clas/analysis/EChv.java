@@ -25,14 +25,14 @@ public class EChv extends DetectorMonitor {
     IndexedList<List<Float>> mean = new IndexedList<List<Float>>(2);
     float[] ngain = {9.8f,8.8f,8.8f}; 
     
-	H1F h;
-	int detid;
+    H1F h;
+    int detid;
 	
-	public EChv(String name) {
-        super(name);		
-	}
+    public EChv(String name) {
+    	super(name);		
+    }
 	
-	public void setGStyle(int icol) {
+    public void setGStyle(int icol) {
     	GStyle.getH1FAttributes().setOptStat("100");
     	switch (icol) {
     	case 0: GStyle.getH1FAttributes().setFillColor(0);
@@ -40,7 +40,7 @@ public class EChv extends DetectorMonitor {
     	case 1: GStyle.getH1FAttributes().setFillColor(27);
                 GStyle.getH1FAttributes().setLineWidth(2);
    	    }
-	}
+    }
 	
     public void createHVHistos(int id, String txt) {
     	
@@ -104,18 +104,18 @@ public class EChv extends DetectorMonitor {
     			String parts1[] = item.split(" ");
     			String parts2[] = parts1[0].split(":");
     			String parts3[] = parts2[0].split("_");
-				int val=(int)Float.parseFloat(parts1[2]);			
+    			int val=(int)Float.parseFloat(parts1[2]);			
     			
     			if(parts2[1].equals("vset")) {
     				int id=detid;
     				int is=decode(parts3[4]);
     				int il=decode(parts3[5]);
     				int ip=Integer.parseInt(parts3[6].substring(1))-1;
-    		        int iil = (il>2)?il-3:il;
-    		        if(id<2 || (id>1&&il>2)) {
-        			if (!hvlist.hasItem(id,is,iil,ip)) hvlist.add(new ArrayList<Integer>(),id,is,iil,ip); 
-   			             hvlist.getItem(id,is,iil,ip).add(val);
-    		        }
+    				int iil = (il>2)?il-3:il;
+    				if(id<2 || (id>1&&il>2)) {
+        			if (!hvlist.hasItem(id,is,iil,ip)) hvlist.add(new ArrayList<Integer>(),id,is,iil,ip);
+        				hvlist.getItem(id,is,iil,ip).add(val);	
+    				}
     		    }
     		}
     		n++;
@@ -160,7 +160,7 @@ public class EChv extends DetectorMonitor {
         JFrame frame = new JFrame("ECAL HV");
         frame.setSize(2000,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-  	    drawGroup(canvas,getDataGroup().getItem(detid,0,0,0));	       	
+        drawGroup(canvas,getDataGroup().getItem(detid,0,0,0));	       	
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);        
@@ -169,7 +169,7 @@ public class EChv extends DetectorMonitor {
     public void getMean(int n) {   	
     	for (int il=0; il<3; il++) {
     	    for (int is=0; is<6; is++) {
-   			 	float val = (float) ((H1F) this.getDataGroup().getItem(detid,0,0,0).getData(is+il*6).get(n)).getMean();  			 	
+    	    	float val = (float) ((H1F) this.getDataGroup().getItem(detid,0,0,0).getData(is+il*6).get(n)).getMean();  			 	
     	    	if(!mean.hasItem(is,il)) mean.add(new ArrayList<Float>(),is,il);
                     mean.getItem(is,il).add(val); 
     		}
