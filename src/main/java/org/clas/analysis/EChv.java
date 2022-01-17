@@ -21,8 +21,10 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 public class EChv extends DetectorMonitor {
 	
-    DataGroup dg = new DataGroup(6,3);
-
+    DataGroup dg = new DataGroup(6,3);    
+    IndexedList<List<Float>> mean = new IndexedList<List<Float>>(2);
+    float[] ngain = {9.8f,8.8f,8.8f}; 
+    
 	H1F h;
 	int detid;
 	
@@ -31,7 +33,7 @@ public class EChv extends DetectorMonitor {
 	}
 	
 	public void setGStyle(int icol) {
-    	GStyle.getH1FAttributes().setOptStat("1110");
+    	GStyle.getH1FAttributes().setOptStat("100");
     	switch (icol) {
     	case 0: GStyle.getH1FAttributes().setFillColor(0);
     	        GStyle.getH1FAttributes().setLineWidth(5); break;
@@ -164,6 +166,27 @@ public class EChv extends DetectorMonitor {
         frame.setVisible(true);        
     }
     
+    public void getMean(int n) {   	
+    	for (int il=0; il<3; il++) {
+    	    for (int is=0; is<6; is++) {
+   			 	float val = (float) ((H1F) this.getDataGroup().getItem(detid,0,0,0).getData(is+il*6).get(n)).getMean();  			 	
+    	    	if(!mean.hasItem(is,il)) mean.add(new ArrayList<Float>(),is,il);
+                    mean.getItem(is,il).add(val); 
+    		}
+    	}
+    }
+    
+    public void setTitles() {   	
+    	for (int il=0; il<3; il++) {
+    	    for (int is=0; is<6; is++) {    	    	
+    	    	float v1 = mean.getItem(is,il).get(0); float v2 = mean.getItem(is,il).get(1);
+    	    	float delV = v2-v1;  float delG = ngain[detid]*delV/v1;
+    	    	String tit = "#Delta V = "+String.format("%.0f",delV)+"   #Delta G/G = "+String.format("%.2f",delG);
+    	    	((H1F) this.getDataGroup().getItem(detid,0,0,0).getData(is+il*6).get(0)).getAttributes().setTitle(tit);  	    	
+    	    }
+    	}
+    }
+    
     public void processFile(int detid, int... item) {
 		String dir = "/Users/colesmith/clas12/HV/";
 		this.detid = detid; String det = detid==0?"PCAL":"ECAL";
@@ -172,8 +195,9 @@ public class EChv extends DetectorMonitor {
 			setGStyle(n);
 			createHVHistos(detid,"(VOLTS)");  this.getDataGroup().add(dg,detid,0,0,0);
 			fillHistos(parseList(getList(dir+det+"_HV/"+getList(dir+"dump_"+det).get(it))),n);
-			n++;
+			getMean(n); n++;
 		}
+		if(item.length==2) setTitles();
 		plotHistos();
     }
     
@@ -182,9 +206,9 @@ public class EChv extends DetectorMonitor {
 		//0,6,0:PCAL_HV-2017_11_23-09_16_01.snp PCAL_HV-2020_10_09-10_43_25.snp
 		//1,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
 		//2,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		int det=0, snp=0;
-		if(args.length==0) reader.processFile(det,snp);
-		if(args.length==1) reader.processFile(Integer.parseInt(args[0]),snp);
+		int det=2, snp1=7, snp2=0;
+		if(args.length==0) reader.processFile(det,snp1,snp2);
+		if(args.length==1) reader.processFile(Integer.parseInt(args[0]),snp1);
 		if(args.length==2) reader.processFile(Integer.parseInt(args[0]),Integer.parseInt(args[1]));
 		if(args.length==3) reader.processFile(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]));	
 	}
