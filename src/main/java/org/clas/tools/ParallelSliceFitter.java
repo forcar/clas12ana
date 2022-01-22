@@ -257,7 +257,7 @@ public class ParallelSliceFitter {
 
 	public void setRange(double min, double max) {
 		this.min = min;
-		this.max = max;
+		this.max = max;		
 		this.autorangemin = false;
 		this.autorangemax = false;
 	}
@@ -562,8 +562,9 @@ public class ParallelSliceFitter {
 			IDataSet currentDataset = histogram;
 			double currentRangeMin = fitFunction.getMin();
 			double currentRangeMax = fitFunction.getMax();
-			double xmax=getMaxXIDataSet(currentDataset, currentRangeMin, currentRangeMax);
-			currentRangeMin = xmax-5; currentRangeMax = xmax+5;
+//			double xmax=getMaxXIDataSet(currentDataset, currentRangeMin, currentRangeMax);
+//			System.out.println(xmax+" "+currentRangeMin+" "+currentRangeMax);
+//			currentRangeMin = xmax-5; currentRangeMax = xmax+5;
 			
 			for (int i = 0; i < fitFunction.getNPars(); i++) {
 				if (i == 0) {					

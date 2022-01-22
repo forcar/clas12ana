@@ -17,7 +17,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -32,18 +31,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
-import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
 
-import org.clas.tools.ECConstants;
 import org.clas.tools.FitData;
 import org.clas.tools.ParallelSliceFitter;
 import org.clas.tools.DataGroupManager;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
-import org.jlab.detector.calib.utils.CalibrationConstants;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
@@ -53,20 +49,13 @@ import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
-import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
-//import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.io.base.DataEventType;
-import org.jlab.io.hipo.HipoDataBank;
-import org.jlab.io.task.IDataEventListener;
 import org.jlab.rec.eb.EBCCDBConstants;
-import org.jlab.service.eb.EBEngine;
-import org.jlab.service.eb.EventBuilder;
 import org.clas.service.ec.ECEngine;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
@@ -1308,15 +1297,18 @@ public class DetectorMonitor implements ActionListener {
     	c.draw(graph,opt);
     }
     
-    public GraphErrors getFitSlices(H2F h, String xy, int col) {
+    public GraphErrors getFitSlices(H2F h, String xy, int col, float... mnmx) {
     	
     	double[] dum = new double[6];
+    	float min=0, max=0;
     	if(h.getDataBufferSize()==0) return new GraphErrors("dum",dum,dum,dum,dum);
     	
     	ParallelSliceFitter fitter;    	
     	fitter = new ParallelSliceFitter(h); fitter.setBackgroundOrder(0); 
+    	if(mnmx.length==2) fitter.setRange(mnmx[0], mnmx[1]);
     	if(xy=="x") fitter.fitSlicesX(); 
     	if(xy=="y") fitter.fitSlicesY(); 
+    	
     	GraphErrors graph = new GraphErrors("graph",fitter.getMeanSlices().getVectorX().getArray(),
     			                                    fitter.getMeanSlices().getVectorY().getArray(),
     			                                    new double[h.getDataSize(0)],
