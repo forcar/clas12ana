@@ -164,6 +164,7 @@ public class ECperf extends DetectorMonitor {
     	config="phot";
     	configEngine("phot");
     	tl.setFitData(Fits);  
+    	engine.setGeomVariation("rga_spring2018");
 //        part.setGeom("2.5");  
 //        part.setConfig("pi0");  
 //        part.setGoodPhotons(1212);    	
@@ -2783,7 +2784,7 @@ public class ECperf extends DetectorMonitor {
     	for (int j=0; j<5; j++) { //elec,phot,pip,pim,prot
     		for (int i=0; i<4; i++) { //pcal,ecin,ecou,ftof
         		H2F h = (H2F) this.getDataGroup().getItem(0,0,k,run).getData(n).get(0);
-            	FitSummary.add(getFitSlices(h,"x",1),i, j, k, run); 
+            	FitSummary.add(getFitSlices(h,"x",1,-0.05f,0.05f),i, j, k, run); 
             	n++;
             }
         }

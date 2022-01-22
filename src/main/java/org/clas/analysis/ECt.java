@@ -142,6 +142,7 @@ public class ECt extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECt.localinit()");
+    	engine.setGeomVariation("rga_spring2018");
     }  
     
     public void localclear() {
@@ -160,8 +161,7 @@ public class ECt extends DetectorMonitor {
     public void createHistos(int run) {  
 	    histosExist = true;
 	    System.out.println("ECt.createHistos("+run+")");
-        setRunNumber(run);
-        runlist.add(run);        
+        setRunNumber(run);  runlist.add(run);        
         this.setNumberOfEvents(0);  
         
         int t1=-70, t2=150, t3=50, t4=250;
