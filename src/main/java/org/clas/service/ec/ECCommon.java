@@ -41,7 +41,7 @@ public class ECCommon {
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
     public static int     UnsharedEnergyCut = 6;
-    public static Boolean   useUnsharedTime = false;
+    public static Boolean   useUnsharedTime = true;
     public static Boolean      useLogWeight = true;
     public static Boolean       useCCDBGain = true;
     public static double           logParam = 4.0;
@@ -146,7 +146,7 @@ public class ECCommon {
             int ecouz = ecTrackingPlane!=-1 ? ecTrackingPlane:DetectorLayer.EC_OUTER_Z;
             
             int off = superlayer==0 ? pcalz : (superlayer==1 ? ecinz : ecouz);
-
+            
             Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
             ScintillatorPaddle      paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
             ScintillatorPaddle firstPaddle = (ScintillatorPaddle) detLayer.getComponent(0);
