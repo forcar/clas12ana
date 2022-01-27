@@ -494,8 +494,7 @@ public class ECpartOld  {
         
         engine.init();
         engine.isMC = true;
-        engine.setVariation("default");
-        engine.setCalRun(10);                
+        engine.setVariation("default");               
         part.setThresholds("Electron_hi",engine);
         part.setGeom("2.5");
         
@@ -656,7 +655,6 @@ public class ECpartOld  {
         engine.init();
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
-        engine.setCalRun(2);
         engine.setVeff(16); //GEMC default
         
         part.setThresholds("Pizero",engine);

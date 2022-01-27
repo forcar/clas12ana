@@ -53,8 +53,7 @@ public class ECmc2 extends DetectorMonitor {
         System.out.println("ECmc2.localinit()");
                 
         engine.isMC = true;        
-        engine.setGeomVariation("rga_fall2018");
-        engine.setCalRun(10);  
+        engine.setGeomVariation("rga_fall2018");  
         engine.debug = false;
         
         ebmce.getCCDB(10); 

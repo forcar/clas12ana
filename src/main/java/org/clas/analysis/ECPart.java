@@ -562,7 +562,7 @@ public class ECPart extends EBTBEngine {
         engine.init();
         engine.isMC = true;
         engine.setVariation("default");
-        engine.setCalRun(10);                
+                
         setCCDB(10);
         setThresholds("Pizero",engine);
         setGeom("2.5");
@@ -961,7 +961,7 @@ public class ECPart extends EBTBEngine {
 //        engine.setOccMax(100000);
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
-        engine.setCalRun(2);
+
         setCCDB(2);
         
         setThresholds("Pizero",engine);
@@ -1087,7 +1087,6 @@ public class ECPart extends EBTBEngine {
         engine.init();
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
-        engine.setCalRun(2);
         
         setCCDB(2);
         setThresholds("Test",engine);
@@ -1320,7 +1319,6 @@ public class ECPart extends EBTBEngine {
         engine.init();
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
-        engine.setCalRun(2);
         
         setCCDB(2);
         setThresholds("Pizero",engine);
@@ -1660,7 +1658,7 @@ public class ECPart extends EBTBEngine {
 //        engine.setOccMax(10000);
         engine.isMC = true;
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
-        engine.setCalRun(2);
+
         setCCDB(2);
         
         int nev=1;

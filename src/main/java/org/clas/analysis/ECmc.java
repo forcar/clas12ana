@@ -49,8 +49,7 @@ public class ECmc extends DetectorMonitor {
         
         engine.init();
         engine.isMC = true;
-        engine.setVariation("default");        
-        engine.setCalRun(10);  
+        engine.setVariation("default");         
         
         eb.getCCDB(10);
         eb.setGeom("2.5");

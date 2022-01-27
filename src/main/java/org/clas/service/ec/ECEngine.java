@@ -26,7 +26,6 @@ public class ECEngine extends ReconstructionEngine {
     public Boolean  isSingleThreaded = false;
     public Boolean       singleEvent = false;
     public Boolean              isMC = false;
-    int                       calrun = 2;
     
     public ECEngine(){
         super("EC","gavalian","1.0");
@@ -214,11 +213,6 @@ public class ECEngine extends ReconstructionEngine {
     public void setDebugSplit(boolean val) {
     	ECCommon.debugSplit = val;
     }
-   
-    public void setCalRun(int val) {
-        System.out.println("ECEngine: Calibration Run Number = "+val);
-        this.calrun = val;
-    }
     
     public void setVariation(String val) {
         System.out.println("ECEngine: Calibration Variation = "+val);
@@ -251,7 +245,6 @@ public class ECEngine extends ReconstructionEngine {
     }
     
     public void setUseUnsharedEnergy(boolean val) {
-    	System.out.println("ECengine: useUnsharedEnergy = "+val);
     	ECCommon.useUnsharedEnergy = val;
     } 
     
@@ -261,7 +254,6 @@ public class ECEngine extends ReconstructionEngine {
     } 
     
     public void setUseUnsharedTime(boolean val) {
-    	System.out.println("ECengine: useUnsharedTime = "+val);
     	ECCommon.useUnsharedTime = val;
     }
     
@@ -344,7 +336,6 @@ public class ECEngine extends ReconstructionEngine {
         System.out.println("GEOMETRY VARIATION IS "+variationName);
         ecDetector =  GeometryFactory.getDetector(DetectorType.ECAL,11,variationName);
 
-        setCalRun(2);
         setStripThresholds(10,9,8);
         setPeakThresholds(18,20,15);
         setClusterThresholds(0,0,0);
