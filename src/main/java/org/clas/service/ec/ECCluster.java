@@ -91,6 +91,10 @@ public class ECCluster {
     public double getTime() {
     	return ECCommon.useUnsharedTime? getUnsharedRawADCTime():getRawADCTime();
     }
+	
+    public double getTime(int view){
+        return this.clusterPeaks.get(view).getTime(clusterHitPosition);
+    }	
     
 	public double getMaxEnergyTime() {
 		// For cluster time use timing from U,V,W peak with largest reconstructed energy		
@@ -131,10 +135,6 @@ public class ECCluster {
 		}
 		return getRawADCTime();
 	}
-		
-    public double getTime(int view){
-        return this.clusterPeaks.get(view).getTime(clusterHitPosition);
-    }	
    
     public Point3D getHitPosition(){
         return this.clusterHitPosition;
