@@ -56,7 +56,9 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
+
 import org.clas.service.ec.ECEngine;
+
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
@@ -216,6 +218,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          dgmActive = false;
     public Boolean    useUnsharedTime = false;
     public Boolean  useUnsharedEnergy = true;
+    public Boolean        useFADCTime = false;
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
     public Boolean        dbgECEngine = false;
@@ -253,6 +256,7 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/attenuation", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
+            "/calibration/ec/ftiming",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
             "/calibration/ec/fadc_global_offset",
@@ -382,6 +386,7 @@ public class DetectorMonitor implements ActionListener {
     	System.out.println(root+"configEngine("+val+")");
     	engine.isSingleThreaded=true;
         engine.setVariation(variation);
+        engine.setGeomVariation("rga_spring2018");
         engine.init();
         engine.isMC = false;
         engine.setLogParam(logParam); // 0 corresponds to default coatjava peak log E weighting 
@@ -396,6 +401,10 @@ public class DetectorMonitor implements ActionListener {
     	engine.setUseUnsharedEnergy(val);
     }
     
+    public void setUseFADCTime(Boolean val) {
+    	engine.setUseFADCTime(val);
+    	useFADCTime = val;
+    }    
     public void setPCTrackingPlane(int val) {
     	engine.setPCTrackingPlane(val);
     	PCTrackingPlane = val;
@@ -823,8 +832,7 @@ public class DetectorMonitor implements ActionListener {
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
-        JLabel      label = new JLabel("" + String.format("%d", 0));
-        System.out.println("DetectorMonitor.getRunSliderPanel: TLmax="+TLmax);
+        JLabel      label = new JLabel("" + String.format("%d", 0));       
         runslider         = new JSlider(JSlider.HORIZONTAL, 0, TLmax, 1); 
         runslider.setPreferredSize(new Dimension(TLmax,10));
 
@@ -1365,7 +1373,6 @@ public class DetectorMonitor implements ActionListener {
          catch(IOException ex) {
              ex.printStackTrace();
          }
-         System.out.println("Exiting getGraph()");
          return g;
 
     } 
