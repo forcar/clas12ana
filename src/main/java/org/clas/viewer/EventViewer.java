@@ -92,7 +92,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     DataSourceProcessorPane   processorPane = null;
     
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf7,cf8,cf9,cf10 = null;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10 = null;   
     JCheckBoxMenuItem                                   ctr = null;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
@@ -144,6 +144,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean          clear = true; 
     public Integer          TRpid = 11;
     public Boolean      useATDATA = false;
+    public Boolean    useFADCTime = false;
     
     public JFileChooser      fc = null; 
     
@@ -201,14 +202,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-   		monitors[n] = new ECperf("ECperf"); 
+//   		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//    	    monitors[n] = new ECt("ECt"); 
+    	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -329,8 +330,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu    = new JMenu("ECEngine");
         co2  = new JCheckBoxMenuItem("Enable");                  co2.addItemListener(this);  menu.add(co2);;
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
-        cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a);  
+        cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a); cf6a.doClick(); 
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
+        cf6c     = new JCheckBoxMenuItem("Use FADC time");       cf6c.addItemListener(this); menu.add(cf6c);
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set Hit Thresh");              menuItem.addActionListener(this); menu.add(menuItem);   
@@ -408,6 +410,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (source==cf5)      zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf6a)   unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf6b) unsharedEnergy = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
+		if (source==cf6c)    useFADCTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf7)     dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf8)     dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
 		if (source==cf9)       useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
@@ -440,6 +443,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                                                    this.monitors[k].setLogZ(zLogEnable);
                                                    this.monitors[k].setUseUnsharedEnergy(unsharedEnergy); 
                                                    this.monitors[k].setUseUnsharedTime(unsharedTime); 
+                                                   this.monitors[k].setUseFADCTime(useFADCTime); 
                                                    this.monitors[k].fitVerbose  = fitVerbose;
                                                    this.monitors[k].TRpid       = TRpid;
                                                    this.monitors[k].useATDATA   = useATDATA;
