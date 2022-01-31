@@ -22,6 +22,7 @@ public class ECStrip implements Comparable {
     
     private int                iADC = 0;
     private int                iTDC = 0;
+    private float             iTADC = 0;
     private double            iGain = 1.0;
     private double     iADC_to_MEV  = 1.0/10000.0;
     private double    iAttenLengthA = 1.0;
@@ -33,6 +34,7 @@ public class ECStrip implements Comparable {
     private double        iTimingA2 = 0; // time-walk factor (time_ns = time_ns + a2/sqrt(adc))
     private double        iTimingA3 = 0; // 0
     private double        iTimingA4 = 0; // 0
+    private double        fTimingA0 = 0;
     private int        triggerPhase = 0;
     private double             veff = 18.1; // Effective velocity of scintillator light (cm/ns)
     private int              peakID = -1;
@@ -48,12 +50,12 @@ public class ECStrip implements Comparable {
     private static final double coincTIME = 25.; //ns. 	
     private double                   time = 0;
     private double                    gtw = 0; //global time walk correction
+    
     private TimeCorrection             tc = null; 
     
     public ECStrip(int sector, int layer, int component){
-        this.desc.setSectorLayerComponent(sector, layer, component);
-        if( ECCommon.useNewTimeCal) tc = new ExtendedTWCTime();
-        if(!ECCommon.useNewTimeCal) tc = new SimpleTWCTime();
+        this.desc.setSectorLayerComponent(sector, layer, component);       
+        tc = ECCommon.useFADCTime ? new ExtendedTWCFTime() : new ExtendedTWCTime();
     }
 	
     public DetectorDescriptor getDescriptor(){
@@ -69,13 +71,18 @@ public class ECStrip implements Comparable {
         this.iTDC = tdc;
         return this;
     }
+    
+    public ECStrip setTADC(float tdc) {
+    	this.iTADC = tdc;
+    	return this;
+    }
 	
     public int getADC(){
         return this.iADC;
     }
 
     public int getTDC(){
-        return this.iTDC;
+        return ECCommon.useFADCTime ? (int) (this.iTADC/iTimingA1) : this.iTDC;
     }
     
     public double getRawTime(){
@@ -149,6 +156,27 @@ public class ECStrip implements Comparable {
         }         
     } 
     
+    public class ExtendedTWCFTime extends TimeCorrection {    	
+        public double getRawTime(){
+           	return iTADC;
+        }
+        
+        public double getPhaseCorrectedTime() {         	
+            return iTADC - triggerPhase;
+        } 
+        
+        public double getTWCTime() {
+        	double radc = Math.sqrt(iADC);
+          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc);          	
+        } 
+        
+    	public double getTime() {
+        	double radc = Math.sqrt(iADC);
+          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc) - fTimingA0;          	
+        }         
+    }     
+    
+    
     public double getEnergy(){
         return this.iADC*this.iGain*this.iADC_to_MEV;
     }
@@ -210,10 +238,15 @@ public class ECStrip implements Comparable {
     public void setTiming(double a0, double a1, double a2, double a3, double a4) {
         this.iTimingA0 = a0;
         this.iTimingA1 = a1;
-        this.iTimingA2 = a2;
-        this.iTimingA3 = a3;
-        this.iTimingA4 = a4;
-    }  
+        this.iTimingA2 = ECCommon.useFADCTime ? 0 : a2;
+        this.iTimingA3 = ECCommon.useFADCTime ? 0 : a3;
+        this.iTimingA4 = ECCommon.useFADCTime ? 0 : a4;
+        if(ECCommon.useFADCTime) this.gtw=0;
+    } 
+    
+    public void setFTiming(double a0) {
+    	this.fTimingA0 = a0;
+    }
 	
     public void setGlobalTimingOffset(double val) {
         this.iTiming00 = val;

@@ -257,6 +257,10 @@ public class ECEngine extends ReconstructionEngine {
     	ECCommon.useUnsharedTime = val;
     }
     
+    public void setUseFADCTime(boolean val) {
+    	ECCommon.useFADCTime = val;
+    } 
+    
     public void setCCDBGain(boolean val) {
         System.out.println("ECEngine: useCCDBGain = "+val);
         ECCommon.useCCDBGain = val;    	
@@ -315,6 +319,7 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/attenuation", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
+            "/calibration/ec/ftiming",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
             "/calibration/ec/fadc_global_offset",

@@ -130,7 +130,7 @@ public class ECPeak {
         this.peakMoment3      = 0.0;
         
         double logSumm = 0.0;       
-        double peakEnergy = (ECCommon.logParam==0)?1.0:getEnergy()*1000;
+        double peakEnergy = (ECCommon.logParam==0)?1.0:getEnergy()*1000; //logParam==0 logWeight==true equivalent to coatjava
         
         for(int i = 0; i < this.peakStrips.size(); i++){
             Line3D line = this.peakStrips.get(i).getLine();

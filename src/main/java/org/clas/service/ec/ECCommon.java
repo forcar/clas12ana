@@ -42,9 +42,10 @@ public class ECCommon {
     public static Boolean useUnsharedEnergy = true;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
+    public static Boolean       useFADCTime = false;
     public static Boolean      useLogWeight = true;
     public static Boolean       useCCDBGain = true;
-    public static double           logParam = 4.0;
+    public static double           logParam = 0.0;
     public static String          variation = "default";
     public static String      geomVariation = "default";
     public static int       pcTrackingPlane = -1;
@@ -118,6 +119,7 @@ public class ECCommon {
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
         IndexedTable     time = manager.getConstants(run, "/calibration/ec/timing");
+        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftiming");
         IndexedTable      ggs = manager.getConstants(run, "/calibration/ec/global_gain_shift");
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable       ev = manager.getConstants(run, "/calibration/ec/effective_velocity");
@@ -184,6 +186,8 @@ public class ECCommon {
                             time.getDoubleValue("a3", sector, layer, component),
                             time.getDoubleValue("a4", sector, layer, component));
             strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
+            
+            strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component));
         }
             
         return ecStrips;
@@ -263,9 +267,10 @@ public class ECCommon {
                     for (float tdcc : tdcs.getItem(is,il,ip)) {
                          float tdif = tps*tdcc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - triggerPhase - FTOFFSET - t; 
                         if (Math.abs(tdif)<TMFCUT&&tdif<tmax) {tmax = tdif; tdc = (int)tdcc;}
-                    }
+                    }                    
                     strip.setTDC(tdc); 
                 }              
+                strip.setTADC(t+FTOFFSET+triggerPhase);
             }
         }  
         
