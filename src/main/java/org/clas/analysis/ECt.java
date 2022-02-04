@@ -159,7 +159,7 @@ public class ECt extends DetectorMonitor {
         this.setNumberOfEvents(0);  
         
         int t1=-70, t2=150, t3=50, t4=250;
-        createTDCHistos(10,-10.,10.,"T-TVERT-PATH/#beta*c (ns)"); 
+        createTDCHistos(10,-30.,30.,"T-TVERT-PATH/#beta*c (ns)"); 
         createBETAHistos(22);
         createTLHistos(tlnum,t1,t2,t3,t4);
         
@@ -719,7 +719,7 @@ public class ECt extends DetectorMonitor {
                        if(Math.abs(pid)==211 || Math.abs(pid)==2212) vel=Math.abs(beta*c); //use EB beta for pion or proton calibration residuals                       
                        
                 	   float pcorr = path/vel;
-                       float resid = tvcor - pcorr; 
+                       float resid = tvcor - pcorr;             
                                                
                 	   float  radc = (float) Math.sqrt(adc);                	   
                        float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
@@ -953,7 +953,7 @@ public class ECt extends DetectorMonitor {
            for (int il=il1; il<il2; il++) {
               for (int iv=iv1; iv<iv2; iv++) {
                   fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,10,run).getData(3*il+iv).get(0));
-                  fitter.setRange(-10,10); fitter.fitSlicesY(); 
+                  fitter.setRange(-30,30); fitter.fitSlicesY(); 
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
                   g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
                   GraphErrors mean = new GraphErrors("RESIDUAL_"+is+"-"+il+" "+iv,g1.getVectorX().getArray(),
