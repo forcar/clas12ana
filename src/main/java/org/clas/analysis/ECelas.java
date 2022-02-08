@@ -73,7 +73,7 @@ public class ECelas extends DetectorMonitor {
     	switch (st) {        
         case 0: 
         	dgm.add("EVENT",6,2,0,st,getRunNumber());
-        	for(int is=1; is<7; is++) {dgm.makeH2("EV1"+is,100,0.5,3.5,50,5.0,20.5,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)");dgm.cc("EV"+is, false, true, 0, 0, 0, 0);}
+        	for(int is=1; is<7; is++) {dgm.makeH2("EV1"+is,100,0.5,3.5,50,8,35,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)");dgm.cc("EV"+is, false, true, 0, 0, 0, 0);}
         	for(int is=1; is<7; is++)  dgm.makeH1("EV2"+is,100,0.5,3.5,-1,"","W (GEV)","");	
         }
     } 
