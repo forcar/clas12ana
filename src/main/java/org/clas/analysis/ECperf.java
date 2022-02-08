@@ -161,19 +161,15 @@ public class ECperf extends DetectorMonitor {
     
     public void localinit() {
     	System.out.println("ECperf.localinit()");
-    	config="phot";
-    	configEngine("phot");
-    	tl.setFitData(Fits);  
+    	tl.setFitData(Fits);      	   	
     	engine.setGeomVariation("rga_spring2018");
-//        part.setGeom("2.5");  
-//        part.setConfig("pi0");  
-//        part.setGoodPhotons(1212);    	
-        neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
+    	neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
     public void localclear() {
     	System.out.println("ECperf:localclear()");
     	isAnalyzeDone = false;
+        isTimeLineFitsDone = false;
     	getDataGroup().clear();
     	runlist.clear();
     	Fits.clear();
@@ -252,7 +248,10 @@ public class ECperf extends DetectorMonitor {
     	histosExist = true;
     }
     
+    @Override
     public void processEvent(DataEvent event) {
+    	
+//    	System.out.println(getEventNumber());
     	
         if(dropBanks) dropBanks(event);
             	
@@ -274,8 +273,8 @@ public class ECperf extends DetectorMonitor {
     	if (nE==1)            fillECtrig(2);
     	if (nE==0)            fillECtrig(3);
     	if (nPIM>0)           fillECtrig(4);
-//	    if (nPIM>0 && nE==0) {fillECtrig(5); fillECpim();} //USE FOR DATA
-    	if (nPIM>0 && nE>0) {fillECtrig(5); fillECpim();}  //USE FOR MC
+	    if (nPIM>0 && nE==0) {fillECtrig(5); fillECpim();} //USE FOR DATA
+//    	if (nPIM>0 && nE>0) {fillECtrig(5); fillECpim();}  //USE FOR MC
 	    
     	if (!makeELEC()) return;
         
@@ -449,9 +448,9 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,3);
         for(int is=1; is<7; is++) {
 	        tag = is+"-"+st+"-"+k+"-"+run;
-	        dg.addDataSet(makeH2(tab+"-1-",tag,50,0,100,30,0.15,0.3,"Sector "+is,"LU (cm)","E/P"),is-1);
-	        dg.addDataSet(makeH2(tab+"-2-",tag,50,0,100,30,0.15,0.3," ",         "LV (cm)","E/P"),is-1+6);
-	        dg.addDataSet(makeH2(tab+"-3-",tag,50,0,100,30,0.15,0.3," ",         "LW (cm)","E/P"),is-1+12);        	
+	        dg.addDataSet(makeH2(tab+"-1-",tag,50,0,150,30,0.15,0.3,"Sector "+is,"LU (cm)","E/P"),is-1);
+	        dg.addDataSet(makeH2(tab+"-2-",tag,50,0,150,30,0.15,0.3," ",         "LV (cm)","E/P"),is-1+6);
+	        dg.addDataSet(makeH2(tab+"-3-",tag,50,0,150,30,0.15,0.3," ",         "LW (cm)","E/P"),is-1+12);        	
         }
         break;        
         case 2: 
@@ -1826,9 +1825,9 @@ public class ECperf extends DetectorMonitor {
 		
 		for (Particle pl : plist){
 			float p_beta_pcal=0,p_beta_ecin=0,p_beta_ecou=0,p_beta_ftof=0;
-			pECAL = ev.getECAL((int)pl.getProperty("pindex"));
+			ev.debug=true; pECAL = ev.getECAL((int)pl.getProperty("pindex")); ev.debug=false;
 			p_beta_ftof = id!=22 ? (float) ev.part.get((int)pl.getProperty("pindex")).getProperty("beta"):0;
-			float pl_mom = (float) pl.p();
+			float pl_mom = (float) pl.p(); float beta_mom = (float) Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom));
 	        for (Particle p : pECAL) {
 	        	int mult = ev.getECALMULT((int)p.getProperty("sector"),(int)p.getProperty("layer")); //count number of clusters in sector,layer
 	        	if(p_beta_pcal==0) p_beta_pcal = (mult>0 && p.getProperty("layer")==1) ? (float) p.getProperty("beta"):0;
@@ -1836,11 +1835,12 @@ public class ECperf extends DetectorMonitor {
 	        	if(p_beta_ecou==0) p_beta_ecou = (mult>0 && p.getProperty("layer")==7) ? (float) p.getProperty("beta"):0;
 	        }
 	        if(p_beta_pcal>0 || p_beta_ecin>0 || p_beta_ecou>0) {
-	        	((H2F)dg0.getData(off  ).get(0)).fill(pl_mom,p_beta_pcal-Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom)));  	
-	        	((H2F)dg0.getData(off+1).get(0)).fill(pl_mom,p_beta_ecin-Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom)));  	
-	        	((H2F)dg0.getData(off+2).get(0)).fill(pl_mom,p_beta_ecou-Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom)));  
+//	        	System.out.println(id+" "+p_beta_pcal+" "+p_beta_ecin+" "+p_beta_ecou);
+	        	((H2F)dg0.getData(off  ).get(0)).fill(pl_mom,p_beta_pcal-beta_mom);  	
+	        	((H2F)dg0.getData(off+1).get(0)).fill(pl_mom,p_beta_ecin-beta_mom);  	
+	        	((H2F)dg0.getData(off+2).get(0)).fill(pl_mom,p_beta_ecou-beta_mom);  
 	        }
-        	((H2F)dg0.getData(off+3).get(0)).fill(pl_mom,p_beta_ftof-Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom)));  
+        	((H2F)dg0.getData(off+3).get(0)).fill(pl_mom,p_beta_ftof-beta_mom);  
 		}
 		
 	}
@@ -2029,7 +2029,8 @@ public class ECperf extends DetectorMonitor {
 		for (Particle p : pip_ecal) {
 			pip_mom  = (float) p.p();
 	        pip_the  = (float) Math.toDegrees(p.theta());
-	        pip_phi  = (float) Math.toDegrees(p.phi());			
+	        pip_phi  = (float) Math.toDegrees(p.phi());	
+	        ev.debug=false;
 	        List<Particle> pipECAL = ev.getECAL((int)p.getProperty("pindex"));
 	    	List<Particle> pipFTOF = ev.getFTOF((int)p.getProperty("pindex"));   
 	    	for (Particle pp : pipFTOF) {
@@ -2251,6 +2252,7 @@ public class ECperf extends DetectorMonitor {
         boolean h12_neutron_found = false, h11_neutron_found=false;
         Vector3 pvec[] = new Vector3[3]; 
         
+        ev.debug = false;
         List<Particle> pipECAL = ev.getECAL((int)pip_ecal.get(0).getProperty("pindex"));
         
         for(Particle p : pipECAL) {
