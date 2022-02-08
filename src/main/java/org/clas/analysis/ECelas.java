@@ -7,6 +7,7 @@ import org.jlab.groot.data.H2F;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.jnp.hipo4.data.Bank;
 
 //import org.jlab.jnp.hipo.io.*;
 //import org.jlab.jnp.hipo.data.*;
@@ -19,33 +20,63 @@ import java.util.HashMap;
 
 public class ECelas extends DetectorMonitor {
 	
-//	EventFilter filter = null;
-	double beamEnergy = 2.22193;
+	boolean processWagon = false;
+	boolean processEvent = true;
+	double beamEnergy;
 	double mp = 0.93828;
 	
     public ECelas(String name) {
         super(name);
-        this.setDetectorTabNames("WvTh",
-        		                 "W");
-        this.useCALUVWSECButtons(true);
+        dgmActive=true; 
+        this.setDetectorTabNames("WAGON",
+        		                 "EVENT");
+        this.use123Buttons(true);
         this.useSliderPane(true);
         this.init();
         this.localinit();
-//        filter = new EventFilter("11");
+        this.localclear();       
     }
     
     public void localinit() {
-        System.out.println("ECelas.localinit()");      
-        configEngine("elec");     	
+        System.out.println("ECelas.localinit()");           	
+    } 
+    
+    public void localclear() {
+    	System.out.println("ECelas.localclear()");
+    	isAnalyzeDone = false;
+    	getDataGroup().clear();
+    	runlist.clear();
+    	Fits.clear();
+    	FitSummary.clear();
+    	tl.Timeline.clear();
+    	runslider.setValue(0);
     } 
     
     @Override  
     public void createHistos(int run) {
-	     setRunNumber(run);
-	     runlist.add(run);  
-	     createSector2D(0);
-	     createSector1D(1);
+	    System.out.println("ECmc:createHistos("+run+")");
+	    setRunNumber(run);
+	    runlist.add(run);  
+	    beamEnergy = getBeamEnergy(run);
+    	histosExist = true;
+    	createEVENT(0);
     }
+    
+    public void createWAGON(int st) {
+    	switch (st) {        
+        case 0: 
+        	dgm.add("WAGON",4,5,0,st,getRunNumber());         	
+    	}
+    }
+    
+    public void createEVENT(int st) {
+    	switch (st) {        
+        case 0: 
+        	dgm.add("EVENT",6,2,0,st,getRunNumber());
+        	for(int is=1; is<7; is++) {dgm.makeH2("EV1"+is,100,0.5,3.5,50,5.0,20.5,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)");dgm.cc("EV"+is, false, true, 0, 0, 0, 0);}
+        	for(int is=1; is<7; is++)  dgm.makeH1("EV2"+is,100,0.5,3.5,-1,"","W (GEV)","");	
+        }
+    } 
     
     public void createSector1D(int k) {
 
@@ -55,8 +86,8 @@ public class ECelas extends DetectorMonitor {
         DataGroup dg = new DataGroup(3,2); 
     
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H1F("hi_w_"+tag,"hi_w_"+tag,100,0.8,1.2);
+            String tag = is+"-"+k+"-"+run;
+            h = new H1F("hi-w-"+tag,"hi-w-"+tag,100,0.8,1.2);
             h.setTitleX("Sector "+is+" W (GeV)");
             dg.addDataSet(h, is-1);          
         }
@@ -72,8 +103,8 @@ public class ECelas extends DetectorMonitor {
         DataGroup dg = new DataGroup(3,2); 
     
         for (int is=1; is<7; is++) {
-            String tag = is+"_"+k+"_"+run;
-            h = new H2F("hi_w_"+tag,"hi_w_"+tag,50,0.8,1.2,28,6.,21.);
+            String tag = is+"-"+k+"-"+run;
+            h = new H2F("hi-w-"+tag,"hi-w-"+tag,50,0.8,1.2,28,6.,21.);
             h.setTitleY("Theta (deg)");
             h.setTitleX("Sector "+is+" W (GeV)");
             dg.addDataSet(h, is-1);          
@@ -84,12 +115,68 @@ public class ECelas extends DetectorMonitor {
     
     @Override       
     public void plotHistos(int run) {
-        setRunNumber(run);
-        plotSummary(0);    	
-        plotSummary(1);    	
+    	if(!histosExist) return;
+    	plot("EVENT");    	 	
+    }
+    
+    public void processEvent(DataEvent event) {
+    	
+    	if(processWagon) processWag(event);
+    	if(processEvent) processEvt(event);
+    }
+    
+    public boolean processWag(DataEvent event) {
+  
+        DataBank RecPart = null;
+        
+        if (event.hasBank("REC::Particle")) RecPart = event.getBank("MC::Particle");
+
+        if (RecPart==null || RecPart.rows()==0) return false;
+
+        ArrayList<Integer> eleCandi = new ArrayList<>();
+        ArrayList<Integer> proCandi = new ArrayList<>();
+
+        for (int ipart=0; ipart<RecPart.rows(); ipart++) {
+           
+            final int    pid = RecPart.getInt("pid",ipart);
+            final int charge = RecPart.getInt("charge",ipart);
+            final int status = RecPart.getInt("status",ipart);       
+
+            final boolean isFD = (int)(Math.abs(status)/1000) == 2;
+
+            if (isFD && charge < 0) eleCandi.add(ipart);
+            if (pid==2212)          proCandi.add(ipart);
+
+        }
+
+        if (eleCandi.isEmpty() || proCandi.isEmpty()) return false;
+
+        if (eleCandi.size()==1 && proCandi.size()==1) {
+        	double epx  = RecPart.getFloat("px",eleCandi.get(0));
+        	double epy  = RecPart.getFloat("py",eleCandi.get(0));
+        	double epz  = RecPart.getFloat("pz",eleCandi.get(0));
+        	Particle neg = new Particle(0,epx,epy,epx);
+        	double ep   = Math.sqrt(epx*epx + epy*epy + epz*epz);
+        	double cthe = epz/ep, sthe=Math.sqrt(1-cthe*cthe);
+
+        	double ppx  = RecPart.getFloat("px",proCandi.get(0));
+        	double ppy  = RecPart.getFloat("py",proCandi.get(0));
+        	double ppz  = RecPart.getFloat("pz",proCandi.get(0));
+        	double pp   = Math.sqrt(ppx*ppx + ppy*ppy + ppz*ppz);
+        	double cthp = ppz/pp, sthp=Math.sqrt(1-cthp*cthp);
+
+        	double ebeam  = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe);
+        	double eprot  = Math.sqrt(pp*pp + mp*mp);
+        	double delthe = Math.acos(cthe) - Math.atan(pp*sthp/(ebeam-pp*cthp));
+
+        	return delthe > -0.026 ? true : false;
+        } 
+
+        return false;
+  	
     }
 
-    public void processEvent(DataEvent event) { 
+    public void processEvt(DataEvent event) { 
     	
     	if(!event.hasBank("REC::Calorimeter")) return;
         if(!event.hasBank("REC::Particle"))    return;
@@ -118,17 +205,15 @@ public class ECelas extends DetectorMonitor {
                     double w2 = -q2 + mp*mp + 2*mp*nu;
                     if (w2>0) {
                     	double w = Math.sqrt(w2);
-                    	((H1F) this.getDataGroup().getItem(0,0,1,getRunNumber()).getData(s-1).get(0)).fill(w);
-                        ((H2F) this.getDataGroup().getItem(0,0,0,getRunNumber()).getData(s-1).get(0)).fill(w,p.theta()*180/Math.PI);
+                    	dgm.fill("EV1"+s,w,p.theta()*180/Math.PI); dgm.fill("EV2"+s,w);
                     }
                  }
         	}
         } 
     }
     
-    public void plotSummary(int index) {
-      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));
-    }    
-    
-    
+    public void plot(String tabname) {     
+    	dgm.drawGroup(tabname,0,getActive123(), getRunNumber());
+    }   
+        
 }
