@@ -11,13 +11,14 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
+
 import org.jlab.geom.prim.Point3D;
 
 public class Event {
      
     public int run=0,event=0,unixtime=0;
     public long timestamp=0,trigger=0;
-    public float starttime=0;
+    public float starttime=0, RF_TIME=0;
 	
 	private DataEvent      ev = null;
 	private DataBank partBank = null;
@@ -70,6 +71,7 @@ public class Event {
 	private int trigger_sect=0;
 	public  int eventNumber=0;
 	private int nelec=0;
+	public boolean debug = false;
 	
 	private float timeshift = 0f;
 	private int  startTimeCut = -100;
@@ -102,6 +104,7 @@ public class Event {
 		clusBank = null;
 		caliBank = null;
 		peakBank = null;
+		
 		mcBank   = null;
 		initpartmap(13); //initialize with cosmic muon (pid=13)
 		hasRUNconfig       = ev.hasBank("RUN::config");
@@ -135,8 +138,13 @@ public class Event {
 		return caloBank.rows()==clusBank.rows();
 	}
 	
+	public void fail(int val) {
+		if(val==0) return;
+		System.out.println(" "); System.out.println("EVENT: "+eventNumber+" FAIL "+val);		
+	}
+	
 	public boolean procEvent(DataEvent event) {
-		
+				
         if(hasMCParticle)          processMCparticle();
         
         if(!isGoodEvent()) return false;
@@ -154,6 +162,7 @@ public class Event {
 	    	if(hasRECtrack)        processRECtrack();
 	    	if(hasRECtraj)         processRECtraj();
 	    	if(hasRECparticle)     processRECparticle();
+
 	    	getRECparticle(-11);
 			getRECparticle(11);
 			getRECparticle(22);
@@ -287,7 +296,8 @@ public class Event {
 	
 	public void storeRECevent(DataBank bank) {
 		this.starttime = isHipo3Event ? bank.getFloat("STTime", 0):
-                                        bank.getFloat("startTime", 0);		
+                                        bank.getFloat("startTime", 0);	
+		this.RF_TIME   = bank.getFloat("RFTime",0);
 	}
 	
 	public void storeRECparticle(DataBank bank) {
@@ -353,9 +363,9 @@ public class Event {
 		nelec++;System.out.println("Evnt "+eventNumber+" Nelec "+nelec+" "+tag);
 	}
 	
-	public float newBeta(Particle p, boolean newtime) {
+	public float getBeta(Particle p) {
 		double path = p.getProperty("path");
-		double time = newtime?p.getProperty("newtime"):p.getProperty("time");
+		double time = p.getProperty("time");
 		return (float) (path/(time-starttime-timeshift)/29.979f);
 	}	
 	
@@ -612,10 +622,10 @@ public class Event {
 				p.setProperty("index",  caloBank.getShort("index",imap));
 				p.setProperty("energy", caloBank.getFloat("energy",imap)*1e3);
 				p.setProperty("time",   caloBank.getFloat("time",imap));
-				p.setProperty("path",   caloBank.getFloat("path",imap));                   		                    
+				p.setProperty("path",   caloBank.getFloat("path",imap));  
 				p.setProperty("x",      caloBank.getFloat("x",imap));
 				p.setProperty("y",      caloBank.getFloat("y",imap)); 
-				p.setProperty("z",      caloBank.getFloat("z",imap)); 
+				p.setProperty("z",      caloBank.getFloat("z",imap)); 	
 				p.setProperty("hx",     caloBank.getFloat("hx",imap));
 				p.setProperty("hy",     caloBank.getFloat("hy",imap));
 				p.setProperty("hz",     caloBank.getFloat("hz",imap));
@@ -628,17 +638,24 @@ public class Event {
 				
 				int ical = (int) p.getProperty("index");
 				
+				int lay = (int) p.getProperty("layer"); 
+				int   pid = part.get((int)p.getProperty("pindex")).pid();
+				float bet = (float) part.get((int)p.getProperty("pindex")).getProperty("beta");
+				float tim1 = (float) p.getProperty("time"), tim2=0;
+				float pat = (float) p.getProperty("path");
+				boolean good = debug && lay>1 && Math.abs(pid)==211;
+								
 				if(clusBank!=null) {
 					p.setProperty("cstat",  clusBank.getInt("status", ical));					
 					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
 					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
-					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);
-					p.setProperty("newtime",clusBank.getFloat("time", ical));
+					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);					
 					p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
 					p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
 					p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
 					p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
 					p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
+					tim2 = (float) p.getProperty("time");
 				}
 				
 				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
@@ -655,7 +672,9 @@ public class Event {
 					p.setProperty("wstat", peakBank.getInt("status", clusBank.getInt("idW",ical)-1));					
 				}
 				
-				p.setProperty("beta", newBeta(p,clusBank!=null?true:false)); //override caloBank with clusBank if it exists
+				p.setProperty("beta", getBeta(p)); //override caloBank with clusBank if it exists
+				
+//				if(good)System.out.println(eventNumber+" "+pid+" "+lay+" "+tim1+" "+tim2+" "+pat+" "+bet+" "+(tim2-starttime)+" "+pat/bet/29.98f);
 
 				if(trajMap.containsKey(ipart)) {
 					for(int tmap : trajMap.get(ipart)) {
