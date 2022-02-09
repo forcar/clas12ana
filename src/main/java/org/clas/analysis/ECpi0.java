@@ -95,8 +95,8 @@ public class ECpi0 extends DetectorMonitor{
     }
     
     public void localinit() {
-    	System.out.println("ECpi0.localinit()");
-        engine.setGeomVariation("rga_fall2018");
+    	System.out.println("ECpi0.localinit()");        
+    	engine.setGeomVariation("rga_spring2018");
         isPARTReady = false;
     	tl.setFitData(Fits);
     }
@@ -528,6 +528,14 @@ public class ECpi0 extends DetectorMonitor{
         
         // FTOF VETO
         
+        DataBank recpar = null;
+        DataBank reccal = null;
+        
+        if (event.hasBank("REC::Particle"))    recpar = event.getBank("REC::Particle");
+        if (event.hasBank("REC::Calorimeter")) reccal = event.getBank("REC::Calorimeter");
+        
+        boolean goodrec = recpar!=null && reccal!=null;
+        
         if(event.hasBank("MIP::event")){          
             DataBank bank = event.getBank("MIP::event");
             for(int i=0; i < bank.rows(); i++) part.mip[i]=bank.getByte("mip", i);   
@@ -560,10 +568,18 @@ public class ECpi0 extends DetectorMonitor{
                 }
             }
             
-        } else if (event.hasBank("REC::Calorimeter")) {        	
-            for (int i=0; i<6; i++) part.mip[i]=0;       
-            DataBank bank = event.getBank("REC::Calorimeter");
-            for (int i=0; i<bank.rows(); i++) {
+        } else if(goodrec) {        	
+        	HashMap<Integer,ArrayList<Integer>> part2calo = mapByIndex(reccal); 
+            ArrayList<Integer> chargeHit = new ArrayList<>();
+            for (int i=0; i<6; i++) part.mip[i]=0;                  
+            for (int ipart=0; ipart<recpar.rows(); ipart++) {
+                final int charge = recpar.getInt("charge",ipart);
+                final int status = recpar.getInt("status",ipart);       
+                final boolean isFD = (int)(Math.abs(status)/1000) == 2;
+                if (isFD && charge != 0) {
+                	int s = part2calo.containsKey(ipart) ? reccal.getInt("sector", part2calo.get(ipart).get(0)):0;
+                	if(s>0) part.mip[s-1]=1;
+                }
             }
         }
         
