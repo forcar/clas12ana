@@ -20,7 +20,7 @@ import java.util.HashMap;
 
 public class ECelas extends DetectorMonitor {
 	
-	boolean processWagon = false;
+	boolean processWagon = true;
 	boolean processEvent = true;
 	double beamEnergy;
 	double mp = 0.93828;
@@ -59,13 +59,17 @@ public class ECelas extends DetectorMonitor {
 	    runlist.add(run);  
 	    beamEnergy = getBeamEnergy(run);
     	histosExist = true;
+    	createWAGON(0);
     	createEVENT(0);
     }
     
     public void createWAGON(int st) {
     	switch (st) {        
         case 0: 
-        	dgm.add("WAGON",4,5,0,st,getRunNumber());         	
+        	dgm.add("WAGON",6,3,0,st,getRunNumber());         	
+        	for(int is=1; is<7; is++) dgm.makeH1("WA0"+is,180,  0,360, -1,"SECTOR "+is,"#Delta#phi (DEG)","");
+         	for(int is=1; is<7; is++) dgm.makeH1("WA1"+is,100, -1,  1, -1,"","#Delta EBEAM (GEV)","");
+        	for(int is=1; is<7; is++) dgm.makeH1("WA2"+is,100,-20, 20, -1,"","#Delta#theta (DEG)","");
     	}
     }
     
@@ -73,49 +77,15 @@ public class ECelas extends DetectorMonitor {
     	switch (st) {        
         case 0: 
         	dgm.add("EVENT",6,2,0,st,getRunNumber());
-        	for(int is=1; is<7; is++) {dgm.makeH2("EV1"+is,100,0.5,3.5,50,8,35,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)");dgm.cc("EV"+is, false, true, 0, 0, 0, 0);}
+        	for(int is=1; is<7; is++) {dgm.makeH2("EV1"+is,100,0.5,3.5,60,6,40,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)");dgm.cc("EV"+is, false, true, 0, 0, 0, 0);}
         	for(int is=1; is<7; is++)  dgm.makeH1("EV2"+is,100,0.5,3.5,-1,"","W (GEV)","");	
         }
-    } 
-    
-    public void createSector1D(int k) {
-
-	    int run = getRunNumber();
-        H1F h;
-
-        DataGroup dg = new DataGroup(3,2); 
-    
-        for (int is=1; is<7; is++) {
-            String tag = is+"-"+k+"-"+run;
-            h = new H1F("hi-w-"+tag,"hi-w-"+tag,100,0.8,1.2);
-            h.setTitleX("Sector "+is+" W (GeV)");
-            dg.addDataSet(h, is-1);          
-        }
-        
-        this.getDataGroup().add(dg,0,0,k,run);    
-    }
-    
-    public void createSector2D(int k) {
-
-	    int run = getRunNumber();
-        H2F h;
-
-        DataGroup dg = new DataGroup(3,2); 
-    
-        for (int is=1; is<7; is++) {
-            String tag = is+"-"+k+"-"+run;
-            h = new H2F("hi-w-"+tag,"hi-w-"+tag,50,0.8,1.2,28,6.,21.);
-            h.setTitleY("Theta (deg)");
-            h.setTitleX("Sector "+is+" W (GeV)");
-            dg.addDataSet(h, is-1);          
-        }
-        
-        this.getDataGroup().add(dg,0,0,k,run);    
     }    
     
     @Override       
     public void plotHistos(int run) {
     	if(!histosExist) return;
+    	plot("WAGON");
     	plot("EVENT");    	 	
     }
     
@@ -127,9 +97,12 @@ public class ECelas extends DetectorMonitor {
     
     public boolean processWag(DataEvent event) {
   
-        DataBank RecPart = null;
+        DataBank RecPart = null, RecCal = null;
         
-        if (event.hasBank("REC::Particle")) RecPart = event.getBank("MC::Particle");
+        if (event.hasBank("REC::Particle"))   RecPart = event.getBank("REC::Particle");
+        if (event.hasBank("REC::Calorimeter")) RecCal = event.getBank("REC::Calorimeter");
+        
+    	HashMap<Integer,ArrayList<Integer>> part2calo = mapByIndex(RecCal);
 
         if (RecPart==null || RecPart.rows()==0) return false;
 
@@ -137,7 +110,6 @@ public class ECelas extends DetectorMonitor {
         ArrayList<Integer> proCandi = new ArrayList<>();
 
         for (int ipart=0; ipart<RecPart.rows(); ipart++) {
-           
             final int    pid = RecPart.getInt("pid",ipart);
             final int charge = RecPart.getInt("charge",ipart);
             final int status = RecPart.getInt("status",ipart);       
@@ -146,7 +118,6 @@ public class ECelas extends DetectorMonitor {
 
             if (isFD && charge < 0) eleCandi.add(ipart);
             if (pid==2212)          proCandi.add(ipart);
-
         }
 
         if (eleCandi.isEmpty() || proCandi.isEmpty()) return false;
@@ -155,19 +126,29 @@ public class ECelas extends DetectorMonitor {
         	double epx  = RecPart.getFloat("px",eleCandi.get(0));
         	double epy  = RecPart.getFloat("py",eleCandi.get(0));
         	double epz  = RecPart.getFloat("pz",eleCandi.get(0));
-        	Particle neg = new Particle(0,epx,epy,epx);
         	double ep   = Math.sqrt(epx*epx + epy*epy + epz*epz);
         	double cthe = epz/ep, sthe=Math.sqrt(1-cthe*cthe);
+        	Particle neg = new Particle(211,epx,epy,epx);
 
         	double ppx  = RecPart.getFloat("px",proCandi.get(0));
         	double ppy  = RecPart.getFloat("py",proCandi.get(0));
         	double ppz  = RecPart.getFloat("pz",proCandi.get(0));
         	double pp   = Math.sqrt(ppx*ppx + ppy*ppy + ppz*ppz);
         	double cthp = ppz/pp, sthp=Math.sqrt(1-cthp*cthp);
+        	Particle pos = new Particle(211,ppx,ppy,ppz);
 
-        	double ebeam  = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe);
-        	double eprot  = Math.sqrt(pp*pp + mp*mp);
-        	double delthe = Math.acos(cthe) - Math.atan(pp*sthp/(ebeam-pp*cthp));
+        	double ebeam  = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe); 
+        	double delthe = Math.acos(cthe) - Math.atan(pp*sthp/(beamEnergy-pp*cthp));
+        	double delphi = (neg.phi()-pos.phi())*180/3.14159;
+        	if (delphi<0) delphi = 360+delphi;
+        	
+        	if (RecCal!=null) {
+        		int s = part2calo.containsKey(eleCandi.get(0)) ? RecCal.getInt("sector", part2calo.get(eleCandi.get(0)).get(0)):0;           
+        		if(s>0) {dgm.fill("WA0"+s, delphi);
+        		         if(Math.abs(180-delphi)<5) dgm.fill("WA1"+s, beamEnergy-ebeam);
+        		         dgm.fill("WA2"+s, delthe*180/3.14159);
+        		}
+        	}
 
         	return delthe > -0.026 ? true : false;
         } 
