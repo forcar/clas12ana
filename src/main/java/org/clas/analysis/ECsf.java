@@ -109,9 +109,9 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
         createXYZHistos("XY");
-        createSLCHistos("SLC",1,0,25,0.,0.5,"PARTIAL SF",false);
-        createSLCHistos("SLC",1,1,25,0.,0.3,"PARTIAL SF",false);
-        createSLCHistos("SLC",1,2,25,0.,0.1,"PARTIAL SF",false);
+        createSLCHistos("SLC",1,0,15,0.,0.30,"PARTIAL SF",false);
+        createSLCHistos("SLC",1,1,12,0.,0.15,"PARTIAL SF",false);
+        createSLCHistos("SLC",1,2,12,0.,0.05,"PARTIAL SF",false);
         createSLCHistos("SLC",0,0,25,0.05,0.4,"TOTAL SF",false);
         createSLCHistos("SLC",0,1,25,0.05,0.4,"TOTAL SF",false);
         createSLCHistos("SLC",0,2,25,0.05,0.4,"TOTAL SF",false);
