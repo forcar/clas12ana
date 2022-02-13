@@ -118,7 +118,7 @@ public class ECCommon {
 
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
-        IndexedTable     time = manager.getConstants(run, "/calibration/ec/timing");
+        IndexedTable    dtime = manager.getConstants(run, "/calibration/ec/timing");
         IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftiming");
         IndexedTable      ggs = manager.getConstants(run, "/calibration/ec/global_gain_shift");
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
@@ -150,6 +150,7 @@ public class ECCommon {
             int off = superlayer==0 ? pcalz : (superlayer==1 ? ecinz : ecouz);
             
             Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
+            
             ScintillatorPaddle      paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
             ScintillatorPaddle firstPaddle = (ScintillatorPaddle) detLayer.getComponent(0);
             ScintillatorPaddle  lastPaddle = (ScintillatorPaddle) detLayer.getComponent(detLayer.getNumComponents()-1);
@@ -172,22 +173,28 @@ public class ECCommon {
                 strip.setDistanceEdge(distance + proj);
             }
             // End of the edit.
+            
             strip.setAttenuation(atten.getDoubleValue("A", sector,layer,component),
                                  atten.getDoubleValue("B", sector,layer,component),
                                  atten.getDoubleValue("C", sector,layer,component));
             double ccdbGain =   gain.getDoubleValue("gain", sector,layer,component)*ggs.getDoubleValue("gain_shift",sector,layer,0);
             double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);
-            strip.setGain(useCCDBGain?ccdbGain:run2Gain); 
+            strip.setGain(useCCDBGain ? ccdbGain : run2Gain); 
             strip.setGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
             strip.setVeff(ev.getDoubleValue("veff",sector,layer,component));
-            strip.setTiming(time.getDoubleValue("a0", sector, layer, component),
-                            time.getDoubleValue("a1", sector, layer, component),
-                            time.getDoubleValue("a2", sector, layer, component),
-                            time.getDoubleValue("a3", sector, layer, component),
-                            time.getDoubleValue("a4", sector, layer, component));
+            strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
+                             dtime.getDoubleValue("a1", sector, layer, component),
+                             dtime.getDoubleValue("a2", sector, layer, component),
+                             dtime.getDoubleValue("a3", sector, layer, component),
+                             dtime.getDoubleValue("a4", sector, layer, component));
+            strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
+                             1,
+                             0,
+                             0,
+                             0);
             strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
+            strip.setGlobalFTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
             
-            strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component));
         }
             
         return ecStrips;

@@ -28,13 +28,12 @@ public class ECStrip implements Comparable {
     private double    iAttenLengthA = 1.0;
     private double    iAttenLengthB = 50000.0;
     private double    iAttenLengthC = 0.0;
-    private double        iTiming00 = 0; // Global TDC offset
-    private double        iTimingA0 = 0; // Offset in ns (before applying a1)
-    private double        iTimingA1 = 1; // ns -> TDC conv. factor (TDC = ns/a1)
-    private double        iTimingA2 = 0; // time-walk factor (time_ns = time_ns + a2/sqrt(adc))
-    private double        iTimingA3 = 0; // 0
-    private double        iTimingA4 = 0; // 0
-    private double        fTimingA0 = 0;
+    private double    fTim00,iTim00 = 0; // Global TDC offset
+    private double    fTimA0,iTimA0 = 0; // Offset in ns (before applying a1)
+    private double    fTimA1,iTimA1 = 1; // ns -> TDC conv. factor (TDC = ns/a1)
+    private double    fTimA2,iTimA2 = 0; // time-walk factor (time_ns = time_ns + a2/sqrt(adc))
+    private double    fTimA3,iTimA3 = 0; // 0
+    private double    fTimA4,iTimA4 = 0; // 0
     private int        triggerPhase = 0;
     private double             veff = 18.1; // Effective velocity of scintillator light (cm/ns)
     private int              peakID = -1;
@@ -49,7 +48,7 @@ public class ECStrip implements Comparable {
     
     private static final double coincTIME = 25.; //ns. 	
     private double                   time = 0;
-    private double                    gtw = 0; //global time walk correction
+    private double               fgtw,gtw = 0; //global time walk correction
     
     private TimeCorrection             tc = null; 
     
@@ -82,7 +81,7 @@ public class ECStrip implements Comparable {
     }
 
     public int getTDC(){
-        return ECCommon.useFADCTime ? (int) (this.iTADC/iTimingA1) : this.iTDC;
+        return ECCommon.useFADCTime ? (int) (this.iTADC/iTimA1) : this.iTDC;
     }
     
     public double getRawTime(){
@@ -97,9 +96,13 @@ public class ECStrip implements Comparable {
  	    return phaseCorrection ? tc.getPhaseCorrectedTime():tc.getRawTime();
     }
     
-    public void setGlobalTimeWalk(double gtw) {
-    	this.gtw = gtw;
+    public void setGlobalTimeWalk(double val) {
+    	this.gtw = val;
     }
+    
+    public void setGlobalFTimeWalk(double val) {
+    	this.fgtw = val;
+    }  
     
     public double getTWCTime() {
     	return tc.getTWCTime();    	
@@ -118,41 +121,41 @@ public class ECStrip implements Comparable {
     
     public class SimpleTWCTime extends TimeCorrection {    	
         public double getRawTime(){
-           	return iTDC * iTimingA1;
+           	return iTDC * iTimA1;
         }
         
         public double getPhaseCorrectedTime() { 
-            return iTDC * iTimingA1 - triggerPhase;
+            return iTDC * iTimA1 - triggerPhase;
         } 
          	
         public double getTWCTime() {
         	double radc = Math.sqrt(iADC);
-          	return  getPhaseCorrectedTime() - iTimingA2/radc;
+          	return  getPhaseCorrectedTime() - iTimA2/radc;
         }  
         
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-    		return getPhaseCorrectedTime() - iTimingA2/radc - iTimingA0;
+    		return getPhaseCorrectedTime() - iTimA2/radc - iTimA0;
     	}
     }
     
     public class ExtendedTWCTime extends TimeCorrection {    	
         public double getRawTime(){
-           	return iTDC * iTimingA1;
+           	return iTDC * iTimA1;
         }
         
         public double getPhaseCorrectedTime() { 
-            return iTDC * iTimingA1 - triggerPhase;
+            return iTDC * iTimA1 - triggerPhase;
         } 
         
         public double getTWCTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc) - iTiming00;          	
+          	return getPhaseCorrectedTime() - gtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc)          - iTim00;          	
         } 
         
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc) - iTimingA0 - iTiming00;          	
+          	return getPhaseCorrectedTime() - gtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc) - iTimA0 - iTim00;          	
         }         
     } 
     
@@ -167,12 +170,12 @@ public class ECStrip implements Comparable {
         
         public double getTWCTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc) - iTiming00;          	
+          	return getPhaseCorrectedTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc)          - fTim00;          	
         } 
         
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimingA2/radc - iTimingA3 - iTimingA4/Math.sqrt(radc) - fTimingA0 - iTiming00;          	
+          	return getPhaseCorrectedTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc) - fTimA0 - fTim00;          	
         }         
     }     
     
@@ -235,33 +238,50 @@ public class ECStrip implements Comparable {
         this.iGain = gain;
     }
     
-    public void setTiming(double a0, double a1, double a2, double a3, double a4) {
-        this.iTimingA0 = a0;
-        this.iTimingA1 = a1;
-        this.iTimingA2 = ECCommon.useFADCTime ? 0 : a2;
-        this.iTimingA3 = ECCommon.useFADCTime ? 0 : a3;
-        this.iTimingA4 = ECCommon.useFADCTime ? 0 : a4;
-        if(ECCommon.useFADCTime) this.gtw=0;
+    public void setDTiming(double a0, double a1, double a2, double a3, double a4) {
+        this.iTimA0 = a0;
+        this.iTimA1 = a1;
+        this.iTimA2 = a2;
+        this.iTimA3 = a3;
+        this.iTimA4 = a4;
     } 
     
-    public void setFTiming(double a0) {
-    	this.fTimingA0 = a0;
+    public void setFTiming(double a0, double a1, double a2, double a3, double a4) {
+    	this.fTimA0 = a0;
+    	this.fTimA1 = a1;
+    	this.fTimA2 = a2;
+    	this.fTimA3 = a3;
+    	this.fTimA4 = a4;
     }
 	
     public void setGlobalTimingOffset(double val) {
-        this.iTiming00 = val;
+        this.iTim00 = val;
     }
-	
+    
+    public void setGlobalFTimingOffset(double val) {
+        this.fTim00 = val;
+    }
+    
     public double[] getTiming() {
         double[] array = new double[5];
-        array[0] = this.iTimingA0;
-        array[1] = this.iTimingA1;
-        array[2] = this.iTimingA2;
-        array[3] = this.iTimingA3;
-        array[4] = this.iTimingA4;
+        array[0] = this.iTimA0;
+        array[1] = this.iTimA1;
+        array[2] = this.iTimA2;
+        array[3] = this.iTimA3;
+        array[4] = this.iTimA4;
         return array;    
     }
-	
+    
+    public double[] getFTiming() {
+        double[] array = new double[5];
+        array[0] = this.fTimA0;
+        array[1] = this.fTimA1;
+        array[2] = this.fTimA2;
+        array[3] = this.fTimA3;
+        array[4] = this.fTimA4;
+        return array;    
+    }	
+    
     public double getEnergy(Point3D point){
         edist = point.distance(this.stripLine.end());
         return this.iADC*this.iGain*this.iADC_to_MEV/getEcorr(-edist);
