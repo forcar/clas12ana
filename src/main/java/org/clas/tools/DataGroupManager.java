@@ -178,16 +178,15 @@ public class DataGroupManager {
     	dg.addDataSet(getH1F(name),n++);
     }
     
-    public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, int ... color) {
+    public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, Object ... color) {
 	    H1F h1 = new H1F(getName(name),getName(name),nx,x1,x2);
 	    if(tit!="") h1.setTitle(tit);
 	    h1.setTitleX(titx);
 	    int nn=0;
-        for (int col : color) {
-    	    if(nn==0) h1.setLineColor(col); 
-    	    if(nn==1) h1.setFillColor(col);
-    	    if(nn==2 && col==1) h1.setOptStat("1000000");
-    	    if(nn==2 && col==2) h1.setOptStat("1000100");
+        for (Object col : color) {
+    	    if(nn==0) h1.setLineColor((Integer)col); 
+    	    if(nn==1) h1.setFillColor((Integer)col);
+    	    if(nn==2) h1.setOptStat((String)col);
     	    nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
@@ -195,16 +194,15 @@ public class DataGroupManager {
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }
     
-    public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, String tity, int ... color) {
+    public void makeH1(String name, int nx, double x1, double x2, int f, String tit, String titx, String tity, Object ... color) {
 	    H1F h1 = new H1F(getName(name),getName(name),nx,x1,x2);
 	    if(tit!="") h1.setTitle(tit);
 	    h1.setTitleX(titx);  h1.setTitleY(tity);
 	    int nn=0;	    
-        for (int col : color) {
-    	    if(nn==0) h1.setLineColor(col); 
-    	    if(nn==1) h1.setFillColor(col);
-    	    if(nn==2 && col==1) h1.setOptStat("1000000");
-     	    if(nn==2 && col==2) h1.setOptStat("1000100");
+        for (Object col : color) {
+    	    if(nn==0) h1.setLineColor((Integer)col); 
+    	    if(nn==1) h1.setFillColor((Integer)col);
+    	    if(nn==2) h1.setOptStat((String)col);
    	        nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
