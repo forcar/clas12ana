@@ -22,10 +22,6 @@ import org.jlab.io.base.DataEvent;
 public class ECEngine extends ReconstructionEngine {
     
     Detector              ecDetector = null;
-    public Boolean             debug = false;
-    public Boolean  isSingleThreaded = false;
-    public Boolean       singleEvent = false;
-    public Boolean              isMC = false;
     
     public ECEngine(){
         super("EC","gavalian","1.0");
@@ -33,23 +29,8 @@ public class ECEngine extends ReconstructionEngine {
     
     @Override
     public boolean processDataEvent(DataEvent de) {
-           
-        ECCommon.setDebug(debug);
-        ECCommon.setisSingleThreaded(isSingleThreaded);
-        ECCommon.setSingleEvent(singleEvent);
-
-        int runNo = 10;
-        
-        if(de.hasBank("RUN::config")==true){
-            DataBank bank = de.getBank("RUN::config");
-            runNo = bank.getInt("run", 0);
-            if (runNo<=0) {
-                System.err.println("ECEngine:  got run <= 0 in RUN::config, skipping event.");
-                return false;
-            }
-        }
                 
-        List<ECStrip>     ecStrips = ECCommon.initEC(de,  ecDetector, this.getConstantsManager(), runNo); // thresholds, ADC/TDC match        
+        List<ECStrip>     ecStrips = ECCommon.initEC(de,  ecDetector, this.getConstantsManager()); // thresholds, ADC/TDC match        
         List<ECPeak>       ecPeaks = ECCommon.processPeaks(ECCommon.createPeaks(ecStrips)); // thresholds, split peaks -> update peak-lines          
         List<ECCluster> ecClusters = new ArrayList<ECCluster>();     
         
@@ -76,7 +57,7 @@ public class ECEngine extends ReconstructionEngine {
         }
         
         
-        if (debug) {
+        if (ECCommon.debug) {
         	if (ecClusters.size()<5) {
         	for(ECCluster c : ecClusters) {
         		if (c.getStatus()>0) {
@@ -95,7 +76,7 @@ public class ECEngine extends ReconstructionEngine {
         
         this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
         
-        if (isSingleThreaded) {
+        if (ECCommon.isSingleThreaded) {
         	ECCommon.clearMyStructures();
         	getStrips().addAll(ecStrips);
         	getPeaks().addAll(ecPeaks);
@@ -207,11 +188,23 @@ public class ECEngine extends ReconstructionEngine {
     }
     
     public void setDebug(boolean val) {
-    	ECCommon.debug = val;
+    	ECCommon.setDebug(val);
     }
     
     public void setDebugSplit(boolean val) {
     	ECCommon.debugSplit = val;
+    }
+    
+    public void setIsSingleThreaded(boolean val) {
+    	ECCommon.isSingleThreaded = val;
+    }
+    
+    public void setSingleEvent(boolean val) {
+    	ECCommon.setSingleEvent(val);
+    }
+        
+    public void setIsMC(boolean val) {
+    	ECCommon.isMC = val;
     }
     
     public void setVariation(String val) {
@@ -332,9 +325,9 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/tmf_window",
             "/calibration/ec/status"
         };
-        
-        
+                
         requireConstants(Arrays.asList(ecTables));
+        
         getConstantsManager().setVariation(ECCommon.variation);
         String variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
         if(!(ECCommon.geomVariation.equals("default"))) variationName = ECCommon.geomVariation;
@@ -352,7 +345,7 @@ public class ECEngine extends ReconstructionEngine {
         this.registerOutputBank("ECAL::calib");
         this.registerOutputBank("ECAL::moments"); 
         
-        if (isSingleThreaded) ECCommon.initHistos();
+        if (ECCommon.isSingleThreaded) ECCommon.initHistos();
         return true;
     }
     

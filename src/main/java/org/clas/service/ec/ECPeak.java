@@ -26,6 +26,7 @@ public class ECPeak {
     private double              peakMoment       = 0.0;
     private double              peakMoment2      = 0.0;
     private double              peakMoment3      = 0.0;
+    private double              splitRatio       = -1;
     //private int                 peakID        = -1;
     
     public ECPeak(ECStrip strip){
@@ -45,6 +46,10 @@ public class ECPeak {
     public void setStatus(int val) {this.peakStatus+=val;}
     
     public byte getStatus()  {return peakStatus;}
+    
+    public double getSplitRatio() {return splitRatio;}
+    
+    public void setSplitRatio(double val) {splitRatio = val;}
     
     public void setPeakId(int id){
         for(ECStrip strip : this.peakStrips){
@@ -212,19 +217,51 @@ public class ECPeak {
         double energy_summ = 0.0;
         double energy_norm = 0.0;
         for(ECStrip strip : this.peakStrips){
-            energy_summ += strip.getEnergy();
 	        int str = strip.getDescriptor().getComponent() - 1;
 	        str = str*8+4;
             energy_norm += strip.getEnergy()*str;
+            energy_summ += strip.getEnergy();
         }        
         return (int) (energy_norm/energy_summ);
     }
     
-    private double integral_old(int strip, boolean left_right){
+    private double integral(int strip, boolean rl){ //rl=false/true: adc summed for strip indices to the right/left of input strip
+        int count = 0, intg = 0;
+        int value = this.peakStrips.get(strip).getADC();
+        for(int i = (rl)?0:strip+1; i < ((rl)?strip:this.peakStrips.size());i++) {count++;intg += this.peakStrips.get(i).getADC();}        
+        return ((double) intg) - ((double) value)*count;        
+    }
+        
+    public int getSplitStrip(){
+        int     split = -1;
+        double  ratio_lo = 0.05, ratio_hi = 5.0;
+        int np = peakStrips.size();
+        
+        if(np>3){
+            for(int i = 1; i < np-1; i++){
+                double right = this.integral_old(i, false);
+                double  left = this.integral_old(i, true);
+                double rl_ratio = right/left;
+                if(ECCommon.debugSplit) {
+                	int  s = peakStrips.get(i).getDescriptor().getSector();
+                	int il = peakStrips.get(i).getDescriptor().getLayer(); 
+                	int ip = peakStrips.get(i).getDescriptor().getComponent();
+               	    System.out.println("getSplitStrip: "+s+" "+il+" "+ip+" "+np+" "+i+" "+right+" "+left+" "+rl_ratio);
+                }
+                if(right>0.0&&left>0.0&&rl_ratio>ratio_lo && rl_ratio<ratio_hi){
+                    split = i;
+                    ratio_lo = rl_ratio;
+                    splitRatio = ratio_lo;
+                }
+            }
+        }
+        return split;
+    }    
+    private double integral_old(int strip, boolean right){
         int count = 0;
         int intg  = 0;
         int value = this.peakStrips.get(strip).getADC();
-        if(!left_right){
+        if(!right){
             for(int i = strip + 1; i < this.peakStrips.size(); i++){
                 count++;
                 intg += this.peakStrips.get(i).getADC();
@@ -236,53 +273,24 @@ public class ECPeak {
                 intg += this.peakStrips.get(i).getADC();
             }
         }
-        double norm = ((double) intg) - ((double) value)*count;
+        
+        double norm = ((double) intg) - ((double) value)*count; 
+        
+        if(ECCommon.debugSplit) System.out.println(right+" "+count+" "+intg+" "+value+" "+norm);
+
         return norm;
     }
-    
-    private double integral(int strip, boolean pm){ //pm=true/false: adc summed for strip indices to the +/- of input strip
-        int count = 0, intg = 0;
-        int value = this.peakStrips.get(strip).getADC();
-        for(int i = (pm)?0:strip+1; i < ((pm)?strip:this.peakStrips.size());i++) {count++;intg += this.peakStrips.get(i).getADC();}        
-        return ((double) intg) - ((double) value)*count;        
-    }
-    
+
     public List<ECPeak>  splitPeak(int strip){
         
         List<ECPeak>  twoPeaks = new ArrayList<ECPeak>();
-        ECPeak  leftPeak = new ECPeak(this.peakStrips.get(0));
+        ECPeak  leftPeak = new ECPeak(this.peakStrips.get(0)); leftPeak.setSplitRatio(splitRatio);
         for(int i = 1; i < strip; i++) { leftPeak.addStrip(this.peakStrips.get(i));}
-        ECPeak  rightPeak = new ECPeak(this.peakStrips.get(strip));
+        ECPeak  rightPeak = new ECPeak(this.peakStrips.get(strip)); rightPeak.setSplitRatio(splitRatio);
         for(int i = strip+1; i < peakStrips.size(); i++) { rightPeak.addStrip(this.peakStrips.get(i));}
         twoPeaks.add(leftPeak);
         twoPeaks.add(rightPeak);
         return twoPeaks;
-    }
-    
-    public int getSplitStrip(){
-        int     split = -1;
-        double  ratio = 0.0;
-        
-        if(peakStrips.size()>3){
-            for(int i = 1; i < peakStrips.size()-1; i++){
-                double left  = this.integral(i, false);
-                double right = this.integral(i, true);
-                double lf_ratio = left/right;
-                if(ECCommon.debugSplit) {
-                	int  s = peakStrips.get(i).getDescriptor().getSector();
-                	int il = peakStrips.get(i).getDescriptor().getLayer(); 
-                    double oleft  = this.integral_old(i, false);
-                    double oright = this.integral_old(i, true);
-               	    System.out.println("getSplitStrip: "+s+" "+il+" "+i+" "+left+" "+right+" "+oleft+" "+oright);
-                }
-                if(left>0.0&&right>0.0&&lf_ratio>ratio){
-                    split = i;
-                    ratio = lf_ratio;
-                }
-            }
-        }
-        //System.out.println(" I THINK YOU SHOULD SPLIT IT at " + split);
-        return split;
     }
     
     @Override

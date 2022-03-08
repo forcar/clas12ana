@@ -18,15 +18,18 @@ public class ECCluster {
     
     int            clusterMultiplicity = 0;
     Point3D        clusterHitPosition  = new Point3D();
-    double         clusterHitPositionError = 1000.0;    
+    double         clusterHitPositionError = 1000.0;
     double         clusterEnergy = 0.0;                    // shareEnergy can update this !!
     
+    static public double  clusterHitPositionErrorOffset = 1.8225; // 
+   
     public         int UVIEW_ID = -1;
     public         int VVIEW_ID = -1;
     public         int WVIEW_ID = -1;
     
     public byte    sharedCluster = -1;
     private byte      sharedView =  0; //1=U, 2=V, 3=W, 4=UV, 5=UW, 6=VW
+    public int            zone   = 0;
        
     public ECCluster(ECPeak u, ECPeak v, ECPeak w){
         
@@ -203,7 +206,7 @@ public class ECCluster {
         Line3D uvLine = uLine.distance(vLine);
         Line3D uvDistTo_w = wLine.distance(uvLine.midpoint());
         this.clusterHitPosition.copy(uvDistTo_w.midpoint());
-        this.clusterHitPositionError = uvDistTo_w.length();
+        this.clusterHitPositionError = uvDistTo_w.length()-this.clusterHitPositionErrorOffset;
     }
     
     @Override

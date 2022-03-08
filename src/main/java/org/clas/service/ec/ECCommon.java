@@ -40,6 +40,7 @@ public class ECCommon {
     public static Boolean       singleEvent = false;
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
+    public static Boolean              isMC = false;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
@@ -65,10 +66,19 @@ public class ECCommon {
     	int[] bins = {480,240,120};       
         for (int is=1; is<7; is++){
             for (int il=1; il<4; il++) {             
-                H1_ecEng.add(is,il,0, new H1F("Cluster Errors",bins[il-1],-10,100));
-                H1_ecEng.add(is,il,1, new H1F("Cluster Errors",bins[il-1],-10,100));
-                H2_ecEng.add(is,il,1, new H2F("Cluster Errors",12,0,12,40,0,20));
+                H1_ecEng.add(is,il, 0, new H1F("Cluster Errors",bins[il-1],-2,30));
+                H1_ecEng.add(is,il, 1, new H1F("Cluster Errors",bins[il-1],-2,30));
+                if(il==1) {
+                H1_ecEng.add(is,il,10, new H1F("Cluster Errors",bins[il-1],-2,30));
+                H1_ecEng.add(is,il,11, new H1F("Cluster Errors",bins[il-1],-2,30));
+                H1_ecEng.add(is,il,12, new H1F("Cluster Errors",bins[il-1],-2,30));
+                H1_ecEng.add(is,il,13, new H1F("Cluster Errors",bins[il-1],-2,30));
+                }
+                H2_ecEng.add(is,il, 1, new H2F("Cluster Errors",11,1,12,40,0,20));
             }
+//            for (int il=1; il<10; il++) {
+//                H1_ecEng.add(is,il,14, new H1F("Split Ratio",100,0,10));           	
+//            }
         }
     }
     
@@ -78,7 +88,8 @@ public class ECCommon {
                 H1_ecEng.get(is,il,0).reset();
                 H1_ecEng.get(is,il,1).reset();
                 H2_ecEng.get(is,il,1).reset();
-            }
+                if(il==1) for (int i=10; i<14; i++) H1_ecEng.get(is,il,i).reset();
+           }
         }       
     }
     
@@ -112,8 +123,14 @@ public class ECCommon {
     	return myClusters;
     }
     
-    public static List<ECStrip>  initEC(DataEvent event, Detector detector, ConstantsManager manager, int run){
+    public static int  getRunNumber(DataEvent de) {
+    	return (de.hasBank("RUN::config") ? (int) de.getBank("RUN::config").getInt("run", 0) : 10);
+    }
+    
+    public static List<ECStrip>  initEC(DataEvent event, Detector detector, ConstantsManager manager){
     	
+        int run = getRunNumber(event);
+        
         manager.setVariation(variation);
 
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
@@ -261,11 +278,8 @@ public class ECCommon {
                 strip.setADC(adc);
                 strip.setTriggerPhase(triggerPhase);
                 strip.setID(i+1);
-                
-                double sca = (is==5)?AtoE5[ind[il-1]]:AtoE[ind[il-1]]; 
-                if (variation=="clas6") sca = 1.0;     
-                
-                if(strip.getADC()>sca*ECCommon.stripThreshold[ind[il-1]]) strips.add(strip); 
+
+                if(isGoodStrip(strip)) strips.add(strip); 
                 
                 float  tmax = 1000; int tdc = 0;
                 
@@ -310,22 +324,14 @@ public class ECCommon {
         }
         
         return peakList;
-    }   
-    
+    } 
+       
     public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
     	
         List<ECPeak> peakList = new ArrayList<ECPeak>();
-        
-        for(ECPeak p : peaks){
-            int adc = p.getADC();
-            int lay = p.getDescriptor().getLayer();
-            int sec = p.getDescriptor().getSector();
-            double sca = (sec==5)?AtoE5[ind[lay-1]]:AtoE[ind[lay-1]]; 
-            if (variation=="clas6") sca = 1.0;
-            if(adc>sca*ECCommon.peakThreshold[ind[lay-1]]) peakList.add(p);  //adc threshold (uncorrected energy MeV*10)
-        }
-        
-        ECPeakAnalysis.splitPeaks(peakList);       //Split peak if strip members have an adc valley
+
+        for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);
+        ECPeakAnalysis.splitPeaks(peakList);       //Split peak if strip members have an adc valley       
         for(ECPeak p : peakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
                 
         return peakList;
@@ -355,6 +361,24 @@ public class ECCommon {
         }        
     }
     
+    public static boolean isGoodStrip(ECStrip s) {
+        int adc = s.getADC();
+        int lay = s.getDescriptor().getLayer();
+        int sec = s.getDescriptor().getSector();
+        double sca = (sec==5)?AtoE5[ind[lay-1]]:AtoE[ind[lay-1]];
+        if (variation=="clas6") sca = 1.0;
+        return adc>sca*ECCommon.stripThreshold[ind[lay-1]];	
+    }
+       
+    public static boolean isGoodPeak(ECPeak p) {
+        int adc = p.getADC();
+        int lay = p.getDescriptor().getLayer();
+        int sec = p.getDescriptor().getSector();
+        double sca = (sec==5)?AtoE5[ind[lay-1]]:AtoE[ind[lay-1]];
+        if (variation=="clas6") sca = 1.0;
+    	return adc>sca*ECCommon.peakThreshold[ind[lay-1]]; //adc threshold (uncorrected energy MeV*10)
+    }
+    
     public static boolean isGoodCluster(ECCluster cluster) {
     	
     	for (int i=0; i<3; i++) {
@@ -364,6 +388,15 @@ public class ECCommon {
     		if(cluster.getEnergy(i)*1e3<thr) return false;  
     	}       
     	return true;
+    }
+    
+    public static int getZone(int layer, int u, int v, int w){
+    	if (layer>0)          return 0;
+        if (u<53&&v>15&&w>15) return 0;
+        if (u>52&&v>15&&w>15) return 1;
+        if (v<16)             return 2;
+        if (w<16)             return 3;
+        return 0;
     }
     
     public static List<ECCluster>  createClusters(List<ECPeak>  peaks, int startLayer){
@@ -395,7 +428,15 @@ public class ECCommon {
                             if(bU==0 && bV==0) pW.get(bW).redoPeakLine();
                             ECCluster cluster = new ECCluster(pU.get(bU),pV.get(bV),pW.get(bW));
                             float err = (float) cluster.getHitPositionError();
-                            if(isSingleThreaded)H1_ecEng.get(sector,ind[startLayer-1]+1,0).fill(err);                           
+                            if(isSingleThreaded) {                           
+//                            	if (pU.get(bU).getSplitRatio()>0) H1_ecEng.get(sector,startLayer,  14).fill((pU.get(bU).getSplitRatio()));
+//                            	if (pV.get(bV).getSplitRatio()>0) H1_ecEng.get(sector,startLayer+1,14).fill((pV.get(bV).getSplitRatio()));
+//                            	if (pW.get(bW).getSplitRatio()>0) H1_ecEng.get(sector,startLayer+2,14).fill((pW.get(bW).getSplitRatio()));
+                                int zone = getZone(ind[startLayer-1],pU.get(bU).getMaxStrip(),pV.get(bV).getMaxStrip(),pW.get(bW).getMaxStrip());
+                            	H1_ecEng.get(sector,ind[startLayer-1]+1,0).fill(err); 
+                            	if(startLayer==1 && zone<2) H1_ecEng.get(sector,1,10+zone).fill(err);
+                            	if(startLayer==1 && zone>1) H1_ecEng.get(sector,1,12).fill(err);
+                            }
                             if(err<ECCommon.clusterError[ind[startLayer-1]]) {
                             	if(err>maxerr) maxerr=err;
                                 if(isSingleThreaded)H1_ecEng.get(sector,ind[startLayer-1]+1,1).fill(err);                               
