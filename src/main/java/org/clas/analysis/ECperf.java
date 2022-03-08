@@ -428,8 +428,8 @@ public class ECperf extends DetectorMonitor {
 		String[] luvw = {" LU"," LV"," LW"}; String[] uvw = {" U"," V"," W"}; 
 		int[]     npmt = {68,62,62,36,36,36,36,36,36};
 		
-		float thmin=5f, thmax=11f, wmax=1.3f;
-		float pmax=kl.ep_from_w(EB, thmin, 0), pmin=kl.ep_from_w(EB, thmax, wmax);
+		double thmin=5, thmax=11, wmax=1.3;
+		double pmax=kl.ep_from_w(EB, thmin, 0), pmin=kl.ep_from_w(EB, thmax, wmax);
 		float offx = EB<3 ? 10:0, offy = EB<3 ? 10:0;
 		
     	switch (st) {        
@@ -1519,7 +1519,7 @@ public class ECperf extends DetectorMonitor {
 			VG1 = new LorentzVector(p1.px(),p1.py(),p1.pz(),p1.p());
 			VG2 = new LorentzVector(p2.px(),p2.py(),p2.pz(),p2.p());
 			VPI0 = new LorentzVector(0,0,0,0);
-			VPI0.add(VG1);
+			VPI0.add(VG1); 
 			VPI0.add(VG2);
 			return true;
     	}

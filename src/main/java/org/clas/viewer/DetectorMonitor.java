@@ -63,6 +63,7 @@ import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 import org.clas.tools.EmbeddedCanvasTabbed;
+//import org.clas.tools.F1D;
 
 public class DetectorMonitor implements ActionListener {    
     
@@ -159,18 +160,21 @@ public class DetectorMonitor implements ActionListener {
 	public Boolean  isHipo3Event = true;
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};   //ECEngine default
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+    int[][] sthrTest = {{20,20,20},{20,20,20},{20,20,20}}; 
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
+    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}}; //ECEngine default
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
     int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+    int[][] pthrTest = {{18,18,18},{20,20,20},{15,15,15}};
         
     double[] cerrMuon = {5.5,10.,10.};
-    double[] cerrPhot = {7.0,15.,20.};
+    double[] cerrPhot = {7.0,15.,20.}; //ECEngine default
     double[] cerrElec = {10.,10.,10.};  
+    double[] cerrTest = {7.,15.,20.};  
     
     String   ltcc[] = {"L","R"};
     String   htcc[] = {"L","R"};
@@ -384,13 +388,13 @@ public class DetectorMonitor implements ActionListener {
     
     public void configEngine(String val) {
     	System.out.println(root+"configEngine("+val+")");
-    	engine.isSingleThreaded=true;
+    	engine.setIsSingleThreaded(true);
         engine.setVariation(variation);
         engine.setGeomVariation("rga_spring2018");
         engine.init();
-        engine.isMC = false;
+        engine.setIsMC(false);
         engine.setLogParam(logParam); // 0 corresponds to default coatjava peak log E weighting 
-        setEngineThresholds(config);
+        setEngineThresholds(val);
    }
     
     public void setUseUnsharedTime(Boolean val) {
@@ -432,11 +436,15 @@ public class DetectorMonitor implements ActionListener {
     
     public void setDbgECEngine(Boolean val) {
     	dbgECEngine = val;
-    	engine.debug = val;
+    	engine.setDebug(val);
     }
     
     public void setDbgAnalyzer(Boolean val) {
     	dbgAnalyzer = val;
+    }
+    
+    public void setEngineConfig(String val) {
+    	config = val;
     }
     
     public void setEngineThresholds(String val) {
@@ -465,6 +473,7 @@ public class DetectorMonitor implements ActionListener {
         case    "phot": return sthrPhot[idet][layer-1] ; 
         case    "muon": return sthrMuon[idet][layer-1] ;  
         case    "elec": return sthrElec[idet][layer-1] ;
+        case    "test": return sthrTest[idet][layer-1] ;
         case    "none": return sthrZero[idet][layer-1] ;
         }
         return 0;
@@ -476,6 +485,7 @@ public class DetectorMonitor implements ActionListener {
         case    "phot": return pthrPhot[idet][layer-1] ;  
         case    "muon": return pthrMuon[idet][layer-1] ; 
         case    "elec": return pthrElec[idet][layer-1] ;
+        case    "test": return pthrTest[idet][layer-1] ;
         case    "none": return pthrZero[idet][layer-1] ;
         }
         return 0;
@@ -487,6 +497,7 @@ public class DetectorMonitor implements ActionListener {
         case    "phot": return (float) cerrPhot[idet] ;  
         case    "muon": return (float) cerrMuon[idet] ; 
         case    "elec": return (float) cerrElec[idet] ;
+        case    "test": return (float) cerrTest[idet] ;
         case    "none": return (float) cerrMuon[idet] ;
         }
         return 0;
@@ -494,20 +505,14 @@ public class DetectorMonitor implements ActionListener {
     
     public void dropBanks(DataEvent de) {
     	
-    	if(!isEngineReady) {configEngine("phot"); isEngineReady = true;}
+    	if(!isEngineReady) {configEngine(config); isEngineReady = true;}
     	
-//    	System.out.println(" ");
-//    	System.out.println("CLUSTER BEFORE? "+event.hasBank("ECAL::clusters"));
-//    	event.show();
         if(!isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
         if( isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBank("ECAL::clusters");
         if( isHipo3Event&&de.hasBank("ECAL::hits"))     de.removeBank("ECAL::hits");
         if( isHipo3Event&&de.hasBank("ECAL::peaks"))    de.removeBank("ECAL::peaks");
         if( isHipo3Event&&de.hasBank("ECAL::calib"))    de.removeBank("ECAL::calib");
         if( isHipo3Event&&de.hasBank("ECAL::moments"))  de.removeBank("ECAL::moments");
-//      System.out.println(" ");
-//      event.show();        
-//    	System.out.println("CLUSTER AFTER? "+event.hasBank("ECAL::clusters"));
         
         if(de.hasBank("ECAL::adc")) engine.processDataEvent(de);     	
     }
@@ -1542,10 +1547,10 @@ public class DetectorMonitor implements ActionListener {
         return fd;
      }
         
-    public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank) {
+    public HashMap<Integer,ArrayList<Integer>> mapByIndex(DataBank bank, String val) {
         HashMap<Integer,ArrayList<Integer>> map=new HashMap<Integer,ArrayList<Integer>>();
         for (int ii=0; ii<bank.rows(); ii++) {
-            final int index = bank.getInt("pindex", ii);
+            final int index = bank.getInt(val, ii);
             if (!map.containsKey(index)) map.put(index,new ArrayList<Integer>());
             map.get(index).add(ii);
         }
