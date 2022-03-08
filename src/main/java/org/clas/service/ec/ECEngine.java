@@ -21,9 +21,7 @@ import org.jlab.io.base.DataEvent;
  */
 public class ECEngine extends ReconstructionEngine {
     
-    Detector              ecDetector = null;
-    
-    public Boolean isMC = false;   
+    Detector              ecDetector = null; 
     
     public ECEngine(){
         super("EC","gavalian","1.0");

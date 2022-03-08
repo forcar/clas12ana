@@ -3,6 +3,7 @@ package org.clas.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.clas.service.ec.ECCommon;
 import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.viewer.DetectorMonitor;
@@ -52,9 +53,10 @@ public class ECmc2 extends DetectorMonitor {
     public void localinit() {
         System.out.println("ECmc2.localinit()");
                 
-        engine.isMC = true;        
+        engine.setIsMC(true);       
         engine.setGeomVariation("rga_fall2018");  
-        engine.debug = false;
+        engine.setDebug(false);
+        setEngineConfig("test");
         
         ebmce.getCCDB(10); 
         ebmce.setGeom("2.5");

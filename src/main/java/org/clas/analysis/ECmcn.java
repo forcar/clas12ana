@@ -3,6 +3,7 @@ package org.clas.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.clas.service.ec.ECCommon;
 import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.viewer.DetectorMonitor;
@@ -50,9 +51,10 @@ public class ECmcn extends DetectorMonitor {
     public void localinit() {
         System.out.println(getDetectorName()+".localinit()");
         
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setGeomVariation("rga_fall2018"); 
-        engine.debug = false;
+        engine.setDebug(false);
+        setEngineConfig("phot");
         
         ebmce.getCCDB(10);
         ebmce.setGeom("2.5");
@@ -112,7 +114,7 @@ public class ECmcn extends DetectorMonitor {
     
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
-//    	geteff();
+    	geteff();
     	if(dumpFiles) writer.close();
     	isAnalyzeDone = true;
     }
@@ -129,7 +131,7 @@ public class ECmcn extends DetectorMonitor {
     		dgm.makeH1("h2",50,0,3,-2,"","","",1,1);
     		dgm.makeH1("h3",50,0,3,-2,"","","",2,2);
     		dgm.makeGraph("g21",-1,"BLK:REC  RED:ECAL ONLY","GEN P (GeV)","EFFICIENCY",1); dgm.cc("g21",false,false,0,0.85f,0,0); 
-    		dgm.makeGraph("g31",-2,"","","",2);
+    		dgm.makeGraph("g31",-2," "," "," ",2);                                         dgm.cc("g31",false,false,0,0.85f,0,0); 
     		dgm.makeH2("h6", 50, 0, 3, 100, 0, 1000, -1, "ANY LAYER", "GEN P (GeV)", "REC E (MeV)");
     		dgm.cc("h6", false, true, 0, 0, 0, 0);
     		dgm.makeH2("h7", 50, 0, 3, 100, 0, 1000, -1, "PCAL+ECIN+ECOU", "GEN P (GeV)", "REC E (MeV)");
@@ -160,18 +162,17 @@ public class ECmcn extends DetectorMonitor {
     public void processEvent(DataEvent de) {
 		
     	GEN.clear();  
-    	if (dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine  
     	
-//		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==1;
+		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==1;
        
-//        if (goodev) {         	
+        if (goodev) {         	
         	GEN   = ebmce.getkin(ebmce.pmc); dgm.fill("h1",GEN.get(0));        	
 	    	if (dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine            
-//        	if(!ebmce.processDataEvent(de)) return;        	
-//        	processDEMO(); 
-//        	processNEUTRONS();
+        	if(!ebmce.processDataEvent(de)) return;        	
+        	processDEMO(); 
+        	processNEUTRONS();
             if(dumpFiles) {ebmce.getRECBanks(de,ebmce.eb); writer.writeEvent(de);}     
-//        }
+        }
     }
     
     public void processDEMO() {
@@ -227,7 +228,9 @@ public class ECmcn extends DetectorMonitor {
 					
 		Vector3D[] r1 = new Vector3D[50]; Vector3[] c1 = new Vector3[50];
 		Vector3D[] r4 = new Vector3D[50]; Vector3[] c4 = new Vector3[50]; 
-		Vector3D[] r7 = new Vector3D[50]; Vector3[] c7 = new Vector3[50];              
+		Vector3D[] r7 = new Vector3D[50]; Vector3[] c7 = new Vector3[50];  
+		
+		System.out.println(trsec+" "+npart+" "+GEN.get(0));
 		
 		if (npart>=1) {
 			int npp = 0, ipp = 0;
@@ -241,8 +244,8 @@ public class ECmcn extends DetectorMonitor {
 			    		if (dr.getAssociation(0)==ipp && dr.getDescriptor().getType()==DetectorType.ECAL) {
 //			            for (DetectorResponse dr : dp.getDetectorResponses()) { 			            	
 //			            	int lay = dr.getDescriptor().getType()==DetectorType.ECAL ? dr.getDescriptor().getLayer():0; 	
-			    			System.out.println(lay+" "+dr.getPath()+" "+dr.getTime()+" "+stt);
 			    			double dre=dr.getEnergy(),drt = dr.getTime()-stt, drb=dr.getPath()/drt/29.97; int drs=dr.getStatus(); 
+			    			System.out.println(lay+" "+dr.getPath()+" "+dr.getTime()+" "+stt);
 			    			Vector3D drp=dr.getPosition(); Vector3 drc=dr.getCoordUVW(); 
 			            	if(lay==1) { npc[0]++ ; npc[npp+1]++;epc[npp+1]=dre;r1[npp+1]=drp;c1[npp+1]=drc;spc[npp+1]=drs;bpc[npp+1]=drb; }    					
 			            	if(lay==4) {neci[0]++ ;neci[npp+1]++;eci[npp+1]=dre;r4[npp+1]=drp;c4[npp+1]=drc;sci[npp+1]=drs;bci[npp+1]=drb; }    					
@@ -254,6 +257,8 @@ public class ECmcn extends DetectorMonitor {
 			    ipp++;
 			}
 			
+			System.out.println(npc[0]+" "+neci[0]+" "+neco[0]);
+			
 			boolean n100 = npc[0]==1 && neci[0]==0 && neco[0]==0; 
 			boolean n010 = npc[0]==0 && neci[0]==1 && neco[0]==0;
 			boolean n001 = npc[0]==0 && neci[0]==0 && neco[1]==1;
@@ -262,13 +267,12 @@ public class ECmcn extends DetectorMonitor {
 			if(n010) dgm.fill("n010",GEN.get(0), bci[1]);
 			if(n001) dgm.fill("n001",GEN.get(0), bco[1]);
 			
-		}
-    	       
+		}   	       
     }
     
     public void geteff() {
-    	dgm.getGraph("g21").copy(H1F.divide(dgm.getH1F("h2"),dgm.getH1F("h1")).getGraph());
-    	dgm.getGraph("g31").copy(H1F.divide(dgm.getH1F("h3"),dgm.getH1F("h1")).getGraph());    
+    	dgm.geteff("g21", "h2", "h1");
+    	dgm.geteff("g31", "h3", "h1");
     }
-    
+   
 }
