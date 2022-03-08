@@ -569,7 +569,7 @@ public class ECpi0 extends DetectorMonitor{
             }
             
         } else if(goodrec) {        	
-        	HashMap<Integer,ArrayList<Integer>> part2calo = mapByIndex(reccal); 
+        	HashMap<Integer,ArrayList<Integer>> part2calo = mapByIndex(reccal,"pindex"); 
             ArrayList<Integer> chargeHit = new ArrayList<>();
             for (int i=0; i<6; i++) part.mip[i]=0;                  
             for (int ipart=0; ipart<recpar.rows(); ipart++) {
