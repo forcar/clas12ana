@@ -113,11 +113,15 @@ public class DataGroupManager {
     
     public boolean isH1(String name) {
     	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof H1F);
-   }
+    }
     
     public boolean isH2(String name) {
     	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof H2F);
-   }
+    }
+    
+    public boolean isGraph(String name) {
+    	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof GraphErrors);
+    }
     
    
     
@@ -162,6 +166,8 @@ public class DataGroupManager {
     	if(isH2(eff)) getH2F(eff).reset();
     	if(isH1(eff)) getH1F(eff).add(H1F.divide(getH1F(numer), getH1F(denom)));
     	if(isH2(eff)) getH2F(eff).add(H2F.divide(getH2F(numer), getH2F(denom)));
+    	if(isGraph(eff)) getGraph(eff).reset();
+    	if(isGraph(eff)) getGraph(eff).copy(H1F.divide(getH1F(numer), getH1F(denom)).getGraph());
     }
     
     public class H2FF extends H2F {
@@ -190,7 +196,7 @@ public class DataGroupManager {
     	    nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
-	    if(f>=0)  dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1); 	   
+	    if(f>=0)  makeF1D("f"+getName(name),"[a]",x1,x2,f);	   
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }
     
@@ -206,7 +212,7 @@ public class DataGroupManager {
    	        nn++;
         }
         dg.addDataSet(h1, (f==-2)? n-1: n++);
-	    if(f>=0)  dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1);
+	    if(f>=0)  makeF1D("f"+getName(name),"[a]",x1,x2,f);
 	    System.out.println("makeH1("+hmap.get(name)+" "+n+")");
     }    
     
@@ -215,13 +221,13 @@ public class DataGroupManager {
 	    if(tit!="") h2.setTitle(tit);
 	    h2.setTitleX(titx); h2.setTitleY(tity);
 	    dg.addDataSet(h2, n++);
-	    if(f!=-1) dg.addDataSet(makeF1D("f"+getName(name),x1,x2,f), n-1);
+	    if(f!=-1) makeF1D("f"+getName(name),"[a]",x1,x2,f);
 	    System.out.println("makeH2("+hmap.get(name)+" "+n+")");
     }
     
-    public F1D makeF1D(String name, double x1, double x2, double val) {
-    	F1D f1 = new F1D(name,"[a]",x1,x2); f1.setParameter(0,val);
-    	return f1;
+    public void makeF1D(String name, String f, double x1, double x2, double val) {
+    	F1D f1 = new F1D(name,f,x1,x2); f1.setParameter(0,val);
+    	dg.addDataSet(f1, n-1);
     }
     
     public void makeGraph(String name, int f, String tit, String titx, String tity, int ... options) {
