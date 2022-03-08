@@ -23,6 +23,8 @@ public class ECEngine extends ReconstructionEngine {
     
     Detector              ecDetector = null;
     
+    public Boolean isMC = false;   
+    
     public ECEngine(){
         super("EC","gavalian","1.0");
     }
