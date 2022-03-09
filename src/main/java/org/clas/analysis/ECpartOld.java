@@ -493,7 +493,7 @@ public class ECpartOld  {
         reader.open(evioPath+evioFile1);
         
         engine.init();
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default");               
         part.setThresholds("Electron_hi",engine);
         part.setGeom("2.5");
@@ -653,7 +653,7 @@ public class ECpartOld  {
               
 //        engine.setGeomVariation("rga_fall2018");
         engine.init();
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setVeff(16); //GEMC default
         

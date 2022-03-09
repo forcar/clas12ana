@@ -19,8 +19,11 @@ import org.jlab.io.base.DataEvent;
 
 public class ECmc extends DetectorMonitor {
 	
-	Event       ev = new Event();
-	EBMCEngine  eb = new EBMCEngine();
+	Event          ev = new Event();
+	EBMCEngine  ebmce = new EBMCEngine();
+	
+	List<Float>           GEN = new ArrayList<Float>();
+	List<Float>           REC = new ArrayList<Float>(); 
 	
 	DataGroup dg = null;
 	   
@@ -48,12 +51,13 @@ public class ECmc extends DetectorMonitor {
         System.out.println("ECmc.localinit()");
         
         engine.init();
-        engine.isMC = true;
-        engine.setVariation("default");         
+        engine.setIsMC(true);
+        engine.setVariation("default");  
+        setEngineConfig("phot");
         
-        eb.getCCDB(10);
-        eb.setGeom("2.5");
-        eb.isMC = true;
+        ebmce.getCCDB(10);
+        ebmce.setGeom("2.5");
+        ebmce.isMC = true;
         
         tl.setFitData(Fits);
     }
@@ -135,7 +139,7 @@ public class ECmc extends DetectorMonitor {
         dgm.makeH2("h51",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h52",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h53",50,0.0,2.5, 60,0.0,0.31,-1,"","ECAL Electron Energy (GeV)","Sampling Fraction E/P");
-        dgm.makeGraph("g53",-2,"","","",1); SFFunction sf = new SFFunction("esf",-11,eb.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
+        dgm.makeGraph("g53",-2,"","","",1); SFFunction sf = new SFFunction("esf",-11,ebmce.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
         dgm.makeH1("h60a",50,0,10,-1,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,3);
         dgm.makeH1("h60b",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,5);
         dgm.makeH1("h60c",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,2);
@@ -152,9 +156,9 @@ public class ECmc extends DetectorMonitor {
         dgm.makeH2("h70",30,0,10, 30,5,30,-1,"e-,#gamma,#pi-","True Electron Momentum (GeV)","True Electron Theta (deg)");
         dgm.makeH2("h71",30,0,10, 30,5,30,-1,"#chiPID<3.5",   "True Electron Momentum (GeV)","True Electron Theta (deg)");
         dgm.makeH2("h72",30,0,10, 30,5,30,-1,"#DeltaP<"+dp2,  "True Electron Momentum (GeV)","True Electron Theta (deg)");
-        dgm.makeH1("h73a",10,0.5,10.5,-1,"","Multiplicity",1,1,2);
-        dgm.makeH1("h73b",10,0.5,10.5,-2,"","Multiplicity",1,34,2);
-        dgm.makeH1("h73c",10,0.5,10.5,-2,"","Multiplicity",1,2,2);
+        dgm.makeH1("h73a",10,0.5,10.5,-1,"","Multiplicity",1,1,"2");
+        dgm.makeH1("h73b",10,0.5,10.5,-2,"","Multiplicity",1,34,"2");
+        dgm.makeH1("h73c",10,0.5,10.5,-2,"","Multiplicity",1,2,"2");
         break;
         case 1:
         dgm.add("EFFICIENCY",4,3,0,st,getRunNumber());               
@@ -192,12 +196,18 @@ public class ECmc extends DetectorMonitor {
     
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
-    	fith52(); geteff();
+//    	fith52(); 
+    	geteff();
     	isAnalyzeDone = true;
     }
     
     @Override
-    public void processEvent(DataEvent event) {
+    public void processEvent(DataEvent event) {  	
+    	processEV(event); //this works 
+    	processEBMCE(event); //debugging
+    }
+    
+    public void processEV(DataEvent event) {
     	
     	ev.init(event);        	
     	ev.setEventNumber(10);
@@ -299,33 +309,62 @@ public class ECmc extends DetectorMonitor {
 //    		System.out.println(" "+nevent+" "+nev+" "+nelec+" "+nphot+" "+npim);
         }
         
-        dropBanks(event);
- //       engine.processDataEvent(event);  
-        eb.processDataEvent(event);  
-        eb.getUnmatchedResponses();
-        List<DetectorResponse> rPC = eb.getPCResponses(mcsec);
+    }
+    
+    public List<Float> getkin (List<Particle> list) {
+    	List<Float> out = new ArrayList<Float>();
+    	int n=0;
+    	for (Particle p : list) {
+		    out.add(n++,(float) p.e()); 
+		    out.add(n++,(float) Math.toDegrees(p.theta())); 
+		    out.add(n++,(float) Math.toDegrees(p.phi()));
+		    if(p.hasProperty("beta")) out.add(n++,(float) p.getProperty("beta"));
+    	}
+		return out;
+    }
+    
+    public void processEBMCE(DataEvent de) { // still debugging this
+    	
+    	GEN.clear();  REC.clear();
+    	
+		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==1;   
+		
+	    if (goodev) { 
+		
+        	GEN = getkin(ebmce.pmc); float refP = (float) GEN.get(0); float refTH = (float) GEN.get(1); float refE = refP;       	    	
+
+	    	dropBanks(de);
+	    	
+        	if(!ebmce.processDataEvent(de)) return;  
+        	
+        	ebmce.processDataEvent(de);  
+        	ebmce.getUnmatchedResponses();
         
-        double ecalE = eb.getEcalEnergy(mcsec);
+        	List<DetectorResponse> rPC = ebmce.getPCResponses(mcsec);
+        
+        	double ecalE = ebmce.getEcalEnergy(mcsec);
 
 //      Boolean trig1 = good_pcal &&  good_ecal && part.epc>0.04 && energy>0.12;
 //      Boolean trig2 = good_pcal && !good_ecal && part.epc>0.04;
 //      Boolean trig1 = good_pcal &&  good_ecal && part.epc>0.06 && energy>0.15;
 //      Boolean trig2 = good_pcal && !good_ecal && part.epc>0.15;
         
-//        System.out.println("energy,1,2,3 = "+energy+" "+part.epc+" "+part.eec1+" "+part.eec2);
+        	System.out.println("energy,1,2,3 = "+ecalE+" "+ebmce.epc+" "+ebmce.eec1+" "+ebmce.eec2);
         
-        Boolean good_pcal = eb.epc>0.00;              //VTP reported cluster
-        Boolean good_ecal = (eb.eec1+eb.eec2)>0.001 ; //VTP reported cluster
-        Boolean trig1 = good_pcal &&  good_ecal && eb.epc>0.04 && ecalE>0.12;
-        Boolean trig2 = good_pcal && !good_ecal && eb.epc>0.12;
+        	Boolean good_pcal = ebmce.epc>0.00;              //VTP reported cluster
+        	Boolean good_ecal = (ebmce.eec1+ebmce.eec2)>0.001 ; //VTP reported cluster
+        	Boolean trig1 = good_pcal &&  good_ecal && ebmce.epc>0.04 && ecalE>0.12;
+        	Boolean trig2 = good_pcal && !good_ecal && ebmce.epc>0.12;
         		
 //        trig1=true; trig2=true;
         
-        if(rPC.size()>0)                   {if(refTH>15)dgm.fill("effmom1",refE); dgm.fill("effthe1",refTH);}
-        if(rPC.size()==1 || rPC.size()==2) {if(refTH>15)dgm.fill("effmom2",refE); dgm.fill("effthe2",refTH);}
-        if(rPC.size()==1)                  {if(refTH>15)dgm.fill("effmom3",refE); dgm.fill("effthe3",refTH);
-        dgm.fill("h50",refP, ecalE/refP); 
-        dgm.fill("h53",ecalE,ecalE/refP);}                       
+        	if(rPC.size()>0)                   {if(refTH>15)dgm.fill("effmom1",refE); dgm.fill("effthe1",refTH);}
+        	if(rPC.size()==1 || rPC.size()==2) {if(refTH>15)dgm.fill("effmom2",refE); dgm.fill("effthe2",refTH);}
+        	if(rPC.size()==1)                  {if(refTH>15)dgm.fill("effmom3",refE); dgm.fill("effthe3",refTH);
+        	dgm.fill("h50",refP, ecalE/refP); 
+        	dgm.fill("h53",ecalE,ecalE/refP);}  
+        	
+	    }
               
     }
     

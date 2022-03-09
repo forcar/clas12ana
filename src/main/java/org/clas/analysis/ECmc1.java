@@ -53,9 +53,8 @@ public class ECmc1 extends DetectorMonitor {
     public void localinit() {
         System.out.println("ECmc1.localinit()");
         
-        engine.init();
-        engine.isMC = true;
-        engine.setVariation("default"); 
+        engine.setIsMC(true);
+        engine.setGeomVariation("rga_fall2018");   
         
         ebmce.getCCDB(11);
         ebmce.setGeom("2.5");
@@ -99,12 +98,12 @@ public class ECmc1 extends DetectorMonitor {
     	switch (st) {        
         case 0:    
     		dgm.add("CLUSTERS",3,5,0,st,getRunNumber());    
-    		dgm.makeH1("h211", 5,0.5,5.5,-1,           "","PCAL Clusters",1,2,2);                              dgm.cc("h211", true,false,0,0,0,0);  
-    		dgm.makeH1("h211t",5,0.5,5.5,-2,           "","PCAL Clusters",1,0,2);                             
-    		dgm.makeH1("h221", 5,0.5,5.5,-1,           "","ECIN Clusters",1,5,2);                              dgm.cc("h221", true,false,0,0,0,0);
-    		dgm.makeH1("h221t",5,0.5,5.5,-2,           "","ECIN Clusters",1,0,2);                              
-    		dgm.makeH1("h231", 5,0.5,5.5,-1,           "","ECOU Clusters",1,4,2);                              dgm.cc("h231", true,false,0,0,0,0);
-    		dgm.makeH1("h231t",5,0.5,5.5,-2,           "","ECOU Clusters",1,0,2);                             
+    		dgm.makeH1("h211", 5,0.5,5.5,-1,           "","PCAL Clusters",1,2,"100");                          dgm.cc("h211", true,false,0,0,0,0);  
+    		dgm.makeH1("h211t",5,0.5,5.5,-2,           "","PCAL Clusters",1,0,"100");                              
+    		dgm.makeH1("h221", 5,0.5,5.5,-1,           "","ECIN Clusters",1,5,"100");                          dgm.cc("h221", true,false,0,0,0,0);
+    		dgm.makeH1("h221t",5,0.5,5.5,-2,           "","ECIN Clusters",1,0,"100");                             
+    		dgm.makeH1("h231", 5,0.5,5.5,-1,           "","ECOU Clusters",1,4,"100");                          dgm.cc("h231", true,false,0,0,0,0);
+    		dgm.makeH1("h231t",5,0.5,5.5,-2,           "","ECOU Clusters",1,0,"100");                              
     		dgm.makeH2("st1",  5,0.5,5.5,4,0,4,-1,     "","PCAL Clusters","STATUS");                           dgm.cc("st1", false,true,0,0,0,0);
     		dgm.makeH2("st4",  5,0.5,5.5,4,0,4,-1,     "","ECIN Clusters","STATUS");                           dgm.cc("st4", false,true,0,0,0,0);
     		dgm.makeH2("st7",  5,0.5,5.5,4,0,4,-1,     "","ECOU Clusters","STATUS");                           dgm.cc("st7", false,true,0,0,0,0);                     
@@ -238,7 +237,7 @@ public class ECmc1 extends DetectorMonitor {
     
     @Override
     public void plotEvent(DataEvent de) {
-        analyze();         
+//        analyze();         
     }
     
     public void analyze() {
@@ -280,13 +279,13 @@ public class ECmc1 extends DetectorMonitor {
 		
         if (goodev) { 
         	
-        	GEN = getkin(ebmce.pmc); float refP = (float) GEN.get(0); float refTH = (float) GEN.get(1);        	    	
- 	
-//	    	if(!ebmce.hasStartTime) dropBanks(de);  //drop ECAL banks and re-run ECEngine            
+        	GEN = getkin(ebmce.pmc); float refP = (float) GEN.get(0); float refTH = (float) GEN.get(1); 
+        	
+	    	if(dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine            
         	if(!ebmce.processDataEvent(de)) return;
         	
         	float stt = ebmce.starttime;  
-        	
+            
             List<DetectorParticle> par = ebmce.eb.getEvent().getParticles(); 
         	List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList(); 
         	

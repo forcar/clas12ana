@@ -45,6 +45,7 @@ import org.jlab.service.eb.EBAnalyzer;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
 import org.jlab.service.eb.EBTBEngine;
+import org.clas.service.ec.ECCommon;
 import org.clas.service.ec.ECEngine;
 import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
@@ -480,9 +481,9 @@ public class ECPart extends EBTBEngine {
     	case      "Pizero":engine.setStripThresholds(10,9,8);  
                            engine.setPeakThresholds(18,20,15); 
                            engine.setClusterCuts(7,15,20); break;
-    	case        "Test":engine.setStripThresholds(10,200,8);  
-                           engine.setPeakThresholds(18,500,15); 
-                           engine.setClusterCuts(7,15,20); 
+    	case        "Test":engine.setStripThresholds(20,20,20);  
+                           engine.setPeakThresholds(18,20,15); 
+                           engine.setClusterCuts(3,7,7); 
     	}
     }
     
@@ -560,7 +561,7 @@ public class ECPart extends EBTBEngine {
         reader.open(hipoPath+hipoFile);
         
         engine.init();
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default");
                 
         setCCDB(10);
@@ -959,12 +960,12 @@ public class ECPart extends EBTBEngine {
             
         engine.init();
 //        engine.setOccMax(100000);
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
 
         setCCDB(2);
         
-        setThresholds("Pizero",engine);
+        setThresholds("Test",engine);
         setGeom("2.5");
         
         int run = 0;
@@ -1085,7 +1086,7 @@ public class ECPart extends EBTBEngine {
         writer.open("/Users/colesmith/photon_dist.hipo");
         
         engine.init();
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         
         setCCDB(2);
@@ -1317,11 +1318,11 @@ public class ECPart extends EBTBEngine {
         H1F  h232 = new H1F("nmult232",50,0.,1);   h232.setTitleX("ECOU Energy Fraction"); 
       
         engine.init();
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         
         setCCDB(2);
-        setThresholds("Pizero",engine);
+        setThresholds("Photon",engine);
         setGeom("2.5");
         setGoodPhotons(12);
       
@@ -1517,7 +1518,7 @@ public class ECPart extends EBTBEngine {
              
 //        engine.setGeomVariation("rga_fall2018"); //this must be set before engine.init()
         engine.init();
-        engine.isMC = isMC;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
         engine.setVeff(16); //GEMC default
         engine.setPCTrackingPlane(9);
@@ -1656,7 +1657,7 @@ public class ECPart extends EBTBEngine {
         
         engine.init();
 //        engine.setOccMax(10000);
-        engine.isMC = true;
+        engine.setIsMC(true);
         engine.setVariation("default"); // Use clas6 variation for legacy simulation 10k-s2-newgeom 
 
         setCCDB(2);
@@ -1720,8 +1721,8 @@ public class ECPart extends EBTBEngine {
         String env = System.getenv("CLAS12DIR");
 //     	part.pizeroDemo(args);
  //    	part.photonDist(args);
-//     	part.photonDemo(args);
-    	part.neutronDemo(args);
+     	part.photonDemo(args);
+//    	part.neutronDemo(args);
 //        part.electronDemo(args);
 //        part.scalerdemo(args);
     }
