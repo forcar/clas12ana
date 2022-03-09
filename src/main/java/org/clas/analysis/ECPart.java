@@ -45,7 +45,6 @@ import org.jlab.service.eb.EBAnalyzer;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
 import org.jlab.service.eb.EBTBEngine;
-import org.clas.service.ec.ECCommon;
 import org.clas.service.ec.ECEngine;
 import org.jlab.service.eb.EventBuilder;
 import org.jlab.utils.groups.IndexedList;
