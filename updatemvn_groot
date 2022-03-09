@@ -1,0 +1,4 @@
+#!/bin/sh -f
+
+mvn install:install-file -Dfile=~/lib/groot-3.0.1-SNAPSHOT.jar -DgroupId=org.jlab.groot -DartifactId=groot -Dpackaging=jar -Dversion=3.0.1-SNAPSHOT
+ 
