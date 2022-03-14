@@ -2,23 +2,14 @@ package org.clas.analysis;
 
 import org.clas.tools.KinLib;
 import org.clas.viewer.DetectorMonitor;
+
 import org.jlab.clas.physics.Particle;
-import org.jlab.groot.data.H1F;
-import org.jlab.groot.data.H2F;
-import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.jnp.hipo4.data.Bank;
-
-//import org.jlab.jnp.hipo.io.*;
-//import org.jlab.jnp.hipo.data.*;
-//import org.jlab.jnp.reader.*;
-//import org.jlab.jnp.physics.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
 
 public class ECelas extends DetectorMonitor {
 	
@@ -76,6 +67,7 @@ public class ECelas extends DetectorMonitor {
     	createWAGON(2);
     	createEVENT(0);
     	createEVENT(1);
+    	createEVENT(2);
     	createKCOR(0);
     	histosExist = true;
     }
@@ -113,24 +105,33 @@ public class ECelas extends DetectorMonitor {
     }
     
     public void createEVENT(int st) {
+    	int nb = 100, is;
     	switch (st) {        
         case 0: 
         	dgm.add("EVENT",6,3,0,st,getRunNumber());
-        	for(int is=1; is<7; is++) {dgm.makeH2("ev0"+is, 100,0.7,kinqw[1]*1.1,60,4,40,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)"); dgm.cc("eV0"+is,false,true,0,0,0,0);}
-        	for(int is=1; is<7; is++) {dgm.makeH2("ev1"+is, 100,0.7,kinqw[1]*1.1,60,4,40,-1,"",          "W (GEV)","#theta (DEG)"); dgm.cc("ev1"+is,false,true,0,0,0,0);}
-        	for(int is=1; is<7; is++) {dgm.makeH1("ev2a"+is,100,0.7,kinqw[1]*1.1,-1,"","W (GEV)","",1,0,"1000000"); 
-        	                           dgm.makeH1("ev2b"+is,100,0.7,kinqw[1]*1.1,-2,"","W (GEV)","",1,1,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH2("ev0"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)"); dgm.cc("eV0"+is,false,true,0,0,0,0);}
+        	for(is=1; is<7; is++) {dgm.makeH2("ev1"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"",          "W (GEV)","#theta (DEG)"); dgm.cc("ev1"+is,false,true,0,0,0,0);}
+        	for(is=1; is<7; is++) {dgm.makeH1("ev2a"+is,nb,0.7,kinqw[1]*1.1,-1,"","W (GEV)","",1,0,"1000000"); 
+        	                           dgm.makeH1("ev2b"+is,nb,0.7,kinqw[1]*1.1,-2,"","W (GEV)","",1,1,"1000000");}
         	break;
         case 1:
-        	dgm.add("EVENT",3,2,0,st,getRunNumber()); int is;
-        	int nb=100;
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=6-8",  "W (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut2"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=8-10", "W (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut3"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=10-15","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut4"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=15-20","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut5"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=20-25","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("thcut6"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=25-30","W (GEV)","",is==6?9:is,0,"1000000");} 
-        }
+        	dgm.add("EVENT",3,2,0,st,getRunNumber());         	
+        	for(is=1; is<7; is++) {dgm.makeH1("wth1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=6-8",  "W (GEV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("wth2"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=8-10", "W (GEV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("wth3"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=10-15","W (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth4"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=15-20","W (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth5"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=20-25","W (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth6"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=25-30","W (GEV)","",is==6?9:is,0,"1000000");} 
+        	break;
+        case 2:
+        	dgm.add("EVENT",3,2,0,st,getRunNumber()); 
+        	double be=beamEnergy;
+        	for(is=1; is<7; is++) {dgm.makeH1("pth1"+is,nb,0.5,kin.p1vsth1(6, be)*1.1,-(is==1?1:2),"#theta=6-8",  "P (GEV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("pth2"+is,nb,0.5,kin.p1vsth1(8, be)*1.1,-(is==1?1:2),"#theta=8-10", "P (GEV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("pth3"+is,nb,0.5,kin.p1vsth1(10,be)*1.1,-(is==1?1:2),"#theta=10-15","P (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth4"+is,nb,0.5,kin.p1vsth1(15,be)*1.1,-(is==1?1:2),"#theta=15-20","P (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth5"+is,nb,0.5,kin.p1vsth1(20,be)*1.1,-(is==1?1:2),"#theta=20-25","P (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth6"+is,nb,0.5,kin.p1vsth1(25,be)*1.1,-(is==1?1:2),"#theta=25-30","P (GEV)","",is==6?9:is,0,"1000000");}         }
     }
     
     public void createKCOR(int st) {
@@ -237,13 +238,11 @@ public class ECelas extends DetectorMonitor {
 
         	return delthe > -0.026 ? true : false;
         } 
-
-        return false;
-  	
+        return false; 	
     }
 
     public void processEV(DataEvent event) { 
-    	    	
+    	int ist = getElecTriggerSector();
         for(int loop = 0; loop < RecPart.rows(); loop++){
         	if(RecPart.getInt("pid",loop)!=0) {
         		Particle p = new Particle(RecPart.getInt("pid", loop),
@@ -265,16 +264,15 @@ public class ECelas extends DetectorMonitor {
                 		float lw = RecCal.getFloat("lw",  part2calo.get(loop).get(0));   
                     	double w = Math.sqrt(w2), the=p.theta()*180/Math.PI;
                     	dgm.fill("ev0"+s,w,the); dgm.fill("ev2a"+s,w);
-                    	if(lv>19 && lw>19) {
-                    	if(the>= 6&&the <8) dgm.fill("thcut1"+s,w); 
-                    	if(the>= 8&&the<10) dgm.fill("thcut2"+s,w); 
-                    	if(the>=10&&the<15) dgm.fill("thcut3"+s,w);
-                    	if(the>=15&&the<20) dgm.fill("thcut4"+s,w); 
-                    	if(the>=20&&the<25) dgm.fill("thcut5"+s,w); 
-                    	if(the>=25&&the<30) dgm.fill("thcut6"+s,w); 
+                    	if(s==ist && lv>19 && lw>19) {
+                    	if(the>= 6&&the <8) {dgm.fill("wth1"+s,w);dgm.fill("pth1"+s,p.e());}
+                    	if(the>= 8&&the<10) {dgm.fill("wth2"+s,w);dgm.fill("pth2"+s,p.e());}
+                    	if(the>=10&&the<15) {dgm.fill("wth3"+s,w);dgm.fill("pth3"+s,p.e());}
+                    	if(the>=15&&the<20) {dgm.fill("wth4"+s,w);dgm.fill("pth4"+s,p.e());}
+                    	if(the>=20&&the<25) {dgm.fill("wth5"+s,w);dgm.fill("pth5"+s,p.e());}
+                    	if(the>=25&&the<30) {dgm.fill("wth6"+s,w);dgm.fill("pth6"+s,p.e());} 
                     	}
-                    }
-                    
+                    }                   
                 }
         	}
         } 
