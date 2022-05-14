@@ -56,14 +56,13 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
-
 import org.clas.service.ec.ECEngine;
 
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 import org.clas.tools.EmbeddedCanvasTabbed;
-//import org.clas.tools.F1D;
+import org.clas.tools.EngineControl;
 
 public class DetectorMonitor implements ActionListener {    
     
@@ -82,7 +81,9 @@ public class DetectorMonitor implements ActionListener {
     private JPanel                    controlsPanel0 = null;
     private JPanel                    controlsPanel1 = null;
     private JPanel                    controlsPanel2 = null;
+    private JPanel                    controlsPanel3 = null;
     private JPanel                     runIndexPanel = null;
+    private JPanel                     ECEnginePanel = null;
     private EmbeddedCanvasTabbed      detectorCanvas = null;
     private DetectorPane2D              detectorView = null;
     private ButtonGroup                          bT0 = null;
@@ -98,6 +99,7 @@ public class DetectorMonitor implements ActionListener {
     public  Boolean                    sectorButtons = false;
     private Boolean                      YsliderPane = false;
     private Boolean                      ZsliderPane = false;
+    private Boolean                     ECEnginePane = false;
     private int                     detectorActivePC = 1;
     private int                 detectorActiveSector = 1;
     private int                   detectorActiveView = 0;
@@ -119,7 +121,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                          useRDIF = false;
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
-    
+   
     public JRadioButton bEL,bPI,bPH,bP,bC,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
     public  JCheckBox arBtn,arBtn2;
     
@@ -151,30 +153,11 @@ public class DetectorMonitor implements ActionListener {
     public String[] layer = new String[]{"pcal","ecin","ecou"};
     public String[]  view = new String[]{"u","v","w"};    
     
-    public ECEngine  engine = new ECEngine();  
-
     public String variation = "default";
     public String      geom = "2.5";
     public String    config = "phot";  //When re-running ECEngine from cooked data this should always be "phot"
 	
 	public Boolean  isHipo3Event = true;
-    
-    int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};   //ECEngine default
-    int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
-    int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
-    int[][] sthrTest = {{20,20,20},{20,20,20},{20,20,20}}; 
-    
-    int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}}; //ECEngine default
-    int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
-    int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
-    int[][] pthrTest = {{18,18,18},{20,20,20},{15,15,15}};
-        
-    double[] cerrMuon = {5.5,10.,10.};
-    double[] cerrPhot = {7.0,15.,20.}; //ECEngine default
-    double[] cerrElec = {10.,10.,10.};  
-    double[] cerrTest = {7.,15.,20.};  
     
     String   ltcc[] = {"L","R"};
     String   htcc[] = {"L","R"};
@@ -220,18 +203,15 @@ public class DetectorMonitor implements ActionListener {
     public Boolean isTimeLineFitsDone = false;
     public Boolean        histosExist = false;
     public Boolean          dgmActive = false;
-    public Boolean    useUnsharedTime = false;
-    public Boolean  useUnsharedEnergy = true;
-    public Boolean        useFADCTime = false;
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
-    public Boolean        dbgECEngine = false;
     public Boolean        dbgAnalyzer = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
     public IndexedList<GraphErrors>       glist = new IndexedList<GraphErrors>(1);
-    public TimeLine                          tl = new TimeLine();
+    
+    public TimeLine                   tl = new TimeLine();
     
     public String                 TLname = null;
     public Boolean                TLflag = null;
@@ -244,7 +224,7 @@ public class DetectorMonitor implements ActionListener {
     public EBCCDBConstants        ebccdb = null;
     public int[]                  detcal = {0,0,0};
     public float                TVOffset = 0;
-    public float                logParam = 0f;
+    public float                logParam = 3f;
     public int           PCTrackingPlane = 9;
     public int           ECTrackingPlane = 0;
     public String                   root = " ";
@@ -255,6 +235,8 @@ public class DetectorMonitor implements ActionListener {
     
 	Map<String,Object[]> map = new HashMap<String,Object[]>();
     Object[] can = {false, false, 0, 0, 0, 0};
+    
+    public EngineControl eng = new EngineControl(new ECEngine());
     
     String[]  ccdbTables = new String[]{
             "/calibration/ec/attenuation", 
@@ -271,11 +253,10 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window"           
-    };
-    
+    };    
     
     public DetectorMonitor(String name){
-    	initGStyle(18);
+    	initGStyle(14);
         detectorName   = name;
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
@@ -343,7 +324,6 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void initGStyle(int fontsize) {
-
         GStyle.getAxisAttributesX().setTitleFontSize(fontsize);
         GStyle.getAxisAttributesX().setLabelFontSize(fontsize);
         GStyle.getAxisAttributesY().setTitleFontSize(fontsize);
@@ -368,7 +348,8 @@ public class DetectorMonitor implements ActionListener {
     
     public void initPanel() {
         getDetectorPanel().setLayout(new BorderLayout());
-        actionPanel = new JPanel(new FlowLayout());
+        actionPanel   = new JPanel(new FlowLayout());
+        ECEnginePanel = new JPanel(new FlowLayout());
         runIndexPanel = new JPanel(new FlowLayout());
         controlsPanel0 = new JPanel(new GridBagLayout());
         this.controlsPanel1 = new JPanel();
@@ -377,135 +358,37 @@ public class DetectorMonitor implements ActionListener {
         this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Timeline"));        
         controlsPanel1.add(packActionPanel());
         controlsPanel2.add(packRunIndexPanel());
+        if(ECEnginePane) {
+        	this.controlsPanel3 = new JPanel();
+        	this.controlsPanel3.setBorder(BorderFactory.createTitledBorder("ECEngine"));        
+        	controlsPanel3.add(packECEnginePanel());
+        }
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;		
         c.gridx=0 ; c.gridy=0 ; controlsPanel0.add(controlsPanel1,c);
         c.gridx=0 ; c.gridy=1 ; controlsPanel0.add(controlsPanel2,c);
+        if(ECEnginePane) {c.gridx=0 ; c.gridy=2 ; controlsPanel0.add(controlsPanel3,c);}
         getDetectorPanel().add(getDetectorCanvas(),BorderLayout.CENTER);           
         getDetectorPanel().add(controlsPanel0,BorderLayout.SOUTH); 
 //        getDetectorPanel().add(packRunIndexPanel(),BorderLayout.SOUTH); 
-    }
-    
-    public void configEngine(String val) {
-    	System.out.println(root+"configEngine("+val+")");
-    	engine.setIsSingleThreaded(true);
-        engine.setVariation(variation);
-        engine.setGeomVariation("rga_spring2018");
-        engine.init();
-        engine.setIsMC(false);
-        engine.setLogParam(logParam); // 0 corresponds to default coatjava peak log E weighting 
-        setEngineThresholds(val);
-   }
-    
-    public void setUseUnsharedTime(Boolean val) {
-    	engine.setUseUnsharedTime(val);
-    }
-    
-    public void setUseUnsharedEnergy(Boolean val) {
-    	engine.setUseUnsharedEnergy(val);
-    }
-    
-    public void setUseFADCTime(Boolean val) {
-    	engine.setUseFADCTime(val);
-    	useFADCTime = val;
-    }    
-    public void setPCTrackingPlane(int val) {
-    	engine.setPCTrackingPlane(val);
-    	PCTrackingPlane = val;
-    } 
-    
-    public void setECTrackingPlane(int val) {
-    	engine.setECTrackingPlane(val);
-    	ECTrackingPlane = val;
-    }  
-    
-    public void setStripThreshold(String val) {
-    	String[] x  = val.split(",",3); 
-    	engine.setStripThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
-    } 
-    
-    public void setPeakThreshold(String val) {
-    	String[] x  = val.split(",",3); 
-    	engine.setPeakThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
-    } 
-    
-    public void setLogParam(float val) {
-    	engine.setLogParam(val);
-    	logParam = val;
-    }  
-    
-    public void setDbgECEngine(Boolean val) {
-    	dbgECEngine = val;
-    	engine.setDebug(val);
     }
     
     public void setDbgAnalyzer(Boolean val) {
     	dbgAnalyzer = val;
     }
     
-    public void setEngineConfig(String val) {
-    	config = val;
-    }
-    
-    public void setEngineThresholds(String val) {
-    	System.out.println(root+"setEngineThresholds("+val+")");
-        engine.setStripThresholds(getStripThr(val, 0, 1),
-                                  getStripThr(val, 1, 1),
-                                  getStripThr(val, 2, 1));  
-        engine.setPeakThresholds(getPeakThr(val, 0, 1),
-                                 getPeakThr(val, 1, 1),
-                                 getPeakThr(val, 2, 1));  
-        engine.setClusterCuts(getClusterErr(val,0),
-                              getClusterErr(val,1),
-                              getClusterErr(val,2));    	
-    }
-    
     public String getConfig(int val) {
-    	if(val==11)  return "elec";
-    	if(val==211) return "muon";
-    	if(val==22)  return "phot";
-    	return "phot";    	
+    	return eng.getConfig(val);   	
     }
     
-    public int getStripThr(String val, int idet, int layer) {
-        switch (val) {
-        case     "pi0": return sthrPhot[idet][layer-1] ;  
-        case    "phot": return sthrPhot[idet][layer-1] ; 
-        case    "muon": return sthrMuon[idet][layer-1] ;  
-        case    "elec": return sthrElec[idet][layer-1] ;
-        case    "test": return sthrTest[idet][layer-1] ;
-        case    "none": return sthrZero[idet][layer-1] ;
-        }
-        return 0;
-     }
-    
-    public int getPeakThr(String val, int idet, int layer) {
-        switch (val) {
-        case     "pi0": return pthrPhot[idet][layer-1] ;  
-        case    "phot": return pthrPhot[idet][layer-1] ;  
-        case    "muon": return pthrMuon[idet][layer-1] ; 
-        case    "elec": return pthrElec[idet][layer-1] ;
-        case    "test": return pthrTest[idet][layer-1] ;
-        case    "none": return pthrZero[idet][layer-1] ;
-        }
-        return 0;
-     }
-    
-    public float getClusterErr(String val, int idet) {
-        switch (val) {
-        case     "pi0": return (float) cerrPhot[idet] ;  
-        case    "phot": return (float) cerrPhot[idet] ;  
-        case    "muon": return (float) cerrMuon[idet] ; 
-        case    "elec": return (float) cerrElec[idet] ;
-        case    "test": return (float) cerrTest[idet] ;
-        case    "none": return (float) cerrMuon[idet] ;
-        }
-        return 0;
-     } 
+    public void setDropBanks(Boolean val) {
+    	dropBanks = val;
+    	if(dropBanks) eng.engCB.doClick();
+    }
     
     public void dropBanks(DataEvent de) {
     	
-    	if(!isEngineReady) {configEngine(config); isEngineReady = true;}
+    	if(!isEngineReady) {isEngineReady = true;}
     	
         if(!isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBanks("ECAL::hits","ECAL::peaks","ECAL::clusters","ECAL::calib","ECAL::moments");
         if( isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBank("ECAL::clusters");
@@ -514,7 +397,7 @@ public class DetectorMonitor implements ActionListener {
         if( isHipo3Event&&de.hasBank("ECAL::calib"))    de.removeBank("ECAL::calib");
         if( isHipo3Event&&de.hasBank("ECAL::moments"))  de.removeBank("ECAL::moments");
         
-        if(de.hasBank("ECAL::adc")) engine.processDataEvent(de);     	
+        if(de.hasBank("ECAL::adc")) eng.engine.processDataEvent(de);     	
     }
     
     public void analyze() {
@@ -676,6 +559,10 @@ public class DetectorMonitor implements ActionListener {
 	    YsliderPane = flag;
     } 
     
+    public void useECEnginePane(boolean flag) {
+    	ECEnginePane = flag;
+    }
+    
     public void useSliderPane(boolean flag) {
 	     useZSliderPane(flag);
     } 
@@ -745,10 +632,15 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public JPanel packActionPanel() {
-        if (use123||useUVW) actionPanel.add(getButtonPane());
+        if (use123||useUVW) actionPanel.add(getButtonPane());      
         if    (YsliderPane) actionPanel.add(getYSliderPane());
         if    (ZsliderPane) actionPanel.add(getZSliderPane());
     	return actionPanel;
+    }
+    
+    public JPanel packECEnginePanel() {
+    	ECEnginePanel.add(eng.getECEnginePane());
+    	return ECEnginePanel;    	
     }
     
     public JPanel packRunIndexPanel() {
@@ -802,7 +694,7 @@ public class DetectorMonitor implements ActionListener {
         bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
    	     bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
    	                             bG4.add(bS4);bG4.add(bS5);bG4.add(bS6);bG4.add(bS7);
-        bS0.setSelected(true);         	
+        bS0.setSelected(true);   bS0.doClick();     	
         }
         
         if(useCAL) {
@@ -834,6 +726,7 @@ public class DetectorMonitor implements ActionListener {
         
         return buttonPane;
     } 
+    
     
     public JPanel getRunSliderPane() {
         JPanel sliderPane = new JPanel();
@@ -1117,7 +1010,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=12716) return 10.3394f;
     	if (run<=12955) return 10.4057f;    
     	if (run<=15490) return  5.986f;
-    	if (run<=15727) return  2.07052f;    	
+//    	if (run<=15727) return  2.07052f;    	
+    	if (run<=15727) return  2.06252f;    	
     	if (run<=50000) return  4.0296f;
     	return 0.0f;
     }
@@ -1670,14 +1564,16 @@ public class DetectorMonitor implements ActionListener {
         c.clear(); c.divide(ncols, nrows); 	    
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
+            boolean maxtest = false;
             List<IDataSet> dsList = group.getData(i);
-            c.cd(i);  String opt = " ";               
-            if(dsList.size()>0) {	
+            c.cd(i);  String opt = " "; 
+            if(dsList.size()>1) maxtest = true; //prevents AutoScale from triggering on empty or low yield histogram
+            if(dsList.size()>0) {
             	IDataSet ds0 = dsList.get(0);            	
             	if(!config(ds0.getName(),c)) { //override canvas auto configuration if ds0 is tagged
             		if (ds0 instanceof H1F) {
             			c.getPad().getAxisY().setAutoScale(true);
-            			c.getPad().getAxisY().setLog(getLogY());
+            			c.getPad().getAxisY().setLog(getLogY()); 
             		}
             		if (ds0 instanceof H2F) {
             			c.getPad().getAxisZ().setLog(getLogZ());
@@ -1692,7 +1588,7 @@ public class DetectorMonitor implements ActionListener {
                                           c.getPad().getAxisZ().setAutoScale(true);}            			
             		}
             	}
-            	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
+            	for (IDataSet ds : dsList) if(maxtest?ds.getMax()>0.5:true) {c.draw(ds,opt); opt="same";}
             }
         } 	       	
     }
