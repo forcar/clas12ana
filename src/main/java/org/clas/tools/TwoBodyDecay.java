@@ -1,5 +1,7 @@
 package org.clas.tools;
 
+import javax.swing.JFrame;
+
 import org.jlab.clas.pdg.PDGDatabase;
 import org.jlab.clas.pdg.PDGParticle;
 import org.jlab.clas.physics.LorentzVector;
@@ -8,6 +10,8 @@ import org.jlab.clas.physics.ParticleGenerator;
 import org.jlab.clas.physics.PhysicsEvent;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.clas.reactions.IDecay;
+import org.jlab.groot.data.H2F;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 
 /**
  *
@@ -93,25 +97,45 @@ public class TwoBodyDecay {
     
     public static void main(String[] args) {
     	
+        JFrame frame = new JFrame("Pizero");
+        frame.setSize(800,800);    	
+        
+        EmbeddedCanvas c = new EmbeddedCanvas(); 
+    	
+    	H2F h = new H2F("decay",50, -10, 10, 50,-10,10);
+    	
     	TwoBodyDecay decay = new TwoBodyDecay();
-    	decay.setCosRange(-1,1);    	
-    	ParticleGenerator pg = new ParticleGenerator(111);
+    	decay.setCosRange(-1,1); 
     	
-    	pg.setRange(2,2,10,10,-5,5);    	
-    	PhysicsEvent event = new PhysicsEvent(); event.clear();
-    	event.addParticle(pg.getParticle());
+    	ParticleGenerator pg = new ParticleGenerator(111);    	
+    	pg.setRange(1,8,24,26,55,65); 
     	
-    	decay.decayParticles(event);
-    	Particle p1 = event.getGeneratedParticle(0); 
-    	Particle p2 = event.getGeneratedParticle(1);
+    	for (int i=0; i<10000; i++) {
+        	PhysicsEvent event = new PhysicsEvent(); event.clear();
+        	event.addParticle(pg.getParticle());
+        	decay.decayParticles(event);
     	
-    	float copa = (float) p1.cosTheta(p2);    
-    	float  opa = (float) Math.toDegrees(Math.acos(copa));
-    	float    x = (float) Math.abs(((p1.e()-p2.e())/(p1.e()+p2.e())));
-    	float  ivm = (float) Math.sqrt(2*p1.e()*p2.e()*(1-copa));
+        	Particle p1 = event.getGeneratedParticle(0); 
+        	Particle p2 = event.getGeneratedParticle(1);
     	
-    	System.out.println("OPA = "+opa+" X = "+x+" IVM= "+ivm);
-    	System.out.println(event.toLundStringGenerated());    	
+        	float copa = (float) p1.cosTheta(p2);    
+        	float  opa = (float) Math.toDegrees(Math.acos(copa));
+        	float    x = (float) Math.abs(((p1.e()-p2.e())/(p1.e()+p2.e())));
+        	float  ivm = (float) Math.sqrt(2*p1.e()*p2.e()*(1-copa));
+    	
+        	float dthe = (float)(Math.toDegrees(p1.theta())-Math.toDegrees(p2.theta()));
+        	float dphi = (float)(Math.toDegrees(p1.phi())  -Math.toDegrees(p2.phi()));
+    	
+        	h.fill(dphi, dthe); 
+    	}
+ 	
+    	c.cd(0); c.draw(h);     
+        frame.add(c);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    	
+//    	System.out.println("OPA = "+opa+" X = "+x+" IVM= "+ivm);
+//    	System.out.println(event.toLundStringGenerated());    	
     }
 
 }
