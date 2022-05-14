@@ -10,9 +10,10 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
-
+import org.clas.service.ec.ECCommon;
 import org.clas.tools.Event;
 import org.clas.tools.KinLib;
+import org.clas.tools.NeutralMeson;
 import org.clas.tools.ParallelSliceFitter;
 import org.clas.viewer.DetectorMonitor;
 
@@ -162,7 +163,7 @@ public class ECperf extends DetectorMonitor {
     public void localinit() {
     	System.out.println("ECperf.localinit()");
     	tl.setFitData(Fits);      	   	
-    	engine.setGeomVariation("rga_spring2018");
+    	eng.engine.setGeomVariation("rga_spring2018");
     	neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
@@ -1437,7 +1438,7 @@ public class ECperf extends DetectorMonitor {
         
         if(!(G1_part_ind>-1 && G2_part_ind>-1)) return false;
         
-		NeutralMeson nm = new NeutralMeson(taggedPI0);
+		NeutralMeson nm = new NeutralMeson(taggedPI0); nm.addEvent(ev);
 		nm.addPhoton(phot_ecal.get(G1_part_ind)); //System.out.println("makeNM "+nm.toString(0));			
 		nm.addPhoton(phot_ecal.get(G2_part_ind)); //System.out.println("makeNM "+nm.toString(1));				
 		nm_ecal.add(nm);
@@ -1446,101 +1447,6 @@ public class ECperf extends DetectorMonitor {
        
     }
     
-    public class NeutralMeson {
-    	
-    	public float mass;
-    	public float e;
-    	public float mom;
-    	public float the;
-    	public float phi;
-    	public float opa;
-    	public float X;
-    	
-    	public  LorentzVector VPI0;
-    	public  LorentzVector VG1;
-    	public  LorentzVector VG2;
-    	
-    	private boolean tag;
-    	
-    	public List<Particle>  plist = new ArrayList<Particle>();
-    	
-    	public NeutralMeson(boolean val) {
-    		this.tag = val;
-    	}
-    	
-    	public void addPhoton(Particle p) {
-    		plist.add(p);
-    	}
-    	
-    	public Particle getPhoton(int n) {
-    		return plist.get(n);    		
-    	}
-    	
-    	public int getPINDEX(int n) {
-    		return (int) getPhoton(n).getProperty("pindex");
-    	}
-    	
-    	public int getPhotonSector(int n) {
-    		return (int) ev.getECAL((int)getPhoton(n).getProperty("pindex")).get(0).getProperty("sector");
-    	}
-    	
-    	public int getPhotonLayer(int n) {
-    		return (int) ev.getECAL((int)getPhoton(n).getProperty("pindex")).get(0).getProperty("layer");
-    	}
-    	
-    	public float getPhotonEnergy(int n) {
-    		return (float) ev.getECAL((int)getPhoton(n).getProperty("pindex")).get(0).getProperty("energy");
-    	}
-    	
-    	public float getParticleEnergy(int n) {
-    		return (float) ev.part.get(getPINDEX(n)).p();
-    	}
-    	
-    	public float getBeta(int n) {
-    		return (float) getPhoton(n).getProperty("beta");    		
-    	}
-    	
-    	public float getEnergy(int n) {
-    		return (float) getPhoton(n).p();    		
-    	}  
-    	
-    	public Boolean filter(boolean val) {
-    		if (val) return  sameSector();
-    		return !sameSector();
-    	}
-    	
-    	public boolean sameSector() {
-    		return getPhotonSector(0)==getPhotonSector(1);		
-    	}
-    	
-    	public boolean getMeson() {
-    		Particle p1 = plist.get(0);
-    		Particle p2 = plist.get(1);
-			VG1 = new LorentzVector(p1.px(),p1.py(),p1.pz(),p1.p());
-			VG2 = new LorentzVector(p2.px(),p2.py(),p2.pz(),p2.p());
-			VPI0 = new LorentzVector(0,0,0,0);
-			VPI0.add(VG1); 
-			VPI0.add(VG2);
-			return true;
-    	}
-    	
-    	public boolean getMesonKin() {
-    		if(!getMeson()) return false;
-			this.mass = (float)VPI0.mass();
-			this.e    = (float)VPI0.e();
-			this.mom  = (float)VPI0.p();
-			this.the  = (float)Math.toDegrees(VPI0.theta());
-			this.phi  = (float)Math.toDegrees(VPI0.phi());
-			this.opa  = (float)Vangle(VG1.vect(),VG2.vect());
-			this.X    = (float)((VG1.e()-VG2.e())/(VG1.e()+VG2.e()));
-			return this.mass > 0.08 && filter(tag);			
-    	}
-    	
-    	public String toString(int n) {
-    		return getPINDEX(n)+" "+getPhotonSector(n)+" "+getPhotonLayer(n)+" "+getPhotonEnergy(n)+" "+getParticleEnergy(n);
-    	}
-    	    	    	
-    }
 
 	// SELECT	
 		
@@ -2444,7 +2350,7 @@ public class ECperf extends DetectorMonitor {
             		
             		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*ev.tpol;
             		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*ev.spol;
-            		float  tdif = (float)((useUnsharedTime?newt:t)-ev.starttime-pat/29.97);
+            		float  tdif = (float)((ECCommon.useUnsharedTime?newt:t)-ev.starttime-pat/29.97);
             		float  udif = iu-iU[il], vdif = iv-iV[il], wdif = iw-iW[il];			
             		
             		if(dbgAnalyzer) {
