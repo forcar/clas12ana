@@ -130,7 +130,7 @@ public class ECcalib extends DetectorMonitor {
     	Fits.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        engine.setCCDBGain(!defaultGain);
+        eng.engine.setCCDBGain(!defaultGain);
     }
     
      @Override    
@@ -1727,7 +1727,7 @@ public class ECcalib extends DetectorMonitor {
 
 	}    
     
-	public String getGAIN(int is, int il, int iv, int ip, int run) {
+	public String getGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
 		int pc = 1; 		
 		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
 			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
