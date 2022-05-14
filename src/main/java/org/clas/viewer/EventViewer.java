@@ -88,15 +88,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;    
-    JTabbedPane                  tabbedpane = null;
-    DataSourceProcessorPane   processorPane = null;
-    
+    JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7 = null;   
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10 = null;   
     JCheckBoxMenuItem                                   ctr = null;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3 = null;  
-    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null;  
+    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6 = null; 
     
+    DataSourceProcessorPane  processorPane = null;
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
@@ -202,14 +201,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	   }
         	}
     	} else {
-//   		monitors[n] = new ECperf("ECperf"); 
+// 		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECscaler("ECscaler");
-//    		monitors[n] = new ECmc1("ECmc1");
+//    		monitors[n] = new ECmc("ECmc");
+    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-    	    monitors[n] = new ECt("ECt"); 
+//  	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -388,70 +388,47 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         this.timerUpdate();
     }
     
+    public Boolean sc(ItemEvent e) {return (e.getStateChange() == ItemEvent.SELECTED)?true:false;}
+  
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		Object source = e.getItemSelectable();	
+		Object s = e.getItemSelectable();	
+		if (s==co0) {clearHist      = sc(e);} 
+		if (s==co1) {autoSave       = sc(e); monitors[0].autoSave    = autoSave;}
+		if (s==co2) {dropBanks      = sc(e); monitors[0].setDropBanks(dropBanks);}
+		if (s==co3) {dropSummary    = sc(e); monitors[0].dropSummary = dropSummary;}
+		if (s==co4) {dumpGraphs     = sc(e); monitors[0].dumpGraphs  = dumpGraphs;}
+		if (s==co4b){dumpFiles      = sc(e); monitors[0].dumpFiles   = dumpFiles;}
+		if (s==co5) {defaultGain    = sc(e); monitors[0].defaultGain = defaultGain;}
+		if (s==co6) {fiduCuts       = sc(e); monitors[0].fiduCuts    = fiduCuts;}
+		if (s==co7) {dropEsect      = sc(e); monitors[0].dropEsect   = dropEsect;}
+		if (s==cf)  {fitVerbose     = sc(e); monitors[0].fitVerbose  = fitVerbose;}
+		if (s==cf0) {cfitEnable     = sc(e); monitors[0].cfitEnable  = cfitEnable;}
+		if (s==cf1) {sfitEnable     = sc(e); monitors[0].sfitEnable  = sfitEnable;}
+		if (s==cf2) {dfitEnable     = sc(e); monitors[0].dfitEnable  = dfitEnable;}
+		if (s==cf3) {gdfitEnable    = sc(e); monitors[0].gdfitEnable = gdfitEnable;}
+		if (s==cf4) {yLogEnable     = sc(e); monitors[0].setLogY(yLogEnable);} 
+		if (s==cf5) {zLogEnable     = sc(e); monitors[0].setLogZ(zLogEnable);}
+		if (s==cf6a){unsharedTime   = sc(e); monitors[0].eng.setUseUnsharedTime(unsharedTime);} 
+		if (s==cf6b){unsharedEnergy = sc(e); monitors[0].eng.setUseUnsharedEnergy(unsharedEnergy);}
+		if (s==cf6c){useFADCTime    = sc(e); monitors[0].eng.setUseFADCTime(useFADCTime);}
+		if (s==cf7) {dbgECEngine    = sc(e); monitors[0].eng.setDbgECEngine(dbgECEngine);}
+		if (s==cf8) {dbgAnalyzer    = sc(e); monitors[0].dbgAnalyzer = dbgAnalyzer;}
+		if (s==cf9) {useATDATA      = sc(e); monitors[0].useATDATA   = useATDATA;}
+		if (s==cf10){normPix        = sc(e); monitors[0].normPix     = normPix;}
+		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
-		if (source==co0)       clearHist = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==co1)        autoSave = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==co2)       dropBanks = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co3)     dropSummary = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co4)      dumpGraphs = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co4b)      dumpFiles = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co5)     defaultGain = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co6)        fiduCuts = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==co7)       dropEsect = (e.getStateChange() == ItemEvent.SELECTED)?true:false;	
-		if (source==cf )      fitVerbose = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf0)      cfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf1)      sfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf2)      dfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf3)     gdfitEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf4)      yLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf5)      zLogEnable = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf6a)   unsharedTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf6b) unsharedEnergy = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf6c)    useFADCTime = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf7)     dbgECEngine = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf8)     dbgAnalyzer = (e.getStateChange() == ItemEvent.SELECTED)?true:false;
-		if (source==cf9)       useATDATA = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==cf10)        normPix = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ct0)          TLname = ct0.getText();
-		if (source==ct1)          TLname = ct1.getText();
-		if (source==ct2)          TLname = ct2.getText();
-		if (source==ct3)          TLflag = (e.getStateChange() == ItemEvent.SELECTED)?true:false; 
-		if (source==ctr0)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   11:11; 
-		if (source==ctr1)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?  211:11; 
-		if (source==ctr2)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   22:11; 
-		if (source==ctr3)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2112:11; 
-		if (source==ctr4)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?    0:11; 
-		if (source==ctr5)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)?   -1:11; 
-		if (source==ctr6)          TRpid = (e.getStateChange() == ItemEvent.SELECTED)? 2212:11; 
-				
-		for(int k=0; k<this.monitors.length; k++) {this.monitors[k].dropBanks   = dropBanks; 
-		                                           this.monitors[k].dropSummary = dropSummary; 
-		                                           this.monitors[k].dumpGraphs  = dumpGraphs;
-		                                           this.monitors[k].dumpFiles   = dumpFiles;
-		                                           this.monitors[k].defaultGain = defaultGain;
-		                                           this.monitors[k].fiduCuts    = fiduCuts;
-		                                           this.monitors[k].dropEsect   = dropEsect;
-		                                           this.monitors[k].autoSave    = autoSave;
-                                                   this.monitors[k].cfitEnable  = cfitEnable;
-                                                   this.monitors[k].sfitEnable  = sfitEnable;
-                                                   this.monitors[k].dfitEnable  = dfitEnable;
-                                                   this.monitors[k].gdfitEnable = gdfitEnable;
-                                                   this.monitors[k].setLogY(yLogEnable);                                                  
-                                                   this.monitors[k].setLogZ(zLogEnable);
-                                                   this.monitors[k].setUseUnsharedEnergy(unsharedEnergy); 
-                                                   this.monitors[k].setUseUnsharedTime(unsharedTime); 
-                                                   this.monitors[k].setUseFADCTime(useFADCTime); 
-                                                   this.monitors[k].fitVerbose  = fitVerbose;
-                                                   this.monitors[k].TRpid       = TRpid;
-                                                   this.monitors[k].useATDATA   = useATDATA;
-                                                   this.monitors[k].normPix     = normPix;
-                                                   this.monitors[k].initTimeLine(TLname);
-                                                   this.monitors[k].setTLflag(TLflag);
-                                                   this.monitors[k].setDbgECEngine(dbgECEngine);
-                                                   this.monitors[k].setDbgAnalyzer(dbgAnalyzer);}
+		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}
+		if (s==ct1)  {TLname = ct1.getText(); monitors[0].initTimeLine(TLname);}
+		if (s==ct2)  {TLname = ct2.getText(); monitors[0].initTimeLine(TLname);}
+		
+		if (s==ctr0) {TRpid = sc(e)?   11:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr1) {TRpid = sc(e)?  211:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr2) {TRpid = sc(e)?   22:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr3) {TRpid = sc(e)? 2112:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr4) {TRpid = sc(e)?    0:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr5) {TRpid = sc(e)?   -1:11; monitors[0].TRpid = TRpid;}
+		if (s==ctr6) {TRpid = sc(e)? 2212:11; monitors[0].TRpid = TRpid;}		
     }  
 	
     public void actionPerformed(ActionEvent e) {
@@ -967,35 +944,35 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         System.out.println("EventViewer.setLogParam("+val+")");
         this.logParam = val;
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].setLogParam(val);
+            this.monitors[k].eng.setLogParam(val);
         }
     }
     
     public void setPCTrackingPlane(int val) {
         System.out.println("EventViewer.setPCTrackingPlane("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].setPCTrackingPlane(val);
+            this.monitors[k].eng.setPCTrackingPlane(val);
         }
     }
     
     public void setECTrackingPlane(int val) {
         System.out.println("EventViewer.setECTrackingPlane("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].setECTrackingPlane(val);
+            this.monitors[k].eng.setECTrackingPlane(val);
         }
     }
     
     public void setStripThreshold(String val) {
         System.out.println("EventViewer.setStripThresholds("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].setStripThreshold(val);
+            this.monitors[k].eng.setStripThreshold(val);
         }
     }
     
     public void setPeakThreshold(String val) {
         System.out.println("EventViewer.setPeakThresholds("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
-            this.monitors[k].setPeakThreshold(val);
+            this.monitors[k].eng.setPeakThreshold(val);
         }
     } 
     
