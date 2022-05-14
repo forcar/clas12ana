@@ -106,7 +106,7 @@ public class ECmip extends DetectorMonitor {
     	Fits.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        engine.setCCDBGain(!defaultGain);
+        eng.engine.setCCDBGain(!defaultGain);
     }
     
      @Override    
@@ -1564,7 +1564,7 @@ public class ECmip extends DetectorMonitor {
 	
 	public String getGAIN(int is, int il, int iv, int ip, int run) {
 		int pc = 1; 
-		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
+		gain    = eng.engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
 		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
 			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
 			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
@@ -1592,8 +1592,8 @@ public class ECmip extends DetectorMonitor {
 	}
 	
 	public String getRDIFGAIN(int is, int il, int iv, int ip, int run) {	
-		gain    = engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
-		shift   = engine.getConstantsManager().getConstants(run, "/calibration/ec/torus_gain_shift");
+		gain    = eng.engine.getConstantsManager().getConstants(run, "/calibration/ec/gain");
+		shift   = eng.engine.getConstantsManager().getConstants(run, "/calibration/ec/torus_gain_shift");
 		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gain",   is, 3*il+iv+1, ip+1)+" "
 				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gainErr",is, 3*il+iv+1, ip+1);    
