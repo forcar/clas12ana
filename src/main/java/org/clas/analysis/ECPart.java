@@ -56,19 +56,20 @@ import org.jlab.rec.eb.SamplingFractions;
 import org.clas.tools.EmbeddedCanvasTabbed;
 import org.clas.tools.Event;
 
-public class ECPart extends EBTBEngine {
+public class ECPart extends EBEngine {
 	
 	public EventBuilder eb = null;
 	EBEngine         ebe = new EBEngine("ECPART");
+	
 	Event             ev = new Event();
+	
 	EBCCDBConstants  ccdb;
 	EBMatching       ebm;
 	EBRadioFrequency rf;
 	
-    public List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<>(); 
-    
-    IndexedList<List<DetectorResponse>>  singleNeutrals = new IndexedList<>(1);
-    IndexedList<List<DetectorResponse>>      singleMIPs = new IndexedList<>(1);
+    public List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<>();     
+    IndexedList<List<DetectorResponse>>         singleNeutrals = new IndexedList<>(1);
+    IndexedList<List<DetectorResponse>>             singleMIPs = new IndexedList<>(1);
     
     DetectorParticle p1 = new DetectorParticle();
     DetectorParticle p2 = new DetectorParticle();
@@ -114,12 +115,12 @@ public class ECPart extends EBTBEngine {
     String particleBank     = "REC::Particle";
     String calorimeterBank  = "REC::Calorimeter";  
     
-    private EmbeddedCanvasTabbed      detectorCanvas = null;  
+    private EmbeddedCanvasTabbed      detectorCanvas = new EmbeddedCanvasTabbed();  
     private ArrayList<String>       detectorTabNames = new ArrayList();
     
     public ECPart() {  
+    	super("EBMC");
     	initBankNames();
-    	detectorCanvas = new EmbeddedCanvasTabbed();
     }
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
@@ -173,15 +174,21 @@ public class ECPart extends EBTBEngine {
         return false;
     }
     
-	// readEC: Copies relevant parts of EBEngine.processDataEvent    
-    public void  readEC(DataEvent de, String bank){    	    	
-        rf = new EBRadioFrequency(ccdb);    	
+	// Copies relevant parts of EBEngine.processDataEvent    
+    public boolean  processDataEvent(DataEvent de){ 
+    	
         eb = new EventBuilder(ccdb);    	   	
-        eb.initEvent(); //don't bother with event header    	
+        eb.initEvent(); //don't bother with event header  
+        
+        rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
-        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));  	
+        
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));
+        
         eb.getPindexMap().put(0, 0); 
-        eb.getPindexMap().put(1, 0);         
+        eb.getPindexMap().put(1, 0); 
+        
+        return true;
     } 
     
 	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent 
@@ -280,7 +287,7 @@ public class ECPart extends EBTBEngine {
     }
      
     public double getTwoPhotonInvMass(int sector){
-        iis[0]=0;iis[1]=-1;
+    	iis = new int[2]; for (int i=0; i<2; i++) { for (int j=0; j<3; j++) {iip[i][j]=-1;}};
         return processTwoPhotons(doHitMatching(getNeutralParticles(sector)));
 //        return processTwoPhotons(getNeutralPart());
     }   
@@ -292,10 +299,11 @@ public class ECPart extends EBTBEngine {
         List<DetectorResponse>      rEC  = new ArrayList<>();        
         List<DetectorParticle> particles = new ArrayList<>();          
 
+        
         rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector); //get PCAL responses
-
+        
         switch (rEC.size()) {
-        case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector);
+        case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector); 
                 if (rEC2.size()>0) {
                    particles.add(DetectorParticle.createNeutral(rEC.get(0),vtx));                    // make neutral particle 1 from PCAL sector                   
                    particles.add(DetectorParticle.createNeutral(rEC2.get(0),vtx)); return particles; // make neutral particle 2 from other PCAL sector
@@ -310,8 +318,7 @@ public class ECPart extends EBTBEngine {
        return particles;
     }
     
-    public List<DetectorParticle> doHitMatching(List<DetectorParticle> particles) {
-    	
+    public List<DetectorParticle> doHitMatching(List<DetectorParticle> particles) {    	
         int ii=0;
         for (DetectorParticle p: particles) {
             DetectorResponse rPC = p.getDetectorResponses().get(0); //get 1st PCAL responses
@@ -720,7 +727,7 @@ public class ECPart extends EBTBEngine {
             
             dropBanks(event);
             engine.processDataEvent(event);  
-            readEC(event,"ECAL::clusters");  
+            processDataEvent(event);  
             getUnmatchedResponses();
             rPC = getPCResponses(mcsec);
             
@@ -974,7 +981,7 @@ public class ECPart extends EBTBEngine {
             run = getRunNumber(event); 
             
             engine.processDataEvent(event);
-            readMC(event); readEC(event,"ECAL::clusters");
+            readMC(event); processDataEvent(event);
             
        		h1.fill(refP);
        		
@@ -1110,7 +1117,7 @@ public class ECPart extends EBTBEngine {
             engine.processDataEvent(de);
             run = getRunNumber(de);            
             if (readMC(de)) {
-            	readEC(de,"ECAL::clusters");
+            	processDataEvent(de);
             	np.clear(); np = getNeutralPart(); 
             	getRECBanks(de,eb);
             	writer.writeEvent(de);
@@ -1332,7 +1339,7 @@ public class ECPart extends EBTBEngine {
             DataEvent event = reader.getNextEvent();
             engine.processDataEvent(event);
             if (readMC(event)) {
-            	readEC(event,"ECAL::clusters");
+            	processDataEvent(event);
             	float refP = (float) pmc.get(0).p();
             	np.clear(); np = getNeutralPart();
             	h5.fill(refP);
@@ -1483,7 +1490,7 @@ public class ECPart extends EBTBEngine {
         hview[3] = new H1F("Shared View UVW",50,100,200);         
         hview[3].setTitleX("Invariant Mass (MeV)");
                 
-        String evioPath = "/Users/colesmith/clas12/sim/2gamma/";
+        String evioPath = "/Users/colesmith/clas12/sim/2gamma/aug.1.2021/";
 //        String evioPath = "/Users/colesmith/clas12/sim/";
         
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
@@ -1492,7 +1499,7 @@ public class ECPart extends EBTBEngine {
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35-r5716.hipo"; int sec=2;
         
 //        String evioFile = "fc-pizero-100k-s2-newgeom-15-1.0-12.0.hipo"; int sec=2;
-        String evioFile = "out-pim-pizero.hipo"; int sec=2;
+        String evioFile = "out-pim-pi0.hipo"; int sec=2;
 //        String evioFile = "rga_fall2018_s2-pizero.hipo"; int sec=2;
 //        String evioFile = "fc-pizero-s2-new-4.4.0.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
@@ -1534,7 +1541,7 @@ public class ECPart extends EBTBEngine {
 //            int iview = engine.getClusters().get(0).getStatus();
             
             if(readMC(de)) {  
-            	readEC(de,"ECAL::clusters");
+            	processDataEvent(de);
             	getNeutralResponses();
             	getRECBanks(de,eb);
             	writer.writeEvent(de);
@@ -1718,9 +1725,9 @@ public class ECPart extends EBTBEngine {
         ECPart part = new ECPart();  
         part.initGraphics();
         String env = System.getenv("CLAS12DIR");
-//     	part.pizeroDemo(args);
+     	part.pizeroDemo(args);
  //    	part.photonDist(args);
-     	part.photonDemo(args);
+//     	part.photonDemo(args);
 //    	part.neutronDemo(args);
 //        part.electronDemo(args);
 //        part.scalerdemo(args);
