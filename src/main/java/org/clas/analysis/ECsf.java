@@ -13,25 +13,18 @@ import java.util.Map;
 
 import org.clas.tools.FitData;
 import org.clas.tools.ParallelSliceFitter;
+import org.clas.tools.SFFunction;
 import org.clas.viewer.DetectorMonitor;
-import org.jlab.clas.detector.CalorimeterResponse;
-import org.jlab.clas.detector.DetectorParticle;
-import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-//import org.jlab.groot.fitter.ParallelSliceFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
-import org.jlab.groot.math.Func1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.rec.eb.EBCCDBConstants;
-import org.jlab.rec.eb.SamplingFractions;
-import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 
 public class ECsf extends DetectorMonitor {
@@ -71,7 +64,7 @@ public class ECsf extends DetectorMonitor {
     
     public void localinit() {
         System.out.println("ECsf.localinit()");
-        configEngine("muon");  
+//        eng.config("muon");  
         tl.setFitData(Fits);
     }
     
@@ -1052,28 +1045,6 @@ public class ECsf extends DetectorMonitor {
     		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(pc+1),((pc==0)?0.25f:0.06f),"Sector "+is+((pc==0)?"  E / P":"  #sigma(E) / E"));
     	}
-    }
-
-    public static class SFFunction extends Func1D{
-    	
-        EBCCDBConstants ccdb = new EBCCDBConstants();  
-   	    DetectorParticle p = new DetectorParticle(); 
-        int pid;
-  	    
-        public SFFunction(String name, int pid, int is, EBCCDBConstants ccdb, double min, double max) {
-            super(name, min, max);
-            this.ccdb = ccdb;
-            this.pid  = pid;
-            
-            p.addResponse(new CalorimeterResponse(1,1,0));
-            p.getDetectorResponses().get(0).getDescriptor().setSector(is);
-            p.getDetectorResponses().get(0).getDescriptor().setType(DetectorType.ECAL);
-        }
-        @Override
-        public double evaluate(double x){        	 
-        	 p.getDetectorResponses().get(0).setEnergy(x);
-       	     return  SamplingFractions.getMean(pid, p, ccdb);
-        }
     }
 
     @Override
