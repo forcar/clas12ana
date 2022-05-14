@@ -67,6 +67,9 @@ public class ECpi0 extends DetectorMonitor{
     float                          fmax = 240f;
     
     Boolean                 isPARTReady = false;
+    Boolean                        isMC = false;
+    
+	static int trSEC=5, trPID=-211, mcSEC=2, mcPID= 22;
     
     public ECpi0(String name) {
         super(name);
@@ -96,7 +99,7 @@ public class ECpi0 extends DetectorMonitor{
     
     public void localinit() {
     	System.out.println("ECpi0.localinit()");        
-    	engine.setGeomVariation("rga_spring2018");
+    	eng.engine.setGeomVariation("rga_spring2018");
         isPARTReady = false;
     	tl.setFitData(Fits);
     }
@@ -363,7 +366,7 @@ public class ECpi0 extends DetectorMonitor{
     }    
     
     public void processMC(DataEvent event, DataBank ecBank) {
-    	
+    	isMC = true;
         int run = getRunNumber();
         if (!isTreeOpen) isTreeOpen = openTree();
         double refE=0,refP=0,refTH=25,tmax=30;
@@ -498,11 +501,11 @@ public class ECpi0 extends DetectorMonitor{
         if (!isPARTReady) initPART(run);
         if (dropBanks) dropBanks(event);
                 
-        part.readEC(event,"ECAL::clusters");      // all raw clusters
+        part.processDataEvent(event);      // all raw clusters
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
-        if(event.hasBank("MC::Particle")) {processMC(event, ecBank); return;}
+        if(event.hasBank("MC::Particle")) {processMC(event, ecBank);}
         
         double[]  esum = {0,0,0,0,0,0};
         int[][]  nesum = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};    
@@ -520,7 +523,7 @@ public class ECpi0 extends DetectorMonitor{
                 double      Z = res.get(idet).get(i).getPosition().z();
                 double    pcR = Math.sqrt(X*X+Y*Y+Z*Z);
                 double pcThet = Math.asin(Math.sqrt(X*X+Y*Y)/pcR)*180/Math.PI;
-//                ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.);          // Layer Cluster Energy
+//                ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.); // Layer Cluster Energy
                 if(idet==0) pcalE[is-1] += energy*1e3;
                 if(energy*1e3>10) {esum[is-1]+=energy*1e3; nesum[idet][is-1]++;}
             }
@@ -585,9 +588,9 @@ public class ECpi0 extends DetectorMonitor{
         
         part.getNeutralResponses();
         
-        int trigger_sect = getElecTriggerSector();
+        int trigger_sect = isMC ? trSEC : getElecTriggerSector();
         
-        for (int is=1; is<7; is++) {
+        for (int is=isMC?mcSEC:1; is<(isMC?mcSEC+1:7); is++) {
            
             if (part.mip[is-1]!=1) {  // No FTOF MIP in sector
                 double invmass = Math.sqrt(part.getTwoPhotonInvMass(is));
@@ -621,7 +624,7 @@ public class ECpi0 extends DetectorMonitor{
                         
                         for (int id=0; id<3; id++) {
                             for (int im=0; im<2; im++) {
-                                if(ecBank!=null) {
+                                if(ecBank!=null && part.iip[im][id]>-1) {
                                     float ipU = (ecBank.getInt("coordU", part.iip[im][id])-4)/8+1;
                                     float ipV = (ecBank.getInt("coordV", part.iip[im][id])-4)/8+1;
                                     float ipW = (ecBank.getInt("coordW", part.iip[im][id])-4)/8+1;
