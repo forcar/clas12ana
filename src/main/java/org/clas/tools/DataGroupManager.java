@@ -23,6 +23,8 @@ public class DataGroupManager {
 	public Map<String,int[]>                    imap = new HashMap<>();
 	public Map<String,String>                   hmap = new HashMap<>();
 	public Map<String,Boolean>                  tmap = new HashMap<>();
+	public Map<String,H1F[]>                   r1map = new HashMap<>();
+	public Map<String,H2F[]>                   r2map = new HashMap<>();
 	
 	DataGroup dg = null;
 	String   tag = null;
@@ -42,14 +44,14 @@ public class DataGroupManager {
 		ilist = new int[4]; ilist[0]=is; ilist[1]=st; ilist[2]=k; ilist[3]=run;
 		tag = "-"+is+"-"+st+"-"+k+"-"+run;
 		System.out.println("dgm.add("+name+tag+")");
-		detectorData.add(dg,ilist);
+		detectorData.add(dg,ilist); 
 		n=0;
 	}
 	
-	public void setDataGroup(String name, int is, int st, int run) {
-		dg = detectorData.getItem(is,st,detectorTabNames.indexOf(name),run);
+	public DataGroup setDataGroup(String name, int is, int st, int run) {
+		return detectorData.getItem(is,st,detectorTabNames.indexOf(name),run);
 	}
-	
+
 	public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
 		detectorCanvas = canvas;
 	}
@@ -119,6 +121,14 @@ public class DataGroupManager {
     	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof H2F);
     }
     
+    public boolean isH1R(String name) {
+    	return (r1map.containsKey(name));
+    }
+    
+    public boolean isH2R(String name) {
+    	return (r2map.containsKey(name));
+    }
+    
     public boolean isGraph(String name) {
     	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof GraphErrors);
     }
@@ -130,10 +140,13 @@ public class DataGroupManager {
     public void fill(String name, double ... val) {    	
         if(!goodName(name)) return; 
         if(!tmap.get(name)) return;
-    	if(val.length==1)               getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0]);
-    	if(val.length==2 && isH1(name)) getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name)).fill(val[0],val[1]);
-        if(val.length==2 && isH2(name)) getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1]);
-    	if(val.length==3)               getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name)).fill(val[0],val[1],val[2]);
+        if(val.length==3 && isH1R(name)) {if(val[2]==1) {getH1FR(name)[0].fill(val[0],val[1]);} getH1FR(name)[1].fill(val[0]);        return;}
+        if(val.length==2 && isH1R(name)) {getH1FR(name)[0].fill(val[0],val[1]);        getH1FR(name)[1].fill(val[0]);        return;}
+        if(val.length==3 && isH2R(name)) {getH2FR(name)[0].fill(val[0],val[1],val[2]); getH2FR(name)[1].fill(val[0],val[1]); return;} 
+    	if(val.length==1)                getH1F(name).fill(val[0]);
+    	if(val.length==2 && isH1(name))  getH1F(name).fill(val[0],val[1]);
+        if(val.length==2 && isH2(name))  getH2F(name).fill(val[0],val[1]);
+    	if(val.length==3)                getH2F(name).fill(val[0],val[1],val[2]);
     	return;
     }
     
@@ -149,6 +162,14 @@ public class DataGroupManager {
     	return true;
     }
     
+    public H1F[] getH1FR(String name) {
+    	return r1map.get(name);
+    }
+    
+    public H2F[] getH2FR(String name) {
+    	return r2map.get(name);
+    }
+    
     public H1F getH1F(String name) {
     	return getDataGroup().getItem(imap.get(name)).getH1F(hmap.get(name));
     }
@@ -161,13 +182,12 @@ public class DataGroupManager {
     	return getDataGroup().getItem(imap.get(name)).getGraph(hmap.get(name));    	
     }
     
-    public void geteff(String eff, String numer, String denom) {
-    	if(isH1(eff)) getH1F(eff).reset();
-    	if(isH2(eff)) getH2F(eff).reset();
-    	if(isH1(eff)) getH1F(eff).add(H1F.divide(getH1F(numer), getH1F(denom)));
-    	if(isH2(eff)) getH2F(eff).add(H2F.divide(getH2F(numer), getH2F(denom)));
-    	if(isGraph(eff)) getGraph(eff).reset();
-    	if(isGraph(eff)) getGraph(eff).copy(H1F.divide(getH1F(numer), getH1F(denom)).getGraph());
+    public void geteff(String eff, String ... val) {
+    	if(isH1R(eff))   {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1FR(eff)[0],getH1FR(eff)[1])); return;}
+    	if(isH2R(eff))   {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2FR(eff)[0],getH2FR(eff)[1])); return;}
+    	if(isH1(eff))    {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1F(val[0]), getH1F(val[1])));}
+    	if(isH2(eff))    {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2F(val[0]), getH2F(val[1])));}
+    	if(isGraph(eff)) {getGraph(eff).reset(); getGraph(eff).copy(H1F.divide(getH1F(val[0]), getH1F(val[1])).getGraph());}
     }
     
     public class H2FF extends H2F {
@@ -179,7 +199,19 @@ public class DataGroupManager {
    	 }
    	 
     }
-        
+    
+    public void makeH1R(String name, int nx, double x1, double x2, int f, String tit, String titx, String tity, Object ... color) {
+    	makeH1(name, nx, x1, x2, f, tit, titx, tity, color);
+    	H1F[] hr = {new H1F(name,name,nx,x1,x2),new H1F(name,name,nx,x1,x2)};
+    	r1map.put(name,hr);
+    }
+    
+    public void makeH2R(String name, int nx, double x1, double x2, int ny, double y1, double y2, int f, String tit, String titx, String tity) {
+    	makeH2(name, nx, x1, x2, ny, y1, y2, f, tit, titx, tity);
+    	H2F[] hr = {new H2F(name,name,nx,x1,x2,ny,y1,y2),new H2F(name,name,nx,x1,x2,ny,y1,y2)};
+    	r2map.put(name,hr);
+    }
+    
     public void makeH1(String name) { //use this to force zone based display of H1 created with overlap tag f=-2
     	dg.addDataSet(getH1F(name),n++);
     }
@@ -270,7 +302,8 @@ public class DataGroupManager {
 	
 	public void drawGroup(String tabname, int is, int st, int run) {
 		int index = getDetectorTabNames().indexOf(tabname);
-    	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(is,st,index,run));   			
+    	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),
+    			  getDataGroup().getItem(is,st,index,run));   			
 	}
     
     public void drawGroup(EmbeddedCanvas c, DataGroup group) {
@@ -279,13 +312,14 @@ public class DataGroupManager {
         c.clear(); c.divide(ncols, nrows); 	    
         int nds = nrows * ncols;
         for (int i = 0; i < nds; i++) {
-          c.cd(i); drawGroupItem(group, c, i);                 
+          c.cd(i); drawGroupItem(group,c,i);                 
         } 	       	
     }
     
     public void drawGroupItem(DataGroup group, EmbeddedCanvas c, int i) {
-    	String opt = " "; 
+    	boolean maxtest = false; String opt = " "; 
     	List<IDataSet> dsList = group.getData(i); 
+        if(dsList.size()>1) maxtest = true; //prevents AutoScale from triggering on empty or low yield histogram
         if(dsList.size()>0) {	                       	
       	    IDataSet ds0 = dsList.get(0);                   
         	if(!config(ds0.getName(),c)) {                      
@@ -297,9 +331,15 @@ public class DataGroupManager {
         			c.getPad().getAxisZ().setLog(getLogZ());
         			if(!doAutoRange) c.getPad().getAxisZ().setRange(0.1*zMin, 20*zMax); 
         			if( doAutoRange) c.getPad().getAxisZ().setAutoScale(true);
-        		}            		
+        		} 
+        		if (ds0 instanceof GraphErrors) {
+        			maxtest = false;
+        			if( doAutoRange) {c.getPad().getAxisX().setAutoScale(true);
+                                      c.getPad().getAxisY().setAutoScale(true);
+                                      c.getPad().getAxisZ().setAutoScale(true);}            			
+        		}        		
         	}
-        	for (IDataSet ds : dsList) {c.draw(ds,opt); opt="same";}
+        	for (IDataSet ds : dsList) if(maxtest?ds.getMax()>0.5:true) {c.draw(ds,opt); opt="same";}
         }   	
     }
 	
