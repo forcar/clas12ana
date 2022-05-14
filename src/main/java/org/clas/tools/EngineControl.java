@@ -27,40 +27,240 @@ public class EngineControl implements ActionListener {
     JLabel                  cfigLB = new JLabel();
     JComboBox            configCMB = null;
     JCheckBox              debugCB = null;
-    JCheckBox                engCB = null;
-    JCheckBox               wlogCB = null;
+    public JCheckBox         engCB = null;
     JCheckBox             repeatCB = null;
     ButtonGroup                bG1 = null;
 	
-	public String config,split,spthr,touch,configField;
+	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0";
+	public String variation="rga_fall2018_bg",geomVariation="rga_fall2018";
 	public int pcS,eciS,ecoS,pcP,eciP,ecoP;
+	public int PCTrackingPlane,ECTrackingPlane;
 	public float pcT,eciT,ecoT;
-	public double wlogPar;
-	public boolean debug,doEng,repeatEv,isMC;
+	public double wlogPar=3.0;
+	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
+	public boolean useFADCTime, useUnsharedEnergy;
+	
 	public ECEngine engine = null;
 	
-	public EngineControl(ECEngine val) {
-		engine = val;
-	}
+    int[][] sthrMuon = {{15,15,15},{15,15,15},{15,15,15}}; //15,20,20
+    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
+    int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
+    int[][] sthrTest = {{10,10,10},{9,9,9},{13,13,13}};
+    int[][] sthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+    
+    int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
+    int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
+    int[][] pthrTest = {{18,18,18},{22,22,22},{15,15,15}};
+    int[][] pthrZero = {{1,1,1},{1,1,1},{1,1,1}};
+    
+    double[] cerrMuon = {5.5,10.,10.};
+    double[] cerrPhot = {7,15,20}; 
+    double[] cerrElec = {10.,10.,10.};
+    double[] cerrTest = {4.5,11.,13.};
 	
-	public void initEngineThresh() {
-		
+	public EngineControl(ECEngine val) {
+		engine = val;		
 	}
 	
 	public void initEngine() {
-		
-	}
-	 
-	public String getConfigField() {
-		return config+"+"+split+"+"+spthr+"+"+touch;
+		engine.setIsSingleThreaded(true);
+	    engine.setIsMC(isMC);     
+	    engine.setVariation(variation);
+	    engine.setGeomVariation(geomVariation);
+	    engine.init();
+	    setEngineConfig(ECCommon.config);
+	    System.out.println("EngineControl.initEngine():Initializing ecEngine");
+	    System.out.println("isMC: "+isMC+" "+mcpart);
+	    System.out.println("Configuration: "+config); 
+	    System.out.println("Variation: "+variation);
+	    System.out.println("GeomVariation: "+geomVariation);
+	    System.out.println("SingleThreaded:"+ECCommon.isSingleThreaded);		
+	}	
+	
+	public void configEngine() {
+		pcS  = getStripThr(config,0,1);
+	    eciS = getStripThr(config,1,1);
+	    ecoS = getStripThr(config,2,1);
+	    pcP  = getPeakThr(config,0,1);
+	    eciP = getPeakThr(config,1,1);
+	    ecoP = getPeakThr(config,2,1);
+	    pcT  = getClusterErr(config,0);
+	    eciT = getClusterErr(config,1);
+	    ecoT = getClusterErr(config,2); 
+	    engine.setStripThresholds(pcS,eciS,ecoS); 
+	    engine.setPeakThresholds( pcP,eciP,ecoP); 
+	    engine.setClusterCuts(pcT,eciT,ecoT); 
+	    split   = "Split"+ECCommon.splitMethod;
+	    spthr   = "SpThr"+ECCommon.splitThresh[0]+ECCommon.splitThresh[1]+ECCommon.splitThresh[2];
+	    touch   = "touchID"+ECCommon.touchID;
+	    cfigLB.setText(getConfigField()); 		
 	}
 	
+	public void updateConfig(String val) {
+        
+        switch (val) {
+        case   "photon": config="phot"; mcpart=config; break;
+        case "electron": config="elec"; break;
+        case     "muon": config="muon"; break;
+        case   "pizero": config="pi0";  mcpart=config;  break;
+        case     "test": config="test"; break;
+        case     "None": config="none"; break;
+        case   "Split0": split="split0";   engine.setSplitMethod(0); break;
+        case   "Split1": split="split1";   engine.setSplitMethod(1); break;
+        case   "Split2": split="split2";   engine.setSplitMethod(2); break;
+        case   "Split3": split="split3";   engine.setSplitMethod(3); break;
+        case   "Split4": split="split4";   engine.setSplitMethod(4); break;
+        case "SpThr332": spthr="spthr332"; engine.setSplitThresh(3,3,2); break;
+        case "SpThr333": spthr="spthr333"; engine.setSplitThresh(3,3,3); break;
+        case "touchID1": touch="touchid1"; engine.setTouchID(1); break;
+        case "touchID2": touch="touchid2"; engine.setTouchID(2); break;
+        case   "rga_bg": variation="rga_fall2018_bg"; engine.setVariation(variation); break;
+        case  "default": variation="default";         engine.setVariation(variation);
+        }		
+	}
+	
+    public void setEngineConfig(String val) {
+    	configCMB.setSelectedItem(val);
+    	config = val;
+    }
+	
+	public void configDisplay() {
+        pcT     = ECCommon.clusterSize[0];
+        eciT    = ECCommon.clusterSize[1];
+        ecoT    = ECCommon.clusterSize[2];
+        wlogPar = ECCommon.logParam;
+        
+        split   = "Split"+ECCommon.splitMethod;
+        spthr   = "SpThr"+ECCommon.splitThresh[0]+ECCommon.splitThresh[1]+ECCommon.splitThresh[2];
+        touch   = "touchID"+ECCommon.touchID;
+        
+        switch (Integer.parseInt(bG1.getSelection().getActionCommand())) {
+        case 0:    
+        pcalTF.setText(Integer.toString(pcS));
+        ecinTF.setText(Integer.toString(eciS));              
+        ecouTF.setText(Integer.toString(ecoS)); break;
+        case 1:
+        pcalTF.setText(Integer.toString(pcP));
+        ecinTF.setText(Integer.toString(eciP));              
+        ecouTF.setText(Integer.toString(ecoP)); break;
+        case 2:
+        pcalTF.setText(Double.toString(pcT));
+        ecinTF.setText(Double.toString(eciT));              
+        ecouTF.setText(Double.toString(ecoT)); 
+        }
+        
+        wlogTF.setText(Double.toString(wlogPar));
+        cfigLB.setText(getConfigField());		
+	}
+	
+    public int getStripThr(String config, int idet, int layer) {
+        switch (config) {
+        case     "pi0": return sthrPhot[idet][layer-1] ;  
+        case    "phot": return sthrPhot[idet][layer-1] ; 
+        case    "muon": return sthrMuon[idet][layer-1] ;  
+        case    "elec": return sthrElec[idet][layer-1] ;
+        case    "test": return sthrTest[idet][layer-1] ;
+        case    "none": return sthrZero[idet][layer-1] ;
+        }
+        return 0;
+     }
+    
+    public int getPeakThr(String config, int idet, int layer) {
+        switch (config) {
+        case     "pi0": return pthrPhot[idet][layer-1] ;  
+        case    "phot": return pthrPhot[idet][layer-1] ;  
+        case    "muon": return pthrMuon[idet][layer-1] ; 
+        case    "elec": return pthrElec[idet][layer-1] ;
+        case    "test": return pthrTest[idet][layer-1] ;
+        case    "none": return pthrZero[idet][layer-1] ;
+        }
+        return 0;
+     }
+    
+    public float getClusterErr(String config, int idet) {
+        switch (config) {
+        case     "pi0": return (float) cerrPhot[idet] ;  
+        case    "phot": return (float) cerrPhot[idet] ;  
+        case    "muon": return (float) cerrMuon[idet] ; 
+        case    "elec": return (float) cerrElec[idet] ;
+        case    "test": return (float) cerrTest[idet] ;
+        case    "none": return (float) cerrMuon[idet] ;
+        }
+        return 0;
+     }		
+	 
+	public String getConfigField() {
+		return mcpart+"    "+config+"+"+split+"+"+spthr+"+"+touch+"    "+variation+"+"+geomVariation;
+	}
+	
+    public String getConfig(int val) {
+    	if(val==11)  return "elec";
+    	if(val==211) return "muon";
+    	if(val==22)  return "phot";
+    	return config;    	
+    }
+    
+    public void setMC(Boolean val) {
+    	engine.setIsMC(val);
+    	isMC = val;
+    }
+    
+    public void setGeomVariation(String val) {
+    	engine.setGeomVariation(val);
+    	geomVariation = val;
+    }
+	
+    public void setUseUnsharedTime(Boolean val) {
+    	engine.setUseUnsharedTime(val);
+    }
+    
+    public void setUseUnsharedEnergy(Boolean val) {
+    	engine.setUseUnsharedEnergy(val);
+    	useUnsharedEnergy = val;
+    }
+    
+    public void setUseFADCTime(Boolean val) {
+    	engine.setUseFADCTime(val);
+    	useFADCTime = val;
+    } 
+    
+    public void setPCTrackingPlane(int val) {
+    	engine.setPCTrackingPlane(val);
+    	PCTrackingPlane = val;
+    }
+    
+    public void setECTrackingPlane(int val) {
+    	engine.setECTrackingPlane(val);
+    	ECTrackingPlane = val;
+    } 
+    
+    public void setStripThreshold(String val) {
+    	String[] x  = val.split(",",3); 
+    	engine.setStripThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
+    } 
+    
+    public void setPeakThreshold(String val) {
+    	String[] x  = val.split(",",3); 
+    	engine.setPeakThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
+    } 
+    
+    public void setLogParam(float val) {
+    	engine.setLogParam(val);
+    	wlogPar= val;
+    }  
+    
+    public void setDbgECEngine(Boolean val) {
+    	engine.setDebug(val);
+    	dbgECEngine = val;
+    }  
+    
 	public JPanel getECEnginePane() {
     
 		JPanel buttonPane = new JPanel();
-		buttonPane.setLayout(new FlowLayout());  
-    
-		buttonPane.add(new JLabel("Config:"));       
+		buttonPane.setLayout(new FlowLayout());      
+		buttonPane.add(new JLabel("Config:"));  
+		
 		configCMB = new JComboBox();
 		DefaultComboBoxModel model = (DefaultComboBoxModel) configCMB.getModel();
 		model.addElement("photon");
@@ -72,59 +272,21 @@ public class EngineControl implements ActionListener {
 		model.addElement("Split0");
 		model.addElement("Split1");
 		model.addElement("Split2");
+		model.addElement("Split3");
+		model.addElement("Split4");
 		model.addElement("SpThr332");
 		model.addElement("SpThr333");
 		model.addElement("touchID1");
 		model.addElement("touchID2");
+		model.addElement("rga_bg");
+		model.addElement("default");
 		configCMB.setModel(model);
-		
 		configCMB.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             String s = (String) configCMB.getSelectedItem();
-            
-            switch (s) {
-            case   "photon": config="phot"; break;
-            case "electron": config="elec"; break;
-            case     "muon": config="muon"; break;
-            case   "pizero": config="pi0";  break;
-            case     "test": config="test"; break;
-            case     "None": config="none"; break;
-            case   "Split0": split="split0";   engine.setSplitMethod(0); break;
-            case   "Split1": split="split1";   engine.setSplitMethod(1); break;
-            case   "Split2": split="split2";   engine.setSplitMethod(2); break;
-            case "SpThr332": spthr="spthr332"; engine.setSplitThresh(3,3,2); break;
-            case "SpThr333": spthr="spthr333"; engine.setSplitThresh(3,3,3); break;
-            case "touchID1": touch="touchid1"; engine.setTouchID(1); break;
-            case "touchID2": touch="touchid2"; engine.setTouchID(2); break;
-            }
-            
-            initEngineThresh();
-            
-            pcT     = ECCommon.clusterSize[0];
-            eciT    = ECCommon.clusterSize[1];
-            ecoT    = ECCommon.clusterSize[2];
-            wlogPar = ECCommon.logParam;
-            
-            split   = "Split"+ECCommon.splitMethod;
-            spthr   = "SpThr"+ECCommon.splitThresh[0]+ECCommon.splitThresh[0]+ECCommon.splitThresh[0];
-            touch   = "touchID"+ECCommon.touchID;
-            
-            switch (Integer.parseInt(bG1.getSelection().getActionCommand())) {
-            case 0:    
-            pcalTF.setText(Integer.toString(pcS));
-            ecinTF.setText(Integer.toString(eciS));              
-            ecouTF.setText(Integer.toString(ecoS)); break;
-            case 1:
-            pcalTF.setText(Integer.toString(pcP));
-            ecinTF.setText(Integer.toString(eciP));              
-            ecouTF.setText(Integer.toString(ecoP)); break;
-            case 2:
-            pcalTF.setText(Double.toString(pcT));
-            ecinTF.setText(Double.toString(eciT));              
-            ecouTF.setText(Double.toString(ecoT)); 
-            }
-            wlogCB.setText(Double.toString(wlogPar));
-            cfigLB.setText(config+"+"+split+"+"+spthr+"+"+touch);
+            updateConfig(s);
+            configEngine();
+            configDisplay();            
         }
 		});
 
@@ -149,8 +311,10 @@ public class EngineControl implements ActionListener {
 		buttonPane.add(ecouTF); 
     
 		buttonPane.add(new JLabel("WLOG:"));
-		wlogCB.setActionCommand("WLOG"); wlogCB.addActionListener(this); wlogCB.setText(Double.toString(wlogPar));  
-		buttonPane.add(wlogCB); 
+		wlogTF.setActionCommand("WLOG"); 
+		wlogTF.addActionListener(this); 
+		wlogTF.setText(Double.toString(wlogPar));  
+		buttonPane.add(wlogTF); 
     
 		debugCB = new JCheckBox("Debug");
 		debugCB.addItemListener(new ItemListener() {
