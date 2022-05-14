@@ -18,7 +18,7 @@ import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 
 import org.jlab.detector.base.DetectorType;
-
+import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.math.Func1D;
@@ -32,6 +32,8 @@ import org.jlab.service.eb.EBAnalyzer;
 import org.jlab.service.eb.EBEngine;
 import org.jlab.service.eb.EBMatching;
 
+import org.clas.tools.NeutralMeson; 
+
 import org.jlab.service.eb.EventBuilder;
 
 import org.jlab.utils.groups.IndexedList;
@@ -43,7 +45,7 @@ public class EBMCEngine extends EBEngine {
 	
 	public EBCCDBConstants  ccdb;
 	EBMatching              ebm;
-	EBRadioFrequency        rf;
+	EBRadioFrequency        rf; 
 	
     public List<List<DetectorResponse>>     unmatchedResponses = new ArrayList<>();     
     IndexedList<List<DetectorResponse>>         singleNeutrals = new IndexedList<>(1);
@@ -224,7 +226,7 @@ public class EBMCEngine extends EBEngine {
         if(eb.getEvent().getParticles().size()>0) {
             Collections.sort(eb.getEvent().getParticles()); 
             eb.setParticleStatuses();
-//            getRECBanks(de,eb);
+            getRECBanks(de,eb);
             return true;
         } 
      	return false;     	
@@ -401,6 +403,32 @@ public class EBMCEngine extends EBEngine {
         return distance;        
     }
     
+    public double getGGphi(int sec) {
+        Vector3 n1 = new Vector3(); Vector3 n2 = new Vector3();
+        n1.copy(pmc.get(0).vector().vect()); n2.copy(pmc.get(1).vector().vect());
+        n1.unit(); n2.unit();
+        Point3D point1 = new Point3D(n1.x(),n1.y(),n1.z());
+        Point3D point2 = new Point3D(n2.x(),n2.y(),n2.z());
+    	point1.rotateZ(Math.toRadians(-60*(sec-1))); point2.rotateZ(Math.toRadians(-60*(sec-1)));
+        point1.rotateY(Math.toRadians(-25));         point2.rotateY(Math.toRadians(-25));      
+        Vector3 vv1 = new Vector3(point1.x(),point1.y(),point1.z()); 
+        Vector3 vv2 = new Vector3(point2.x(),point2.y(),point2.z());
+        Vector3 vv12 = vv1.cross(vv2);
+        double ggp = Math.toDegrees(Math.atan2(vv12.y(),vv12.x()));
+        if(ggp<0) ggp=-ggp;
+        ggp=ggp-90;
+        if(ggp<0) ggp=ggp+180;   
+        return ggp;
+    }
+    
+    public List<Float> getPizeroKinematics() {
+    	NeutralMeson nsm = new NeutralMeson(pmc);
+        nsm.setPhotonSector(MCsec);
+        nsm.getMeson();
+        nsm.getMesonKin();
+        return nsm.getPizeroKinematics();        
+    }  
+    
     public List<Float> getPizeroKinematics(List<Particle> list) {
 
     	List<Float> out = new ArrayList<Float>();
@@ -427,12 +455,12 @@ public class EBMCEngine extends EBEngine {
         double tpi2 = 2*mpi0*mpi0/(1-cth)/(1-X*X);
         double cpi0 = (e1*cth1+e2*cth2)/Math.sqrt(e1*e1+e2*e2+2*e1*e2*cth);
         
-        g1.combine(g2, +1);  
-        
+        g1.combine(g2, +1); double invm = Math.sqrt(g1.mass2()); 
+         
         int n=0;
         out.add(n++,(float) Math.sqrt(tpi2));
         out.add(n++,(float) Math.toDegrees(Math.acos(cpi0)));
-        out.add(n++,(float)(1e3*Math.sqrt(g1.mass2())));
+        out.add(n++,(float) ((invm-mpi0)/mpi0));
         out.add(n++,(float) Math.toDegrees(Math.acos(cth)));
         out.add(n++,(float) Math.abs(X));
         out.add(n++,(float) Math.sqrt(e1*e2));
