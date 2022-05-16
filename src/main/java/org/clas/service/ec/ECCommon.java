@@ -23,7 +23,9 @@ import org.jlab.utils.groups.IndexedTable;
  */
 
 public class ECCommon {
-    
+	
+    public static Detector        ecDetector = null; 
+        
     public static List<ECStrip>     myStrips = new ArrayList<ECStrip>();
     public static List<ECPeak>       myPeaks = new ArrayList<ECPeak>();
     public static List<ECCluster> myClusters = new ArrayList<ECCluster>();
@@ -31,26 +33,33 @@ public class ECCommon {
     public static int[]   stripThreshold = new int[3];
     public static int[]    peakThreshold = new int[3]; 
     public static int[] clusterThreshold = new int[3];
-    public static float[]   clusterError = new float[3];
+    public static float[]    clusterSize = new float[3];
     public static float[]  clusterDeltaT = new float[3];
     
+    public static int            touchID = 1;
+    public static int        splitMethod = 0;
+    public static int    stripSortMethod = 0;
+    public static int[]      splitThresh = new int[3];
+    
+    public static Boolean              isMC = false;
     public static Boolean             debug = false;
     public static Boolean        debugSplit = false;
     public static Boolean  isSingleThreaded = false;
     public static Boolean       singleEvent = false;
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
-    public static Boolean              isMC = false;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
-    public static Boolean      useLogWeight = true;
     public static Boolean       useCCDBGain = true;
-    public static double           logParam = 0.0;
+    public static double           logParam = 3.0;
+    public static String             config = "";
     public static String          variation = "default";
     public static String      geomVariation = "default";
     public static int       pcTrackingPlane = -1;
     public static int       ecTrackingPlane = -1;
+    
+    public static int           eventNumber = 0;
    
     private static double[] AtoE  = {15,10,10};   // SCALED ADC to Energy in MeV
     private static double[] AtoE5 = {15,5,5};     // For Sector 5 ECAL
@@ -61,6 +70,8 @@ public class ECCommon {
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     static float               tps = 0.02345f;
     public static float       veff = 18.1f;
+    static int nclus, slast;
+    static float maxerr;
     
     public  static void initHistos() {
     	int[] bins = {480,240,120};       
@@ -127,7 +138,7 @@ public class ECCommon {
     	return (de.hasBank("RUN::config") ? (int) de.getBank("RUN::config").getInt("run", 0) : 10);
     }
     
-    public static List<ECStrip>  initEC(DataEvent event, Detector detector, ConstantsManager manager){
+    public static List<ECStrip>  initEC(DataEvent event,  ConstantsManager manager){
     	
         int run = getRunNumber(event);
         
@@ -151,7 +162,7 @@ public class ECCommon {
         
         if(ecStrips==null) return new ArrayList<ECStrip>();
         
-        Collections.sort(ecStrips); //sort by sector, layer, component
+        stripSortMethod=0; Collections.sort(ecStrips); //sort by sector, layer, component
         
         for(ECStrip strip : ecStrips){
             int sector    = strip.getDescriptor().getSector();
@@ -166,7 +177,7 @@ public class ECCommon {
             
             int off = superlayer==0 ? pcalz : (superlayer==1 ? ecinz : ecouz);
             
-            Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
+            Layer detLayer = ecDetector.getSector(sector-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
             
             ScintillatorPaddle      paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
             ScintillatorPaddle firstPaddle = (ScintillatorPaddle) detLayer.getComponent(0);
@@ -194,9 +205,11 @@ public class ECCommon {
             strip.setAttenuation(atten.getDoubleValue("A", sector,layer,component),
                                  atten.getDoubleValue("B", sector,layer,component),
                                  atten.getDoubleValue("C", sector,layer,component));
+            
             double ccdbGain =   gain.getDoubleValue("gain", sector,layer,component)*ggs.getDoubleValue("gain_shift",sector,layer,0);
-            double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);
+            double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);            
             strip.setGain(useCCDBGain ? ccdbGain : run2Gain); 
+            
             strip.setGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
             strip.setVeff(ev.getDoubleValue("veff",sector,layer,component));
             strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
@@ -220,6 +233,7 @@ public class ECCommon {
     public static List<ECStrip>  readStripsHipo(DataEvent event, int run, ConstantsManager manager){ 
     	
       	List<ECStrip>  strips = new ArrayList<ECStrip>();
+      	
         IndexedList<List<Integer>>  tdcs = new IndexedList<List<Integer>>(3);  
         
         IndexedTable    jitter = manager.getConstants(run, "/calibration/ec/time_jitter");
@@ -252,7 +266,7 @@ public class ECCommon {
                 int  ip = bank.getShort("component",i);    
                 int tdc = bank.getInt("TDC",i);
                 
-                if(status.getIntValue("status",is,il,ip)==2) continue;
+                if(status.getIntValue("status",is,il,ip)==2) continue; //for MC use only
                 
                 if(tdc>0) {                       
                     if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Integer>(),is,il,ip);
@@ -271,7 +285,7 @@ public class ECCommon {
                 float t = bank.getFloat("time", i) + (float) tmf.getDoubleValue("offset",is,il,ip) // TDC-FADC offset (sector, layer, PMT)
                                                    + (float)  fo.getDoubleValue("offset",is,il,0); // TDC-FADC offset (sector, layer) 
                 
-                if (status.getIntValue("status",is,il,ip)==3) continue;
+                if (status.getIntValue("status",is,il,ip)==3) continue; //for MC use only
                 
                 ECStrip  strip = new ECStrip(is, il, ip); 
                 
@@ -279,7 +293,9 @@ public class ECCommon {
                 strip.setTriggerPhase(triggerPhase);
                 strip.setID(i+1);
 
-                if(isGoodStrip(strip)) strips.add(strip); 
+                if(!isGoodStrip(strip)) continue;
+                
+                strips.add(strip); 
                 
                 float  tmax = 1000; int tdc = 0;
                 
@@ -300,36 +316,31 @@ public class ECCommon {
     
     public static List<ECPeak>  createPeaks(List<ECStrip> stripList){
     	
-        List<ECPeak>  peakList = new ArrayList<ECPeak>();
+        List<ECPeak>  peakList = new ArrayList<ECPeak>();  
         
-        if(stripList.size()>1){ //Require minimum of 2 strips/event to reject uncorrelated hot channels
-            ECPeak  firstPeak = new ECPeak(stripList.get(0)); //Seed the first peak with the first strip
-            peakList.add(firstPeak); 
-            for(int loop = 1; loop < stripList.size(); loop++){ //Loop over all strips 
-                boolean stripAdded = false;                
-                for(ECPeak  peak : peakList) {
-                    if(peak.addStrip(stripList.get(loop))){ //Add adjacent strip to newly seeded peak
-                        stripAdded = true;
-                    }
-                }
-                if(!stripAdded){
-                    ECPeak  newPeak = new ECPeak(stripList.get(loop)); //Non-adjacent strip seeds new peak
-                    peakList.add(newPeak);
-                }
+        if(!(stripList.size()>1)) return peakList;  //Require minimum of 2 strips/event to reject uncorrelated hot channels         	
+        peakList.add(new ECPeak(stripList.get(0))); //Seed the first peak with the first strip
+        
+        int n=1;
+        for(int loop = 1; loop < stripList.size(); loop++){ //Loop over remaining strips 
+        	ECStrip s = stripList.get(loop); boolean stripAdded = false;                
+            for(ECPeak peak : peakList)  {
+            	if(peak.addStrip(s)) { //Add adjacent strip to newly seeded peak
+            		stripAdded = true; s.setStripID(n); peak.setimap(n++, s.getADC()); //Set indices to assist peak splitting
+            	} 
             }
+            if(!stripAdded) {peakList.add(new ECPeak(s)); n=1;} //Non-adjacent strip seeds new peak
         }
 
-        for(int loop = 0; loop < peakList.size(); loop++){
-            peakList.get(loop).setPeakId(loop+1);
-        }
-        
+        for(int loop = 0; loop < peakList.size(); loop++) peakList.get(loop).setPeakId(loop+1);
+ 
         return peakList;
     } 
        
     public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
     	
         List<ECPeak> peakList = new ArrayList<ECPeak>();
-
+        
         for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);
         ECPeakAnalysis.splitPeaks(peakList);       //Split peak if strip members have an adc valley       
         for(ECPeak p : peakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
@@ -338,7 +349,9 @@ public class ECCommon {
     }
     
     public static List<ECPeak>  getPeaks(int sector, int layer, List<ECPeak> peaks){
-        List<ECPeak>  selected = new ArrayList<ECPeak>();
+    	
+        List<ECPeak> selected = new ArrayList<ECPeak>();
+        
         for(ECPeak peak : peaks){
             if(peak.getDescriptor().getSector()==sector&&peak.getDescriptor().getLayer()==layer){
                 selected.add(peak);
@@ -346,13 +359,82 @@ public class ECCommon {
         }
         return selected;
     }
+    
+    public static List<ECCluster>  createClusters(List<ECPeak>  peaks, int layer){ 
+       return filterClusters(processClusters(getClusters(peaks,layer)));       
+    }
+    
+    public static boolean goodPeaks(int sector, int layer, List<ECPeak> peaks) {
+    	List<ECPeak>  pU = ECCommon.getPeaks(sector, layer,   peaks);
+        List<ECPeak>  pV = ECCommon.getPeaks(sector, layer+1, peaks);
+        List<ECPeak>  pW = ECCommon.getPeaks(sector, layer+2, peaks); 
+        return pU.size()>0 && pV.size()>0 && pW.size()>0;
+    }
+    
+    public static List<ECCluster> getClusters(List<ECPeak> peaks, int layer) {
+    	
+        List<ECCluster> clusters = new ArrayList<ECCluster>();
+        
+        for(int p = 0; p < peaks.size(); p++) peaks.get(p).setOrder(p+1);
+        
+        for(int sector = 1; sector <= 6; sector++){ 
+        	if(!goodPeaks(sector,layer,peaks)) continue;
+            nclus=0; maxerr=0;
+            for (ECPeak pu : getPeaks(sector,layer,peaks)) {
+                for (ECPeak pv : getPeaks(sector,layer+1,peaks)) {
+                    for (ECPeak pw : getPeaks(sector,layer+2,peaks)) {
+                    	ECCluster c = new ECCluster(pu,pv,pw);
+                        clusters.add(c); if(isSingleThreaded) processSingleThreaded(c);
+                    }
+                }
+            }
+            if(isSingleThreaded) H2_ecEng.get(sector,ind[layer-1]+1,1).fill(nclus,maxerr);
+        }        
+        return clusters;        
+    }
+            
+    public static List<ECCluster>  processClusters(List<ECCluster> clusters) { 
+    	
+    	for (ECCluster c : clusters) {
+    		int l = c.getDescriptor().getLayer();
+    		c.setError(c.getClusterSize()>clusterSize[ind[l-1]]); //flag clusters that exceed the size limit
+    	}
+
+    	return clusters;   	
+    }
+    
+    public static List<ECCluster>  filterClusters(List<ECCluster> clusters) {
+    	
+        List<ECCluster> filtClusters = new ArrayList<ECCluster>();
+
+    	for (ECCluster c : clusters) {
+    		if(!c.getError() && isGoodCluster(c)) filtClusters.add(c);
+        } 
+    	
+        for (ECCluster c : filtClusters) c.setEnergy();
+
+        return filtClusters;   
+    }
+    
+    public static void processSingleThreaded(ECCluster c) {  //not used in clara  
+    	int s = c.getDescriptor().getSector(); 
+    	int l = c.getDescriptor().getLayer();
+    	List<ECPeak> p = c.getPeaks();
+    	float err = (float) c.getClusterSize();
+    	boolean gc = err < clusterSize[ind[l-1]];
+        int zone = getZone(ind[l-1],p.get(0).getMaxStrip(),p.get(1).getMaxStrip(),p.get(2).getMaxStrip());
+    	if(l==1 && zone<2) H1_ecEng.get(s,1,10+zone).fill(err);
+    	if(l==1 && zone>1) H1_ecEng.get(s,1,12).fill(err); 
+    	                          H1_ecEng.get(s,ind[l-1]+1,0).fill(err); 
+    	if(gc&&isGoodCluster(c)) {H1_ecEng.get(s,ind[l-1]+1,1).fill(err); nclus++; if(err>maxerr) maxerr=err;} 
+    }    
 
     public static void shareClustersEnergy(List<ECCluster> clusters){
         
         for(int i = 0; i < clusters.size() - 1; i++){
             for(int k = i+1 ; k < clusters.size(); k++){
                 byte sharedView = (byte) clusters.get(i).sharedView(clusters.get(k)); // 0,1,2,3,4,5 <=> U,V,W,UV,UW,VW
-                if(sharedView>=0&&sharedView<UnsharedEnergyCut){
+                if(sharedView>=0 && sharedView<UnsharedEnergyCut){
                 	clusters.get(i).setSharedCluster(k); clusters.get(i).setSharedView(sharedView+1);
                 	clusters.get(k).setSharedCluster(i); clusters.get(k).setSharedView(sharedView+1);                  
                 	if(useUnsharedEnergy) ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView+1);
@@ -363,11 +445,10 @@ public class ECCommon {
     
     public static boolean isGoodStrip(ECStrip s) {
         int adc = s.getADC();
-        int lay = s.getDescriptor().getLayer();
+        int lay = s.getDescriptor().getLayer(); 
         int sec = s.getDescriptor().getSector();
         double sca = (sec==5)?AtoE5[ind[lay-1]]:AtoE[ind[lay-1]];
-        if (variation=="clas6") sca = 1.0;
-        return adc>sca*ECCommon.stripThreshold[ind[lay-1]];	
+        return adc>sca*stripThreshold[ind[lay-1]];	
     }
        
     public static boolean isGoodPeak(ECPeak p) {
@@ -375,17 +456,15 @@ public class ECCommon {
         int lay = p.getDescriptor().getLayer();
         int sec = p.getDescriptor().getSector();
         double sca = (sec==5)?AtoE5[ind[lay-1]]:AtoE[ind[lay-1]];
-        if (variation=="clas6") sca = 1.0;
-    	return adc>sca*ECCommon.peakThreshold[ind[lay-1]]; //adc threshold (uncorrected energy MeV*10)
-    }
+    	return adc>sca*peakThreshold[ind[lay-1]]; //adc threshold (uncorrected energy MeV*10)
+    }  
     
-    public static boolean isGoodCluster(ECCluster cluster) {
-    	
-    	for (int i=0; i<3; i++) {
-    		int lay = cluster.getPeak(i).getDescriptor().getLayer();
-    		if(ECCommon.clusterThreshold[ind[lay-1]]==0) return true;
-    		double thr = 0.1*ECCommon.clusterThreshold[ind[lay-1]]*ECCommon.peakThreshold[ind[lay-1]]; //cluster thrsh. fraction of peak
-    		if(cluster.getEnergy(i)*1e3<thr) return false;  
+    public static boolean isGoodCluster(ECCluster c) {    	
+    	int l = c.getDescriptor().getLayer();    	     	
+    	for (int i=0; i<3; i++) {   		
+    		if(clusterThreshold[ind[l-1]]==0) return true;
+    		double thr = 0.1*clusterThreshold[ind[l-1]]*peakThreshold[ind[l-1]]; //cluster thrsh. fraction of peak
+    		if(c.getEnergy(i)*1e3<thr) return false;  
     	}       
     	return true;
     }
@@ -399,13 +478,11 @@ public class ECCommon {
         return 0;
     }
     
-    public static List<ECCluster>  createClusters(List<ECPeak>  peaks, int startLayer){
+    public static List<ECCluster>  OldcreateClusters(List<ECPeak>  peaks, int startLayer){
 
         List<ECCluster>   clusters = new ArrayList<ECCluster>();
         
-        for(int p = 0; p < peaks.size(); p++){
-            peaks.get(p).setOrder(p+1);
-        }
+        for(int p = 0; p < peaks.size(); p++) peaks.get(p).setOrder(p+1);
 
         for(int sector = 1; sector <= 6; sector++){
 
@@ -418,7 +495,8 @@ public class ECCommon {
                     " W " + pW.size()
             );*/
             
-           int nclus=0; float maxerr=0;
+           nclus=0; maxerr=0;
+           
            if(pU.size()>0&&pV.size()>0&&pW.size()>0){  //U,V,W peaks required for cluster
                 for(int bU = 0; bU < pU.size();bU++){
                     pU.get(bU).redoPeakLine();
@@ -427,7 +505,7 @@ public class ECCommon {
                         for(int bW = 0; bW < pW.size();bW++){
                             if(bU==0 && bV==0) pW.get(bW).redoPeakLine();
                             ECCluster cluster = new ECCluster(pU.get(bU),pV.get(bV),pW.get(bW));
-                            float err = (float) cluster.getHitPositionError();
+                            float err = (float) cluster.getClusterSize();
                             if(isSingleThreaded) {                           
 //                            	if (pU.get(bU).getSplitRatio()>0) H1_ecEng.get(sector,startLayer,  14).fill((pU.get(bU).getSplitRatio()));
 //                            	if (pV.get(bV).getSplitRatio()>0) H1_ecEng.get(sector,startLayer+1,14).fill((pV.get(bV).getSplitRatio()));
@@ -437,7 +515,7 @@ public class ECCommon {
                             	if(startLayer==1 && zone<2) H1_ecEng.get(sector,1,10+zone).fill(err);
                             	if(startLayer==1 && zone>1) H1_ecEng.get(sector,1,12).fill(err);
                             }
-                            if(err<ECCommon.clusterError[ind[startLayer-1]]) {
+                            if(err<clusterSize[ind[startLayer-1]]) {
                             	if(err>maxerr) maxerr=err;
                                 if(isSingleThreaded)H1_ecEng.get(sector,ind[startLayer-1]+1,1).fill(err);                               
 								if(isGoodCluster(cluster)) {clusters.add(cluster);nclus++;}
@@ -449,13 +527,7 @@ public class ECCommon {
             if(isSingleThreaded) H2_ecEng.get(sector,ind[startLayer-1]+1,1).fill(nclus,maxerr);             
         }
 
-        
-        for(int i = 0 ; i < clusters.size(); i++){
-            clusters.get(i).setEnergy(
-            clusters.get(i).getEnergy(0) + 
-            clusters.get(i).getEnergy(1) +
-            clusters.get(i).getEnergy(2));      
-        }  
+        for (ECCluster c : clusters) c.setEnergy();
         
         return clusters;
     }    

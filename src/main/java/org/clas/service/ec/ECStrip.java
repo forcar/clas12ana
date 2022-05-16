@@ -36,9 +36,10 @@ public class ECStrip implements Comparable {
     private double    fTimA4,iTimA4 = 0; // 0
     private int        triggerPhase = 0;
     private double             veff = 18.1; // Effective velocity of scintillator light (cm/ns)
-    private int              peakID = -1;
-    private int                  id = -1;       // ID of the hit. this shows the row number of the corresponding hit in the ADC bank
-    private int           clusterId = -1;       // Id (row number) of the cluster that this hit belongs to
+    private int                  id = -1;   // ID (row number) of the corresponding hit in the ADC bank for truth matching
+    private int              peakID = -1;   // ID of peak this hit belongs to (all strips belonging to a peak have this same number)
+    private int           clusterId = -1;   // Id (row number) of the cluster that this hit belongs to
+    private int             stripId = -1;   // Id (row number) of the peak striplist that this hit belongs to
 	
     private double            tdist = 0;
     private double            edist = 0;
@@ -53,35 +54,35 @@ public class ECStrip implements Comparable {
     private TimeCorrection             tc = null; 
     
     public ECStrip(int sector, int layer, int component){
-        this.desc.setSectorLayerComponent(sector, layer, component);       
+        desc.setSectorLayerComponent(sector, layer, component);       
         tc = ECCommon.useFADCTime ? new ExtendedTWCFTime() : new ExtendedTWCTime();
     }
 	
     public DetectorDescriptor getDescriptor(){
-    	return this.desc;
+    	return desc;
     }
     
     public ECStrip setADC(int adc){
-        this.iADC = adc;
+        iADC = adc;
         return this;
     }
     
     public ECStrip setTDC(int tdc){
-        this.iTDC = tdc;
+        iTDC = tdc;
         return this;
     }
     
     public ECStrip setTADC(float tdc) {
-    	this.iTADC = tdc;
+    	iTADC = tdc;
     	return this;
     }
 	
     public int getADC(){
-        return this.iADC;
+        return iADC;
     }
 
     public int getTDC(){
-        return ECCommon.useFADCTime ? (int) (this.iTADC/iTimA1) : this.iTDC;
+        return ECCommon.useFADCTime||iTDC==0 ? (int) (iTADC/iTimA1) : iTDC;
     }
     
     public double getRawTime(){
@@ -97,11 +98,11 @@ public class ECStrip implements Comparable {
     }
     
     public void setGlobalTimeWalk(double val) {
-    	this.gtw = val;
+    	gtw = val;
     }
     
     public void setGlobalFTimeWalk(double val) {
-    	this.fgtw = val;
+    	fgtw = val;
     }  
     
     public double getTWCTime() {
@@ -181,164 +182,177 @@ public class ECStrip implements Comparable {
     
     
     public double getEnergy(){
-        return this.iADC*this.iGain*this.iADC_to_MEV;
+        return iADC*iGain*iADC_to_MEV;
     }
     
-    public void setDistanceEdge(double dist){
-        this.stripDistanceEdge = dist;
+    public void setDistanceEdge(double val){
+        stripDistanceEdge = val;
     }
     
     public double getDistanceEdge(){
-        return this.stripDistanceEdge;
+        return stripDistanceEdge;
     }
   
-    public void setPeakId(int id){ 
-    	    this.peakID = id;
+    public void setPeakId(int val){ 
+    	peakID = val;
     }
     
     public int getPeakId(){
-      	return this.peakID;      	
+      	return peakID;      	
     }
 
-    public void setID(int id){
-        this.id = id;
-}
+    public void setID(int val){
+        id = val;    
+    }
 
     public int getID(){
-        return this.id;
+        return id;
     }
 
-    public void setClusterId(int id){
-        this.clusterId = id;
+    public void setStripID(int val){
+        stripId = val;    
+    }
+
+    public int getStripID(){
+        return stripId;
+    }
+    
+    public void setClusterId(int val){
+        clusterId = val;
     }
 
     public int getClusterId(){
-        return this.clusterId;
+        return clusterId;
     }
     
     public void setAttenuation(double a, double b, double c){
-        this.iAttenLengthA = a;
-        this.iAttenLengthB = b;
-        this.iAttenLengthC = c;
+        iAttenLengthA = a;
+        iAttenLengthB = b;
+        iAttenLengthC = c;
     }
     
-    public void setTriggerPhase(int num) {
-        this.triggerPhase = num;
+    public void setTriggerPhase(int val) {
+        triggerPhase = val;
     } 
     
-    public void setVeff(double veff) {
-        this.veff = veff;
+    public void setVeff(double val) {
+        veff = val;
     }
     
-    public double getVeff(double veff) {
- 	    return this.veff;
+    public double getVeff() {
+ 	    return veff;
     }  
     
-    public void setGain(double gain){
-        this.iGain = gain;
+    public void setGain(double val){
+        iGain = val;
     }
     
     public void setDTiming(double a0, double a1, double a2, double a3, double a4) {
-        this.iTimA0 = a0;
-        this.iTimA1 = a1;
-        this.iTimA2 = a2;
-        this.iTimA3 = a3;
-        this.iTimA4 = a4;
+        iTimA0 = a0;
+        iTimA1 = a1;
+        iTimA2 = a2;
+        iTimA3 = a3;
+        iTimA4 = a4;
     } 
     
     public void setFTiming(double a0, double a1, double a2, double a3, double a4) {
-    	this.fTimA0 = a0;
-    	this.fTimA1 = a1;
-    	this.fTimA2 = a2;
-    	this.fTimA3 = a3;
-    	this.fTimA4 = a4;
+    	fTimA0 = a0;
+    	fTimA1 = a1;
+    	fTimA2 = a2;
+    	fTimA3 = a3;
+    	fTimA4 = a4;
     }
 	
     public void setGlobalTimingOffset(double val) {
-        this.iTim00 = val;
+        iTim00 = val;
     }
     
     public void setGlobalFTimingOffset(double val) {
-        this.fTim00 = val;
+        fTim00 = val;
     }
     
     public double[] getTiming() {
         double[] array = new double[5];
-        array[0] = this.iTimA0;
-        array[1] = this.iTimA1;
-        array[2] = this.iTimA2;
-        array[3] = this.iTimA3;
-        array[4] = this.iTimA4;
+        array[0] = iTimA0;
+        array[1] = iTimA1;
+        array[2] = iTimA2;
+        array[3] = iTimA3;
+        array[4] = iTimA4;
         return array;    
     }
     
     public double[] getFTiming() {
         double[] array = new double[5];
-        array[0] = this.fTimA0;
-        array[1] = this.fTimA1;
-        array[2] = this.fTimA2;
-        array[3] = this.fTimA3;
-        array[4] = this.fTimA4;
+        array[0] = fTimA0;
+        array[1] = fTimA1;
+        array[2] = fTimA2;
+        array[3] = fTimA3;
+        array[4] = fTimA4;
         return array;    
     }	
     
     public double getEnergy(Point3D point){
-        edist = point.distance(this.stripLine.end());
-        return this.iADC*this.iGain*this.iADC_to_MEV/getEcorr(-edist);
+        edist = point.distance(stripLine.end());
+        return iADC*iGain*iADC_to_MEV/getEcorr(-edist);
     }
     
     public double getEcorr(double dist) {
-        return this.iAttenLengthA*Math.exp(dist/this.iAttenLengthB) + this.iAttenLengthC;    	
+        return iAttenLengthA*Math.exp(dist/iAttenLengthB) + iAttenLengthC;    	
     }
     
     public double getTime(Point3D point) {		
-        tdist = point.distance(this.stripLine.end());
+        tdist = point.distance(stripLine.end());
         time =  getTime() - tdist/veff;
         return time;
     } 
 	
     public double getPointTime() {
-        return this.time;
+        return time;
     }
 	
-    public double getEdist() {return this.edist;}
+    public double getEdist() {return edist;}
 	
-    public double getTdist() {return this.tdist;}
+    public double getTdist() {return tdist;}
     
-    public Line3D getLine()  {return this.stripLine;}
+    public Line3D getLine()  {return stripLine;}
     
     public boolean isNeighbour(ECStrip strip){
-        if(strip.getDescriptor().getSector() == this.desc.getSector() &&
-           strip.getDescriptor().getLayer()  == this.desc.getLayer()){
-           if(Math.abs(strip.getDescriptor().getComponent()-this.desc.getComponent())<=1) return true;
+        if(strip.getDescriptor().getSector() == desc.getSector() &&
+           strip.getDescriptor().getLayer()  == desc.getLayer()){
+           if(Math.abs(strip.getDescriptor().getComponent()-desc.getComponent())<=ECCommon.touchID) return true;
         }
         return false;
     }
     
     public boolean isInTime(ECStrip strip) {
-        if (Math.abs(this.getTime() - strip.getTime()) < ECStrip.coincTIME) return true;
+        if (Math.abs(getTime() - strip.getTime()) < ECStrip.coincTIME) return true;
         return false;
     } 
     
     public int compareTo(Object o) {
         ECStrip ob = (ECStrip) o;
-        if(ob.getDescriptor().getSector()     < this.desc.getSector())    return  1;
-        if(ob.getDescriptor().getSector()     > this.desc.getSector())    return -1;
-        if(ob.getDescriptor().getLayer()      < this.desc.getLayer())     return  1;
-        if(ob.getDescriptor().getLayer()      > this.desc.getLayer())     return -1;
-        if(ob.getDescriptor().getComponent() <  this.desc.getComponent()) return  1;
-        if(ob.getDescriptor().getComponent() == this.desc.getComponent()) return  0;
+        if (ECCommon.stripSortMethod==0) {
+            if(ob.getDescriptor().getSector()     < desc.getSector())    return  1;
+            if(ob.getDescriptor().getSector()     > desc.getSector())    return -1;
+            if(ob.getDescriptor().getLayer()      < desc.getLayer())     return  1;
+            if(ob.getDescriptor().getLayer()      > desc.getLayer())     return -1;
+            if(ob.getDescriptor().getComponent() <  desc.getComponent()) return  1;
+            if(ob.getDescriptor().getComponent() == desc.getComponent()) return  0;
+        } else {
+        	if(ob.getEnergy()                       > getEnergy())            return  1;
+        	if(ob.getEnergy()                       < getEnergy())            return -1;
+        }
         return -1;
     }
     
     @Override
     public String toString(){
         StringBuilder str = new StringBuilder();
-        str.append(String.format("----> strip (%3d %3d %3d) ADC/TDC  %5d %5d  ENERGY = %8.5f TIME = %8.5f DIST = %8.5f", 
-                this.desc.getSector(),this.desc.getLayer(),this.desc.getComponent(),
-                this.iADC,this.iTDC,this.getEnergy(),this.getTime(),this.getTdist()));
-        str.append(String.format("  GAIN (%5.3f) ATT (%12.5f %12.5f %12.5f)", 
-                this.iGain,this.iAttenLengthA,this.iAttenLengthB,this.iAttenLengthC));
+        str.append(String.format("----> strip (%3d %3d %3d) ADC/TDC  %5d %5d  ENERGY=%6.4f TIME=%6.2f DIST=%6.2f PEAKID=%2d", 
+                desc.getSector(),desc.getLayer(),desc.getComponent(),
+                iADC,iTDC,getEnergy(),getTime(),getTdist(),getStripID()));
+        str.append(String.format("  GAIN (%5.3f) ATT (%5.1f)", 
+                iGain,iAttenLengthB));
         return str.toString();
     }
 }
