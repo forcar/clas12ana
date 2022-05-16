@@ -50,10 +50,10 @@ public class ECmc extends DetectorMonitor {
     public void localinit() {
         System.out.println("ECmc.localinit()");
         
-        engine.init();
-        engine.setIsMC(true);
-        engine.setVariation("default");  
-        setEngineConfig("phot");
+        eng.engine.init();
+        eng.engine.setIsMC(true);
+        eng.engine.setVariation("default");  
+        eng.setEngineConfig("phot");
         
         ebmce.getCCDB(10);
         ebmce.setGeom("2.5");

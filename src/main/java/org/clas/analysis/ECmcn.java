@@ -51,10 +51,10 @@ public class ECmcn extends DetectorMonitor {
     public void localinit() {
         System.out.println(getDetectorName()+".localinit()");
         
-        engine.setIsMC(true);
-        engine.setGeomVariation("rga_fall2018"); 
-        engine.setDebug(false);
-        setEngineConfig("phot");
+        eng.engine.setIsMC(true);
+        eng.engine.setGeomVariation("rga_fall2018"); 
+        eng.engine.setDebug(false);
+        eng.setEngineConfig("phot");
         
         ebmce.getCCDB(10);
         ebmce.setGeom("2.5");
