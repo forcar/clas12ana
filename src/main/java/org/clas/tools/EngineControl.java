@@ -64,18 +64,19 @@ public class EngineControl implements ActionListener {
 	}
 	
 	public void initEngine() {
+	    System.out.println("*** EngineControl.initEngine:Initializing ecEngine ***");
 		engine.setIsSingleThreaded(true);
 	    engine.setIsMC(isMC);     
 	    engine.setVariation(variation);
 	    engine.setGeomVariation(geomVariation);
 	    engine.init();
 	    setEngineConfig(ECCommon.config);
-	    System.out.println("EngineControl.initEngine():Initializing ecEngine");
 	    System.out.println("isMC: "+isMC+" "+mcpart);
 	    System.out.println("Configuration: "+config); 
 	    System.out.println("Variation: "+variation);
 	    System.out.println("GeomVariation: "+geomVariation);
-	    System.out.println("SingleThreaded:"+ECCommon.isSingleThreaded);		
+	    System.out.println("SingleThreaded:"+ECCommon.isSingleThreaded);
+	    System.out.println("EngineControl.initEngine complete\n");
 	}	
 	
 	public void configEngine() {
