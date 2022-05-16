@@ -111,7 +111,7 @@ public class ECa extends DetectorMonitor {
       	VB = new LorentzVector(0,0,Ebeam,Ebeam);
 	    VT = new LorentzVector(0,0,0,0.93827);
 	    tl.setFitData(Fits);
-	    configEngine("muon");  
+	    eng.updateConfig("muon");  
     }
     
     public void localclear() {
