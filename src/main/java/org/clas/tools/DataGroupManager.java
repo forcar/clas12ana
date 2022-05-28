@@ -140,9 +140,9 @@ public class DataGroupManager {
     public void fill(String name, double ... val) {    	
         if(!goodName(name)) return; 
         if(!tmap.get(name)) return;
-        if(val.length==3 && isH1R(name)) {if(val[2]==1) {getH1FR(name)[0].fill(val[0],val[1]);} getH1FR(name)[1].fill(val[0]);        return;}
-        if(val.length==2 && isH1R(name)) {getH1FR(name)[0].fill(val[0],val[1]);        getH1FR(name)[1].fill(val[0]);        return;}
-        if(val.length==3 && isH2R(name)) {getH2FR(name)[0].fill(val[0],val[1],val[2]); getH2FR(name)[1].fill(val[0],val[1]); return;} 
+        if(val.length==3 && isH1R(name)) {if(val[2]==1) {getH1FR(name)[0].fill(val[0],val[1]);} getH1FR(name)[1].fill(val[0]);return;}
+        if(val.length==2 && isH1R(name)) {getH1FR(name)[0].fill(val[0],val[1]);        getH1FR(name)[1].fill(val[0]);         return;}
+        if(val.length==3 && isH2R(name)) {getH2FR(name)[0].fill(val[0],val[1],val[2]); getH2FR(name)[1].fill(val[0],val[1]);  return;} 
     	if(val.length==1)                getH1F(name).fill(val[0]);
     	if(val.length==2 && isH1(name))  getH1F(name).fill(val[0],val[1]);
         if(val.length==2 && isH2(name))  getH2F(name).fill(val[0],val[1]);
