@@ -138,16 +138,16 @@ public class ECpi0 extends DetectorMonitor{
     	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
     	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
     	createSIJHistos(2,130,5.,700.,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
-    	create2DHistos(3,50,0.,20.,50,0.,5*EB/10.6,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
+    	create2DHistos(3,1,50,0.,20.,50,0.,5*EB/10.6,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
     	addFunctions(3,"IM1","0.13495*0.13495/2/(1-cos(x*3.14159/180.))",3.65,20.,1,2);
     	addFunctions(3,"IM2","0.12495*0.12495/2/(1-cos(x*3.14159/180.))",3.4,20.,5,2);
     	addFunctions(3,"IM3","0.14495*0.14495/2/(1-cos(x*3.14159/180.))",4.0,20.,5,2);
-    	create2DHistos(4,40,0.,20.,50,-1.,1.,      "opax",   "Two Photon Opening Angle (deg)","X:(E1-E2)/(E1+E2)");
-    	create2DHistos(5,60,-150.,150.,60,1.,20.,  "imopa",  "Inv. Mass Error (MeV)",         "Two Photon Opening Angle (deg)");
-    	create2DHistos(6,60,-150.,150.,60,0.,5*EB/10.6,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
-    	create2DHistos(7,60,-150.,150.,60,0.,10*EB/10.6,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
-    	create2DHistos(8,60,-150.,150.,60,-15.,15.,"tij",    "Inv. Mass Error (MeV)",         "Time Difference (Phot1-Phot2) (ns)");
-    	create2DHistos(9,60,3.,32.,60,0.,10*EB/10.6,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
+    	create2DHistos(4,3,30,0.,20.,30,-1.,1.,      "opax",   "Two Photon Opening Angle (deg)","X:(E1-E2)/(E1+E2)");
+    	create2DHistos(5,1,60,-150.,150.,60,1.,20.,  "imopa",  "Inv. Mass Error (MeV)",         "Two Photon Opening Angle (deg)");
+    	create2DHistos(6,1,60,-150.,150.,60,0.,5*EB/10.6,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
+    	create2DHistos(7,1,60,-150.,150.,60,0.,10*EB/10.6,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
+    	create2DHistos(8,1,60,-150.,150.,60,-15.,15.,"tij",    "Inv. Mass Error (MeV)",         "Time Difference (Phot1-Phot2) (ns)");
+    	create2DHistos(9,1,60,3.,32.,60,0.,10*EB/10.6,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
     	createXYHistos(10,1,60,410);
     	createXYHistos(10,2,60,410);
     	create1DHistos(11,100,0.,50.,"ftof","Energy (MeV)");
@@ -168,7 +168,7 @@ public class ECpi0 extends DetectorMonitor{
         if(isAnalyzeDone) {updateUVW(1); }else{ plotPI0Summary(1);}
         plotPI0Summary(2);    	
         plotPI0Summary(3);    	
-        plotPI0Summary(4);   
+        plotOAXSummary(4);   
         plotPI0Summary(5);
         plotPI0Summary(6);
         plotPI0Summary(7);
@@ -252,18 +252,22 @@ public class ECpi0 extends DetectorMonitor{
         this.getDataGroup().add(dg,0,0,k,run);
     }
     
-    public void create2DHistos(int k, int nchx, double x1, double x2, int nchy, double y1, double y2, String var, String txtx, String txty) {
+    public void create2DHistos(int k, int imax, int nchx, double x1, double x2, int nchy, double y1, double y2, String var, String txtx, String txty) {
     	
 	    int run = getRunNumber();
-        DataGroup dg = new DataGroup(3,2);
+	    
+        String[] t = {"e","w","r"};
         
-        for (int is=1; is<7; is++) {
-            String tag = var+"-"+is+"-"+k+"-"+run;
-            h2 = new H2F("pi0-"+tag,"pi0-"+tag, nchx, x1, x2, nchy, y1, y2);
-            h2.setTitleX("Sector "+is+" "+txtx); h2.setTitleY(txty); 
-            dg.addDataSet(h2,is-1);   
+        for (int i=0; i<imax; i++) {
+        	DataGroup dg = new DataGroup(3,2);
+        	for (int is=1; is<7; is++) {
+        		String tag = var+"-"+is+"-"+t[i]+"-"+k+"-"+run;
+        		h2 = new H2F("pi0-"+tag,"pi0-"+tag, nchx, x1, x2, nchy, y1, y2);
+        		h2.setTitleX("Sector "+is+" "+txtx); h2.setTitleY(txty); 
+        		dg.addDataSet(h2,is-1);   
+        	}
+        	this.getDataGroup().add(dg,i,0,k,run);   
         }
-        this.getDataGroup().add(dg,0,0,k,run);    	
     }
     
     public void createXYHistos(int k, int n, int nb, int bmx) {
@@ -499,9 +503,10 @@ public class ECpi0 extends DetectorMonitor{
         int run = getRunNumber();
         
         if (!isPARTReady) initPART(run);
-        if (dropBanks) dropBanks(event);
+        
+        if (dropBanks) dropBanks(event); //rerun ECEngine, recreate REC::Particle,Calorimeter - input file must contain ECAL::adc,tdc
                 
-        part.processDataEvent(event);      // all raw clusters
+        part.processDataEvent(event); // input file must contain ECAL::clusters OR dropBanks=true
         
         DataBank ecBank = event.getBank("ECAL::clusters");
                
@@ -615,8 +620,9 @@ public class ECpi0 extends DetectorMonitor{
                     	
                         if(nesum[0][is-1]>1 && nesum[1][is-1]>0) {
                     	   ((H2F) this.getDataGroup().getItem(0,0,3,run).getData(part.iis[0]-1).get(0)).fill(opa,part.e1c*part.e2c);
-                       	   ((H2F) this.getDataGroup().getItem(0,0,4,run).getData(part.iis[0]-1).get(0)).fill(opa,part.X);
-                        } 
+                      	   if(ivmcut) ((H2F) this.getDataGroup().getItem(0,0,4,run).getData(part.iis[0]-1).get(0)).fill(opa,part.X);
+                      	   if(ivmcut) ((H2F) this.getDataGroup().getItem(1,0,4,run).getData(part.iis[0]-1).get(0)).fill(opa,part.X,invmass/part.mpi0);
+                         } 
                         
                         if (ivmcut) {
                            ((H2F) this.getDataGroup().getItem(0,0,9,run).getData(part.iis[0]-1).get(0)).fill(Math.acos(part.cpi0)*180/Math.PI,Math.sqrt(part.tpi2));                    
@@ -803,7 +809,31 @@ public class ECpi0 extends DetectorMonitor{
            c.cd(idet+3); c.getPad(idet+3).getAxisZ().setLog(false); c.getPad(idet+3).getAxisZ().setRange(0.7, 1.3); c.draw(h3);
         }	
    
-    }   
+    }
+    
+    public void plotOAXSummary(int index) {        
+    	
+      	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        
+        int   run = getRunNumber();
+        
+        c.clear(); c.divide(3,2);
+        
+        for (int is=0; is<6; is++) {
+           H2F h1 = (H2F) this.getDataGroup().getItem(0,0,index,run).getData(is).get(0); 
+           H2F h2 = (H2F) this.getDataGroup().getItem(1,0,index,run).getData(is).get(0);  
+           H2F h3 = (H2F) this.getDataGroup().getItem(2,0,index,run).getData(is).get(0);  
+           
+           
+           h3=h2.divide(h2, h1); boolean pc = getActivePC()==0; c.cd(is); 
+           h3.setTitleX(h1.getTitleX()); h3.setTitleY(h1.getTitleY());
+           c.getPad(is).getAxisZ().setLog(pc?true:false);
+           if( pc)  c.getPad(is).getAxisZ().setAutoScale(true);
+           if(!pc)  c.getPad(is).getAxisZ().setRange(0.7,1.3);
+           c.draw(pc?h1:h3);
+        }	
+   
+    }
     
     public void plotMCPHOT(int index) {
       	EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
