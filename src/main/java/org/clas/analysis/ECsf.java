@@ -101,7 +101,7 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",1,1,50,0.2,EB,50,0.1,0.4,"ep_p"," Momentum (GeV)",   " E/P",dg);
         createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
-        createXYZHistos("XY");
+        createXYZHistos("XY","xyz"); createXYZHistos("XY","hxyz"); 
         createSLCHistos("SLC",1,0,15,0.,0.30,"PARTIAL SF",false);
         createSLCHistos("SLC",1,1,12,0.,0.15,"PARTIAL SF",false);
         createSLCHistos("SLC",1,2,12,0.,0.05,"PARTIAL SF",false);
@@ -179,7 +179,7 @@ public class ECsf extends DetectorMonitor {
 
     } 
     
-    public void createXYZHistos(String tab) {
+    public void createXYZHistos(String tab, String xyz) {
     	    
         int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
 
@@ -196,15 +196,16 @@ public class ECsf extends DetectorMonitor {
         int nb=200, x=400, y=400;
         
         for (int i=1; i<4; i++) {
-            h = new H2F("ep_xyc_w"+i+"_"+run,  nb, -x, x, nb, -y,y);                        dg2.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_ww"+i+"_"+run, nb, -x, x, nb, -y,y);                        dg3.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_e"+i+"_"+run,  nb, -x, x, nb, -y,y); h.setTitle(tit1[i-1]); dg1.addDataSet(h,i-1); 
-            h = new H2F("ep_xyc_sf"+i+"_"+run, nb, -x, x, nb, -y,y); h.setTitle(tit2[i-1]); dg1.addDataSet(h,i+2);  
-            h = new H2F("ep_xyc_sff"+i+"_"+run,nb, -x, x, nb, -y,y); h.setTitle(tit3[i-1]); dg1.addDataSet(h,i+5);  
+            h = new H2F("ep_"+xyz+"_w"+i+"_"+run,  nb, -x, x, nb, -y,y);                        dg2.addDataSet(h,i-1); 
+            h = new H2F("ep_"+xyz+"_ww"+i+"_"+run, nb, -x, x, nb, -y,y);                        dg3.addDataSet(h,i-1); 
+            h = new H2F("ep_"+xyz+"_e"+i+"_"+run,  nb, -x, x, nb, -y,y); h.setTitle(tit1[i-1]); dg1.addDataSet(h,i-1); 
+            h = new H2F("ep_"+xyz+"_sf"+i+"_"+run, nb, -x, x, nb, -y,y); h.setTitle(tit2[i-1]); dg1.addDataSet(h,i+2);  
+            h = new H2F("ep_"+xyz+"_sff"+i+"_"+run,nb, -x, x, nb, -y,y); h.setTitle(tit3[i-1]); dg1.addDataSet(h,i+5);  
         }
-        this.getDataGroup().add(dg1, 0,0,k,run);
-        this.getDataGroup().add(dg2, 0,1,k,run);
-        this.getDataGroup().add(dg3, 0,2,k,run);
+        int num = xyz=="xyz"?0:1;
+        this.getDataGroup().add(dg1, num,0,k,run);
+        this.getDataGroup().add(dg2, num,1,k,run);
+        this.getDataGroup().add(dg3, num,2,k,run);
     }
     
     public void createUVWHistos(String tab, int cal, int xbins, int ybins, double xmin, double xmax, double ymin, double ymax, String xtxt, String ytxt) {
@@ -341,6 +342,15 @@ public class ECsf extends DetectorMonitor {
         electron_sf = ebcm.getConstants(runno, "/calibration/eb/electron_sf");    
     }
     
+    public Point3D squeeze(Point3D xyz, int det, int e_sect) {        
+        xyz.rotateZ(Math.toRadians(-60*(e_sect-1)));
+        xyz.rotateY(Math.toRadians(-25.));
+        xyz.translateXYZ(-(det==1?40:50),0,0);
+        xyz.rotateY(Math.toRadians(25.));
+        xyz.rotateZ(Math.toRadians(60*(e_sect-1)));
+        return xyz;
+    }
+    
     @Override
     public void processEvent(DataEvent event) {
     	
@@ -357,6 +367,8 @@ public class ECsf extends DetectorMonitor {
     	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0, lU=0, lV=0, lW=0; 
     	float[]     x_ecal = {-1000,-1000,-1000};
         float[]     y_ecal = {-1000,-1000,-1000};
+    	float[]    hx_ecal = {-1000,-1000,-1000};
+        float[]    hy_ecal = {-1000,-1000,-1000};
     	float[]  e_ecal_TH = new float[3];
     	float[]  e_ecal_EL = new float[4];
     	float[]   e_ecal_u = new float[3];
@@ -409,17 +421,16 @@ public class ECsf extends DetectorMonitor {
                     float  x = reccal.getFloat("x",icalo);
                     float  y = reccal.getFloat("y",icalo);
                     float  z = reccal.getFloat("z",icalo);					         
+                    float hx = reccal.getFloat("hx",icalo);
+                    float hy = reccal.getFloat("hy",icalo);
+                    float hz = reccal.getFloat("hz",icalo);					         
                     float pa = reccal.getFloat("path", icalo);
                     float  t = reccal.getFloat("time",icalo);
                     float  r = (float) Math.sqrt(x*x+y*y+z*z);
                     if(det==1) e_sect = reccal.getByte("sector",icalo);	                 
-                    int ind = getDet(det);	
-                    Point3D xyz = new Point3D(x,y,z);
-                    xyz.rotateZ(Math.toRadians(-60*(e_sect-1)));
-                    xyz.rotateY(Math.toRadians(-25.));
-                    xyz.translateXYZ(-(det==1?40:50),0,0);
-                    xyz.rotateY(Math.toRadians(25.));
-                    xyz.rotateZ(Math.toRadians(60*(e_sect-1)));
+                    int ind = getDet(det);
+                    Point3D  xyz = squeeze(new Point3D( x, y, z),det,e_sect);
+                    Point3D hxyz = squeeze(new Point3D(hx,hy,hz),det,e_sect);
                     if (det==1) {
                     	lU = reccal.getFloat("lu",icalo);
                     	lV = reccal.getFloat("lv",icalo);
@@ -427,6 +438,8 @@ public class ECsf extends DetectorMonitor {
                     }
                     x_ecal[ind]     = (float) xyz.x();
                     y_ecal[ind]     = (float) xyz.y();
+                    hx_ecal[ind]    = (float) hxyz.x();
+                    hy_ecal[ind]    = (float) hxyz.y();
                     t_ecal[ind]     = t-Tvertex-pa/29.98f;
                     e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
                     e_ecal_EL[ind] += ecalclust.getFloat("energy", ic);
