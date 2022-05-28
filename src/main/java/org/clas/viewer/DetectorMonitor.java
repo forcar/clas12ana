@@ -119,6 +119,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                           useCAL = false;
     private Boolean                           useSEC = false;
     private Boolean                          useRDIF = false;
+    private Boolean                        useEBCCDB = false;
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
    
@@ -252,7 +253,8 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/global_time_walk",
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
-            "/calibration/ec/tmf_window"           
+            "/calibration/ec/tmf_window",
+            "/daq/fadc/ec"
     };    
     
     public DetectorMonitor(String name){
@@ -261,7 +263,7 @@ public class DetectorMonitor implements ActionListener {
         detectorPanel  = new JPanel();
         detectorCanvas = new EmbeddedCanvasTabbed();
         detectorView   = new DetectorPane2D();
-        root           = "DetectorMonitor."+detectorName+".";
+        root           = detectorName+".DetectorMonitor.";
         numberOfEvents = 0;        
         eventResetTime_current[0]=0;
         eventResetTime_current[1]=0;     
@@ -298,6 +300,12 @@ public class DetectorMonitor implements ActionListener {
     public void initCCDB(int runNumber) {    	
     	System.out.println(root+"initCCDB("+runNumber+")");
     }
+        
+    public void initEBCCDB(int runNumber) {
+    	if(!useEBCCDB) return;
+    	System.out.println(root+"initEBCCDB("+runNumber+")");
+    	ebccdb = new EBCCDBConstants(runNumber,ebcm);
+    }
     
     public void initEPICS() {
         layMap.put("LTCC",ltcc); nlayMap.put("LTCC", nltcc);
@@ -308,12 +316,7 @@ public class DetectorMonitor implements ActionListener {
         layMap.put("CND",cnd);   nlayMap.put("CND",  ncnd);
         layMap.put("ECAL",ecal); nlayMap.put("ECAL", necal);    	
     }
-    
-    public void initEBCCDB(int runNumber) {    
-    	System.out.println(root+"initEBCCDB("+runNumber+")");
-    	ebccdb = new EBCCDBConstants(runNumber,ebcm);
-    }
-    
+
     public void createTimeLineHistos() {    	
     }
     
@@ -519,6 +522,10 @@ public class DetectorMonitor implements ActionListener {
     
     public DetectorPane2D getDetectorView() {
         return detectorView;
+    }
+    
+    public void useEBCCDB(boolean flag) {
+    	useEBCCDB = flag;
     }
     
     public void use123Buttons(boolean flag) {
@@ -1567,7 +1574,7 @@ public class DetectorMonitor implements ActionListener {
             boolean maxtest = false;
             List<IDataSet> dsList = group.getData(i);
             c.cd(i);  String opt = " "; 
-            if(dsList.size()>1) maxtest = true; //prevents AutoScale from triggering on empty or low yield histogram
+            if(dsList.size()>2) maxtest = true; //prevents AutoScale from triggering on empty or low yield histogram
             if(dsList.size()>0) {
             	IDataSet ds0 = dsList.get(0);            	
             	if(!config(ds0.getName(),c)) { //override canvas auto configuration if ds0 is tagged
