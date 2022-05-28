@@ -112,6 +112,7 @@ public class ECcalib extends DetectorMonitor {
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
+        useECEnginePane(true);
         this.init();
         this.localinit();
     }
@@ -194,7 +195,7 @@ public class ECcalib extends DetectorMonitor {
 //    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
     	 updateUVW(1);   
 //    	 plotAlignSummary(16); 
-    	 plotTimeLines(11);  	    
+//    	 plotTimeLines(11);  	    
      }
      
      public void plotMean() {
