@@ -41,7 +41,7 @@ public class ECmc1 extends DetectorMonitor {
     SFFit                  sf = null;
     
 	String tit = null;
-	double ethresh = 0.0;
+	double ethresh = 0.01;
 	public float e1=0,e2=2.5f,p2=e2*4;
 	static float refP, refTH;
 	static int trSEC=5, trPID=-211, mcSEC=2, mcPID= 22;
@@ -55,7 +55,7 @@ public class ECmc1 extends DetectorMonitor {
         this.use123Buttons(true);
         this.useZSliderPane(true);
         useECEnginePane(true);
-        
+        useEBCCDB(true);
         this.init();
         this.localinit();
         this.localclear();
@@ -69,6 +69,7 @@ public class ECmc1 extends DetectorMonitor {
     }
     
     public void initEBMCE() {        
+        System.out.println("ECmc1.initEBMCE()");          
         ebmce.getCCDB(11);
         ebmce.setGeom("2.5");
         ebmce.setGoodPhotons(12);
@@ -154,45 +155,52 @@ public class ECmc1 extends DetectorMonitor {
         	dgm.makeH2("peakE3", 9,1,10,50,0.5,1.5,-1,"UV,UW,VW","ECAL LAYER","Peak/Peak");
         	dgm.makeH2("peakE4",10,0,p2,270,1,10,  -1,"UV,UW,VW","Photon Energy (GeV)","Peak/Peak");
     	}
-
     }
     
     public void createRECGEN(int st) {
     	
     	switch (st) {        
         case 0: 
-    		dgm.add("RECGEN",4,4,0,st,getRunNumber());    
+    		dgm.add("RECGEN",5,4,0,st,getRunNumber());    
+        	dgm.makeH2("dee0", 50,0,p2,20,-0.4,0.4,0,"N1>0",     "Photon Energy (GeV)","#DeltaE/E");          dgm.cc("dee0",false,true,0,0,0,0);
         	dgm.makeH2("dee1", 50,0,p2,20,-0.4,0.4,0,"N1=1",     "Photon Energy (GeV)","#DeltaE/E");          dgm.cc("dee1",false,true,0,0,0,0);
         	dgm.makeH2("dee2", 40,0,p2,15,-0.4,0.4,0,"N1=1 N4=2","Photon Energy (GeV)","#DeltaE/E");          dgm.cc("dee2",false,true,0,0,0,0); 
         	dgm.makeH2("dee3", 30,0,p2,10,-0.4,0.4,0,"N1=1 N4=3","Photon Energy (GeV)","#DeltaE/E");          dgm.cc("dee3",false,true,0,0,0,0);
         	dgm.makeH2("dee4", 30,0,p2,10,-0.4,0.4,0,"N1=1 N4=4","Photon Energy (GeV)","#DeltaE/E");          dgm.cc("dee4",false,true,0,0,0,0);
+        	dgm.makeH2("det0", 50,0,p2,20,-0.6,0.6,0,"N1>0",     "Photon Energy (GeV)","#Delta#theta (deg)"); dgm.cc("det0",false,true,0,0,0,0);
         	dgm.makeH2("det1", 50,0,p2,20,-0.6,0.6,0,"N1=1",     "Photon Energy (GeV)","#Delta#theta (deg)"); dgm.cc("det1",false,true,0,0,0,0);
         	dgm.makeH2("det2", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=2","Photon Energy (GeV)","#Delta#theta (deg)"); dgm.cc("det2",false,true,0,0,0,0);
         	dgm.makeH2("det3", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=3","Photon Energy (GeV)","#Delta#theta (deg)"); dgm.cc("det3",false,true,0,0,0,0);
         	dgm.makeH2("det4", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=4","Photon Energy (GeV)","#Delta#theta (deg)"); dgm.cc("det4",false,true,0,0,0,0);
+        	dgm.makeH2("dep0", 50,0,p2,20,-0.6,0.6,0,"N1>0",     "Photon Energy (GeV)","#Delta#phi (deg)");   dgm.cc("dep0",false,true,0,0,0,0);
         	dgm.makeH2("dep1", 50,0,p2,20,-0.6,0.6,0,"N1=1",     "Photon Energy (GeV)","#Delta#phi (deg)");   dgm.cc("dep1",false,true,0,0,0,0);
         	dgm.makeH2("dep2", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=2","Photon Energy (GeV)","#Delta#phi (deg)");   dgm.cc("dep2",false,true,0,0,0,0);
         	dgm.makeH2("dep3", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=3","Photon Energy (GeV)","#Delta#phi (deg)");   dgm.cc("dep3",false,true,0,0,0,0);
         	dgm.makeH2("dep4", 50,0,p2,20,-0.6,0.6,0,"N1=1 N4=4","Photon Energy (GeV)","#Delta#phi (deg)");   dgm.cc("dep4",false,true,0,0,0,0);
+        	dgm.makeH2("deb0", 50,0,p2,20,-0.05,0.05,0,"N1>0",     "Photon Energy (GeV)","#Delta#beta");      dgm.cc("deb0",false,true,0,0,0,0);
         	dgm.makeH2("deb1", 50,0,p2,20,-0.05,0.05,0,"N1=1",     "Photon Energy (GeV)","#Delta#beta");      dgm.cc("deb1",false,true,0,0,0,0);
         	dgm.makeH2("deb2", 50,0,p2,20,-0.05,0.05,0,"N1=1 N4=2","Photon Energy (GeV)","#Delta#beta");      dgm.cc("deb2",false,true,0,0,0,0);
         	dgm.makeH2("deb3", 50,0,p2,20,-0.05,0.05,0,"N1=1 N4=3","Photon Energy (GeV)","#Delta#beta");      dgm.cc("deb3",false,true,0,0,0,0);
         	dgm.makeH2("deb4", 50,0,p2,20,-0.05,0.05,0,"N1=1 N4=4","Photon Energy (GeV)","#Delta#beta");      dgm.cc("deb4",false,true,0,0,0,0);
         	break;
         case 1: 
-    		dgm.add("RECGEN",4,4,0,st,getRunNumber());    
+    		dgm.add("RECGEN",5,4,0,st,getRunNumber());    
+        	dgm.makeH2("dte0", 50,5,26,20,-0.4,0.4,0,"N1>0",     "Photon Theta (deg)","#DeltaE/E");          dgm.cc("dte0",false,true,0,0,0,0);
         	dgm.makeH2("dte1", 50,5,26,20,-0.4,0.4,0,"N1=1",     "Photon Theta (deg)","#DeltaE/E");          dgm.cc("dte1",false,true,0,0,0,0);
         	dgm.makeH2("dte2", 40,5,26,15,-0.4,0.4,0,"N1=1 N4=2","Photon Theta (deg)","#DeltaE/E");          dgm.cc("dte2",false,true,0,0,0,0); 
         	dgm.makeH2("dte3", 30,5,26,10,-0.4,0.4,0,"N1=1 N4=3","Photon Theta (deg)","#DeltaE/E");          dgm.cc("dte3",false,true,0,0,0,0);
         	dgm.makeH2("dte4", 30,5,26,10,-0.4,0.4,0,"N1=1 N4=4","Photon Theta (deg)","#DeltaE/E");          dgm.cc("dte4",false,true,0,0,0,0);
+        	dgm.makeH2("dtt0", 50,5,26,20,-0.6,0.6,0,"N1>0",     "Photon Theta (deg)","#Delta#theta (deg)"); dgm.cc("dtt0",false,true,0,0,0,0);
         	dgm.makeH2("dtt1", 50,5,26,20,-0.6,0.6,0,"N1=1",     "Photon Theta (deg)","#Delta#theta (deg)"); dgm.cc("dtt1",false,true,0,0,0,0);
         	dgm.makeH2("dtt2", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=2","Photon Theta (deg)","#Delta#theta (deg)"); dgm.cc("dtt2",false,true,0,0,0,0);
         	dgm.makeH2("dtt3", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=3","Photon Theta (deg)","#Delta#theta (deg)"); dgm.cc("dtt3",false,true,0,0,0,0);
         	dgm.makeH2("dtt4", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=4","Photon Theta (deg)","#Delta#theta (deg)"); dgm.cc("dtt4",false,true,0,0,0,0);
-        	dgm.makeH2("dtp1", 50,5,26,20,-0.6,0.6,0,"N1=1",     "Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp1",false,true,0,0,0,0);
+           	dgm.makeH2("dtp0", 50,5,26,20,-0.6,0.6,0,"N1>0",     "Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp0",false,true,0,0,0,0);
+           	dgm.makeH2("dtp1", 50,5,26,20,-0.6,0.6,0,"N1=1",     "Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp1",false,true,0,0,0,0);
         	dgm.makeH2("dtp2", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=2","Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp2",false,true,0,0,0,0);
         	dgm.makeH2("dtp3", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=3","Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp3",false,true,0,0,0,0);
         	dgm.makeH2("dtp4", 50,5,26,20,-0.6,0.6,0,"N1=1 N4=4","Photon Theta (deg)","#Delta#phi (deg)");   dgm.cc("dtp4",false,true,0,0,0,0);
+        	dgm.makeH2("dtb0", 50,5,26,20,-0.05,0.05,0,"N1>0",     "Photon Theta (deg)","#Delta#beta");      dgm.cc("dtb0",false,true,0,0,0,0);
         	dgm.makeH2("dtb1", 50,5,26,20,-0.05,0.05,0,"N1=1",     "Photon Theta (deg)","#Delta#beta");      dgm.cc("dtb1",false,true,0,0,0,0);
         	dgm.makeH2("dtb2", 50,5,26,20,-0.05,0.05,0,"N1=1 N4=2","Photon Theta (deg)","#Delta#beta");      dgm.cc("dtb2",false,true,0,0,0,0);
         	dgm.makeH2("dtb3", 50,5,26,20,-0.05,0.05,0,"N1=1 N4=3","Photon Theta (deg)","#Delta#beta");      dgm.cc("dtb3",false,true,0,0,0,0);
@@ -231,21 +239,18 @@ public class ECmc1 extends DetectorMonitor {
         	dgm.makeH1("h210",50,0,p2,-1,"PCAL","Photon Energy (GeV)",1,3);
         	dgm.makeH1("h220",50,0,p2,-1,"ECIN","Photon Energy (GeV)",1,2);
         	dgm.makeH1("h230",50,0,p2,-1,"ECOU","Photon Energy (GeV)",1,5);
-   	}
-
+    	}
     }
         
     public void createSF(int st) {
     	
     	switch (st) {
     	case 0: 
-    		dgm.add("SF", 2, 3, 0, st, getRunNumber());
-    		dgm.makeH2("sf1",80,e1,e2,50,0.15,0.35,-1,"N#gamma>0","Measured Photon Energy (GeV)","Sampling Fraction");           dgm.cc("sf1",false,true,0,0,0,0);
-    		dgm.makeH2("sf2",80,e1,e2,50,0.15,0.35,-1,"N#gamma>0 #theta<8","Measured Photon Energy (GeV)","Sampling Fraction");  dgm.cc("sf2",false,true,0,0,0,0);
-    		dgm.makeH2("sf3",80,e1,e2,50,0.15,0.35,-1,"N#gamma=1","Measured Photon Energy (GeV)","Sampling Fraction");           dgm.cc("sf3",false,true,0,0,0,0);
-    		dgm.makeH2("sf4",80,e1,e2,50,0.15,0.35,-1,"N#gamma=1 #theta<8","Measured Photon Energy (GeV)","Sampling Fraction");  dgm.cc("sf4",false,true,0,0,0,0);
-    		dgm.makeH2("sf5",80,5, 26,50,0.15,0.35,-1,"N#gamma>0","Photon Theta  (deg)","Sampling Fraction");                         dgm.cc("sf5",false,true,0,0,0,0);
-    		dgm.makeH2("sf6",80,5, 26,50,0.15,0.35,-1,"N#gamma=1","Photon Theta  (deg)","Sampling Fraction");                         dgm.cc("sf6",false,true,0,0,0,0);  		
+    		dgm.add("SF", 2, 2, 0, st, getRunNumber());
+    		dgm.makeH2("sf1",80,e1,e2,50,0.15,0.35,-1,"N#gamma>0","Measured Photon Energy (GeV)","Sampling Fraction");  dgm.cc("sf1",false,true,0,0,0,0);
+    		dgm.makeH2("sf2",80,e1,e2,50,0.15,0.35,-1,"N#gamma=1","Measured Photon Energy (GeV)","Sampling Fraction");  dgm.cc("sf2",false,true,0,0,0,0);
+    		dgm.makeH2("sf3",80,5, 26,50,0.15,0.35,-1,"N#gamma>0","Photon Theta  (deg)","Sampling Fraction");           dgm.cc("sf3",false,true,0,0,0,0);
+    		dgm.makeH2R("sf4",20,e1,e2,40,5.5,25.5,-1,"SF: N#gamma>0","Measured Photon Energy (GeV)","Photon Theta (deg)"); dgm.cc("sf4",false,false,0,0,0.18f,0.265f);		
     	}
     }
     
@@ -283,7 +288,7 @@ public class ECmc1 extends DetectorMonitor {
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
     	geteff();
-    	sf.fit("sf1","sf2","sf3","sf4");
+    	sf.fit("sf1","sf2");
     	if(dumpFiles) writer.close();
     	isAnalyzeDone = true;
     }
@@ -454,7 +459,7 @@ public class ECmc1 extends DetectorMonitor {
         			float em = (float) (dp.getEnergy(DetectorType.ECAL)); 
         			float  e = (float) (em/ebmce.getSF(dp)); 				  
         			if(e>ethresh) {
-        				dgm.fill("sf1",em,em/refP); dgm.fill("sf5",refTH,em/refP);if(refTH<8) dgm.fill("sf2",em,em/refP);
+        				dgm.fill("sf1",em,em/refP); dgm.fill("sf3",refTH,em/refP);
         				for (DetectorResponse dr : cal){ CalorimeterResponse r = (CalorimeterResponse) dr;          					
         					if (r.getAssociation()==ipp) { 
         						int lay = r.getDescriptor().getLayer(); 	
@@ -482,6 +487,7 @@ public class ECmc1 extends DetectorMonitor {
         		dgm.fill("h11",refP);       	   
         	    
         		//RECGEN.0
+        		if(n1>0)        {dgm.fill("dee0",refP,delE1);dgm.fill("det0",refP,delTH1); dgm.fill("dep0",refP,delPH1);dgm.fill("deb0",refP,delBET);}
         		if(n1==1)       {dgm.fill("dee1",refP,delE1);dgm.fill("det1",refP,delTH1); dgm.fill("dep1",refP,delPH1);dgm.fill("deb1",refP,delBET);}
         		if(n1==1&&n4>1) {dgm.fill("dee2",refP,delE1);dgm.fill("det2",refP,delTH1); dgm.fill("dep2",refP,delPH1);dgm.fill("deb2",refP,delBET);}
         		if(n1==1&&n4>2) {dgm.fill("dee3",refP,delE1);dgm.fill("det3",refP,delTH1); dgm.fill("dep3",refP,delPH1);dgm.fill("deb3",refP,delBET);}   
@@ -489,7 +495,8 @@ public class ECmc1 extends DetectorMonitor {
         		
         		//RECGEN.1
         		if(refP>0) {
-        		if(n1==1)       {dgm.fill("dte1",refTH,delE1);dgm.fill("dtt1",refTH,delTH1); dgm.fill("dtp1",refTH,delPH1);dgm.fill("dtb1",refTH,delBET);}
+            	if(n1>0)        {dgm.fill("dte0",refTH,delE1);dgm.fill("dtt0",refTH,delTH1); dgm.fill("dtp0",refTH,delPH1);dgm.fill("dtb0",refTH,delBET);}
+            	if(n1==1)       {dgm.fill("dte1",refTH,delE1);dgm.fill("dtt1",refTH,delTH1); dgm.fill("dtp1",refTH,delPH1);dgm.fill("dtb1",refTH,delBET);}
         		if(n1==1&&n4>1) {dgm.fill("dte2",refTH,delE1);dgm.fill("dtt2",refTH,delTH1); dgm.fill("dtp2",refTH,delPH1);dgm.fill("dtb2",refTH,delBET);}
         		if(n1==1&&n4>2) {dgm.fill("dte3",refTH,delE1);dgm.fill("dtt3",refTH,delTH1); dgm.fill("dtp3",refTH,delPH1);dgm.fill("dtb3",refTH,delBET);}   
         		if(n1==1&&n4>3) {dgm.fill("dte4",refTH,delE1);dgm.fill("dtt4",refTH,delTH1); dgm.fill("dtp4",refTH,delPH1);dgm.fill("dtb4",refTH,delBET);}  
@@ -535,7 +542,7 @@ public class ECmc1 extends DetectorMonitor {
 	        					if(lay==7) sum+=   7;
 	        				}
 	        			}	        			
-	        			if(sum>=100){dgm.fill("h13",refP); dgm.fill("sf3", em, em/refP); dgm.fill("sf6", refTH, em/refP); if(refTH<8) dgm.fill("sf4", em, em/refP);}
+	        			if(sum>=100){dgm.fill("h13",refP); dgm.fill("sf2", em, em/refP); dgm.fill("sf4", em, refTH, em/refP);}
 	        			if(sum>=140) dgm.fill("h14",refP);
 	        			if(sum==147) dgm.fill("h15",refP);	        					        			
 	        		}
@@ -560,7 +567,8 @@ public class ECmc1 extends DetectorMonitor {
     	dgm.geteff("pef1");
     	dgm.geteff("pef4");
     	dgm.geteff("pef7");	
-    	dgm.geteff("peft");	
+    	dgm.geteff("peft");
+    	dgm.geteff("sf4");
     }
     
     public class SFFit {
