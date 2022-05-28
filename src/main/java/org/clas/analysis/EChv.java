@@ -111,10 +111,11 @@ public class EChv extends DetectorMonitor {
     				int is=decode(parts3[4]);
     				int il=decode(parts3[5]);
     				int ip=Integer.parseInt(parts3[6].substring(1))-1;
+    				if(is==4 && val>2500 && val<=2550) System.out.println(parts2[0]+" "+val);
     				int iil = (il>2)?il-3:il;
     				if(id<2 || (id>1&&il>2)) {
         			if (!hvlist.hasItem(id,is,iil,ip)) hvlist.add(new ArrayList<Integer>(),id,is,iil,ip);
-        				hvlist.getItem(id,is,iil,ip).add(val);	
+                         hvlist.getItem(id,is,iil,ip).add(val);	
     				}
     		    }
     		}
@@ -206,7 +207,7 @@ public class EChv extends DetectorMonitor {
 		//0,6,0:PCAL_HV-2017_11_23-09_16_01.snp PCAL_HV-2020_10_09-10_43_25.snp
 		//1,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
 		//2,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		int det=2, snp1=7, snp2=0;
+		int det=1, snp1=7, snp2=0;
 		if(args.length==0) reader.processFile(det,snp1,snp2);
 		if(args.length==1) reader.processFile(Integer.parseInt(args[0]),snp1);
 		if(args.length==2) reader.processFile(Integer.parseInt(args[0]),Integer.parseInt(args[1]));
