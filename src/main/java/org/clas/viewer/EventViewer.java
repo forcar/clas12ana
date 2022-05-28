@@ -149,13 +149,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     List<Integer>     runList  = new ArrayList<Integer>();
     
-    DetectorMonitor[]  monitors = null;
+    DetectorMonitor[]           monitors = null;
     Map<String,DetectorMonitor> Monitors = new LinkedHashMap<String,DetectorMonitor>();
     
     int    selectedTabIndex = 0;
     String selectedTabName  = " ";
     
-    private DataSourceProcessor  dataProcessor = new DataSourceProcessor();    
+    private DataSourceProcessor  dataProcessor = null;    
     private java.util.Timer      processTimer  = null;
     private int                  eventDelay    = 0;
    
@@ -170,11 +170,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public EventViewer(String[] args) {  
+    	System.out.println("*** WELCOME TO CLAS12ANA ***\n");
+    	dataProcessor = new DataSourceProcessor();    
     	createMonitors(args);
     	createMenuBar();
     	createPanels();   	    
         schemaFactory.initFromDirectory(ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4"));
-        System.out.println("EventViewer init complete");
+        System.out.println("EventViewer init complete \n");
     }
     
     public void createMonitors(String[] args) {
@@ -206,11 +208,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECscaler("ECscaler");
 //    		monitors[n] = new ECmc("ECmc");
-    		monitors[n] = new ECmc1("ECmc1");
+//    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
-//          monitors[n] = new ECsf("ECsf"); 
+          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
@@ -219,6 +221,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void createMenuBar() {
+    	System.out.println("EventViewer.createMenuBar");
         		
         menuBar = new JMenuBar();
         
@@ -320,15 +323,15 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
        
         menu   	= new JMenu("ECscaler");
-        cf9 = new JCheckBoxMenuItem("ATDATA");  cf9.addItemListener(this);  ; menu.add(cf9);
+        cf9 = new JCheckBoxMenuItem("ATDATA");   cf9.addItemListener(this);  ; menu.add(cf9);
         menuBar.add(menu);
         
         menu   	= new JMenu("ECcalib");
-        cf10 = new JCheckBoxMenuItem("NormPix");  cf10.addItemListener(this);  ; menu.add(cf10);
+        cf10 = new JCheckBoxMenuItem("NormPix"); cf10.addItemListener(this); ; menu.add(cf10);
         menuBar.add(menu);   
         
-        menu    = new JMenu("ECEngine");
-        co2  = new JCheckBoxMenuItem("Enable");                  co2.addItemListener(this);  menu.add(co2);;
+        menu     = new JMenu("ECEngine");
+        co2      = new JCheckBoxMenuItem("Enable");              co2.addItemListener(this);  menu.add(co2);;
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
         cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a); cf6a.doClick(); 
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
@@ -342,6 +345,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void createPanels() {
+    	System.out.println("EventViewer.createPanels()");
 
         mainPanel = new JPanel();	
         mainPanel.setLayout(new BorderLayout());
@@ -438,8 +442,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //          case("Load Summary"):                this.readHistosFromSummary(); break;
           case("Analyze Runs"):                this.readFiles(); break;
           case("Analyze Histos"):              this.readHistos(); break;
-          case("Set GUI update interval"):     this.chooseUpdateInterval(); break;
-          case("Set logParam"):                this.chooseLogParam(); break;
+          case("Set GUI update interval"):     this.setUpdateInterval(); break;
+          case("Set logParam"):                this.setLogParam(); break;
           case("Set PC Z plane"):              this.setPCZplane(); break;
           case("Set EC Z plane"):              this.setECZplane(); break;
           case("Set Hit Thresh"):              this.setHitThresh(); break;
@@ -475,7 +479,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         for(int k=0; k<this.monitors.length; k++) this.monitors[k].saveTimelines();	
     }
 
-    public void chooseUpdateInterval() {
+    public void setUpdateInterval() {
         String s = (String)JOptionPane.showInputDialog(
                     null,
                     "GUI update interval (ms)",
@@ -499,8 +503,30 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }
         }
     }
+        
+    private void setRunNumber(String actionCommand) {
     
-    public void chooseLogParam() {
+        System.out.println("EventViewer.setRunNumber("+actionCommand+")");
+        String  RUN_number = (String) JOptionPane.showInputDialog(null, "Set run number to ", " ", JOptionPane.PLAIN_MESSAGE, null, null, "2284");
+        
+        if (RUN_number != null) { 
+            int cur_runNumber= this.runNumber;
+            try {
+                cur_runNumber = Integer.parseInt(RUN_number);
+            } 
+            catch (
+                NumberFormatException f) {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            if (cur_runNumber > 0){ 
+                this.ccdbRunNumber = cur_runNumber;
+                clasDecoder.setRunNumber(cur_runNumber,true);
+            } 
+            else {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");}   
+        }
+        
+    }
+    
+    public void setLogParam() {
         String s = (String)JOptionPane.showInputDialog(
                     null,
                     "ECEngine logParam",
@@ -664,7 +690,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private boolean isNewRun(int run) {
-    	if(isFirstRun(run)) {runList.add(this.runNumber); return true;}
+    	if(isFirstRun(run)) {runList.add(run); return true;}
     	if(runList.contains(run)) return false;
     	runList.add(run);
     	return true;
@@ -698,7 +724,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	int rNum = getRunNumber(event);
     	
         if(rNum!=0 && isNewRun(rNum) && clear) {  //clear is initialized true and reset true by readFiles()
-        	System.out.println("EventViewer: Processing Run "+rNum);
+        	System.out.println("\nEventViewer: Processing Run "+rNum+" Event: "+getEventNumber(event));
         	this.runNumber = rNum;
             if(!clearHist) clear=false; //bypass initRun after first run is analyzed
         	return initRun(rNum,event);
@@ -719,7 +745,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     private DataEvent initRun(int runno, DataEvent event) {
-    	System.out.println("EventViewer.initRun("+runno+")");
+    	System.out.println("\nEventViewer.initRun("+runno+")");
         for(int k=0; k<this.monitors.length; k++) {
         	if(autoSave && this.runNumber!=0) this.monitors[k].saveHistosToFile();
             this.runNumber = runno; 
@@ -983,28 +1009,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.monitors[k].timerUpdate();
         }
    }
-    
-    private void setRunNumber(String actionCommand) {
-    
-        System.out.println("EventViewer.setRunNumber("+actionCommand+")");
-        String  RUN_number = (String) JOptionPane.showInputDialog(null, "Set run number to ", " ", JOptionPane.PLAIN_MESSAGE, null, null, "2284");
-        
-        if (RUN_number != null) { 
-            int cur_runNumber= this.runNumber;
-            try {
-                cur_runNumber = Integer.parseInt(RUN_number);
-            } 
-            catch (
-                NumberFormatException f) {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
-            }
-            if (cur_runNumber > 0){ 
-                this.ccdbRunNumber = cur_runNumber;
-                clasDecoder.setRunNumber(cur_runNumber,true);
-            } 
-            else {JOptionPane.showMessageDialog(null, "Value must be a positive integer!");}   
-        }
-        
-    }
 
     private void resetHistograms(String actionCommand) {
 
