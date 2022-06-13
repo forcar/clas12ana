@@ -126,6 +126,7 @@ public class ECt extends DetectorMonitor {
         this.useCALUVWSECButtons(true);
         this.usePCCheckBox(true);
         this.useSliderPane(true);
+        this.useECEnginePane(true);
         tlnum = getDetectorTabNames().indexOf("TL");
         this.init();
         this.localinit();
