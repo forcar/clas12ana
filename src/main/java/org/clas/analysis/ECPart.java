@@ -75,6 +75,7 @@ public class ECPart extends EBEngine {
     DetectorParticle p2 = new DetectorParticle();
     
     public List<Particle> pmc = new ArrayList<>();;
+    public List<Vector3>  pmv = new ArrayList<>();
     
     public double distance11,distance12,distance21,distance22;
     public double e1,e2,e1c,e2c,cth,cth1,cth2;
@@ -98,13 +99,14 @@ public class ECPart extends EBEngine {
     public String config = null;
     public double SF1 = 0.27, SF1db=0.27;
     public double SF2 = 0.27, SF2db=0.27;
-    public boolean isMC = true;
+    public boolean isMC = true, hasStartTime = false;;
     public H1F h5,h6,h7,h8;
   
-    public int n2mc=0;
-
+    public int n2mc=0, MCpid=11, MCsec=2;
+    
     public int[] mip = {0,0,0,0,0,0};
     public int runNumber=11;
+    public float starttime=0;
     
     int photonMult = 12;
     
@@ -122,6 +124,14 @@ public class ECPart extends EBEngine {
     	super("EBMC");
     	initBankNames();
     }
+    
+	public void setMCpid(int val) {
+		MCpid = val;
+	}
+	
+	public void setMCsec(int val) {
+		MCsec = val;
+	}
     
     public void setDetectorCanvas(EmbeddedCanvasTabbed canvas) {
         detectorCanvas = canvas;
@@ -147,11 +157,23 @@ public class ECPart extends EBEngine {
     	System.out.println("ECpart.setCCDB("+runno+")");
     	ebe.init();
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
+    }   
+    
+    public boolean hasStartTime(int pid) {
+    	return (pid==11 || pid==-11 || pid==-211 || pid==211);
     }
     
-    public boolean readMC(DataEvent event) {
-    	
-        pmc.clear();
+    public float getStartTime(DataEvent event) { 
+    	float time=0;
+    	if(event.hasBank("REC::Event")) {
+    		DataBank bank = event.getBank("REC::Event");
+    		time = bank.getFloat("startTime", 0);	
+    	}
+    	return time;
+    }
+    
+    public boolean readMC(DataEvent event) {    	
+        pmc.clear(); pmv.clear(); hasStartTime=false;
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
             for (int i=0; i<bank.rows(); i++) {
@@ -162,11 +184,14 @@ public class ECPart extends EBEngine {
             	double vy = bank.getFloat("vy",i);
             	double vz = bank.getFloat("vz",i);
             	int   pid = bank.getInt("pid",i);  
-                pmc.add(new Particle(pid, px, py, pz, vx, vy, vz));
-                if(i==0) vtx.setXYZ(vx, vy, vz);
-                refE  = pmc.get(0).e(); refP = pmc.get(0).p();
-                refTH = Math.toDegrees(pmc.get(0).theta());
-                refPH = Math.toDegrees(pmc.get(0).phi());
+                if(pid==MCpid) {
+                	pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));
+                	refE = pmc.get(0).e(); 
+                	refP = pmc.get(0).p();
+                	refTH = Math.toDegrees(pmc.get(0).theta());
+                	refPH = Math.toDegrees(pmc.get(0).phi());	
+                }
+                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid); starttime = getStartTime(event);}
             }
             n2mc++;
             return true;
@@ -187,6 +212,9 @@ public class ECPart extends EBEngine {
         
         eb.getPindexMap().put(0, 0); 
         eb.getPindexMap().put(1, 0); 
+        
+//        eb.processHitMatching();
+//        eb.assignTrigger(); 
         
         return true;
     } 
@@ -942,8 +970,14 @@ public class ECPart extends EBEngine {
         
         EmbeddedCanvas c = new EmbeddedCanvas(); 
         
+    	int trSEC=5, trPID=-211, mcSEC=2, mcPID= 2112;
+    	
+        setMCpid(mcPID);
+        setMCsec(mcSEC);
+        
         String evioPath = "/Users/colesmith/clas12/sim/neutron/";
         String evioFile = "fc-neut-80k-s2-r5424.hipo";
+//        String evioFile = "out_pim_n.hipo";
         
         if (args.length == 0) { 
             reader.open(evioPath+evioFile);
@@ -980,25 +1014,28 @@ public class ECPart extends EBEngine {
             DataEvent event = reader.getNextEvent();
             run = getRunNumber(event); 
             
-            engine.processDataEvent(event);
-            readMC(event); processDataEvent(event);
+            if(!readMC(event)) continue; 
+            
+            engine.processDataEvent(event); processDataEvent(event);
             
        		h1.fill(refP);
        		
    			boolean n1=true, n2=true; float en=0; int np=0;
        		boolean goodpc=false, goodeci=false, goodeco=false;
        		
-       		for (DetectorParticle neut : getNeutralPart()) { np++;          			
+       		for (DetectorParticle neut : getNeutralPart()) {         		
+       		if(neut.getSector(DetectorType.ECAL)==mcSEC) {np++;
        			for (DetectorResponse ds : neut.getDetectorResponses()) { 
-       				if (ds.getDescriptor().getType()==DetectorType.ECAL) {      					
+      				if (ds.getDescriptor().getType()==DetectorType.ECAL) {      					
        					if(n1 && ds.getDescriptor().getLayer()>0) {h2.fill(refP); n1=false;} //PCAL+ECAL
        					if(n2 && ds.getDescriptor().getLayer()>1) {h3.fill(refP); n2=false;} //ECAL ONLY
        					en+=ds.getEnergy()*1e3;
        					if(ds.getDescriptor().getLayer()==1) goodpc=true;
        					if(ds.getDescriptor().getLayer()==4) goodeci=true;
        					if(ds.getDescriptor().getLayer()==7) goodeco=true;       					
-        			}          		
+        			}        	       		
       			}
+       		}
        		}       			
             if(en>0)                     {h6.fill(refP,en);h8.fill(refP, np);h10.fill(1e3*(refE-0.93957));}
             if(goodpc&&goodeci&&goodeco) {h7.fill(refP,en);h9.fill(refP, np);h11.fill(1e3*(refE-0.93957));}
@@ -1725,10 +1762,10 @@ public class ECPart extends EBEngine {
         ECPart part = new ECPart();  
         part.initGraphics();
         String env = System.getenv("CLAS12DIR");
-     	part.pizeroDemo(args);
+ //    	part.pizeroDemo(args);
  //    	part.photonDist(args);
 //     	part.photonDemo(args);
-//    	part.neutronDemo(args);
+    	part.neutronDemo(args);
 //        part.electronDemo(args);
 //        part.scalerdemo(args);
     }
