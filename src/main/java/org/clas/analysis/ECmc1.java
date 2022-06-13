@@ -348,8 +348,7 @@ public class ECmc1 extends DetectorMonitor {
         	if(i==1) {rat = c.getEnergy(0)/c.getEnergy(2); dgm.fill("peakE3",i+l,rat);}
         	if(i==1 && rat>0.5 && rat<1.5) dgm.fill("peakE4", refP, i+l+rat-0.5);
         	if(i==2) {rat = c.getEnergy(1)/c.getEnergy(2); dgm.fill("peakE3",i+l,rat);}
-        	if(i==2 && rat>0.5 && rat<1.5) dgm.fill("peakE4", refP, i+l+rat-0.5);
-        	
+        	if(i==2 && rat>0.5 && rat<1.5) dgm.fill("peakE4", refP, i+l+rat-0.5);        	
         }
     		   
     }
@@ -379,8 +378,6 @@ public class ECmc1 extends DetectorMonitor {
 	    	if(dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine  
 	    	
         	if(!ebmce.processDataEvent(de)) return;
-        	
-        	float stt = ebmce.starttime;  
             
             List<DetectorParticle> par = ebmce.eb.getEvent().getParticles(); //REC::Particle
         	List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList();  //REC::Calorimeter

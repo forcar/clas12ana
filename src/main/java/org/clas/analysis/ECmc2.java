@@ -688,7 +688,7 @@ public class ECmc2 extends DetectorMonitor {
  			        	if (r.getAssociation(0)==ipp) { //assume r.getNAssociations=1
  	 			        	int lay = r.getDescriptor().getLayer(); 
  			    			double dre=r.getEnergy(),drt = r.getTime()-stt, drb=r.getPath()/drt/29.97; 
- 			    			int    drs=r.getStatus(); 
+ 			    			int    drs=r.getStatus(); 			    			
  			    			Vector3D drp=r.getPosition(); Vector3 drc=r.getCoordUVW(); 
  			            	if(lay==1) { npc[0]++ ; npc[npp+1]++;epc[npp+1]=dre;r1[npp+1]=drp;c1[npp+1]=drc;spc[npp+1]=drs;bpc[npp+1]=drb;}    					
  			            	if(lay==4) {neci[0]++ ;neci[npp+1]++;eci[npp+1]=dre;r4[npp+1]=drp;c4[npp+1]=drc;sci[npp+1]=drs;bci[npp+1]=drb;}    					

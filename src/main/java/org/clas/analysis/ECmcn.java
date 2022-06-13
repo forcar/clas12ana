@@ -29,10 +29,16 @@ public class ECmcn extends DetectorMonitor {
 	List<Particle>       phot = new ArrayList<Particle>();
 	List<Particle>       neut = new ArrayList<Particle>();
 	
-	HipoDataSync       writer = new HipoDataSync();	
+	HipoDataSync       writer = new HipoDataSync();
 	
+	List<DetectorParticle> par;
+	List<DetectorResponse> cal;	
+	int trsec = -1;
 	String tit = null;
 	double ethresh = 0.3;	
+	
+	static double refE, refP, refTH, refPH;
+	static int trSEC=5, trPID=-211, mcSEC=2, mcPID= 2112;
 	
     public ECmcn(String name) {
         super(name);
@@ -42,6 +48,7 @@ public class ECmcn extends DetectorMonitor {
 
         this.use123Buttons(true);
         this.useZSliderPane(true);
+        useECEnginePane(true);
 
         this.init();
         this.localinit();
@@ -50,19 +57,17 @@ public class ECmcn extends DetectorMonitor {
     
     public void localinit() {
         System.out.println(getDetectorName()+".localinit()");
+        initEBMCE();
+        tl.setFitData(Fits);          
+    }
         
-        eng.engine.setIsMC(true);
-        eng.engine.setGeomVariation("rga_fall2018"); 
-        eng.engine.setDebug(false);
-        eng.setEngineConfig("phot");
-        
-        ebmce.getCCDB(10);
-        ebmce.setGeom("2.5");
-        ebmce.setMCpid(2112);
-        ebmce.setMCsec(2);
-        ebmce.isMC = true;
-        
-        tl.setFitData(Fits);
+   public void initEBMCE() {        
+       System.out.println(getDetectorName()+".initEBMCE()");          
+       ebmce.getCCDB(10);
+       ebmce.setGeom("2.5");
+       ebmce.setMCpid(mcPID);
+       ebmce.setMCsec(mcSEC);
+       ebmce.isMC = true;
     }
     
     public void localclear() {
@@ -74,6 +79,13 @@ public class ECmcn extends DetectorMonitor {
     	FitSummary.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
+    } 
+    
+    
+    public void openOutput(String file) {
+    	System.out.println(getDetectorName()+".openOutput("+file+")");
+    	writer = new HipoDataSync();
+        writer.open(file);    	
     } 
     
     @Override
@@ -149,41 +161,67 @@ public class ECmcn extends DetectorMonitor {
     public void createNEUTRONS(int st) {
     	switch (st) {
     	case 0:
-    		dgm.add("NEUTRONS", 3,2,0,st,getRunNumber());
+    		dgm.add("NEUTRONS", 3,4,0,st,getRunNumber());
 //    		dgm.makeH2("n00",100,0.2,1.3,9,0.5,9.5,-1,"","Neutron #beta","Neutrons");
 //    		dgm.makeH2("n01",100,0,2,    9,0.5,9.5,-1,"","Neutron REC Energy (GeV)","Neutrons");
-    		dgm.makeH2("n100", 50,0,6,   50,0.2,1.3,-1,"","Neutron GEN Momentum (GeV)","PCAL #beta");
-    		dgm.makeH2("n010", 50,0,6,   50,0.2,1.3,-1,"","Neutron GEN Momentum (GeV)","ECIN #beta");
-    		dgm.makeH2("n001", 50,0,6,   50,0.2,1.3,-1,"","Neutron GEN Momentum (GeV)","ECOU #beta");
+    		dgm.makeH2("n100", 50,0,6,   50,-0.15,0.1,0,"pc=1 eci=0 eco=0","Neutron GEN Momentum (GeV)","PCAL #Delta#beta");
+    		dgm.makeH2("n010", 50,0,6,   50,-0.15,0.1,0,"pc=0 eci=1 eco=0","Neutron GEN Momentum (GeV)","ECIN #Delta#beta");
+    		dgm.makeH2("n001", 50,0,6,   50,-0.15,0.1,0,"pc=0 eci=0 eco=1","Neutron GEN Momentum (GeV)","ECOU #Delta#beta");
+    		dgm.makeH2("n+00", 50,0,6,   50,-0.15,0.1,0,"pc>1 eci=0 eco=0","Neutron GEN Momentum (GeV)","PCAL #Delta#beta");
+    		dgm.makeH2("n0+0", 50,0,6,   50,-0.15,0.1,0,"pc=0 eci>1 eco=0","Neutron GEN Momentum (GeV)","ECIN #Delta#beta");
+    		dgm.makeH2("n00+", 50,0,6,   50,-0.15,0.1,0,"pc=0 eci=0 eco>1","Neutron GEN Momentum (GeV)","ECOU #Delta#beta");
+    		dgm.makeH2("n1110",50,0,6,   50,-0.15,0.1,0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","PCAL #Delta#beta");
+    		dgm.makeH2("n1111",50,0,6,   50,-0.15,0.1,0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","ECIN #Delta#beta");
+    		dgm.makeH2("n1112",50,0,6,   50,-0.15,0.1,0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","ECOU #Delta#beta");
+    		dgm.makeH2("pgr1", 50,0,6,   50,-0.6,0.6, 0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","PCAL #DeltaP/P" );
+    		dgm.makeH2("pgr2", 50,0,6,   50,-0.6,0.6, 0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","ECIN #DeltaP/P" );
+    		dgm.makeH2("pgr3", 50,0,6,   50,-0.6,0.6, 0,"pc=1 eci=1 eco=1","Neutron GEN Momentum (GeV)","ECOU #DeltaP/P" );
     	}
     }
     
     @Override
     public void processEvent(DataEvent de) {
 		
-    	GEN.clear();  
-    	
 		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==1;
-       
-        if (goodev) {         	
-        	GEN   = ebmce.getkin(ebmce.pmc); dgm.fill("h1",GEN.get(0));        	
+		
+        if (goodev) { 
+        	
+        	refE  = ebmce.pmc.get(0).e(); 
+        	refP  = ebmce.pmc.get(0).p();
+        	refTH = Math.toDegrees(ebmce.pmc.get(0).theta());
+        	refPH = Math.toDegrees(ebmce.pmc.get(0).phi());
+        	
+        	dgm.fill("h1",refP);  
+        	
 	    	if (dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine            
-        	if(!ebmce.processDataEvent(de)) return;        	
+        	if(!ebmce.processDataEvent(de)) return;  
+        	
+            par = ebmce.eb.getEvent().getParticles(); //REC::Particle
+        	cal = ebmce.eb.getEvent().getCalorimeterResponseList();  //REC::Calorimeter
+       	
+        	trsec = -1; 
+        	for (DetectorParticle dp : par) { //find trigger particle and sector
+        		int pid = dp.getPid(); int sec = dp.getSector(DetectorType.ECAL);
+        		if(trsec==-1 && sec==trSEC && pid==trPID) trsec=sec;
+        	}
+        	
+        	if(trsec==-1) return; // reject events with missing trigger particle  
+        	
         	processDEMO(); 
         	processNEUTRONS();
+        	
             if(dumpFiles) {ebmce.getRECBanks(de,ebmce.eb); writer.writeEvent(de);}     
         }
     }
     
     public void processDEMO() {
     	
-    	float refP = GEN.get(0), refE = (float)ebmce.pmc.get(0).e();
-    	
 	    boolean n1=true, n2=true; float en=0; int np=0;
 	    boolean goodpc=false, goodeci=false, goodeco=false;
 		
-	    for (DetectorParticle neut : ebmce.eb.getEvent().getParticles()) { np++;          			
-			    for (DetectorResponse ds : neut.getDetectorResponses()) { 
+	    for (DetectorParticle dp : par) {         			
+	    	if(dp.getSector(DetectorType.ECAL)==mcSEC) { np++; 
+	    		for (DetectorResponse ds : dp.getDetectorResponses()) { 
 				    if (ds.getDescriptor().getType()==DetectorType.ECAL) {      					
 					    if(n1 && ds.getDescriptor().getLayer()>0) {dgm.fill("h2",refP); n1=false;} //PCAL+ECAL
 					    if(n2 && ds.getDescriptor().getLayer()>1) {dgm.fill("h3",refP); n2=false;} //ECAL ONLY
@@ -191,11 +229,21 @@ public class ECmcn extends DetectorMonitor {
 					    if(ds.getDescriptor().getLayer()==1) goodpc=true;
 					    if(ds.getDescriptor().getLayer()==4) goodeci=true;
 					    if(ds.getDescriptor().getLayer()==7) goodeco=true;       					
-			    }          		
+				    }          		
 			    }
-		    }       			
+	    	}
+		}
+	    
         if(en>0)                     {dgm.fill("h6", refP,en); dgm.fill("h8",refP, np); dgm.fill("h10",1e3*(refE-0.93957));}
         if(goodpc&&goodeci&&goodeco) {dgm.fill("h7", refP,en); dgm.fill("h9",refP, np); dgm.fill("h11",1e3*(refE-0.93957));}    	
+    }
+    
+    public boolean isNeutral(DetectorParticle dp) {
+    	return dp.getPid()==2112 || dp.getPid()==22;
+    }
+    
+    public float bp(double rm, double b) {
+    	return (float) (rm*b/Math.sqrt(1-b*b));
     }
     
     public void processNEUTRONS() {
@@ -204,20 +252,8 @@ public class ECmcn extends DetectorMonitor {
         float stt = ebmce.starttime;
         
     	DetectorParticle p1 = new DetectorParticle();
-    	DetectorParticle p2 = new DetectorParticle();
         
-        List<DetectorParticle> par = ebmce.eb.getEvent().getParticles();  
-        List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList();         
-        
-        int trsec = -1; int trpid = -211;
-        for (DetectorParticle dp: par) { //find sector of trpid
-        	int pid = dp.getPid(), sec = dp.getSector(DetectorType.ECAL);
-        	if(trsec==-1 && sec>0 && pid==trpid) trsec=sec;
-        }
-        	
-        if(trsec==-1) return;
-        
-        for (DetectorParticle dp : par) if(dp.getSector(DetectorType.ECAL)==2 && dp.getPid()==2112) npart++;
+        for (DetectorParticle dp : par) if(dp.getSector(DetectorType.ECAL)==mcSEC && isNeutral(dp)) npart++;
 
  		double dist=0, du=0;
  		
@@ -230,23 +266,19 @@ public class ECmcn extends DetectorMonitor {
 		Vector3D[] r4 = new Vector3D[50]; Vector3[] c4 = new Vector3[50]; 
 		Vector3D[] r7 = new Vector3D[50]; Vector3[] c7 = new Vector3[50];  
 		
-		System.out.println(trsec+" "+npart+" "+GEN.get(0));
-		
-		if (npart>=1) {
+		if (npart>=1) { // number of EB ID=22,2112 > 0
+			
 			int npp = 0, ipp = 0;
+			
 			for (DetectorParticle dp : par) {
-			    if(dp.getSector(DetectorType.ECAL)==2 && dp.getPid()==2112) {
+			    if(dp.getSector(DetectorType.ECAL)==mcSEC && isNeutral(dp)) {
 			    	if(npp==0) p1 = dp; //Neutron 1
-			    	if(npp==1) p2 = dp; //Neutron 2
-			        for(int iresp = 0; iresp < cal.size(); iresp++){
-			        	CalorimeterResponse dr = (CalorimeterResponse)cal.get(iresp); 			              
-			    		int lay = dr.getDescriptor().getLayer(); 			    		  
-			    		if (dr.getAssociation(0)==ipp && dr.getDescriptor().getType()==DetectorType.ECAL) {
-//			            for (DetectorResponse dr : dp.getDetectorResponses()) { 			            	
-//			            	int lay = dr.getDescriptor().getType()==DetectorType.ECAL ? dr.getDescriptor().getLayer():0; 	
-			    			double dre=dr.getEnergy(),drt = dr.getTime()-stt, drb=dr.getPath()/drt/29.97; int drs=dr.getStatus(); 
-			    			System.out.println(lay+" "+dr.getPath()+" "+dr.getTime()+" "+stt);
-			    			Vector3D drp=dr.getPosition(); Vector3 drc=dr.getCoordUVW(); 
+ 			        for(DetectorResponse dr : cal){ CalorimeterResponse r = (CalorimeterResponse) dr; 
+			        	if (r.getAssociation(0)==ipp) { //assume r.getNAssociations=1			        				              
+			        		int lay = r.getDescriptor().getLayer(); 			    		  
+			    			double dre=dr.getEnergy(),drt = dr.getTime()-stt, drb=dr.getPath()/drt/29.97; 
+			    			int drs=dr.getStatus(); 			    			
+			    			Vector3D drp=dr.getPosition(); Vector3 drc=r.getCoordUVW(); 
 			            	if(lay==1) { npc[0]++ ; npc[npp+1]++;epc[npp+1]=dre;r1[npp+1]=drp;c1[npp+1]=drc;spc[npp+1]=drs;bpc[npp+1]=drb; }    					
 			            	if(lay==4) {neci[0]++ ;neci[npp+1]++;eci[npp+1]=dre;r4[npp+1]=drp;c4[npp+1]=drc;sci[npp+1]=drs;bci[npp+1]=drb; }    					
 			            	if(lay==7) {neco[0]++ ;neco[npp+1]++;eco[npp+1]=dre;r7[npp+1]=drp;c7[npp+1]=drc;sco[npp+1]=drs;bco[npp+1]=drb; }
@@ -257,15 +289,32 @@ public class ECmcn extends DetectorMonitor {
 			    ipp++;
 			}
 			
-			System.out.println(npc[0]+" "+neci[0]+" "+neco[0]);
+			float bmc = (float) Math.sqrt(1/(1+0.93957*0.93957/refP/refP));
 			
 			boolean n100 = npc[0]==1 && neci[0]==0 && neco[0]==0; 
 			boolean n010 = npc[0]==0 && neci[0]==1 && neco[0]==0;
-			boolean n001 = npc[0]==0 && neci[0]==0 && neco[1]==1;
+			boolean n001 = npc[0]==0 && neci[0]==0 && neco[0]==1;
+			boolean np00 = npc[0]>1  && neci[0]==0 && neco[0]==0; 
+			boolean n0p0 = npc[0]==0 && neci[0]>1  && neco[0]==0;
+			boolean n00p = npc[0]==0 && neci[0]==0 && neco[0]>1;
+			boolean n111 = npc[0]==1 && neci[0]==1 && neco[0]==1;
 			
-			if(n100) dgm.fill("n100",GEN.get(0), bpc[1]);
-			if(n010) dgm.fill("n010",GEN.get(0), bci[1]);
-			if(n001) dgm.fill("n001",GEN.get(0), bco[1]);
+			float ppc = bp(0.93957,bpc[1]);
+			float pci = bp(0.93957,bci[1]);
+			float pco = bp(0.93957,bco[1]);
+			
+			if(n100) dgm.fill("n100",refP, bpc[1]-bmc);
+			if(n010) dgm.fill("n010",refP, bci[1]-bmc);
+			if(n001) dgm.fill("n001",refP, bco[1]-bmc);
+			if(np00) dgm.fill("n+00",refP, bpc[1]-bmc);
+			if(n0p0) dgm.fill("n0+0",refP, bci[1]-bmc);
+			if(n00p) dgm.fill("n00+",refP, bco[1]-bmc);
+			if(n111) dgm.fill("n1110",refP,bpc[1]-bmc);
+			if(n111) dgm.fill("n1111",refP,bci[1]-bmc);
+			if(n111) dgm.fill("n1112",refP,bco[1]-bmc);
+			if(n111) dgm.fill("pgr1", refP,(ppc-refP)/refP);
+			if(n111) dgm.fill("pgr2", refP,(pci-refP)/refP);
+			if(n111) dgm.fill("pgr3", refP,(pco-refP)/refP);
 			
 		}   	       
     }
