@@ -108,7 +108,6 @@ public class ECped extends DetectorMonitor {
 			System.out.println("Error writing file '" );                   
 			ex.printStackTrace();
 		}
-
 		
 	}
     

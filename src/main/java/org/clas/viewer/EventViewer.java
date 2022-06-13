@@ -210,9 +210,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
-//    		monitors[n] = new ECmcn("ECmcn");
+    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
-          monitors[n] = new ECsf("ECsf"); 
+//          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
