@@ -2,5 +2,4 @@
 
 mvn install:install-file -Dfile=$CLAS12DIR/lib/services/clas12detector-ec-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-ec -Dpackaging=jar -Dversion=1.0-SNAPSHOT
 mvn install:install-file -Dfile=$CLAS12DIR/lib/services/clas12detector-eb-1.0-SNAPSHOT.jar -DgroupId=org.jlab.services -DartifactId=clas12detector-eb -Dpackaging=jar -Dversion=1.0-SNAPSHOT
-mvn install:install-file -Dfile=$CLAS12DIR/lib/clas/coat-libs-7.0.0-SNAPSHOT.jar -DgroupId=org.jlab.coat -DartifactId=coat-libs -Dpackaging=jar -Dversion=7.0.0-SNAPSHOT
- 
+mvn install:install-file -Dfile=$CLAS12DIR/lib/clas/coat-libs-7.1.0-SNAPSHOT.jar -DgroupId=org.jlab.coat -DartifactId=coat-libs -Dpackaging=jar -Dversion=7.1.0-SNAPSHOT
