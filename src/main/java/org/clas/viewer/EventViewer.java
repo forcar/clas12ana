@@ -173,7 +173,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	System.out.println("*** WELCOME TO CLAS12ANA ***\n");
     	dataProcessor = new DataSourceProcessor();    
     	createMonitors(args);
-//    	initMonitors();
+    	initMonitors();
     	createMenuBar();
     	createPanels();   	    
         schemaFactory.initFromDirectory(ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4"));
