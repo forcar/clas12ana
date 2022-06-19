@@ -188,12 +188,12 @@ public class ECcalib extends DetectorMonitor {
 //    		 updateFITS(15); 
     		 if(runlist.size()==3) dumpFiles("gain");
     		 if(TLname=="UVW") {
-    			     plotMean(); plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
+    			     /*plotMean();*/ plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
     			 } else {
     				 plotMeanHWSummary(3); plotRmsHWSummary(4);
              }	 
     	 }
-    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
+//    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
     	 updateUVW(1);   
 //    	 plotAlignSummary(16); 
     	 plotTimeLines(11);  	    
@@ -1252,7 +1252,8 @@ public class ECcalib extends DetectorMonitor {
         for (int id=0; id<3; id++) {
         for (int il=0; il<3; il++) {           	
             F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,1);
-            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber());
+            
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber());            
             GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?5:7,getRunNumber());
             plot1.setMarkerColor(1);
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
@@ -1264,7 +1265,13 @@ public class ECcalib extends DetectorMonitor {
         }
         }
         }        
-    }        
+    }    
+    
+    public void printGraph(GraphErrors g) {
+    	for (int i=0; i<g.getDataSize(1); i++) {
+    		System.out.println(g.getDataX(i)+" "+g.getDataY(i));
+    	}
+    }
     
     public void plotRmsSummary(int index) {
     	
