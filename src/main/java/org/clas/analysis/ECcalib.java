@@ -129,6 +129,7 @@ public class ECcalib extends DetectorMonitor {
     	runlist.clear();
     	FitSummary.clear();
     	Fits.clear();
+    	tl.fitData.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
         eng.engine.setCCDBGain(!defaultGain);
@@ -184,18 +185,18 @@ public class ECcalib extends DetectorMonitor {
     	 if(!isAnalyzeDone) return;
     	 if(!dropSummary) {
     		 updateFITS(2); 
- //   		 updateFITS(15); 
+//    		 updateFITS(15); 
     		 if(runlist.size()==3) dumpFiles("gain");
     		 if(TLname=="UVW") {
-    			 /*plotMean()*/;plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
+    			     plotMean(); plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
     			 } else {
     				 plotMeanHWSummary(3); plotRmsHWSummary(4);
              }	 
     	 }
-//    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
+    	 if(!dropSummary) {updateFITS(2);plotMeanHWSummary(3); plotRmsHWSummary(4);}
     	 updateUVW(1);   
 //    	 plotAlignSummary(16); 
-//    	 plotTimeLines(11);  	    
+    	 plotTimeLines(11);  	    
      }
      
      public void plotMean() {
@@ -556,7 +557,7 @@ public class ECcalib extends DetectorMonitor {
     	if(dropBanks) dropBanks(event);
     	 
     	ev.init(event);
-        ev.isMC = (getRunNumber()<100) ? true:false;    	
+        ev.isMC = (run<100) ? true:false;    	
     	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
@@ -687,7 +688,7 @@ public class ECcalib extends DetectorMonitor {
        	
     	public ECALdet (int is, Particle p) {
     		this.p = p;
-    		rl = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+    		rl     = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
     		ip     = (int)   p.getProperty("pindex");
     		il     = (int)   p.getProperty("layer"); int ild = getDet(il);
     		
@@ -760,8 +761,8 @@ public class ECcalib extends DetectorMonitor {
 
             	v2.sub(v1); v23.sub(v3); v3.sub(v1);  
             
-            	v12mag = (float) v2.mag();
-            	v13mag = (float) v3.mag();
+            	v12mag = (float)  v2.mag();
+            	v13mag = (float)  v3.mag();
             	v23mag = (float) v23.mag();
             	
             	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==4;
@@ -1112,9 +1113,9 @@ public class ECcalib extends DetectorMonitor {
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
     	
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
-        int ipc=0,iipc=0, run=getRunNumber();
-        double min=1,max=20,mip=10;
-        System.out.println("Analyzing run "+run);
+        int ipc=0, run=getRunNumber();
+        double min=1, max=20, mip=10;
+        System.out.println(getDetectorName()+".fitGraphs: Analyzing run "+run);
         for (int is=is1; is<is2; is++) {            
             for (int id=id1; id<id2; id++) {
             	for (int pc=0; pc<2; pc++) {
@@ -1182,23 +1183,23 @@ public class ECcalib extends DetectorMonitor {
             fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
             fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
             double mean = fd.mean;       
-            if(mean>0) yrms[i] = fd.sigma/mean; 
-            	     yMeanc[i] = (fd.getMean()/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):0); //torus correction
-                     ymeanc[i] =         (mean/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):0); //torus correction
-                      yMean[i] = fd.getMean()/nrm;
-                      ymean[i] =         mean/nrm;
-                     ymeane[i] = fd.meane/nrm;
-                     if(varcut(id,il,i)&&fd.integral>15) {h1.fill(ymean[i]); h5.fill(yMean[i]); h6.fill(ymeanc[i]); h7.fill(yMeanc[i]);}
+                 yrms[i] =  mean>0 ? fd.sigma/mean:0; 
+            	ymean[i] =          mean/nrm;
+            	yMean[i] =  fd.getMean()/nrm;
+               ymeanc[i] =         (mean/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):1); //torus correction
+               yMeanc[i] = (fd.getMean()/nrm)*((pc==1)?shift.getDoubleValue("shift", is, 3*id+il+1, i+1):1); //torus correction
+               ymeane[i] =  fd.meane/nrm;
+               if(varcut(id,il,i)&&fd.integral>15) {h1.fill(ymean[i]); h5.fill(yMean[i]); h6.fill(ymeanc[i]); h7.fill(yMeanc[i]);}
         }
 //       fd = fitEngine(h5,0.5,1.5,0.5,1.5); tl.fitData.add(fd,is,id+100*pc*(il+1),0,run); 
 //       fd = fitEngine(h7,0.5,1.5,0.5,1.5); tl.fitData.add(fd,is,id+100*pc*(il+1),0,run); 
-        GraphErrors  mean = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,ymean,xe,ymeane);                   
-        GraphErrors  Mean = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yMean,xe,ymeane);                   
-        GraphErrors meanc = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,ymeanc,xe,ymeane);                   
-        GraphErrors Meanc = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yMeanc,xe,ymeane);                   
         GraphErrors   rms = new GraphErrors("MIP-"+is+"-"+id+" "+il,x,yrms,xe,ye);                  
-        FitSummary.add(mean,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run); VarSummary.add(h1,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run);
+        GraphErrors  mean = new GraphErrors("MIP1-"+is+"-"+id+" "+il,x,ymean,xe,ymeane);                   
+        GraphErrors  Mean = new GraphErrors("MIP5-"+is+"-"+id+" "+il,x,yMean,xe,ymeane);                   
+        GraphErrors meanc = new GraphErrors("MIP6-"+is+"-"+id+" "+il,x,ymeanc,xe,ymeane);                   
+        GraphErrors Meanc = new GraphErrors("MIP7-"+is+"-"+id+" "+il,x,yMeanc,xe,ymeane);                   
         FitSummary.add(rms,   is,id+10*(pc+1)*(pc+1)*(il+1),2,run);                    
+        FitSummary.add(mean,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run); VarSummary.add(h1,  is,id+10*(pc+1)*(pc+1)*(il+1),1,run);
         FitSummary.add(Mean,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run); VarSummary.add(h5,  is,id+10*(pc+1)*(pc+1)*(il+1),5,run);       	        
         FitSummary.add(meanc, is,id+10*(pc+1)*(pc+1)*(il+1),6,run); VarSummary.add(h6,  is,id+10*(pc+1)*(pc+1)*(il+1),6,run);       	        
         FitSummary.add(Meanc, is,id+10*(pc+1)*(pc+1)*(il+1),7,run); VarSummary.add(h7,  is,id+10*(pc+1)*(pc+1)*(il+1),7,run);
@@ -1258,8 +1259,8 @@ public class ECcalib extends DetectorMonitor {
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("MEAN / MIP");
             plot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
-            n++; c.draw(plot1); c.draw(plot2,"same");
-            f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+            c.draw(plot1); c.draw(plot2,"same");f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+            n++;
         }
         }
         }        
@@ -1598,7 +1599,7 @@ public class ECcalib extends DetectorMonitor {
 
     }
     
-    public void plotTimeLines(int index) {        
+    public void plotTimeLines(int index) {    
     	if(TLflag) {plotTimeLineSectors(index); } else {
     	if (getActivePC()==0) {plotClusterTimeLines(index);} else {plotPeakTimeLines(index);}}
     }
