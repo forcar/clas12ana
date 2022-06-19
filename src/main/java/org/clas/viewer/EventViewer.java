@@ -173,6 +173,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	System.out.println("*** WELCOME TO CLAS12ANA ***\n");
     	dataProcessor = new DataSourceProcessor();    
     	createMonitors(args);
+//    	initMonitors();
     	createMenuBar();
     	createPanels();   	    
         schemaFactory.initFromDirectory(ClasUtilsFile.getResourceDir("CLAS12DIR", "etc/bankdefs/hipo4"));
@@ -210,10 +211,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
-    		monitors[n] = new ECmcn("ECmcn");
+//    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
-//          monitors[n] = new ECsf("ECsf"); 
-//    		monitors[n] = new ECcalib("ECcalib"); 
+//    		monitors[n] = new ECsf("ECsf"); 
+    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
 
@@ -458,6 +459,31 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Reset"):                       for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = 0;
         }
         if (e.getActionCommand().substring(0, 5).equals("Reset")) resetHistograms(e.getActionCommand());
+    }
+    
+    public void initMonitors() {
+    	System.out.println("EventViewer.initMonitors");
+		for(int k=0; k<this.monitors.length; k++) {
+			this.monitors[k].dropBanks   = dropBanks; 
+			this.monitors[k].dropSummary = dropSummary; 
+			this.monitors[k].dumpGraphs  = dumpGraphs;
+			this.monitors[k].dumpFiles   = dumpFiles;
+			this.monitors[k].defaultGain = defaultGain;
+			this.monitors[k].fiduCuts    = fiduCuts;
+			this.monitors[k].dropEsect   = dropEsect;
+			this.monitors[k].autoSave    = autoSave;
+			this.monitors[k].cfitEnable  = cfitEnable;
+			this.monitors[k].sfitEnable  = sfitEnable;
+			this.monitors[k].dfitEnable  = dfitEnable;
+			this.monitors[k].gdfitEnable = gdfitEnable;
+			this.monitors[k].setLogY(yLogEnable);                                                  
+			this.monitors[k].setLogZ(zLogEnable);
+			this.monitors[k].fitVerbose  = fitVerbose;
+			this.monitors[k].TRpid       = TRpid;
+			this.monitors[k].initTimeLine(TLname);
+			this.monitors[k].setTLflag(TLflag);
+			this.monitors[k].setDbgAnalyzer(dbgAnalyzer);
+    	} 
     }
     
     public void histoChooser() {
