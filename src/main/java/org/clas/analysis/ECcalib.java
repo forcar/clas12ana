@@ -186,7 +186,9 @@ public class ECcalib extends DetectorMonitor {
     	 if(!dropSummary) {
     		 updateFITS(2); 
 //    		 updateFITS(15); 
-    		 if(runlist.size()==3) dumpFiles("gain");
+    		 if(runlist.size()==1) dumpFiles("piongain");
+    		 if(runlist.size()==1) dumpFiles("hvgain");
+    		 if(runlist.size()==3) dumpFiles("muongain");
     		 if(TLname=="UVW") {
     			     /*plotMean();*/ plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
     			 } else {
@@ -1703,7 +1705,7 @@ public class ECcalib extends DetectorMonitor {
 		String line = new String();
 		
 		try { 
-			File outputFile = new File(path+table+"_"+detcal[0]);
+			File outputFile = new File(path+table+"_"+getRunNumber());
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
@@ -1714,7 +1716,9 @@ public class ECcalib extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) { //u,v,w
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "gain":     line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
+							case "muongain": line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
+							case "piongain": line = getGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "hvgain":   line = getHVGAIN(is,il,iv,ip,runlist.get(0)); break;
 							case "rdif":     line = getRDIF(is,il,iv,ip); break;
 							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
 							}
@@ -1734,7 +1738,20 @@ public class ECcalib extends DetectorMonitor {
 			ex.printStackTrace();
 		}
 
-	}    
+	}
+    
+	public String getHVGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
+			double     i = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getHist().getIntegral();
+			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
+			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+g+" "+ge+" "+i;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  1.0  0.0 0.0";		
+		}
+		
+	}
     
 	public String getGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
 		int pc = 1; 		
