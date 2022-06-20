@@ -1,7 +1,10 @@
 package org.clas.analysis;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -24,14 +27,187 @@ public class EChv extends DetectorMonitor {
     DataGroup dg = new DataGroup(6,3);    
     IndexedList<List<Float>> mean = new IndexedList<List<Float>>(2);
     float[] ngain = {9.8f,8.8f,8.8f}; 
-    
+    static String gainPath = "/Users/colesmith/CLAS12ANA/ECcalib/ccdb/";
+    static String  snpPath = "/Users/colesmith/clas12/HV/";
+    public static final int[]     DHV = {20,150};
+    public static final float[] HVEXP = {12,11};
+
     H1F h;
     int detid;
 	
     public EChv(String name) {
     	super(name);		
     }
+    
+    public List<String> getList(String path) { 
+    	
+    	List<String> out = new ArrayList();
+    	String strCurrentLine;
+       
+    	try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+    	while ((strCurrentLine = br.readLine()) != null) out.add(strCurrentLine);
+    	} catch (IOException e) {
+    		e.printStackTrace();    		
+    	}    	
+    	return out;
+    }
+    
+//  *** runGenerateSNP() *** 
+    
+    public static void runGenerateSNP(int run, int detid, String snpName) {
+    	EChv reader = new EChv("EChv");
+    	String gainFile = gainPath+"hvgain_"+run;
+    	String  snpFile = snpPath+(detid==0?"PCAL_HV/":"ECAL_HV/")+snpName;
+    	IndexedList<List<Float>> gain = parseGain(reader.getList(gainFile)); 
+    	List<String>  snp = reader.getList(snpFile); 
+    	writeSNP(run, detid, gain, snp);
+    }
+    
+	public static void writeSNP(int run, int detid, IndexedList<List<Float>> gain, List<String> snp) {
+		
+		String line = new String();
+		
+		try { 
+			File outputFile = new File(gainPath+(detid==0?"PCAL_HV_":"ECAL_HV_")+"hvgain_"+run+".snp");
+			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+			BufferedWriter outputBw = new BufferedWriter(outputFw);
+			
+	    	int n=0;
+	    	for (String item : snp) {
+	    		if(n<11) {outputBw.write(item); outputBw.newLine();}
+	    		if(n>10) {
+	    			String parts1[] = item.split(" ");
+	    			String parts2[] = parts1[0].split(":");
+	    			String parts3[] = parts2[0].split("_");
+	    			float hvold = Float.parseFloat(parts1[2]);			
+	    			
+	    			if(parts2[1].equals("vset")) {
+	    				int id=detid;
+	    				int is=decodeSNP(parts3[4]);
+	    				int il=decodeSNP(parts3[5]);
+	    				int ip=Integer.parseInt(parts3[6].substring(1));
+	    				
+	    				float gv = gain.getItem(is,il,ip).get(0);
+	    				float ge = gain.getItem(is,il,ip).get(1);
+	    				float cn = gain.getItem(is,il,ip).get(2);
+	    				float gerr = (gv>0) ? ge/gv:0;
+	                    if (gv<0.5||gv>1.7||(gerr>0.25 && cn<6)||cn<2) gv=1f;
+	                    double ratio=Math.pow(gv, 1./HVEXP[detid]);
+	                    double hvnew = (ratio>0.5) ? hvold/ratio : hvold;
+	                    if((hvnew-hvold)>100) hvnew=hvold;
+	                    if (gerr>0.25 && cn>5) System.out.println(is+" "+il+" "+ip+" "+hvold+" "+cn+" "+gerr+" "+gv);
+	    				line = parts1[0]+" "+parts1[1]+" "+hvnew;
+	    				outputBw.write(line); outputBw.newLine();
+	    		    }
+	    		}
+	    		n++;
+	    	}
+
+			outputBw.close();
+			outputFw.close();
+		}
+		catch(IOException ex) {
+			System.out.println("Error writing file '" );                   
+			ex.printStackTrace();
+		}
+
+	} 
 	
+    public static int decodeSNP(String input) {
+    	switch (input) {
+    	case  "U": return 1;
+    	case  "V": return 2;
+    	case  "W": return 3;
+    	case "UI": return 4;
+    	case "VI": return 5;
+    	case "WI": return 6;
+    	case "UO": return 7;
+    	case "VO": return 8;
+    	case "WO": return 9;
+    	case "SEC1": return 1;
+    	case "SEC2": return 2;
+    	case "SEC3": return 3;
+    	case "SEC4": return 4;
+    	case "SEC5": return 5;
+    	case "SEC6": return 6;
+    	}
+    	return 0;
+    }
+
+    
+    public static IndexedList<List<Float>> parseGain(List<String> list) {
+    	IndexedList<List<Float>> gainList = new IndexedList<List<Float>>(3);
+    	for (String item : list) {
+			String parts[] = item.split(" ");
+			int   is = Integer.parseInt(parts[0]);
+			int   il = Integer.parseInt(parts[1]);
+			int   ip = Integer.parseInt(parts[2]);
+			float  g = Float.parseFloat(parts[3]);
+			float ge = Float.parseFloat(parts[4]);
+			float cn = Float.parseFloat(parts[5]);
+			
+    		if (!gainList.hasItem(is,il,ip)) gainList.add(new ArrayList<Float>(), is,il,ip);
+    		gainList.getItem(is,il,ip).add(g); 
+    		gainList.getItem(is,il,ip).add(ge); 
+    		gainList.getItem(is,il,ip).add(cn); 
+    	}
+    	return gainList;
+    } 
+    
+//  *** runCompareFiles() ***    
+		
+    public static void runCompareFiles() {
+    	EChv reader = new EChv("EChv");
+    	//0,6,0:PCAL_HV-2017_11_23-09_16_01.snp PCAL_HV-2020_10_09-10_43_25.snp
+		//1,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
+		//2,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
+		int det=0, snp1=7, snp2=0;
+		reader.compareFiles(det,snp1,snp2);    	
+    }
+        
+    public void compareFiles(int detid, int... item) {
+		String dir = "/Users/colesmith/clas12/HV/";
+		this.detid = detid; String det = detid==0?"PCAL":"ECAL";
+		int n=0;
+		for (int it: item) {
+			setGStyle(n);
+			createHVHistos(detid,"(VOLTS)");  this.getDataGroup().add(dg,detid,0,0,0);
+			fillHistos(parseList(getList(dir+det+"_HV/"+getList(dir+"dump_"+det).get(it))),n);
+			getMean(n); n++;
+		}
+		if(item.length==2) setTitles();
+		plotHistos();
+    }
+    
+    public IndexedList<List<Integer>> parseList(List<String> list) {
+    	
+    	IndexedList<List<Integer>> hvlist = new IndexedList<List<Integer>>(4);
+    	int n=0;
+    	for (String item : list) {
+    		if(n>10) {
+    			String parts1[] = item.split(" ");
+    			String parts2[] = parts1[0].split(":");
+    			String parts3[] = parts2[0].split("_");
+    			int val=(int)Float.parseFloat(parts1[2]);			
+    			
+    			if(parts2[1].equals("vset")) {
+    				int id=detid;
+    				int is=decode(parts3[4]);
+    				int il=decode(parts3[5]);
+    				int ip=Integer.parseInt(parts3[6].substring(1))-1;
+    				if(is==4 && val>2500 && val<=2550) System.out.println(parts2[0]+" "+val);
+    				int iil = (il>2)?il-3:il;
+    				if(id<2 || (id>1&&il>2)) {
+        			if (!hvlist.hasItem(id,is,iil,ip)) hvlist.add(new ArrayList<Integer>(),id,is,iil,ip);
+                         hvlist.getItem(id,is,iil,ip).add(val);	
+    				}
+    		    }
+    		}
+    		n++;
+    	}     	
+    	return hvlist;
+    }
+    
     public void setGStyle(int icol) {
     	GStyle.getH1FAttributes().setOptStat("100");
     	switch (icol) {
@@ -81,49 +257,7 @@ public class EChv extends DetectorMonitor {
     	   }
       }            
     } 
-	
-    public List<String> getList(String path) { 
-    	
-    	List<String> out = new ArrayList();
-    	String strCurrentLine;
-       
-    	try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-    	while ((strCurrentLine = br.readLine()) != null) out.add(strCurrentLine);
-    	} catch (IOException e) {
-    		e.printStackTrace();    		
-    	}    	
-    	return out;
-    }
-    
-    public IndexedList<List<Integer>> parseList(List<String> list) {
-    	
-    	IndexedList<List<Integer>> hvlist = new IndexedList<List<Integer>>(4);
-    	int n=0;
-    	for (String item : list) {
-    		if(n>10) {
-    			String parts1[] = item.split(" ");
-    			String parts2[] = parts1[0].split(":");
-    			String parts3[] = parts2[0].split("_");
-    			int val=(int)Float.parseFloat(parts1[2]);			
-    			
-    			if(parts2[1].equals("vset")) {
-    				int id=detid;
-    				int is=decode(parts3[4]);
-    				int il=decode(parts3[5]);
-    				int ip=Integer.parseInt(parts3[6].substring(1))-1;
-    				if(is==4 && val>2500 && val<=2550) System.out.println(parts2[0]+" "+val);
-    				int iil = (il>2)?il-3:il;
-    				if(id<2 || (id>1&&il>2)) {
-        			if (!hvlist.hasItem(id,is,iil,ip)) hvlist.add(new ArrayList<Integer>(),id,is,iil,ip);
-                         hvlist.getItem(id,is,iil,ip).add(val);	
-    				}
-    		    }
-    		}
-    		n++;
-    	}     	
-    	return hvlist;
-    }
-    
+ 
     public int decode(String input) {
     	switch (input) {
     	case  "U": return 0;
@@ -187,31 +321,11 @@ public class EChv extends DetectorMonitor {
     	    }
     	}
     }
-    
-    public void processFile(int detid, int... item) {
-		String dir = "/Users/colesmith/clas12/HV/";
-		this.detid = detid; String det = detid==0?"PCAL":"ECAL";
-		int n=0;
-		for (int it: item) {
-			setGStyle(n);
-			createHVHistos(detid,"(VOLTS)");  this.getDataGroup().add(dg,detid,0,0,0);
-			fillHistos(parseList(getList(dir+det+"_HV/"+getList(dir+"dump_"+det).get(it))),n);
-			getMean(n); n++;
-		}
-		if(item.length==2) setTitles();
-		plotHistos();
-    }
-    
-	public static void main(String[] args) {		
-		EChv reader = new EChv("EChv");
-		//0,6,0:PCAL_HV-2017_11_23-09_16_01.snp PCAL_HV-2020_10_09-10_43_25.snp
-		//1,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		//2,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		int det=1, snp1=7, snp2=0;
-		if(args.length==0) reader.processFile(det,snp1,snp2);
-		if(args.length==1) reader.processFile(Integer.parseInt(args[0]),snp1);
-		if(args.length==2) reader.processFile(Integer.parseInt(args[0]),Integer.parseInt(args[1]));
-		if(args.length==3) reader.processFile(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]));	
+
+	public static void main(String[] args) {
+//		runCompareFiles();	
+//		runGenerateSNP(16066,0,"PCAL_HV-2022_06_17-18_24_13.snp");
+		runGenerateSNP(16066,1,"ECAL_HV-2022_06_17-18_23_29.snp");
 	}
 
 }
