@@ -93,6 +93,7 @@ public class ECpi0 extends DetectorMonitor{
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
+        useECEnginePane(true);
         this.init();
         this.localinit();
     }
@@ -109,10 +110,13 @@ public class ECpi0 extends DetectorMonitor{
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
+    	FitSummary.clear();
     	Fits.clear();
+    	tl.fitData.clear();
     	tl.Timeline.clear();
-    	runslider.setValue(0);
+        eng.engine.setCCDBGain(!defaultGain);
     } 
+    
     public void initPART(int run) {
         part.setGeom("2.5");  
         part.setConfig("pi0");  
@@ -131,9 +135,9 @@ public class ECpi0 extends DetectorMonitor{
     public void createHistos(int run) { 
     	histosExist = true;
 	    System.out.println("ECpi0:createHistos("+run+")");
-        setRunNumber(run);
-        float EB = getBeamEnergy(run);
+        setRunNumber(run);	     
         runlist.add(run);
+        float EB = getBeamEnergy(run);
         createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
     	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
     	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
