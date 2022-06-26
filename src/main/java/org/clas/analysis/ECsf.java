@@ -111,9 +111,9 @@ public class ECsf extends DetectorMonitor {
         createSLCHistos("Timing",0,0,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
         createSLCHistos("Timing",0,1,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
         createSLCHistos("Timing",0,2,100,-10.,10.," T-TVERT-PATH/c (ns)",true);        
-        createUVWHistos("UVW",0,50,50,0,10,0,0.23/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",1,50,50,0,10,0,0.15/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",2,50,50,0,10,0,0.06/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",0,50,50,0,EB,0,0.23/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",1,50,50,0,EB,0,0.15/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",2,50,50,0,EB,0,0.06/3,"P (GEV)","SF ");
         createPIDFitHistos("PID Fits",50,0.1,0.4," "," Corrected E/P");
         createMCHistos("MC");
     }
