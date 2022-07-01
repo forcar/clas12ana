@@ -156,6 +156,7 @@ public class ECperf extends DetectorMonitor {
         this.useCALButtons(true);
         this.use123Buttons(true);
         this.useSliderPane(true);
+        useECEnginePane(true);
         this.init();
         this.localinit();      
     }
@@ -163,7 +164,7 @@ public class ECperf extends DetectorMonitor {
     public void localinit() {
     	System.out.println("ECperf.localinit()");
     	tl.setFitData(Fits);      	   	
-    	eng.engine.setGeomVariation("rga_spring2018");
+    	eng.engine.setGeomVariation("rga_fall2018");
     	neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
