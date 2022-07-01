@@ -123,7 +123,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                        stopBlink = true;
     Timer                                      timer = null;
    
-    public JRadioButton bEL,bPI,bPH,bP,bC,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
+    public JRadioButton bEL,bPI,bPH,bP,bC,bT,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
     public  JCheckBox arBtn,arBtn2;
     
     public int        bitsec = 0;
@@ -666,9 +666,10 @@ public class DetectorMonitor implements ActionListener {
         }
                 
         if(usePC) {
-        bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("1"); bP.addActionListener(this);
-        bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("0"); bC.addActionListener(this); 
-        bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC); 
+        bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("2"); bP.addActionListener(this);
+        bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("1"); bC.addActionListener(this); 
+        bT = new JRadioButton("T"); buttonPane.add(bT); bT.setActionCommand("0"); bT.addActionListener(this);
+        bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC); bG0.add(bT); 
         bP.setSelected(true);
         }
         
@@ -1475,7 +1476,7 @@ public class DetectorMonitor implements ActionListener {
 		canvas.getPad().getAxisZ().setLog((Boolean)can[1]);
 		float ymin=(float)can[2], ymax=(float)can[3], zmin=(float)can[4], zmax=(float)can[5]; 
 		if(ymin!=ymax) canvas.getPad().getAxisY().setRange(ymin,ymax);
-		if(zmin!=zmax) canvas.getPad().getAxisZ().setRange(zmin,zmax);
+		if(zmin!=zmax) canvas.getPad().getAxisZ().setRange(zmin,zmax);		
 		return true;
 	}    
  
