@@ -92,28 +92,31 @@ public class ECsf extends DetectorMonitor {
         runlist.add(run);
         this.setNumberOfEvents(0);
         dg = new DataGroup(6,4);
-        createSecHistos("E/P",0,0,50,0.0,EB*0.3,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
-        createSecHistos("E/P",0,1,50,0.2,EB,50,0.1,0.4,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",0,2,30,  3.,35.,50,0.1,0.4,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
-        createSecHistos("E/P",0,3,48,  3.,35.,50,0.1,0.4,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",0,1,50,0.2,EB,  50,0.1,0.35,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
+        createSecHistos("E/P",0,2,30,  3.,35.,50,0.1,0.35,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,3,48,  3.,35.,50,0.1,0.35,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
         dg = new DataGroup(6,4);
-        createSecHistos("E/P",1,0,50,0.0,EB*0.3,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
-        createSecHistos("E/P",1,1,50,0.2,EB,50,0.1,0.4,"ep_p"," Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.4,"ep_thv"," VertexTheta (deg)"," E/P",dg);
-        createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.4,"ep_thd"," Detector Theta (deg)"," E/P",dg);
+        createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
+        createSecHistos("E/P",1,1,50,0.2,EB,  50,0.1,0.35,"ep_p"," Momentum (GeV)",   " E/P",dg);
+        createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
         createXYZHistos("XY","xyz"); createXYZHistos("XY","hxyz"); 
-        createSLCHistos("SLC",1,0,15,0.,0.30,"PARTIAL SF",false);
-        createSLCHistos("SLC",1,1,12,0.,0.15,"PARTIAL SF",false);
-        createSLCHistos("SLC",1,2,12,0.,0.05,"PARTIAL SF",false);
-        createSLCHistos("SLC",0,0,25,0.05,0.4,"TOTAL SF",false);
-        createSLCHistos("SLC",0,1,25,0.05,0.4,"TOTAL SF",false);
-        createSLCHistos("SLC",0,2,25,0.05,0.4,"TOTAL SF",false);
-        createSLCHistos("Timing",0,0,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
-        createSLCHistos("Timing",0,1,100,-10.,10.," T-TVERT-PATH/c (ns)",true);
-        createSLCHistos("Timing",0,2,100,-10.,10.," T-TVERT-PATH/c (ns)",true);        
-        createUVWHistos("UVW",0,50,50,0,EB,0,0.23/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",1,50,50,0,EB,0,0.15/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",2,50,50,0,EB,0,0.06/3,"P (GEV)","SF ");
+        createSLCHistos("SLC",2,0,15,0.,0.30/3,"PEAK PARTIAL SF",false);
+        createSLCHistos("SLC",2,1,12,0.,0.15/3,"PEAK PARTIAL SF",false);
+        createSLCHistos("SLC",2,2,12,0.,0.06/3,"PEAK PARTIAL SF",false);
+        createSLCHistos("SLC",1,0,15,0.,0.30,"CLUSTER PARTIAL SF",false);
+        createSLCHistos("SLC",1,1,12,0.,0.15,"CLUSTER PARTIAL SF",false);
+        createSLCHistos("SLC",1,2,12,0.,0.05,"CLUSTER PARTIAL SF",false);
+        createSLCHistos("SLC",0,0,25,0.1,0.35,"TOTAL SF",false);
+        createSLCHistos("SLC",0,1,25,0.1,0.35,"TOTAL SF",false);
+        createSLCHistos("SLC",0,2,25,0.1,0.35,"TOTAL SF",false);
+        createSLCHistos("Timing",0,0,50,-5.,5.," T-TVERT-PATH/c (ns)",true);
+        createSLCHistos("Timing",0,1,50,-5.,5.," T-TVERT-PATH/c (ns)",true);
+        createSLCHistos("Timing",0,2,50,-5.,5.," T-TVERT-PATH/c (ns)",true);        
+        createUVWHistos("UVW",0,25,25,0,EB,0,0.23/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",1,25,25,0,EB,0,0.15/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",2,25,25,0,EB,0,0.06/3,"P (GEV)","SF ");
         createPIDFitHistos("PID Fits",50,0.1,0.4," "," Corrected E/P");
         createMCHistos("MC");
     }
@@ -489,7 +492,7 @@ public class ECsf extends DetectorMonitor {
        
         if(!good_e)  return;
         
-        if(goodSector) {
+        if(goodSector && good_fiduc) {
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1  ).get(0)).fill(e_ecal_EL[3], sf);
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+6).get(0)).fill(e_mom,sf);
             ((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+12).get(0)).fill(e_theta,sf);
@@ -507,6 +510,9 @@ public class ECsf extends DetectorMonitor {
             ((H2F) getDG(0,0,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?1f:0);
             ((H2F) getDG(0,1,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(0,2,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sf<0.5?sf:0.);
+            ((H2F) getDG(id,2,"SLC",run).getData(is-1   ).get(0)).fill(iU[id], e_ecal_u[id]/e_mom);
+            ((H2F) getDG(id,2,"SLC",run).getData(is-1+ 6).get(0)).fill(iV[id], e_ecal_v[id]/e_mom);
+            ((H2F) getDG(id,2,"SLC",run).getData(is-1+12).get(0)).fill(iW[id], e_ecal_w[id]/e_mom);
             ((H2F) getDG(id,1,"SLC",run).getData(is-1   ).get(0)).fill(iU[id], sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(id,1,"SLC",run).getData(is-1+ 6).get(0)).fill(iV[id], sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(id,1,"SLC",run).getData(is-1+12).get(0)).fill(iW[id], sff[id]<0.5?sff[id]:0.);				  
@@ -519,7 +525,7 @@ public class ECsf extends DetectorMonitor {
             
             ((H2F) getDG(is,3*id+1,"UVW",run).getData(iU[id]-1).get(0)).fill(e_mom, e_ecal_u[id]/e_mom);
             ((H2F) getDG(is,3*id+2,"UVW",run).getData(iV[id]-1).get(0)).fill(e_mom, e_ecal_v[id]/e_mom);
-            ((H2F) getDG(is,3*id+3,"UVW",run).getData(iW[id]-1).get(0)).fill(e_mom, e_ecal_w[id]/e_mom);
+            ((H2F) getDG(is,3*id+3,"UVW",run).getData(iW[id]-1).get(0)).fill(e_mom, e_ecal_w[id]/e_mom);           
             
             if(sff[id]>0) {
             if(id==0) ((H1F) getDG(0,0,"MC",run).getData(is-1).get(0)).fill(-t_ecal[id]);
