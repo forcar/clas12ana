@@ -114,7 +114,7 @@ public class ECsf extends DetectorMonitor {
         createSLCHistos("Timing",0,0,50,-5.,5.," T-TVERT-PATH/c (ns)",true);
         createSLCHistos("Timing",0,1,50,-5.,5.," T-TVERT-PATH/c (ns)",true);
         createSLCHistos("Timing",0,2,50,-5.,5.," T-TVERT-PATH/c (ns)",true);        
-        createUVWHistos("UVW",0,25,25,0,EB,0,0.23/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",0,25,25,0,EB,0.1,0.30/3,"P (GEV)","SF ");
         createUVWHistos("UVW",1,25,25,0,EB,0,0.15/3,"P (GEV)","SF ");
         createUVWHistos("UVW",2,25,25,0,EB,0,0.06/3,"P (GEV)","SF ");
         createPIDFitHistos("PID Fits",50,0.1,0.4," "," Corrected E/P");
@@ -397,6 +397,7 @@ public class ECsf extends DetectorMonitor {
       	DataBank    reccal = event.getBank("REC::Calorimeter");
       	DataBank ecalclust = event.getBank("ECAL::clusters");
       	DataBank ecalpeaks = event.getBank("ECAL::peaks");
+      	DataBank ecalcalib = event.getBank("ECAL::calib");
         DataBank    recpar = event.getBank("REC::Particle");
         
       	Map<Integer,List<Integer>> caloMap = loadMapByIndex(reccal,"pindex");
@@ -453,9 +454,9 @@ public class ECsf extends DetectorMonitor {
                     int ic1         =  ecalclust.getInt("idU",ic)-1; //peak index U
                     int ic2         =  ecalclust.getInt("idV",ic)-1; //peak index V
                     int ic3         =  ecalclust.getInt("idW",ic)-1; //peak index W
-                    e_ecal_u[ind]   =  ecalpeaks.getFloat("energy",ic1); //peak energy U
-                    e_ecal_v[ind]   =  ecalpeaks.getFloat("energy",ic2); //peak energy V
-                    e_ecal_w[ind]   =  ecalpeaks.getFloat("energy",ic3); //peak energy W
+                    e_ecal_u[ind]   =  ecalcalib.getFloat("recEU",ic); //peak energy U
+                    e_ecal_v[ind]   =  ecalcalib.getFloat("recEV",ic); //peak energy V
+                    e_ecal_w[ind]   =  ecalcalib.getFloat("recEW",ic); //peak energy W
                     /*
                     idU[ind]        = ecalclust.getInt("idU",ic);
                     idV[ind]        = ecalclust.getInt("idV",ic);
