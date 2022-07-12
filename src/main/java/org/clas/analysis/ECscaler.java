@@ -258,7 +258,7 @@ public class ECscaler extends DetectorMonitor {
     
 	public void plot(String tabname) { 		
 //		if(tabname=="STATUS")  {dgm.drawGroup(tabname,0, 0, getRunNumber()); return;}
-		if(tabname=="TRIGGER") dgm.drawGroup(tabname, 0,0,0);
+		if(tabname=="TRIGGER") dgm.drawGroup(tabname, 0,0,0); 
 		int is = getActiveSector(); int im = getActiveLayer()+1;
     	dgm.drawGroup(tabname, is, im, 0);
     }
@@ -291,7 +291,6 @@ public class ECscaler extends DetectorMonitor {
     	singleRun = prevRun==run;   
     	
         if (de.hasBank("ECAL::scaler")) {doScalerEvent(de); return;}
-        
         if(occCounts>=occMax || (prevRun>0 && run!=prevRun)) {       	
         	fillFifoFromData();
         	doWriteEvent();
