@@ -139,13 +139,13 @@ public class ECt extends DetectorMonitor {
     }
     
     public void localinit() {
-    	System.out.println("ECt.localinit()");
+    	System.out.println(getDetectorName()+".localinit()");
     	tl.setFitData(Fits);
     	eng.engine.setGeomVariation("rga_spring2018");
     }  
     
     public void localclear() {
-    	System.out.println("ECt:localclear()");
+    	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;
         isTimeLineFitsDone = false;
     	getDataGroup().clear();
@@ -158,8 +158,8 @@ public class ECt extends DetectorMonitor {
     
     @Override
     public void createHistos(int run) {  
+	    System.out.println(getDetectorName()+".createHistos("+run+")");
 	    histosExist = true;
-	    System.out.println("ECt.createHistos("+run+")");
         setRunNumber(run);  runlist.add(run);    
         
         this.setNumberOfEvents(0);  
@@ -436,7 +436,9 @@ public class ECt extends DetectorMonitor {
         }            
 
     } 
+    
     public void initCCDB(int runno) {
+    	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         ftime   = cm.getConstants(runno, "/calibration/ec/ftiming");
@@ -574,10 +576,10 @@ public class ECt extends DetectorMonitor {
                 	   if (Math.abs(tdif)<10 && tdif<tmax) {tmax = tdif; tdcm = tdc;}                	    
                    }
                    double a0 = time.getDoubleValue("a0", is, il, ip); 
-                   double a1 = time.getDoubleValue("a1", is, il, ip);
                    double a2 = time.getDoubleValue("a2", is, il, ip);
                    double a3 = time.getDoubleValue("a3", is, il, ip);
                    double a4 = time.getDoubleValue("a4", is, il, ip);
+                   
                    double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm-FTOFFSET,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
@@ -1194,7 +1196,7 @@ public class ECt extends DetectorMonitor {
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
-			System.out.println("ECt.writefile("+table+")");
+			System.out.println(getDetectorName()+".writefile("+table+")");
 
 			for (int is=is1; is<is2; is++) {
 				for (int il=il1; il<il2; il++ ) {
@@ -1411,7 +1413,7 @@ public class ECt extends DetectorMonitor {
     }
     
     public void saveTimelines() {
-    	System.out.println("ECt: Saving timelines");
+    	System.out.println(getDetectorName()+": Saving timelines");
     	String tag = getTLtag();
     	saveTimeLine(10,0,100,"StartTime","TIME");
     	saveTimeLine(20,1,100,"PCALU3","TIME");
