@@ -16,7 +16,7 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSync;
 import org.jlab.utils.groups.IndexedList;
 
-public class ECscaler extends DetectorMonitor {
+public class ECstatus extends DetectorMonitor {
 
     static int              occCounts = 0;
     static int                 occMax = 10002, counter=0;
@@ -55,7 +55,7 @@ public class ECscaler extends DetectorMonitor {
     
     double aYL,aYS,aYR,tYL,tYS,tYR;
     
-    public ECscaler(String name) {
+    public ECstatus(String name) {
         super(name);
         
         dgmActive=true; 
@@ -182,9 +182,9 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         				int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
-        				dgm.makeH2("VADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC VALUES", "RUN INDEX", tity);    	    		
+        				dgm.makeH2("VADC"+hl, nx,0,nx,ny,1,ny+1, -1,"MEAN ADC", "RUN INDEX", tity);    	    		
         				dgm.cc("VADC"+hl, false, false, 0, 0, 0, 100);
-        				dgm.makeH2("VTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC VALUES", "RUN INDEX", tity);	
+        				dgm.makeH2("VTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"MEAN TDC", "RUN INDEX", tity);	
         				dgm.cc("VTDC"+hl, false, false, 0, 0, 200, 300);
         			}
         		}
@@ -198,9 +198,9 @@ public class ECscaler extends DetectorMonitor {
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
-        	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC VALUES", "RUN INDEX", tity);
+        	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM MEAN ADC", "RUN INDEX", tity);
         	    		dgm.cc("NVADC"+hl, false, false, 0, 0, 0.5f,1.5f);
-        	    		dgm.makeH2("NVTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM TDC VALUES", "RUN INDEX", tity);
+        	    		dgm.makeH2("NVTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM MEAN TDC", "RUN INDEX", tity);
         	    		dgm.cc("NVTDC"+hl, false, false, 0, 0, -3, 3);
         			}
         		}
