@@ -30,8 +30,10 @@ public class ECstatus extends DetectorMonitor {
     static DataEvent        prevEvent = null;
     static boolean          singleRun = false;
     static boolean        scalerEvent = false;
+    static boolean             isNorm = false;
+    static String             detName = null;
     
-    static DetectorOccupancy               occupancyECAL = new DetectorOccupancy(); 
+    static DetectorOccupancy         occupancyECAL = new DetectorOccupancy(); 
     
     DetectorCollection<LinkedList<Integer>> fifoac = new DetectorCollection<LinkedList<Integer>>();
     DetectorCollection<LinkedList<Integer>> fifotc = new DetectorCollection<LinkedList<Integer>>();
@@ -47,17 +49,18 @@ public class ECstatus extends DetectorMonitor {
     IndexedList<ArrayList<H1F>>             ATData = new IndexedList<>(3);  
     IndexedList<H1F>                       NATData = new IndexedList<>(3);  
     
-    HipoDataSync  writer = null;		
+    HipoDataSync  writer = null;	
     
-    int[]           npmt = {68,62,62,36,36,36,36,36,36};    
+    int[]           npmt = {68,62,62,36,36,36,36,36,36};     
     String[]         det = new String[]{" PCAL"," ECIN"," ECOU"};
     String[]           v = new String[]{"U","V","W"};
     
     double aYL,aYS,aYR,tYL,tYS,tYR;
     
-    public ECstatus(String name) {
+    public ECstatus(String name, String val) {
         super(name);
         
+        detName = val;
         dgmActive=true; 
         setDetectorTabNames("ATDATA","TIMELINE","STATUS","TRIGGER","SUMMARY");
 
@@ -69,17 +72,17 @@ public class ECstatus extends DetectorMonitor {
         this.initEPICS();
         this.localinit();
         this.localclear();
-        this.initFIFO("ECAL",1,7);
+        this.initFIFO(1,7);
     }
     
     public void localinit() {
-        System.out.println("ECscaler.localinit()");
+        System.out.println(getDetectorName()+".localinit()");
         occupancyECAL.ADCWindow[0]=10;  occupancyECAL.ADCWindow[1]=100;
         occupancyECAL.TDCWindow[0]=200; occupancyECAL.TDCWindow[1]=300;
     }
     
     public void localclear() {
-    	System.out.println("ECscaler.localclear()");
+    	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	Fits.clear();
@@ -89,13 +92,13 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void openOutput(String file) {
-    	System.out.println("ECscaler:openOutput("+file+")");
+    	System.out.println(getDetectorName()+".openOutput("+file+")");
     	writer = new HipoDataSync();
         writer.open(file);    	
     }
     
-    public void initFIFO(String detName, int is1, int is2) {
-        System.out.println("ECscaler:initFIFO():");
+    public void initFIFO(int is1, int is2) {
+        System.out.println(getDetectorName()+".initFIFO():");
         for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                 for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
@@ -113,7 +116,7 @@ public class ECstatus extends DetectorMonitor {
         
     @Override
     public void createHistos(int run) {
-    	System.out.println("ECstatus:createHistos("+run+")");
+    	System.out.println(getDetectorName()+".createHistos("+run+")");
     	if(dumpFiles) openOutput(outPath+"ECscaler/ECscaler-"+run+".hipo");
     	setRunNumber(run);    	   	
     	histosExist = true;  
@@ -138,8 +141,7 @@ public class ECstatus extends DetectorMonitor {
     			dgm.makeH2("ADD"+hl, 100, 1, 600, im==1?192:108, 1, im==1?193:109, -1, "","ADC", tity);
     			dgm.makeH2("TDD"+hl, 100, 100, 400, im==1?192:108, 1, im==1?193:109, -1, "","TDC", tity);
     		}
-    	}
-    	
+    	}    	
     }
     
     public void createTIMELINE(int st, int nx) {    	
@@ -151,7 +153,7 @@ public class ECstatus extends DetectorMonitor {
         				int sl = iv+3*(im-1); //superlayer 1-9
         				int hl = 10*is+sl;    //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
-        				int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
+        				int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
         				dgm.makeH2("ADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
         				dgm.makeH2("TDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
         			}
@@ -165,7 +167,7 @@ public class ECstatus extends DetectorMonitor {
         				int sl = iv+3*(im-1); //superlayer 1-9
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
-        	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
+        	    		int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
         	    		dgm.makeH2("NADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM ADC COUNTS", "RUN INDEX", tity);
         	    		dgm.cc("NADC"+hl, false, false, 0, 0, -3, 3);
         	    		dgm.makeH2("NTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM TDC COUNTS", "RUN INDEX", tity);
@@ -181,7 +183,7 @@ public class ECstatus extends DetectorMonitor {
         				int sl = iv+3*(im-1); //superlayer 1-9
         				int hl = 10*is+sl;    //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
-        				int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
+        				int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
         				dgm.makeH2("VADC"+hl, nx,0,nx,ny,1,ny+1, -1,"MEAN ADC", "RUN INDEX", tity);    	    		
         				dgm.cc("VADC"+hl, false, false, 0, 0, 0, 100);
         				dgm.makeH2("VTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"MEAN TDC", "RUN INDEX", tity);	
@@ -197,7 +199,7 @@ public class ECstatus extends DetectorMonitor {
         				int sl = iv+3*(im-1); //superlayer 1-9
         				int hl = 10*is+sl;    //hyperlayer 11-69
         	    		dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
-        	    		int ny=npmt[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
+        	    		int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";
         	    		dgm.makeH2("NVADC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM MEAN ADC", "RUN INDEX", tity);
         	    		dgm.cc("NVADC"+hl, false, false, 0, 0, 0.5f,1.5f);
         	    		dgm.makeH2("NVTDC"+hl, nx,0,nx,ny,1,ny+1, -1,"NORM MEAN TDC", "RUN INDEX", tity);
@@ -214,8 +216,7 @@ public class ECstatus extends DetectorMonitor {
     		dgm.add("TIMELINE", 1, 2, 0, st, getRunNumber());
     		dgm.makeH2("NTRIG", nx, 0, nx, 32,-0.5,31.5, -1, "NORM TRIGGER COUNTS", "RUN INDEX", "TRIGGER BITS");    	        	        	
     		dgm.cc("NTRIG", false, false, 0, 0, -3, 3);	
-    	}
-    	
+    	}   	
     }
     
     public void createTRIGGER(int run) {
@@ -253,7 +254,7 @@ public class ECstatus extends DetectorMonitor {
     	setRunNumber(run);
     	plotTimeLine("TIMELINE");
     	plotStatus("STATUS");
-    	plotTLSummary("SUMMARY");
+    	if(getActiveSCAL()<4) plotTLSummary("SUMMARY");
     }
     
 	public void plot(String tabname) { 		
@@ -270,7 +271,7 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void analyze() {
-    	System.out.println(getDetectorName()+".Analyze() ");  
+    	System.out.println(getDetectorName()+".analyze() ");  
     	fillHistFromFifo("ECAL",1,7);
     	analyzeSTATUS("ECAL",1,7);
     	analyzeNORM("ECAL",1,7);
@@ -291,6 +292,7 @@ public class ECstatus extends DetectorMonitor {
     	singleRun = prevRun==run;   
     	
         if (de.hasBank("ECAL::scaler")) {doScalerEvent(de); return;}
+        
         if(occCounts>=occMax || (prevRun>0 && run!=prevRun)) {       	
         	fillFifoFromData();
         	doWriteEvent();
@@ -430,7 +432,8 @@ public class ECstatus extends DetectorMonitor {
         		    }        		    
     			}
     		}
-    	}   				    	
+    	} 
+    	
     	for (int ib=0; ib<32; ib++) fifotr.get(0,0,ib).add((int)dgm.getH1F("trigmon").getBinContent(ib));
     } 
     
@@ -454,7 +457,7 @@ public class ECstatus extends DetectorMonitor {
     } 
    
     public void fillHistFromFifo(String detName, int is1, int is2) {   	
-        System.out.println("ECscaler:fillHistFromFifo("+detName+","+is1+","+is2+")");
+        System.out.println(getDetectorName()+".fillHistFromFifo("+detName+","+is1+","+is2+")");
     	for (int is=is1; is<is2 ; is++) {
     		for (int il=1; il<layMap.get(detName).length+1 ; il++) {
     			int hl = 10*is+il;
@@ -575,7 +578,7 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void analyzeSTATUS(String detName, int is1, int is2) {    
-        System.out.println("ECscaler:AnalyzeSTATUS("+detName+","+is1+","+is2+")");
+        System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+")");
         asum.clear(); tsum.clear();
     	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
     		for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {
@@ -672,11 +675,12 @@ public class ECstatus extends DetectorMonitor {
     	int hl = 10*is + sl;
     	int st = as + (dNorm ? 1:0);
         String opstat = as==4 ? "":"1000000";
-        
+
     	DataLine line3 = new DataLine(runIndexSlider,  as==4?-0.5:1,  runIndexSlider,  (as==4?31.5:npmt[sl-1])+1);  line3.setLineColor(5);
     	DataLine line4 = new DataLine(runIndexSlider+1,as==4?-0.5:1,  runIndexSlider+1,(as==4?31.5:npmt[sl-1])+1);  line4.setLineColor(5);  
     	
-    	String tit1 = "RUN "+runlist.get(runIndexSlider)+"   EVENT "+evnlist.get(runIndexSlider);
+    	String tit3 = isNorm ? "   NORM RUNS: "+runlist.get(normrun)+"-"+(runlist.get(normrun+normrng-1)):"";
+    	String tit1 = "RUN "+runlist.get(runIndexSlider)+"   EVENT "+evnlist.get(runIndexSlider)+tit3;
     	String tit2 = "   EV/SEC "+evrlist.get(runIndexSlider);
     	
     	h1a = ATData.getItem(is,sl,it+0).get(runIndexSlider); h1a.setTitle(tit1+(singleRun?tit2:" ")); h1a.setFillColor(21); h1a.setOptStat(opstat);
@@ -684,7 +688,7 @@ public class ECstatus extends DetectorMonitor {
     		
     	float amax = (float) h1a.getMax()*1.3f, tmax = (float) h1t.getMax()*1.3f, amin=0, tmin=0;
     	
-    	if (normrun>0) {    		
+    	if (isNorm) { //overlay the green template histo   		
     		         h1ar = NATData.getItem(is,sl,it+0); h1ar.setLineColor(3); amax = (float) h1ar.getMax()*1.3f; h1ar.setLineWidth(5); h1ar.setOptStat(opstat);
     		if(as<4) h1tr = NATData.getItem(is,sl,it+1); h1tr.setLineColor(3); tmax = (float) h1tr.getMax()*1.3f; h1tr.setLineWidth(5); h1tr.setOptStat(opstat);
     	}
@@ -693,12 +697,12 @@ public class ECstatus extends DetectorMonitor {
     	
     	c.cd(0); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 0); c.draw(line3); c.draw(line4);
     	c.cd(1); c.getPad().setTitleFontSize(24); c.getPad().getAxisY().setRange(amin, amax); 
-    	if(h1a.getIntegral()>0) c.draw(h1a); if (normrun>0) c.draw(h1ar,"same");
+    	if(h1a.getIntegral()>0) c.draw(h1a); if (isNorm) c.draw(h1ar,"same");
     	if(as==4) return;
     	
     	c.cd(2); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 1); c.draw(line3); c.draw(line4);
     	c.cd(3); c.getPad().setTitleFontSize(24); c.getPad().getAxisY().setRange(tmin, tmax); 
-    	if(h1t.getIntegral()>0) c.draw(h1t); if (normrun>0) c.draw(h1tr,"same");
+    	if(h1t.getIntegral()>0) c.draw(h1t); if (isNorm) c.draw(h1tr,"same");
     	    	
     }
     
@@ -721,12 +725,12 @@ public class ECstatus extends DetectorMonitor {
     }  
     	
     public void analyzeNORM(String detName, int is1, int is2) {
-        System.out.println("ECscaler:analyzeNORM("+detName+","+is1+","+is2+")");
+        System.out.println(getDetectorName()+".analyzeNORM("+detName+","+is1+","+is2+")");
     	analyzeATData(detName,is1,is2);
     }
     
     public void analyzeATData(String detName, int is1, int is2) {
-        System.out.println("ECscaler:analyzeATData("+detName+","+is1+","+is2+")");
+        System.out.println(getDetectorName()+".analyzeATData("+detName+","+is1+","+is2+")");
         ATData.clear();
         for (int is=is1; is<is2; is++) {
         	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) { int hl=10*is+sl;
@@ -741,8 +745,9 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void getATNData(String detName, int is1, int is2) {
-        System.out.println("ECscaler:getATNData("+detName+","+is1+","+is2+")");
-    	int i1=normrun, i2=i1+normrng-1;
+        System.out.println(getDetectorName()+".getATNData("+detName+","+is1+","+is2+")");
+        System.out.println(normrun+" "+normrng);
+    	int i1=normrun, i2=i1+normrng;
     	NATData.clear();
     	for (int is=is1; is<is2; is++) {
     		for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
@@ -756,22 +761,24 @@ public class ECstatus extends DetectorMonitor {
     } 
     
     public float getNorm(int at, int is, int sl, int ic) {
-    	if(at==0 && normrun==0) return anorm.get(is, sl, ic)/occHL;
-    	if(at==1 && normrun==0) return tnorm.get(is, sl, ic)/occHL;
-    	if(normrun>0)  return (float) NATData.getItem(is,sl,at).getBinContent(ic-1);
+    	if(at==0 && !isNorm) return anorm.get(is, sl, ic)/occHL;
+    	if(at==1 && !isNorm) return tnorm.get(is, sl, ic)/occHL;
+    	if(isNorm)  return (float) NATData.getItem(is,sl,at).getBinContent(ic-1);
     	return 0f;
     }
     
     @Override
     public void NormRunFunction() {
+    	isNorm = true;
     	getATNData("ECAL",1,7);
     	fillHistFromFifo("ECAL",1,7);    	
     }
     
     public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
-    	H1F h = list.get(i1-1).histClone("dum");
-    	for (int i=i1; i<i2; i++) h.add(list.get(i));
-    	h.normalize(i2-i1+1);
+    	H1F h = list.get(i1).histClone("dum");
+    	System.out.println(i1+" "+i2+" "+normrng);
+    	for (int i=i1+1; i<i2; i++) h.add(list.get(i));
+    	h.normalize(normrng);
     	return h;
     }
   
