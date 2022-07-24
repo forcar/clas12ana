@@ -129,7 +129,7 @@ public class DataGroupManager {
     	return (r2map.containsKey(name));
     }
     
-    public boolean isGraph(String name) {
+    public boolean isGE(String name) {
     	return (getDataGroup().getItem(imap.get(name)).getData(hmap.get(name)) instanceof GraphErrors);
     }
     
@@ -178,16 +178,16 @@ public class DataGroupManager {
     	return getDataGroup().getItem(imap.get(name)).getH2F(hmap.get(name));
     }
     
-    public GraphErrors getGraph(String name) {
+    public GraphErrors getGE(String name) {
     	return getDataGroup().getItem(imap.get(name)).getGraph(hmap.get(name));    	
     }
     
     public void geteff(String eff, String ... val) {
-    	if(isH1R(eff))   {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1FR(eff)[0],getH1FR(eff)[1])); return;}
-    	if(isH2R(eff))   {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2FR(eff)[0],getH2FR(eff)[1])); return;}
-    	if(isH1(eff))    {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1F(val[0]), getH1F(val[1])));}
-    	if(isH2(eff))    {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2F(val[0]), getH2F(val[1])));}
-    	if(isGraph(eff)) {getGraph(eff).reset(); getGraph(eff).copy(H1F.divide(getH1F(val[0]), getH1F(val[1])).getGraph());}
+    	if(isH1R(eff)) {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1FR(eff)[0],getH1FR(eff)[1])); return;}
+    	if(isH2R(eff)) {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2FR(eff)[0],getH2FR(eff)[1])); return;}
+    	if(isH1(eff))  {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1F(val[0]), getH1F(val[1])));}
+    	if(isH2(eff))  {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2F(val[0]), getH2F(val[1])));}
+    	if(isGE(eff))  {getGE(eff).reset();  getGE(eff).copy(H1F.divide(getH1F(val[0]), getH1F(val[1])).getGraph());}
     }
     
     public class H2FF extends H2F {
@@ -262,7 +262,7 @@ public class DataGroupManager {
     	dg.addDataSet(f1, n-1);
     }
     
-    public void makeGraph(String name, int f, String tit, String titx, String tity, int ... options) {
+    public void makeGE(String name, int f, String tit, String titx, String tity, int ... options) {
     	GraphErrors graph = new GraphErrors();
     	graph.setName(getName(name)); 
     	graph.setTitle(tit); graph.setTitleX(titx); graph.setTitleY(tity);
