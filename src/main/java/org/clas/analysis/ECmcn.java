@@ -142,8 +142,8 @@ public class ECmcn extends DetectorMonitor {
     		dgm.makeH1("h1",50,0,3,-1,"GRN:GEN    BLK:REC    RED:ECAL ONLY","GEN P (GeV)","COUNTS",3,3);
     		dgm.makeH1("h2",50,0,3,-2,"","","",1,1);
     		dgm.makeH1("h3",50,0,3,-2,"","","",2,2);
-    		dgm.makeGraph("g21",-1,"BLK:REC  RED:ECAL ONLY","GEN P (GeV)","EFFICIENCY",1); dgm.cc("g21",false,false,0,0.85f,0,0); 
-    		dgm.makeGraph("g31",-2," "," "," ",2);                                         dgm.cc("g31",false,false,0,0.85f,0,0); 
+    		dgm.makeGE("g21",-1,"BLK:REC  RED:ECAL ONLY","GEN P (GeV)","EFFICIENCY",1); dgm.cc("g21",false,false,0,0.85f,0,0); 
+    		dgm.makeGE("g31",-2," "," "," ",2);                                         dgm.cc("g31",false,false,0,0.85f,0,0); 
     		dgm.makeH2("h6", 50, 0, 3, 100, 0, 1000, -1, "ANY LAYER", "GEN P (GeV)", "REC E (MeV)");
     		dgm.cc("h6", false, true, 0, 0, 0, 0);
     		dgm.makeH2("h7", 50, 0, 3, 100, 0, 1000, -1, "PCAL+ECIN+ECOU", "GEN P (GeV)", "REC E (MeV)");

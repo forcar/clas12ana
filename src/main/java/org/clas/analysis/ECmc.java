@@ -139,7 +139,7 @@ public class ECmc extends DetectorMonitor {
         dgm.makeH2("h51",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h52",50,0.0,10., 60,0.0,0.31,-1,"","Track Electron Momentum (GeV)","Sampling Fraction E/P");   
         dgm.makeH2("h53",50,0.0,2.5, 60,0.0,0.31,-1,"","ECAL Electron Energy (GeV)","Sampling Fraction E/P");
-        dgm.makeGraph("g53",-2,"","","",1); SFFunction sf = new SFFunction("esf",-11,ebmce.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
+        dgm.makeGE("g53",-2,"","","",1); SFFunction sf = new SFFunction("esf",-11,ebmce.ccdb,0.1,2.5); dgm.addDataSet(sf,-2);
         dgm.makeH1("h60a",50,0,10,-1,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,3);
         dgm.makeH1("h60b",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,5);
         dgm.makeH1("h60c",50,0,10,-2,"G: PC > 0  Y: PC = 1 or 2  R: PC = 1","True Electron Energy (GeV)","Efficiency #theta>15",1,2);
@@ -376,7 +376,7 @@ public class ECmc extends DetectorMonitor {
     
     @Override
     public void plotEvent(DataEvent de) {
-//        analyze();         
+        analyze();         
     }
     
     public void fith52() {
@@ -389,11 +389,11 @@ public class ECmc extends DetectorMonitor {
         sigGraph.setTitleX("ECAL Electron Energy (GeV)");  sigGraph.setTitleY("SIGMA E/P"); 	
         sigGraph.setMarkerSize(4); sigGraph.setMarkerStyle(1);
         
-        dgm.getGraph("g53").copy(fitter.getMeanSlices());  
-        dgm.getGraph("g53").setTitleX("ECAL Electron Energy (GeV)");  dgm.getGraph("g53").setTitleY("Sampling Fraction E/P"); 	
-        dgm.getGraph("g53").setMarkerSize(4);  dgm.getGraph("g53").setMarkerStyle(1); 
+        dgm.getGE("g53").copy(fitter.getMeanSlices());  
+        dgm.getGE("g53").setTitleX("ECAL Electron Energy (GeV)");  dgm.getGE("g53").setTitleY("Sampling Fraction E/P"); 	
+        dgm.getGE("g53").setMarkerSize(4);  dgm.getGE("g53").setMarkerStyle(1); 
           
-        int npts =  dgm.getGraph("g53").getDataSize(0)  ;
+        int npts =  dgm.getGE("g53").getDataSize(0)  ;
         double[] xm  = new double[npts];
         double[] ym  = new double[npts];
         double[] yme = new double[npts];
@@ -402,9 +402,9 @@ public class ECmc extends DetectorMonitor {
         double[] yse = new double[npts];
         
         for (int i=0; i<npts; i++) {
-      	   xm[i] = 1/Math.sqrt(dgm.getGraph("g53").getDataX(i));
-      	   ym[i] = dgm.getGraph("g53").getDataY(i);
-      	  yme[i] = dgm.getGraph("g53").getDataEY(i);     
+      	   xm[i] = 1/Math.sqrt(dgm.getGE("g53").getDataX(i));
+      	   ym[i] = dgm.getGE("g53").getDataY(i);
+      	  yme[i] = dgm.getGE("g53").getDataEY(i);     
         } 
         
         GraphErrors resGraph = new GraphErrors();
