@@ -51,6 +51,7 @@ import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
+import org.jlab.groot.math.Axis;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
@@ -590,11 +591,11 @@ public class DetectorMonitor implements ActionListener {
 	    return detectorActiveSector;
     }
     
-    public int getActiveLayer() {
+    public int getActiveLayer() { //PCAL,ECIN,ECOU
 	    return detectorActiveLayer;
     }
     
-    public int getActiveView() {
+    public int getActiveView() { //UVW
 	    return detectorActiveView;
     }
     
@@ -1204,6 +1205,22 @@ public class DetectorMonitor implements ActionListener {
     	}    	
     	return graph;
     }
+    
+    public H1F projectionX(H2F h2, float ymin, float ymax ) {
+        String name = "X Projection";
+        Axis xAxis = h2.getXAxis(), yAxis = h2.getYAxis();
+        H1F projX = new H1F(name, xAxis.getNBins(), xAxis.min(), xAxis.max());
+        for (int x = 0; x < xAxis.getNBins(); x++) {
+            double height = 0.0;
+            for (int y = yAxis.getBin(ymin); y < yAxis.getBin(ymax); y++) {
+                height += h2.getBinContent(x, y);
+            }
+            projX.setBinContent(x, height);
+        }
+        
+        return projX;
+    }
+
     
 // GRAPH HELPERS   
         
