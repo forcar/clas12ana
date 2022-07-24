@@ -47,9 +47,10 @@ import org.clas.analysis.ECmc1;
 import org.clas.analysis.ECmc2;
 import org.clas.analysis.ECmcn;
 import org.clas.analysis.ECmip;
+import org.clas.analysis.ECmon;
 import org.clas.analysis.ECperf;
 import org.clas.analysis.ECpi0;
-import org.clas.analysis.ECscaler;
+import org.clas.analysis.ECstatus;
 import org.clas.analysis.ECsf;
 import org.clas.analysis.ECt;
 import org.clas.tools.DataSourceProcessorPane;
@@ -192,6 +193,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     	         case     "ECsf": monitors[n++]=new ECsf(s);   break; 
         	     case      "ECt": monitors[n++]=new ECt(s);    break;
         	     case    "ECmip": monitors[n++]=new ECmip(s);  break; 
+        	     case	 "ECmon": monitors[n++]=new ECmon(s);  break;
         	     case  "ECcalib": monitors[n++]=new ECcalib(s);break; 
         	     case    "ECpi0": monitors[n++]=new ECpi0(s);  break;
         	     case   "ECperf": monitors[n++]=new ECperf(s); break;
@@ -199,7 +201,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECmcn": monitors[n++]=new ECmcn(s);  break;
         	     case    "ECmc1": monitors[n++]=new ECmc1(s);  break;
         	     case    "ECmc2": monitors[n++]=new ECmc2(s);  break;
-        	     case "ECscaler": monitors[n++]=new ECscaler(s); break;
+        	     case "ECstatus": monitors[n++]=new ECstatus(s,"ECAL"); break;
         	     case   "ECelas": monitors[n++]=new ECelas(s); 
         	   }
         	}
@@ -207,14 +209,16 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 // 		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
-//    		monitors[n] = new ECscaler("ECscaler");
+    		monitors[n] = new ECstatus("ECstatus","ECAL");
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
+//            monitors[n] = new ECperf("ECperf");
 //    		monitors[n] = new ECsf("ECsf"); 
-    		monitors[n] = new ECcalib("ECcalib"); 
+//    		monitors[n] = new ECcalib("ECcalib"); 
+//    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
 
@@ -250,7 +254,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
         menuBar.add(menu);
         
-        if(!monitors[0].getDetectorName().equals("ECscaler")) co0.doClick(); //must use .equals here
+        if(!monitors[0].getDetectorName().equals("ECstatus")) co0.doClick(); //must use .equals here
         
         menu     = new JMenu("Fitting");
         cf  = new JCheckBoxMenuItem("Verbose");        cf.addItemListener(this);       menu.add(cf);
