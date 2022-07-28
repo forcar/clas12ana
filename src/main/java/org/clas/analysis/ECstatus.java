@@ -1,5 +1,9 @@
 package org.clas.analysis;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +24,7 @@ public class ECstatus extends DetectorMonitor {
 
     static int              occCounts = 0;
     static int                 occMax = 10002, counter=0;
-    static int                 occLo  =  1;
+    static int                 occLo  =  0;
     static int                 occHi  =  100;
     static int                 occHL  = occHi-occLo+1;
     static int                    nev = 1;
@@ -48,6 +52,7 @@ public class ECstatus extends DetectorMonitor {
     List<Integer>                          evrlist = new ArrayList<Integer>();   
     IndexedList<ArrayList<H1F>>             ATData = new IndexedList<>(3);  
     IndexedList<H1F>                       NATData = new IndexedList<>(3);  
+    IndexedList<Integer>                    status = new IndexedList<>(3);
     
     HipoDataSync  writer = null;	
     
@@ -83,6 +88,7 @@ public class ECstatus extends DetectorMonitor {
     
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
+    	occHi = getTotalEvents()-1;
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	Fits.clear();
@@ -102,12 +108,12 @@ public class ECstatus extends DetectorMonitor {
         for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                 for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
-                    fifoac.add(is, il, ic, new LinkedList<Integer>());
-                    fifotc.add(is, il, ic, new LinkedList<Integer>());
-                    fifoav.add(is, il, ic, new LinkedList<Integer>());
-                    fifotv.add(is, il, ic, new LinkedList<Integer>());
-                    anorm.add(is, il, ic,0);
-                    tnorm.add(is, il, ic,0);
+                    fifoac.add(is,il,ic, new LinkedList<Integer>());
+                    fifotc.add(is,il,ic, new LinkedList<Integer>());
+                    fifoav.add(is,il,ic, new LinkedList<Integer>());
+                    fifotv.add(is,il,ic, new LinkedList<Integer>());
+                    anorm.add(is,il,ic,0);
+                    tnorm.add(is,il,ic,0);
                 }
             }
         }
@@ -156,6 +162,8 @@ public class ECstatus extends DetectorMonitor {
         				int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
         				dgm.makeH2("ADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
         				dgm.makeH2("TDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
+        				dgm.makeH2("SADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
+        				dgm.makeH2("STDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
         			}
         		}
         	}
@@ -252,8 +260,8 @@ public class ECstatus extends DetectorMonitor {
     public void plotScalers(int run) {
     	if(!isAnalyzeDone) return;
     	setRunNumber(run);
-    	plotTimeLine("TIMELINE");
-    	plotStatus("STATUS");
+    	plotTimeLine();
+    	plotStatus();
     	if(getActiveSCAL()<4) plotTLSummary("SUMMARY");
     }
     
@@ -271,10 +279,12 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void analyze() {
-    	System.out.println(getDetectorName()+".analyze() ");  
+    	System.out.println(getDetectorName()+".analyze() ");
     	fillHistFromFifo("ECAL",1,7);
     	analyzeSTATUS("ECAL",1,7);
     	analyzeNORM("ECAL",1,7);
+    	System.out.println(occLo+" "+occHi);
+    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,9);
     	if(dumpFiles) writer.close();
     	isAnalyzeDone = true;
     }	
@@ -331,11 +341,7 @@ public class ECstatus extends DetectorMonitor {
     		doScalerEvent(de);
     	}
     }
-    
-    public boolean inNormWindow() {
-    	return occCounts>=occLo && occCounts<=occHi;
-    }
-    
+
     public void processRUNCONFIG(DataEvent de) {
     	int  evn = de.getBank("RUN::config").getInt("event", 0);
     	long tim = de.getBank("RUN::config").getLong("timestamp",0);
@@ -367,7 +373,21 @@ public class ECstatus extends DetectorMonitor {
     		}
     	}
     }
+        
+    public int getPMT(int il, int ic) {
+    	int off[] = {0,68,130,0,36,72,0,36,72};
+    	return ic+off[il-1];
+    }
     
+    public int getDET(int il) {
+    	int det[] = {1,1,1,2,2,2,3,3,3};
+    	return det[il-1];
+    }
+    
+    public boolean inNormWindow(int counter) {
+    	return counter>=occLo && counter<occHi;
+    }
+        
     public void fillFifoFromBank(DataEvent de) {
 
     	DataBank bank = null;
@@ -382,11 +402,11 @@ public class ECstatus extends DetectorMonitor {
         	int iav = bank.getInt("avalue", i);
         	int itv = bank.getInt("tvalue", i);
         	if(il>0) {
-        		fifoac.get(is, il, ic).add(ia); 
-        		fifotc.get(is, il, ic).add(it);
-        		fifoav.get(is, il, ic).add(ia>0?iav/ia:0); 
-        		fifotv.get(is, il, ic).add(it>0?itv/it:0);
-        		   if(inNormWindow()) {
+        		fifoac.get(is,il,ic).add(ia); 
+        		fifotc.get(is,il,ic).add(it);
+        		fifoav.get(is,il,ic).add(ia>0?iav/ia:0); 
+        		fifotv.get(is,il,ic).add(it>0?itv/it:0);
+        		   if(inNormWindow(occCounts)) {
         			   anorm.add(is,il,ic,anorm.get(is,il,ic)+ia);
         			   tnorm.add(is,il,ic,tnorm.get(is,il,ic)+it);
         		   }
@@ -400,16 +420,6 @@ public class ECstatus extends DetectorMonitor {
         	fifotr.get(0,0,ib).add(ic);
         }
 
-    }
-    
-    public int getPMT(int il, int ic) {
-    	int off[] = {0,68,130,0,36,72,0,36,72};
-    	return ic+off[il-1];
-    }
-    
-    public int getDET(int il) {
-    	int det[] = {1,1,1,2,2,2,3,3,3};
-    	return det[il-1];
     }
 
     public void fillFifoFromData() {
@@ -426,7 +436,7 @@ public class ECstatus extends DetectorMonitor {
     				fifotc.get(is,il,ic).add(occupancyECAL.getTDC(is,il,ic));
     				fifoav.get(is,il,ic).add(occupancyECAL.getADCVC(is,il,ic)); 
     				fifotv.get(is,il,ic).add(occupancyECAL.getTDCVC(is,il,ic));
-        		    if(inNormWindow()) {
+        		    if(inNormWindow(occCounts)) {
         		    	anorm.add(is,il,ic,anorm.get(is,il,ic)+occupancyECAL.getADC(is,il,ic));
         		    	tnorm.add(is,il,ic,tnorm.get(is,il,ic)+occupancyECAL.getTDC(is,il,ic));
         		    }        		    
@@ -462,27 +472,30 @@ public class ECstatus extends DetectorMonitor {
     		for (int il=1; il<layMap.get(detName).length+1 ; il++) {
     			int hl = 10*is+il;
 				dgm.getH2F( "ADC"+hl).reset();  dgm.getH2F( "TDC"+hl).reset(); 
+				dgm.getH2F("SADC"+hl).reset();  dgm.getH2F("STDC"+hl).reset();
 				dgm.getH2F("NADC"+hl).reset();  dgm.getH2F("NTDC"+hl).reset(); 
 				dgm.getH2F("VADC"+hl).reset();  dgm.getH2F("VTDC"+hl).reset(); 
 				dgm.getH2F("NVADC"+hl).reset(); dgm.getH2F("NVTDC"+hl).reset(); 
     			for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {    	
-            		Integer fa[]  = new Integer[fifoac.get(is, il, ic).size()];
-     				Integer ft[]  = new Integer[fifotc.get(is, il, ic).size()];
-            		Integer fav[] = new Integer[fifoav.get(is, il, ic).size()];
-     				Integer ftv[] = new Integer[fifotv.get(is, il, ic).size()];
-    				fifoac.get(is, il, ic).toArray(fa);
-    				fifotc.get(is, il, ic).toArray(ft);
-    				fifoav.get(is, il, ic).toArray(fav);
-    				fifotv.get(is, il, ic).toArray(ftv);
-    				for (int it=0; it<fa.length; it++) {
+            		Integer fa[]  = new Integer[fifoac.get(is,il,ic).size()];
+     				Integer ft[]  = new Integer[fifotc.get(is,il,ic).size()];
+            		Integer fav[] = new Integer[fifoav.get(is,il,ic).size()];
+     				Integer ftv[] = new Integer[fifotv.get(is,il,ic).size()];
+    				fifoac.get(is,il,ic).toArray(fa);
+    				fifotc.get(is,il,ic).toArray(ft);
+    				fifoav.get(is,il,ic).toArray(fav);
+    				fifotv.get(is,il,ic).toArray(ftv);
+    				for (int it=0; it<fa.length; it++) { //need Map(it,run)
     					float y = (float)((float)(fa[it]-getNorm(0,is,il,ic))/Math.sqrt(fa[it]));
     					dgm.fill( "ADC"+hl,it,ic,fa[it]);     					
     					dgm.fill("NADC"+hl,it,ic,y);
+    					if(inNormWindow(it)) dgm.fill("SADC"+hl,it,ic,fa[it]);     					
     				}   				
     				for (int it=0; it<ft.length; it++) {
     					float y = (float)((float)(ft[it]-getNorm(1,is,il,ic))/Math.sqrt(ft[it]));
     					dgm.fill( "TDC"+hl,it,ic,ft[it]); 
     					dgm.fill("NTDC"+hl,it,ic,y);
+    					if(inNormWindow(it)) dgm.fill("STDC"+hl,it,ic,ft[it]);     					
     				}
     				for (int it=0; it<fav.length; it++) {
     					float y = (float)((float)(fav[it]/getNorm(20,is,il,ic)));    					
@@ -547,8 +560,8 @@ public class ECstatus extends DetectorMonitor {
     	bank = de.createBank("ECAL::trigger", 32); 
 
     	for (int i=0; i<32; i++) {
-    		bank.setShort("bit", 	i, (short) i);    		
-    		bank.setInt("counts",	i, (int) dgm.getH1F("trigmon").getBinContent(i));    		
+    		bank.setShort("bit", i,(short) i);    		
+    		bank.setInt("counts",i,(int) dgm.getH1F("trigmon").getBinContent(i));    		
     	}
     	
     	de.appendBanks(bank);
@@ -567,8 +580,8 @@ public class ECstatus extends DetectorMonitor {
     }
 
     
-    public void plotStatus(String tab) {           
-    	EmbeddedCanvas c = getCanvas(tab); c.clear(); c.divide(3, 6);
+    public void plotStatus() {           
+    	EmbeddedCanvas c = getCanvas("STATUS"); c.clear(); c.divide(3, 6);
         int n=0;
         for (int is=1; is<7; is++) {
             for (int im=1; im<4; im++) {      
@@ -579,33 +592,35 @@ public class ECstatus extends DetectorMonitor {
     
     public void analyzeSTATUS(String detName, int is1, int is2) {    
         System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+")");
+        String aname = isNorm?"SADC":"ADC", tname = isNorm?"STDC":"TDC";
         asum.clear(); tsum.clear();
     	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
     		for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {
     			float aint = 0, tint = 0; int acnt=0, tcnt=0;
                 for (int is=is1; is<is2; is++) {
                 	int hl = 10*is+sl;
-                    asum.add(is,sl,ip,(float)dgm.getH2F("ADC"+hl).sliceY(ip-1).integral());
-                    tsum.add(is,sl,ip,(float)dgm.getH2F("TDC"+hl).sliceY(ip-1).integral());
-                    acnt+=(asum.get(is, sl, ip)>0?1:0);
-                    tcnt+=(tsum.get(is, sl, ip)>0?1:0);
-            		aint+=(asum.get(is, sl, ip)>0?asum.get(is, sl, ip):0);
-            		tint+=(tsum.get(is, sl, ip)>0?tsum.get(is, sl, ip):0); 
+                    asum.add(is,sl,ip,(float)dgm.getH2F(aname+hl).sliceY(ip-1).integral()); 
+                    tsum.add(is,sl,ip,(float)dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
+                    acnt+=(asum.get(is,sl,ip)>0?1:0);
+                    tcnt+=(tsum.get(is,sl,ip)>0?1:0);
+            		aint+=(asum.get(is,sl,ip)>0?asum.get(is, sl, ip):0);
+            		tint+=(tsum.get(is,sl,ip)>0?tsum.get(is, sl, ip):0); 
                 }
                 asum.add(7,sl,ip,aint/acnt);
                 tsum.add(7,sl,ip,tint/tcnt);
             }
         }
   	
+    	status.clear();
         for(int is=is1; is<is2; is++) {
             for (int im=1; im<4 ; im++) {            	
+            	dgm.getH2F("STATUS"+is+im).reset();
             	for(int il=1; il<4; il++) {
                 	int sl = il+(im-1)*3;  
-//                	dgm.getH2F("STATUS"+is+im).reset();
                 	for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {                 		
-                		Integer status = getStatus(is,sl,ip);
-//                		calib.setIntValue(status,"status", is, sl, ip);  
-                		dgm.fill("STATUS"+is+im,(float)ip, (float)il, getPlotStatus(status));
+                		Integer stat = getStatus(is,sl,ip);
+                		status.add(stat,is,sl,ip);  
+                		dgm.fill("STATUS"+is+im,(float)ip, (float)il, getPlotStatus(stat));
                 	}
                 }   
             }
@@ -660,13 +675,43 @@ public class ECstatus extends DetectorMonitor {
     public Boolean badAT() {return (tYS<200)&&(aYS<10000);}
     public double  getLL() {return (goodT()) ? tYL/tYS:0.0;}  
     
+	public void writeFile(String file, int is1, int is2, int il1, int il2) {
+		
+		String line = new String();
+		int[] npmt = {68,62,62,36,36,36,36,36,36};    
+		
+		try { 
+			File outputFile = new File(file);
+			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+			BufferedWriter outputBw = new BufferedWriter(outputFw);
+			
+			for (int is=is1; is<is2; is++) {
+				for (int il=il1; il<il2; il++ ) {
+					for (int ip=0; ip<npmt[il-1]; ip++) {
+						    line = is+" "+il+" "+(ip+1)+" "+status.getItem(is,il,ip+1);
+						    outputBw.write(line);
+						    outputBw.newLine();
+					}
+				}
+			}
+
+			outputBw.close();
+			outputFw.close();
+		}
+		catch(IOException ex) {
+			System.out.println("Error writing file '" );                   
+			ex.printStackTrace();
+		}
+
+	}
+    
 /*   TIMELINES */
     
-    public void plotTimeLine(String tab) {
+    public void plotTimeLine() {
     	
     	H1F h1a=new H1F(),h1ar=new H1F(),h1t=new H1F(),h1tr=new H1F();
     	
-        EmbeddedCanvas c = getCanvas(tab); c.clear(); c.divide(2, 2);
+        EmbeddedCanvas c = getCanvas("TIMELINE"); c.clear(); c.divide(2, 2);
         
         int as = getActiveSCAL();
         int it = as*10;
@@ -744,10 +789,9 @@ public class ECstatus extends DetectorMonitor {
         
     }
     
-    public void getATNData(String detName, int is1, int is2) {
+    public void getATNData(String detName, int is1, int is2) { //NATDATA are the green template TimeLine overlays
         System.out.println(getDetectorName()+".getATNData("+detName+","+is1+","+is2+")");
-        System.out.println(normrun+" "+normrng);
-    	int i1=normrun, i2=i1+normrng;
+    	int i1=normrun, i2=i1+normrng; occLo = normrun; occHi = normrun+normrng;
     	NATData.clear();
     	for (int is=is1; is<is2; is++) {
     		for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
@@ -770,13 +814,14 @@ public class ECstatus extends DetectorMonitor {
     @Override
     public void NormRunFunction() {
     	isNorm = true;
-    	getATNData("ECAL",1,7);
-    	fillHistFromFifo("ECAL",1,7);    	
+    	getATNData("ECAL",1,7);    	
+    	fillHistFromFifo("ECAL",1,7);
+    	analyzeSTATUS("ECAL",1,7);
+    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
     }
     
     public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
     	H1F h = list.get(i1).histClone("dum");
-    	System.out.println(i1+" "+i2+" "+normrng);
     	for (int i=i1+1; i<i2; i++) h.add(list.get(i));
     	h.normalize(normrng);
     	return h;

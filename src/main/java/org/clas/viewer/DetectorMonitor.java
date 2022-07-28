@@ -184,6 +184,7 @@ public class DetectorMonitor implements ActionListener {
     public String  outPath = "/home/lcsmith/CLAS12ANA/";
     public String  pawPath = outPath+"paw/";
     public String  jawPath = outPath+"jaw/";
+    public String  tabPath = null;
     public String   tlPath = null;
     public String  vecPath = null;
     
@@ -278,6 +279,7 @@ public class DetectorMonitor implements ActionListener {
         pawPath = outPath+"paw/";
         vecPath = pawPath+detectorName+"/";  
         jawPath = outPath+"jaw/";
+        tabPath = outPath+detectorName+"/tables/";
         tlPath  = outPath+detectorName+"/timelines/";
         TimeSlice.put("UVW", 3);
         TimeSlice.put("FADC Slot", 16);

@@ -781,10 +781,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             this.runNumber = runno; 
             this.monitors[k].isHipo3Event = processorPane.isHipo3Event;
         	this.monitors[k].setRunNumber(this.runNumber); 
+            this.monitors[k].setTotalEvents(getTotalEvents());
            	this.monitors[k].localclear();
            	this.monitors[k].initCCDB(this.runNumber);
            	this.monitors[k].initEBCCDB(this.runNumber);
-            this.monitors[k].setTotalEvents(getTotalEvents());
         	this.monitors[k].createHistos(this.runNumber);
             this.monitors[k].initGStyle(18);
             this.monitors[k].plotHistos(this.runNumber);
