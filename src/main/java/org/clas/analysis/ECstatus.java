@@ -123,7 +123,7 @@ public class ECstatus extends DetectorMonitor {
     @Override
     public void createHistos(int run) {
     	System.out.println(getDetectorName()+".createHistos("+run+")");
-    	if(dumpFiles) openOutput(outPath+"ECscaler/ECscaler-"+run+".hipo");
+    	if(dumpFiles) openOutput(filPath+getDetectorName()+"-"+run+".hipo");
     	setRunNumber(run);    	   	
     	histosExist = true;  
     	TLmax = getTotalEvents()>occMax ? getTotalEvents()/occMax : getTotalEvents();    
