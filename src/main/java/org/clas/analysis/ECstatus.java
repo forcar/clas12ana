@@ -88,8 +88,8 @@ public class ECstatus extends DetectorMonitor {
     
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
+    	isAnalyzeDone = false;    	
     	occHi = getTotalEvents()-1;
-    	isAnalyzeDone = false;
     	getDataGroup().clear();
     	Fits.clear();
     	FitSummary.clear();
@@ -119,11 +119,16 @@ public class ECstatus extends DetectorMonitor {
         }
         for (int ib=0; ib<32; ib++) fifotr.add(0, 0, ib, new LinkedList<Integer>());
     }
+    
+    public void initDumpFiles(int run) {
+    	openOutput(filPath+getDetectorName()+"-"+run+".hipo");
+    	occHi = occMax;	
+    }
         
     @Override
     public void createHistos(int run) {
     	System.out.println(getDetectorName()+".createHistos("+run+")");
-    	if(dumpFiles) openOutput(filPath+getDetectorName()+"-"+run+".hipo");
+    	if(dumpFiles) initDumpFiles(run);
     	setRunNumber(run);    	   	
     	histosExist = true;  
     	TLmax = getTotalEvents()>occMax ? getTotalEvents()/occMax : getTotalEvents();    
@@ -280,12 +285,12 @@ public class ECstatus extends DetectorMonitor {
     
     public void analyze() {
     	System.out.println(getDetectorName()+".analyze() ");
+    	if(dumpFiles) {writer.close(); return;}
     	fillHistFromFifo("ECAL",1,7);
     	analyzeSTATUS("ECAL",1,7);
     	analyzeNORM("ECAL",1,7);
     	System.out.println(occLo+" "+occHi);
     	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,9);
-    	if(dumpFiles) writer.close();
     	isAnalyzeDone = true;
     }	
     
