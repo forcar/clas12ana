@@ -118,12 +118,12 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void localinit() {
-    	System.out.println("ECcalib.localinit()");    	
+    	System.out.println(getDetectorName()+".localinit()");    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
     }  
     
     public void localclear() {
-    	System.out.println("ECcalib:localclear()");
+    	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;
     	getDataGroup().clear();
     	runlist.clear();
@@ -138,7 +138,7 @@ public class ECcalib extends DetectorMonitor {
      @Override    
      public void createHistos(int run) {
 	     histosExist = true;
-	     System.out.println("ECcalib:createHistos("+run+")");
+	     System.out.println(getDetectorName()+".createHistos("+run+")");
 	     setRunNumber(run);
 	     runlist.add(run);
 	     createMIPHistos(0,1,50,0, 40," Peak Energy (MeV)");
@@ -1592,7 +1592,7 @@ public class ECcalib extends DetectorMonitor {
     }
         
     public void saveTimelines() {
-    	System.out.println("ECmip: Saving timelines");
+    	System.out.println(getDetectorName()+".saveTimelines()");
     	saveTimeLine(10,0,0,"PCALmip","MIP");
     	saveTimeLine(20,1,0,"ECINmip","MIP");
     	saveTimeLine(30,2,0,"ECOUmip","MIP");
@@ -1698,10 +1698,8 @@ public class ECcalib extends DetectorMonitor {
     
     @Override
 	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
-		
-    	if(!dumpFiles) return;
-    	
-		String path = "/Users/colesmith/CLAS12ANA/ECcalib/ccdb/";
+   	
+		String path = filPath+"ccdb/";
 		String line = new String();
 		
 		try { 
@@ -1709,7 +1707,7 @@ public class ECcalib extends DetectorMonitor {
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
-			System.out.println("ECcalib.writefile("+table+")");
+			System.out.println(getDetectorName()+".writefile("+table+")");
 
 			for (int is=is1; is<is2; is++) {
 				for (int il=il1; il<il2; il++ ) { //pcal,ecin,ecou
@@ -1914,7 +1912,7 @@ public class ECcalib extends DetectorMonitor {
 */  
     public void getPixLengthMap(String filename) {   
         
-    	System.out.println("ECmip.getPixLengthMap("+filename+")");
+    	System.out.println(getDetectorName()+".getPixLengthMap("+filename+")");
     	
         try{
             FileReader       file = new FileReader(filename);
