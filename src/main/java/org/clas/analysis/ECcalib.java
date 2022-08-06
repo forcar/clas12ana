@@ -201,11 +201,11 @@ public class ECcalib extends DetectorMonitor {
     	 plotTimeLines(11);  	    
      }
      
-     public void plotMean() {
-    	 if(getActiveRDIF()==1 && runlist.size()==2) {getMeanRDIF(); dumpFiles("rdif");     plotMeanRDIF(3);                        return;} //plot RDIF if two runs present and dump RDIF
-    	 if(getActiveRDIF()==0 && runlist.size()==1) {               dumpFiles("gain");     plotMeanSummary(3); plotVarSummary(14); return;} //dump PMT gains based on current analyzed run
-    	 if(getActiveRDIF()==1 && runlist.size()==1) {               dumpFiles("rdifgain"); plotMeanSummary(3); plotVarSummary(14);}         //plot effect of RDIF correction and dump RDIF corrected CCDB gains
-     }
+//     public void plotMean() {
+//    	 if(getActiveRDIF()==1 && runlist.size()==2) {getMeanRDIF(); dumpFiles("rdif");     plotMeanRDIF(3);                        return;} //plot RDIF if two runs present and dump RDIF
+//    	 if(getActiveRDIF()==0 && runlist.size()==1) {               dumpFiles("gain");     plotMeanSummary(3); plotVarSummary(14); return;} //dump PMT gains based on current analyzed run
+//    	 if(getActiveRDIF()==1 && runlist.size()==1) {               dumpFiles("rdifgain"); plotMeanSummary(3); plotVarSummary(14);}         //plot effect of RDIF correction and dump RDIF corrected CCDB gains
+//   }
 
      public void dumpFiles(String val) {
     	 if(dumpFiles) writeFile(val,1,7,0,3,0,3);
@@ -792,7 +792,7 @@ public class ECcalib extends DetectorMonitor {
             	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
             	
 // Below are FTOF/ECAL alignment histos           	
-
+/*
         		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
         		
                 if(pixpc) for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(0).il-1).get(0)).fill(bar,e.get(0).uvw[i]);            		
@@ -803,6 +803,7 @@ public class ECcalib extends DetectorMonitor {
                 	                	
                 if(pixpc && pixeci)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1+6).get(0)).fill(puvw[i],e.get(1).uvw[i]);
                 if(pixpc && pixeco)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1+6).get(0)).fill(puvw[i],e.get(2).uvw[i]);
+*/                
 			}  
     	}
     }
@@ -880,7 +881,7 @@ public class ECcalib extends DetectorMonitor {
         ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+11).get(0)).fill(v13mag,w);    	
         ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+17).get(0)).fill(v23mag,w);    	
     }    
-    
+/*    
     public void getECALTDC(int run, int eis, DataEvent event) {
     	
     	etdcs.clear(); 
@@ -977,7 +978,7 @@ public class ECcalib extends DetectorMonitor {
             }
         }   	
     }
-    
+*/    
     public List<Integer> getFTOFBAR(float thr) {
  	   
         IndexGenerator ig = new IndexGenerator();
@@ -1105,7 +1106,7 @@ public class ECcalib extends DetectorMonitor {
     public void analyze() {    
     	System.out.println(getDetectorName()+".analyze() ");
         fitGraphs(1,7,0,3,0,(dropSummary)?0:3);
-        analyzeGraphs();
+        if(!dropSummary) analyzeGraphs();
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
         System.out.println("Finished");
