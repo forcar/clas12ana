@@ -494,7 +494,7 @@ public class ECsf extends DetectorMonitor {
         if(!good_e)  return;
         
         if(goodSector && good_fiduc) {
-            float sfplot = dropSummary ? sf:sf/getSFcorr(e_sect,e_ecal_EL[3]);
+            float sfplot = SFcorr ? sf/getSFcorr(e_sect,e_ecal_EL[3]):sf;
             ((H1F) getDG(0,0,"PID Fits",run).getData(e_sect-1).get(0)).fill(sfplot);
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1   ).get(0)).fill(e_ecal_EL[3], sf); if (dropSummary) return;
         	((H2F) getDG(0,0,"E/P",run).getData(e_sect-1+ 6).get(0)).fill(e_mom,sf);
@@ -961,7 +961,7 @@ public class ECsf extends DetectorMonitor {
             File f = new File(fname); 
             if (!f.exists()) return;
             BufferedReader reader = new BufferedReader(new FileReader(f));
-			System.out.println("ECsf.readSF("+fname+")");
+			System.out.println(getDetectorName()+".readSF("+fname+")");
             int n = 0 ;
             while (n<7) {		
                 String line = reader.readLine();

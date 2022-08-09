@@ -209,6 +209,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          dgmActive = false;
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
+    public Boolean             SFcorr = false;
     public Boolean        dbgAnalyzer = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
