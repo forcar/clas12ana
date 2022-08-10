@@ -120,7 +120,7 @@ public class ECcalib extends DetectorMonitor {
     public void localinit() {
     	System.out.println(getDetectorName()+".localinit()");    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
-        tl.setFitData(Fits);         
+//        tl.setFitData(Fits);         
     }  
     
     public void localclear() {
@@ -1028,7 +1028,7 @@ public class ECcalib extends DetectorMonitor {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         
-        int    pc = getActivePC();
+        int    pc = getActivePC()==2 ? 1 : getActivePC();
         int    is = getActiveSector(); 
         
         c.clear();
@@ -1055,7 +1055,7 @@ public class ECcalib extends DetectorMonitor {
        
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         
-        int    pc = getActivePC();
+        int    pc = getActivePC()==2 ? 1 : getActivePC();
         int    is = getActiveSector(); 
         int     i = getActiveLayer();
         int     j = getActiveView();
@@ -1220,7 +1220,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotVarSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         c.clear(); c.divide(9, 6);
@@ -1244,7 +1244,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotMeanSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         double ymin=0.99f, ymax=1.01f;
@@ -1280,7 +1280,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotRmsSummary(int index) {
     	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         double ymin=0.3f, ymax=1.0f;
@@ -1307,7 +1307,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotRmsHWSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         List<DataLine> lines = new ArrayList<DataLine>();
@@ -1344,7 +1344,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotMeanHWSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         List<DataLine> lines = new ArrayList<DataLine>();
@@ -1415,7 +1415,7 @@ public class ECcalib extends DetectorMonitor {
     public void plotMeanRDIF(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int           pc = getActivePC();
+        int           pc = getActivePC()==2 ? 1 : getActivePC();
         int            n = 0;
         
         double ymin=0.99f, ymax=1.01f;
@@ -1682,7 +1682,7 @@ public class ECcalib extends DetectorMonitor {
     
     public void plotTimeLineSectors(int index) {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-        int pc = getActivePC();
+        int pc = getActivePC()==2 ? 1 : getActivePC();
         int iv = getActiveView();
         int il = getActiveLayer();
        	String  v[] = {" U "," V "," W "};
@@ -1722,7 +1722,7 @@ public class ECcalib extends DetectorMonitor {
 							case "rdif":     line = getRDIF(is,il,iv,ip); break;
 							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
 							}
-						    System.out.println(line);
+						    if(table=="piongain") System.out.println(line);
 						    outputBw.write(line);
 						    outputBw.newLine();
 						}
