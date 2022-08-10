@@ -120,6 +120,7 @@ public class ECcalib extends DetectorMonitor {
     public void localinit() {
     	System.out.println(getDetectorName()+".localinit()");    	
         getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
+        tl.setFitData(Fits);         
     }  
     
     public void localclear() {
@@ -129,7 +130,6 @@ public class ECcalib extends DetectorMonitor {
     	runlist.clear();
     	FitSummary.clear();
     	Fits.clear();
-    	tl.fitData.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
         eng.engine.setCCDBGain(!defaultGain);
@@ -539,7 +539,8 @@ public class ECcalib extends DetectorMonitor {
     }
         
     public void initCCDB(int runno) {
-    	System.out.println("ECcalib.initCCDB("+runno+")");
+    	if(dropSummary) return;
+    	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(2,     "/calibration/ec/gain");       
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
