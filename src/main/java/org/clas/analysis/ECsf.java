@@ -1017,7 +1017,7 @@ public class ECsf extends DetectorMonitor {
     }
     
     public void saveTimelines() {
-    	System.out.println("ECsf: Saving timelines");
+    	System.out.println(getDetectorName()+".saveTimeLines()");
     	saveTimeLine(10,0,7,"SampFrac","SF");
     	saveTimeLine(20,0,7,"Resolution","SF");
     }
