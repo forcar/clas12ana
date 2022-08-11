@@ -720,7 +720,7 @@ public class ECcalib extends DetectorMonitor {
             
     		e_cz   = p.hasProperty("cz")?(float) p.getProperty("cz"):1;
     		
-    		d      = (il>1 && ev.isMuon && normPix && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
+    		d      = (il>1 && (ev.isMuon || normPix) && PixLength.hasItem((int)uvw[0],(int)uvw[1],(int)uvw[2]))? PixLength.getItem((int)uvw[0],(int)uvw[1],(int)uvw[2]):1f; 
     		
     		ecl    = (float) p.getProperty("energy")/d;	    	   
     		ep[0]  = (float) p.getProperty("receu")/d;
