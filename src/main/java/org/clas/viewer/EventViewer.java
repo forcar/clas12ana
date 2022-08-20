@@ -216,8 +216,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
-//            monitors[n] = new ECperf("ECperf");
-   		monitors[n] = new ECsf("ECsf"); 
+            monitors[n] = new ECperf("ECperf");
+//   		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -328,7 +328,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
         menuBar.add(menu);
        
-        menu   	= new JMenu("ECscaler");
+        menu   	= new JMenu("ECstatus");
         cf9 = new JCheckBoxMenuItem("ATDATA");   cf9.addItemListener(this); menu.add(cf9);
         menuBar.add(menu);
         
