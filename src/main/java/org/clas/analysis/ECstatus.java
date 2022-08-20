@@ -24,8 +24,8 @@ public class ECstatus extends DetectorMonitor {
 
     static int              occCounts = 0;
     static int                 occMax = 10002, counter=0;
-    static int                 occLo  =  0;
-    static int                 occHi  =  100;
+    static int                 occLo  = 0;
+    static int                 occHi  = 100;
     static int                 occHL  = occHi-occLo+1;
     static int                    nev = 1;
     static int               evn_last = 0;
@@ -46,8 +46,6 @@ public class ECstatus extends DetectorMonitor {
     DetectorCollection<LinkedList<Integer>> fifotr = new DetectorCollection<LinkedList<Integer>>();
     DetectorCollection<Integer>              anorm = new DetectorCollection<Integer>();
     DetectorCollection<Integer>              tnorm = new DetectorCollection<Integer>();
-    DetectorCollection<Float>                 asum = new DetectorCollection<Float>();
-    DetectorCollection<Float>                 tsum = new DetectorCollection<Float>(); 
     List<Integer>                          evnlist = new ArrayList<Integer>();
     List<Integer>                          evrlist = new ArrayList<Integer>();   
     IndexedList<ArrayList<H1F>>             ATData = new IndexedList<>(3);  
@@ -146,11 +144,14 @@ public class ECstatus extends DetectorMonitor {
     public void createATDATA() {
     	for (int is=1; is<7; is++) {
     		for (int im=1; im<4; im++) {
-    			int hl = 10*is+im;
-    			String tity="SEC"+is+det[im-1]+" PMT";
-    			dgm.add("ATDATA", 2, 1, is, im, 0);
-    			dgm.makeH2("ADD"+hl, 100, 1, 600, im==1?192:108, 1, im==1?193:109, -1, "","ADC", tity);
-    			dgm.makeH2("TDD"+hl, 100, 100, 400, im==1?192:108, 1, im==1?193:109, -1, "","TDC", tity);
+				dgm.add("ATDATA", 2, 3, is, im, 0);
+    			for(int iv=1; iv<4; iv++) { //views u,v,w
+    				int sl = iv+3*(im-1);   //superlayer 1-9
+    				int hl = 10*is+sl;      //hyperlayer 11-69
+    				int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
+    				dgm.makeH2("ADD"+hl, 100,   1, im==1?600:300, ny,1,ny+1, -1,"ADC DATA", "", tity);
+    				dgm.makeH2("TDD"+hl, 100, 100, 400, ny,1,ny+1, -1,"TDC DATA", "", tity);
+    			}
     		}
     	}    	
     }
@@ -161,14 +162,14 @@ public class ECstatus extends DetectorMonitor {
         	for(int is=1; is<7; is++) { //sectors 1-6
         		for(int im=1; im<4; im++) { //modules pcal,ecin,ecou
         			for(int iv=1; iv<4; iv++) { //views u,v,w
-        				int sl = iv+3*(im-1); //superlayer 1-9
-        				int hl = 10*is+sl;    //hyperlayer 11-69
+        				int sl = iv+3*(im-1);   //superlayer 1-9
+        				int hl = 10*is+sl;      //hyperlayer 11-69
         				dgm.add("TIMELINE",1,2, hl, st, getRunNumber());
         				int ny=nlayMap.get(detName)[sl-1]; String tity="SEC"+is+det[im-1]+" "+v[iv-1]+" PMT";  
         				dgm.makeH2("ADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
         				dgm.makeH2("TDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
-        				dgm.makeH2("SADC"+hl, nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
-        				dgm.makeH2("STDC"+hl, nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
+        				dgm.makeH2("SADC"+hl,nx,0,nx,ny,1,ny+1, -1,"ADC COUNTS", "RUN INDEX", tity);    	    		
+        				dgm.makeH2("STDC"+hl,nx,0,nx,ny,1,ny+1, -1,"TDC COUNTS", "RUN INDEX", tity);	
         			}
         		}
         	}
@@ -258,7 +259,7 @@ public class ECstatus extends DetectorMonitor {
    	    if(dropSummary) return;
         setRunNumber(run);
         plot("TRIGGER");
-        if(useATDATA) plot("ATDATA");
+        if(useATDATA) {plot("ATDATA"); plotStatus();}
     }
     
     @Override
@@ -286,9 +287,9 @@ public class ECstatus extends DetectorMonitor {
     public void analyze() {
     	System.out.println(getDetectorName()+".analyze() ");
     	if(dumpFiles) {writer.close(); return;}
-    	fillHistFromFifo("ECAL",1,7);
+    	if(!useATDATA) fillHistFromFifo("ECAL",1,7);
     	analyzeSTATUS("ECAL",1,7);
-    	analyzeNORM("ECAL",1,7);
+    	if(!useATDATA) analyzeNORM("ECAL",1,7);
     	System.out.println(occLo+" "+occHi);
     	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,9);
     	isAnalyzeDone = true;
@@ -371,9 +372,9 @@ public class ECstatus extends DetectorMonitor {
     		for(Integer il : layers){   		
     			Set<Integer> components = dc.getComponents(is,il);
     			for(Integer ic : components){  
-    				int hl = 10*is+getDET(il);
-    				dgm.fill("ADD"+hl, occupancyECAL.getADCV(is, il, ic),getPMT(il,ic));
-    				dgm.fill("TDD"+hl, occupancyECAL.getTDCV(is, il, ic),getPMT(il,ic));
+    				int hl = 10*is+il;
+    				dgm.fill("ADD"+hl, occupancyECAL.getADCV(is, il, ic),ic);
+    				dgm.fill("TDD"+hl, occupancyECAL.getTDCV(is, il, ic),ic);
     			}
     		}
     	}
@@ -595,17 +596,19 @@ public class ECstatus extends DetectorMonitor {
         }            
     }
     
-    public void analyzeSTATUS(String detName, int is1, int is2) {    
+    public void analyzeSTATUS(String detName, int is1, int is2) {  
         System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+")");
-        String aname = isNorm?"SADC":"ADC", tname = isNorm?"STDC":"TDC";
-        asum.clear(); tsum.clear();
+        DetectorCollection<Float> asum = new DetectorCollection<Float>();
+        DetectorCollection<Float> tsum = new DetectorCollection<Float>(); 
+        String aname = isNorm?"SADC":"ADC", tname = isNorm?"STDC":"TDC"; //SADC is runs used for norm, ADC is all runs
+        if(useATDATA) {aname="ADD"; tname="TDD";}
     	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
     		for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {
     			float aint = 0, tint = 0; int acnt=0, tcnt=0;
                 for (int is=is1; is<is2; is++) {
                 	int hl = 10*is+sl;
-                    asum.add(is,sl,ip,(float)dgm.getH2F(aname+hl).sliceY(ip-1).integral()); 
-                    tsum.add(is,sl,ip,(float)dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
+                    asum.add(is,sl,ip,(float) dgm.getH2F(aname+hl).sliceY(ip-1).integral()); 
+                    tsum.add(is,sl,ip,(float) dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
                     acnt+=(asum.get(is,sl,ip)>0?1:0);
                     tcnt+=(tsum.get(is,sl,ip)>0?1:0);
             		aint+=(asum.get(is,sl,ip)>0?asum.get(is, sl, ip):0);
@@ -622,8 +625,10 @@ public class ECstatus extends DetectorMonitor {
             	dgm.getH2F("STATUS"+is+im).reset();
             	for(int il=1; il<4; il++) {
                 	int sl = il+(im-1)*3;  
-                	for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {                 		
-                		Integer stat = getStatus(is,sl,ip);
+                	for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {  
+                    	float Asum = asum.get(7, sl, ip), A = asum.get(is, sl, ip);
+                    	float Tsum = tsum.get(7, sl, ip), T = tsum.get(is, sl, ip);
+                		Integer stat = getStatus(Asum,A,Tsum,T);
                 		status.add(stat,is,sl,ip);  
                 		dgm.fill("STATUS"+is+im,(float)ip, (float)il, getPlotStatus(stat));
                 	}
@@ -632,9 +637,7 @@ public class ECstatus extends DetectorMonitor {
         }      
     }
     
-    public Integer getStatus(int is, int sl, int ip) {
-    	float Asum = asum.get(7, sl, ip), A = asum.get(is, sl, ip);
-    	float Tsum = tsum.get(7, sl, ip), T = tsum.get(is, sl, ip);
+    public Integer getStatus(float Asum,float A,float Tsum,float T) {
     	float aAsym = (A-Asum)/(A+Asum), tAsym = (T-Tsum)/(T+Tsum);
     	Boolean   badA = A==0 && T>0;   //dead ADC good TDC
         Boolean   badT = T==0 && A>0;   //dead TDC good ADC
@@ -819,10 +822,9 @@ public class ECstatus extends DetectorMonitor {
     @Override
     public void NormRunFunction() {
     	isNorm = true;
-    	getATNData("ECAL",1,7);    	
-    	fillHistFromFifo("ECAL",1,7);
+    	if(!useATDATA) {getATNData("ECAL",1,7); fillHistFromFifo("ECAL",1,7);}
     	analyzeSTATUS("ECAL",1,7);
-    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
+    	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
     }
     
     public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
