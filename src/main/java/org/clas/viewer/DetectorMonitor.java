@@ -1221,9 +1221,23 @@ public class DetectorMonitor implements ActionListener {
                 height += h2.getBinContent(x, y);
             }
             projX.setBinContent(x, height);
+        }        
+        return projX;
+    }
+    
+    public H1F projectionY(H2F h2, float xmin, float xmax ) {
+        String name = "Y Projection";
+        Axis xAxis = h2.getXAxis(), yAxis = h2.getYAxis();
+        H1F projY = new H1F(name, yAxis.getNBins(), yAxis.min(), yAxis.max());
+        for (int y = 0; y < yAxis.getNBins(); y++) {
+            double height = 0.0;
+            for (int x = xAxis.getBin(xmin); x < xAxis.getBin(xmax); x++) {
+                height += h2.getBinContent(x, y);
+            }
+            projY.setBinContent(y, height);
         }
         
-        return projX;
+        return projY;
     }
 
     
