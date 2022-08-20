@@ -439,7 +439,7 @@ public class ECperf extends DetectorMonitor {
         dg = new DataGroup(6,5);
         for(int is=1;is<7;is++){    
 	        tag = is+"-"+st+"-"+k+"-"+run;
-	        dg.addDataSet(makeH2(tab+"-1-",tag,60,5.0,thmax,60,pmin,pmax,  "","#theta (deg)","p (GeV)"),is-1);
+	        dg.addDataSet(makeH2(tab+"-1-",tag,60,thmin,thmax,60,pmin,pmax,  "","#theta (deg)","p (GeV)"),is-1);
 	        dg.addDataSet(makeH2(tab+"-2-",tag,60,0.7,wmax, 60,pmin,pmax,  "","W (GeV)","p (GeV)"),     is-1+6);
 	        dg.addDataSet(makeH2(tab+"-3-",tag,60,0.7,wmax, 60,thmin,thmax,"","W (GeV)","#theta (deg)"),is-1+12);
 	        dg.addDataSet(makeH2(tab+"-4-",tag,60,0.7,wmax, 60, -20,30,    "","W (GeV)","#phi (^o"),    is-1+18);
