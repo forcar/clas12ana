@@ -430,7 +430,7 @@ public class ECperf extends DetectorMonitor {
 		String[] luvw = {" LU"," LV"," LW"}; String[] uvw = {" U"," V"," W"}; 
 		int[]     npmt = {68,62,62,36,36,36,36,36,36};
 		
-		double thmin=5, thmax=11, wmax=1.8;
+		double thmin=6.2, thmax=11, wmax=1.9;
 		double pmax=kl.ep_from_w(EB, thmin, 0), pmin=kl.ep_from_w(EB, thmax, wmax);
 		float offx = EB<3 ? 10:0, offy = EB<3 ? 10:0;
 		
