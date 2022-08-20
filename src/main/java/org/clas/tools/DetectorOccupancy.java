@@ -25,8 +25,9 @@ public class DetectorOccupancy {
     
     private int maxLayers     = 9;
     private int maxComponents = 72;
-    public  int[] ADCWindow = {10,100};
+    public  int[] ADCWindow = {20,300};
     public  int[] TDCWindow = {200,300};
+    ECConstants ecc = new ECConstants();
     
     public DetectorOccupancy(){
         
@@ -43,7 +44,10 @@ public class DetectorOccupancy {
             int    sector = bank.getByte(  "sector",    row);
             int     layer = bank.getByte(  "layer",     row);
             int component = bank.getShort( "component", row);
-            int       adc = (int)(bank.getInt("ADC", row)*0.1f);
+            float sca = (float) ((sector==5)?ecc.SCALE5[layer-1]:ecc.SCALE[layer-1]);
+            int       adc = (int)(bank.getInt("ADC", row)/sca);
+            
+
             if(adc>this.ADCWindow[0] && adc<this.ADCWindow[1]){
                 if(occupancyCollection.hasEntry(sector, layer, component)==true){
                     this.occupancyCollection.get(sector, layer, component).incrementADC(adc);                
