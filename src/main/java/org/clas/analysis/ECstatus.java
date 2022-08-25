@@ -27,7 +27,7 @@ public class ECstatus extends DetectorMonitor {
     static int                 occLo  = 0;
     static int                 occHi  = 100;
     static int                 occHL  = occHi-occLo+1;
-    static int                    nev = 1;
+    static int       nevents,nev,nevs = 0;
     static int               evn_last = 0;
     static long              tim_last = 0;
     static int                prevRun = 0;
@@ -44,6 +44,7 @@ public class ECstatus extends DetectorMonitor {
     DetectorCollection<LinkedList<Integer>> fifoav = new DetectorCollection<LinkedList<Integer>>();
     DetectorCollection<LinkedList<Integer>> fifotv = new DetectorCollection<LinkedList<Integer>>();
     DetectorCollection<LinkedList<Integer>> fifotr = new DetectorCollection<LinkedList<Integer>>();
+    
     DetectorCollection<Integer>              anorm = new DetectorCollection<Integer>();
     DetectorCollection<Integer>              tnorm = new DetectorCollection<Integer>();
     List<Integer>                          evnlist = new ArrayList<Integer>();
@@ -87,7 +88,8 @@ public class ECstatus extends DetectorMonitor {
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;    	
-    	occHi = getTotalEvents()-1;
+    	nevents = getTotalEvents();
+    	occHi = nevents-1;
     	getDataGroup().clear();
     	Fits.clear();
     	FitSummary.clear();
@@ -106,12 +108,13 @@ public class ECstatus extends DetectorMonitor {
         for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                 for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
-                    fifoac.add(is,il,ic, new LinkedList<Integer>());
+                    fifoac.add(is,il,ic, new LinkedList<Integer>());                   
                     fifotc.add(is,il,ic, new LinkedList<Integer>());
                     fifoav.add(is,il,ic, new LinkedList<Integer>());
                     fifotv.add(is,il,ic, new LinkedList<Integer>());
                     anorm.add(is,il,ic,0);
                     tnorm.add(is,il,ic,0);
+                    
                 }
             }
         }
@@ -287,7 +290,6 @@ public class ECstatus extends DetectorMonitor {
     public void analyze() {
     	System.out.println(getDetectorName()+".analyze() ");
     	if(dumpFiles) {writer.close(); return;}
-    	if(!useATDATA) fillHistFromFifo("ECAL",1,7);
     	analyzeSTATUS("ECAL",1,7);
     	if(!useATDATA) analyzeNORM("ECAL",1,7);
     	System.out.println(occLo+" "+occHi);
@@ -332,7 +334,7 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void doScalerEvent(DataEvent de) {
-    	processRUNCONFIG(de); fillFifoFromBank(de);     	
+    	processRUNCONFIG(de); fillHistFromBank(de); //fillFifoFromBank(de);     	
     }
     
     public void doWriteEvent() {
@@ -393,40 +395,6 @@ public class ECstatus extends DetectorMonitor {
     public boolean inNormWindow(int counter) {
     	return counter>=occLo && counter<occHi;
     }
-        
-    public void fillFifoFromBank(DataEvent de) {
-
-    	DataBank bank = null;
-    	
-        bank = de.getBank("ECAL::scaler");
-        for (int i=0; i<bank.rows(); i++) {
-        	int  is = bank.getByte("sector", i);
-        	int  il = bank.getByte("layer", i);
-        	int  ic = bank.getShort("component", i);
-        	int  ia = bank.getInt("acount", i);
-        	int  it = bank.getInt("tcount", i);
-        	int iav = bank.getInt("avalue", i);
-        	int itv = bank.getInt("tvalue", i);
-        	if(il>0) {
-        		fifoac.get(is,il,ic).add(ia); 
-        		fifotc.get(is,il,ic).add(it);
-        		fifoav.get(is,il,ic).add(ia>0?iav/ia:0); 
-        		fifotv.get(is,il,ic).add(it>0?itv/it:0);
-        		   if(inNormWindow(occCounts)) {
-        			   anorm.add(is,il,ic,anorm.get(is,il,ic)+ia);
-        			   tnorm.add(is,il,ic,tnorm.get(is,il,ic)+it);
-        		   }
-        	}
-        }
-        
-        bank = de.getBank("ECAL::trigger");
-        for (int i=0; i<bank.rows(); i++) {
-        	int ib = bank.getShort("bit", i);
-        	int ic = bank.getInt("counts", i);
-        	fifotr.get(0,0,ib).add(ic);
-        }
-
-    }
 
     public void fillFifoFromData() {
     	
@@ -454,76 +422,73 @@ public class ECstatus extends DetectorMonitor {
     } 
     
     public void fillHistFromBank(DataEvent de) { //this bypasses fifo creation and precludes using NORM feature
-        if(de.hasBank("ECAL::scaler")) {
+    	if(de.hasBank("ECAL::scaler")) {
         	DataBank  bank = de.getBank("ECAL::scaler");
         	for(int i=0; i<bank.rows(); i++) {
-        		int is = bank.getByte("sector", i);
-        		int il = bank.getByte("layer", i);
-        		int ic = bank.getShort("component", i);
-        		int ia = bank.getInt("acount", i);
-        		int it = bank.getInt("tcount", i);
+        		int  is = bank.getByte("sector", i);
+        		int  il = bank.getByte("layer", i);
+        		int  ic = bank.getShort("component", i);
+        		int  ia = bank.getInt("acount", i);
+        		int  it = bank.getInt("tcount", i);
         		int iav = bank.getInt("avalue", i);
         		int itv = bank.getInt("tvalue", i);
-        		int hl = 10*is+il;
+        		int  hl = 10*is+il;
         		if(il>0) {dgm.fill( "ADC"+hl,nev,ic,ia);            dgm.fill( "TDC"+hl,nev,ic,it);
         		          dgm.fill("VADC"+hl,nev,ic,ia>0?iav/ia:0); dgm.fill("VTDC"+hl,nev,ic,it>0?itv/it:0);}
         	}
     		nev++;
-       }    	
+    	}
+        
+    	if(de.hasBank("ECAL::trigger")) {
+    		DataBank bank = de.getBank("ECAL::trigger");
+    		for (int i=0; i<bank.rows(); i++) {
+    			int ib = bank.getShort("bit", i);
+    			int ic = bank.getInt("counts", i);
+    			dgm.fill("TRIG", nevs, ib, ic);	
+    		}
+    	   nevs++;
+       }
     } 
    
-    public void fillHistFromFifo(String detName, int is1, int is2) {   	
-        System.out.println(getDetectorName()+".fillHistFromFifo("+detName+","+is1+","+is2+")");
+    public void fillNormHist(String detName, int is1, int is2) {   	
+        System.out.println(getDetectorName()+".fillNormHist("+detName+","+is1+","+is2+")");
     	for (int is=is1; is<is2 ; is++) {
-    		for (int il=1; il<layMap.get(detName).length+1 ; il++) {
+    		for (int il=1; il<layMap.get(detName).length+1; il++) {
     			int hl = 10*is+il;
-				dgm.getH2F( "ADC"+hl).reset();  dgm.getH2F( "TDC"+hl).reset(); 
-				dgm.getH2F("SADC"+hl).reset();  dgm.getH2F("STDC"+hl).reset();
-				dgm.getH2F("NADC"+hl).reset();  dgm.getH2F("NTDC"+hl).reset(); 
-				dgm.getH2F("VADC"+hl).reset();  dgm.getH2F("VTDC"+hl).reset(); 
+				dgm.getH2F( "SADC"+hl).reset(); dgm.getH2F( "STDC"+hl).reset();
+				dgm.getH2F( "NADC"+hl).reset(); dgm.getH2F( "NTDC"+hl).reset(); 
 				dgm.getH2F("NVADC"+hl).reset(); dgm.getH2F("NVTDC"+hl).reset(); 
-    			for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {    	
-            		Integer fa[]  = new Integer[fifoac.get(is,il,ic).size()];
-     				Integer ft[]  = new Integer[fifotc.get(is,il,ic).size()];
-            		Integer fav[] = new Integer[fifoav.get(is,il,ic).size()];
-     				Integer ftv[] = new Integer[fifotv.get(is,il,ic).size()];
-    				fifoac.get(is,il,ic).toArray(fa);
-    				fifotc.get(is,il,ic).toArray(ft);
-    				fifoav.get(is,il,ic).toArray(fav);
-    				fifotv.get(is,il,ic).toArray(ftv);
-    				for (int it=0; it<fa.length; it++) { //need Map(it,run)
-    					float y = (float)((float)(fa[it]-getNorm(0,is,il,ic))/Math.sqrt(fa[it]));
-    					dgm.fill( "ADC"+hl,it,ic,fa[it]);     					
+    			for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {  
+    				for (int it=0; it<nevents; it++) { 
+    					float fa = (float) ATData.getItem(is,il,0).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(fa-getNorm(0,is,il,ic))/Math.sqrt(fa));
     					dgm.fill("NADC"+hl,it,ic,y);
-    					if(inNormWindow(it)) dgm.fill("SADC"+hl,it,ic,fa[it]);     					
+    					if(inNormWindow(it)) dgm.fill("SADC"+hl,it,ic,fa);     					
     				}   				
-    				for (int it=0; it<ft.length; it++) {
-    					float y = (float)((float)(ft[it]-getNorm(1,is,il,ic))/Math.sqrt(ft[it]));
-    					dgm.fill( "TDC"+hl,it,ic,ft[it]); 
+    				for (int it=0; it<nevents; it++) {
+    					float ft = (float) ATData.getItem(is,il,1).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(ft-getNorm(1,is,il,ic))/Math.sqrt(ft));
     					dgm.fill("NTDC"+hl,it,ic,y);
-    					if(inNormWindow(it)) dgm.fill("STDC"+hl,it,ic,ft[it]);     					
+    					if(inNormWindow(it)) dgm.fill("STDC"+hl,it,ic,ft);     					
     				}
-    				for (int it=0; it<fav.length; it++) {
-    					float y = (float)((float)(fav[it]/getNorm(20,is,il,ic)));    					
-    					dgm.fill( "VADC"+hl,it,ic,fav[it]);
+    				for (int it=0; it<nevents; it++) {
+    					float fav = (float) ATData.getItem(is,il,20).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(fav/getNorm(20,is,il,ic)));    					
     					dgm.fill("NVADC"+hl,it,ic,y);
     				}
-    				for (int it=0; it<ftv.length; it++) {
-    					float y = (float)((float)(ftv[it]-getNorm(21,is,il,ic)));    					
-    					dgm.fill( "VTDC"+hl,it,ic,ftv[it]);
+    				for (int it=0; it<nevents; it++) {
+    					float ftv = (float) ATData.getItem(is,il,21).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(ftv-getNorm(21,is,il,ic)));    					
     					dgm.fill("NVTDC"+hl,it,ic,y);
     				} 	
     			}
     		}
     	}
     	
-    	dgm.getH2F("TRIG").reset(); dgm.getH2F("NTRIG").reset();
     	for (int ib=0; ib<32; ib++) {
-    		Integer ftr[] = new Integer[fifotr.get(0, 0, ib).size()]; 
-    		fifotr.get(0, 0, ib).toArray(ftr);
-    		for (int it=0; it<ftr.length; it++) {
-    			float y = (float)((float)(ftr[it]-getNorm(40,0,0,ib+1))/Math.sqrt(ftr[it]));
-    			dgm.fill("TRIG", it, ib, ftr[it]);
+    		for (int it=0; it<nevents; it++) {
+    			float ftr = (float) ATData.getItem(0,0,40).get(it).getBinContent(ib);
+    			float y = (float)((float)(ftr-getNorm(40,0,0,ib+1))/Math.sqrt(ftr));
     			dgm.fill("NTRIG",it, ib, y);
     		}
     	}
@@ -611,8 +576,8 @@ public class ECstatus extends DetectorMonitor {
                     tsum.add(is,sl,ip,(float) dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
                     acnt+=(asum.get(is,sl,ip)>0?1:0);
                     tcnt+=(tsum.get(is,sl,ip)>0?1:0);
-            		aint+=(asum.get(is,sl,ip)>0?asum.get(is, sl, ip):0);
-            		tint+=(tsum.get(is,sl,ip)>0?tsum.get(is, sl, ip):0); 
+            		aint+=(asum.get(is,sl,ip)>0?asum.get(is,sl,ip):0);
+            		tint+=(tsum.get(is,sl,ip)>0?tsum.get(is,sl,ip):0); 
                 }
                 asum.add(7,sl,ip,aint/acnt);
                 tsum.add(7,sl,ip,tint/tcnt);
@@ -822,7 +787,7 @@ public class ECstatus extends DetectorMonitor {
     @Override
     public void NormRunFunction() {
     	isNorm = true;
-    	if(!useATDATA) {getATNData("ECAL",1,7); fillHistFromFifo("ECAL",1,7);}
+    	if(!useATDATA) {getATNData("ECAL",1,7); fillNormHist("ECAL",1,7);}
     	analyzeSTATUS("ECAL",1,7);
     	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
     }
