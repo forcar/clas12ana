@@ -1617,7 +1617,6 @@ public class ECperf extends DetectorMonitor {
 		((H2F) dg0.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
 		if (e_the>6) ((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_W,ephi);
 //		if (e_the>6) ((H2F) dg0.getData(e_sect-1+24).get(0)).fill(e_W,e_Q2);
-		if (e_the>6 && e_mom>7.5 && e_mom<8.5) ((H2F) dg0.getData(e_sect-1+24).get(0)).fill(e_the,elec_ecal_resid.getItem(e_sect,3,0));
 		if(lV[0]>19 && lW[0]>19) ((H2F) dg1.getData(e_sect-1   ).get(0)).fill(lU[0],e_ecal_sf);
 		if(lU[0]>60)             ((H2F) dg1.getData(e_sect-1+ 6).get(0)).fill(lV[0],e_ecal_sf);
 		if(lU[0]>60)             ((H2F) dg1.getData(e_sect-1+12).get(0)).fill(lW[0],e_ecal_sf);
@@ -1656,6 +1655,7 @@ public class ECperf extends DetectorMonitor {
 			DataGroup  dg0 = this.getDataGroup().getItem(il,0,k,run);				
 			DataGroup  dg1 = this.getDataGroup().getItem(il,1,k,run);	
 			DataGroup dg05 = this.getDataGroup().getItem(il,5,k1,run);	
+			DataGroup dg00 = this.getDataGroup().getItem(il,0,k1,run);		
 			
 			if(ic==0) {((H2F)dg0.getData(is-1  ).get(0)).fill(hX[il],val); ((H2F)dg0.getData(is-1+12).get(0)).fill(hY[il],val);} 
 			if(ic==1) {((H2F)dg0.getData(is-1+6).get(0)).fill(hX[il],val); ((H2F)dg0.getData(is-1+18).get(0)).fill(hY[il],val);}
@@ -1678,6 +1678,8 @@ public class ECperf extends DetectorMonitor {
 			if(ic==3) ((H2F) dg02.getData(e_sect-1+ 6).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_sf);
 			if(ic==3) ((H2F) dg02.getData(e_sect-1+12).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),elec_ecal_resid.getItem(e_sect,4,0));
 			if(ic==3) ((H2F) dg02.getData(e_sect-1+18).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_rat);
+			if(ic==3 && il==0 && e_the>6 && e_mom>7.5 && e_mom<9.0) ((H2F) dg00.getData(e_sect-1+24).get(0)).fill(e_the,elec_ecal_resid.getItem(e_sect,3,0));
+
 			}	
 		}
 		
