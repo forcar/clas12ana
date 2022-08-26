@@ -444,7 +444,7 @@ public class ECperf extends DetectorMonitor {
 	        dg.addDataSet(makeH2(tab+"-3-",tag,60,0.7,wmax, 60,thmin,thmax,"","W (GeV)","#theta (deg)"),is-1+12);
 	        dg.addDataSet(makeH2(tab+"-4-",tag,60,0.7,wmax, 60, -20,30,    "","W (GeV)","#phi (^o"),    is-1+18);
 //	        dg.addDataSet(makeH2(tab+"-5-",tag,120,0.8,2.0, 100, 0.00,9.5, "","W (GeV)","Q^2 (GeV)"),   is-1+24);	        
-	        dg.addDataSet(makeH2(tab+"-5-",tag,60,thmin,thmax,9,12,21, "","#theta (deg)","PCAL U STRIP"),   is-1+24);	        
+	        dg.addDataSet(makeH2(tab+"-5-",tag,60,thmin,thmax,17,1,18, "","#theta (deg)","PCAL U STRIP"),   is-1+24);	        
         }
 		break;		
         case 1:
