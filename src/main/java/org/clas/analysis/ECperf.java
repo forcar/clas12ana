@@ -443,7 +443,8 @@ public class ECperf extends DetectorMonitor {
 	        dg.addDataSet(makeH2(tab+"-2-",tag,60,0.7,wmax, 60,pmin,pmax,  "","W (GeV)","p (GeV)"),     is-1+6);
 	        dg.addDataSet(makeH2(tab+"-3-",tag,60,0.7,wmax, 60,thmin,thmax,"","W (GeV)","#theta (deg)"),is-1+12);
 	        dg.addDataSet(makeH2(tab+"-4-",tag,60,0.7,wmax, 60, -20,30,    "","W (GeV)","#phi (^o"),    is-1+18);
-	        dg.addDataSet(makeH2(tab+"-5-",tag,120,0.8,2.0, 100, 0.00,9.5, "","W (GeV)","Q^2 (GeV)"),   is-1+24);	        
+//	        dg.addDataSet(makeH2(tab+"-5-",tag,120,0.8,2.0, 100, 0.00,9.5, "","W (GeV)","Q^2 (GeV)"),   is-1+24);	        
+	        dg.addDataSet(makeH2(tab+"-5-",tag,60,thmin,thmax,9,12,21, "","#theta (deg)","PCAL U STRIP"),   is-1+24);	        
         }
 		break;		
         case 1:
@@ -1615,7 +1616,8 @@ public class ECperf extends DetectorMonitor {
 		((H2F) dg0.getData(e_sect-1+ 6).get(0)).fill(e_W,e_mom);
 		((H2F) dg0.getData(e_sect-1+12).get(0)).fill(e_W,e_the);
 		if (e_the>6) ((H2F) dg0.getData(e_sect-1+18).get(0)).fill(e_W,ephi);
-		if (e_the>6) ((H2F) dg0.getData(e_sect-1+24).get(0)).fill(e_W,e_Q2);
+//		if (e_the>6) ((H2F) dg0.getData(e_sect-1+24).get(0)).fill(e_W,e_Q2);
+		if (e_the>6 && e_mom>7.5 && e_mom<8.5) ((H2F) dg0.getData(e_sect-1+24).get(0)).fill(e_the,elec_ecal_resid.getItem(e_sect,3,0));
 		if(lV[0]>19 && lW[0]>19) ((H2F) dg1.getData(e_sect-1   ).get(0)).fill(lU[0],e_ecal_sf);
 		if(lU[0]>60)             ((H2F) dg1.getData(e_sect-1+ 6).get(0)).fill(lV[0],e_ecal_sf);
 		if(lU[0]>60)             ((H2F) dg1.getData(e_sect-1+12).get(0)).fill(lW[0],e_ecal_sf);
