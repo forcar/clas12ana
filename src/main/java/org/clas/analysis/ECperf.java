@@ -675,17 +675,29 @@ public class ECperf extends DetectorMonitor {
 
 		F1D f1,f2,f3; 
 		
-    	switch (st) {   	
-        case 0: 
+		double thmin=6.2, thmax=11, wmax=2.3;
+		double pmax=kl.ep_from_w(EB, thmin, 0), pmin=kl.ep_from_w(EB, thmax, wmax);
+		
+    	switch (st) { 
+    	
+    	case 0:
+        dg = new DataGroup(6,4);
+        for(int is=1;is<7;is++){    		
+	        tag = is+"-"+st+"-"+k+"-"+run;
+	        dg.addDataSet(makeH2(tab+"-1-",tag,60,thmin,thmax,60,pmin,pmax,  "","#theta (deg)","p (GeV)"),is-1);
+        }
+        break;
+
+        case 2: 
         f1 = new F1D("ECposi-1+"+run,"[a]/x",0.4,EB*0.9);   f1.setParameter(0,0.108f);  f1.setLineWidth(1);
         f2 = new F1D("H-pim-EC-resid0_f+"+run,"[a]",1,69);  f2.setParameter(0,0f);      f2.setLineWidth(1);
         f3 = new F1D("H-pim-EC-resid0_f+"+run,"[a]",0,1.6); f3.setParameter(0,0f);      f3.setLineWidth(1);
         dg = new DataGroup(6,4);
         for(int is=1;is<7;is++){
 	        tag = is+"-"+st+"-"+k+"-"+run;
-			dg.addDataSet(makeH2(tab+"-1-",tag,60,0,EB*1.01,60,0.0,0.35,"","p (GeV)","E/P"),is-1);                dg.addDataSet(f1,is-1);
-			dg.addDataSet(makeH2(tab+"-2-",tag,68,1,69,50,0.5,7,"","PCAL U STRIP","EC / PCAL"),is-1+6);
-			dg.addDataSet(makeH2(tab+"-3-",tag,68,1,69,50,-4,4,     "","PCAL U STRIP","#chi PID"),is-1+12); dg.addDataSet(f2,is-1+12);
+			dg.addDataSet(makeH2(tab+"-1-",tag,60,0,EB*1.01,60,0.0,0.35,"","p (GeV)","E/P"),is-1);         dg.addDataSet(f1,is-1);
+			dg.addDataSet(makeH2(tab+"-2-",tag,68,1,69,50,0.0,7,"","PCAL U STRIP","EC / PCAL"),is-1+6);
+			dg.addDataSet(makeH2(tab+"-3-",tag,68,1,69,50,-4,4,     "","PCAL U STRIP","#chi PID"),is-1+12);dg.addDataSet(f2,is-1+12);
 //			dg.addDataSet(makeH2(tab+"-4-",tag,70,0,EB/6,70,0,EB/5, "","PC (GeV)","EC (GeV)"),is-1+18);	
 			dg.addDataSet(makeH2(tab+"-4-",tag,60,0,1.6,50,-5,5, "","Em (GeV)","#chi PID"),is-1+18);       dg.addDataSet(f3,is-1+18);	
         }		
@@ -697,7 +709,7 @@ public class ECperf extends DetectorMonitor {
 		f1.setParameter(0, 0f); f1.setLineColor(1); f1.setLineWidth(1);
 		f2 = new F1D("H-pim-EC-resid-f2+"+run,"[a]",x1[1],x2[1]); 
 		f2.setParameter(0, 0f); f2.setLineColor(1); f2.setLineWidth(1);
-		String[] xtxt = {" p_p_i_m"," #theta_p_i_m"}; 
+		String[] xtxt = {" p_p#pi-"," #theta_#pi-"}; 
 
 		for(int i=0;i<3;i++) { //pcal,ecin,ecou
 	        dg = new DataGroup(6,4); int in=0; float y = i<1?6.5f:15;
@@ -1892,6 +1904,7 @@ public class ECperf extends DetectorMonitor {
 		int   k = getDetectorTabNames().indexOf("ECpim");
 		
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,k,run);
+		DataGroup dg2 = this.getDataGroup().getItem(0,2,k,run);
 
 		for (Particle p : pim_ecal) {
 			float mom = (float) p.p();
@@ -1902,7 +1915,8 @@ public class ECperf extends DetectorMonitor {
 	        int is=0,il=0,iU=0; float pcsum=0, ecsum=0, esum = 0, epcal = 0;
 			for (Particle pp : pimECAL) {
 	    		is = (int) pp.getProperty("sector");
-	    		il = (int) pp.getProperty("layer");				
+	    		il = (int) pp.getProperty("layer");	
+	    		if(il==1) ((H2F) dg0.getData(is-1).get(0)).fill(the,mom);
 				DataGroup dg1 = this.getDataGroup().getItem(getDet(il),1,k,run);				
 				if(il==1) {
 					iU = pp.hasProperty("iu")?(int)pp.getProperty("iu"):(int)(pp.getProperty("lu")*0.891/4.5); 
@@ -1920,10 +1934,10 @@ public class ECperf extends DetectorMonitor {
 			
 			if(esum>0) {
 				float eop = esum/mom;
-				((H2F) dg0.getData(is-   1).get(0)).fill(mom,eop);
-				((H2F) dg0.getData(is-1+ 6).get(0)).fill(iU,ecsum/pcsum);
-				((H2F) dg0.getData(is-1+12).get(0)).fill(iU,pid);
-				((H2F) dg0.getData(is-1+18).get(0)).fill(esum,pid);
+				((H2F) dg2.getData(is-   1).get(0)).fill(mom,eop);
+				((H2F) dg2.getData(is-1+ 6).get(0)).fill(iU,ecsum/pcsum);
+				((H2F) dg2.getData(is-1+12).get(0)).fill(iU,pid);
+				((H2F) dg2.getData(is-1+18).get(0)).fill(esum,pid);
 			}
 		}
 			
