@@ -211,7 +211,7 @@ public class ECelas extends DetectorMonitor {
             final boolean isFD = (int)(Math.abs(status)/1000) == 2;
 
             if (isFD && charge < 0 && pid==0)   noPID.add(ipart);
-            if (isFD && charge < 0 && pid>0) eleCandi.add(ipart);
+            if (isFD && charge < 0 && Math.abs(pid)>0) eleCandi.add(ipart);
             if (isFD && pid==11)       eleEB.add(ipart);
             if (isFD && pid==-211)     pimEB.add(ipart);
             if (pid==2212)             proEB.add(ipart);
