@@ -105,14 +105,14 @@ public class ECelas extends DetectorMonitor {
         	for(int is=1; is<7; is++) {dgm.makeH2("wc2"+is, 80, xlo1, 80, 40, 0.6, 1.4,1," ","#theta p+ (DEG)", "MOM / KIN p+");}
             break;
         case 3:
-    		double thmin=5.2, thmax=11, wmax=1.3;
+    		double thmin=6.0, thmax=11, wmax=2.3;
     		double pmax=kin.ep_from_w(beamEnergy, thmin, 0)*1.02, pmin=kin.ep_from_w(beamEnergy, thmax, wmax);
     		System.out.println(pmin);
         	dgm.add("WAGON",6,4,0,st,getRunNumber());        
-        	for(int is=1; is<7; is++) dgm.makeH2("wd0"+is, 80,thmin,thmax,80,pmin,pmax,-1,"SECTOR "+is,"#theta neg (deg)","p (GeV)");
-            for(int is=1; is<7; is++) dgm.makeH2("wd1"+is, 80,thmin,thmax,80,pmin,pmax,-1," ",          "#theta e- (deg)","p (GeV)");
-            for(int is=1; is<7; is++) dgm.makeH2("wd2"+is, 80,thmin,thmax,80,pmin,pmax,-1," ",         "#theta pi- (deg)","p (GeV)");
-            for(int is=1; is<7; is++) dgm.makeH2("wd3"+is, 80,thmin,thmax,80,pmin,pmax,-1," ",        "#theta null (deg)","p (GeV)");
+        	for(int is=1; is<7; is++) dgm.makeH2("wd0"+is, 80,thmin,thmax,100,pmin,pmax,-1,"SECTOR "+is,"#theta neg (deg)","p (GeV)");
+            for(int is=1; is<7; is++) dgm.makeH2("wd1"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",          "#theta e- (deg)","p (GeV)");
+            for(int is=1; is<7; is++) dgm.makeH2("wd2"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",         "#theta pi- (deg)","p (GeV)");
+            for(int is=1; is<7; is++) dgm.makeH2("wd3"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",        "#theta null (deg)","p (GeV)");
     	}
     }
     
