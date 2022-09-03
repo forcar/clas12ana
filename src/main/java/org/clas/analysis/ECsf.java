@@ -95,8 +95,8 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",0,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
         if(dropSummary) return;
         createSecHistos("E/P",0,1,50,0.2,EB,  50,0.1,0.35,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",0,2,30,  3.,35.,50,0.1,0.35,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
-        createSecHistos("E/P",0,3,48,  3.,35.,50,0.1,0.35,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,2,60, 6.2,11.,50,0.1,0.35,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,3,80, 2.5,11.,50,0.1,0.35,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
         dg = new DataGroup(6,4);
         createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
         createSecHistos("E/P",1,1,50,0.2,EB,  50,0.1,0.35,"ep_p"," Momentum (GeV)",   " E/P",dg);
@@ -197,7 +197,7 @@ public class ECsf extends DetectorMonitor {
         String tit3[] = {"TOTAL SF PCAL","TOTAL SF ECIN","TOTAL SF ECOU"};
         
         
-        int nb=200, x=400, y=400;
+        int nb=200, x=70, y=70;
         
         for (int i=1; i<4; i++) {
             h = new H2F("ep_"+xyz+"_w"+i+"_"+run,  nb, -x, x, nb, -y,y);                        dg2.addDataSet(h,i-1); 
