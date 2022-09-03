@@ -100,8 +100,8 @@ public class ECsf extends DetectorMonitor {
         dg = new DataGroup(6,4);
         createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
         createSecHistos("E/P",1,1,50,0.2,EB,  50,0.1,0.35,"ep_p"," Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",1,2,30,  3.,35.,50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
-        createSecHistos("E/P",1,3,48,  3.,35.,50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
+        createSecHistos("E/P",1,2,60, 6.2,11, 50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",1,3,80, 2.5,11, 50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
         createXYZHistos("XY","xyz"); createXYZHistos("XY","hxyz"); 
         createSLCHistos("SLC",2,0,15,0.,0.30/3,"PEAK PARTIAL SF",false);
         createSLCHistos("SLC",2,1,12,0.,0.15/3,"PEAK PARTIAL SF",false);
