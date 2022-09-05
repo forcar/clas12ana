@@ -102,7 +102,8 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",1,1,50,0.2,EB,  50,0.1,0.35,"ep_p"," Momentum (GeV)",   " E/P",dg);
         createSecHistos("E/P",1,2,60, 6.2,11, 50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",1,3,80, 2.5,11, 50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
-        createXYZHistos("XY","xyz"); createXYZHistos("XY","hxyz"); 
+        createXYZHistos("XY","xyz");
+        createXYZHistos("XY","hxyz"); 
         createSLCHistos("SLC",2,0,15,0.,0.30/3,"PEAK PARTIAL SF",false);
         createSLCHistos("SLC",2,1,12,0.,0.15/3,"PEAK PARTIAL SF",false);
         createSLCHistos("SLC",2,2,12,0.,0.06/3,"PEAK PARTIAL SF",false);
@@ -116,8 +117,8 @@ public class ECsf extends DetectorMonitor {
         createSLCHistos("Timing",0,1,50,-5.,5.," T-TVERT-PATH/c (ns)",true);
         createSLCHistos("Timing",0,2,50,-5.,5.," T-TVERT-PATH/c (ns)",true);        
         createUVWHistos("UVW",0,25,25,0,EB,0.01,0.30/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",1,25,25,0,EB,0,0.15/3,"P (GEV)","SF ");
-        createUVWHistos("UVW",2,25,25,0,EB,0,0.06/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",1,25,25,0,EB,0.00,0.15/3,"P (GEV)","SF ");
+        createUVWHistos("UVW",2,25,25,0,EB,0.00,0.06/3,"P (GEV)","SF ");
         createMCHistos("MC");
     }
 
@@ -363,8 +364,6 @@ public class ECsf extends DetectorMonitor {
         trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
-        
-//        if(!goodSector) return;
     	
     	int run = getRunNumber();
     	
@@ -387,18 +386,16 @@ public class ECsf extends DetectorMonitor {
     	
         if(dropBanks) dropBanks(event);
         
-//        if (event.hasBank("MC::Particle")) return;
-
         boolean goodEvent = event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
         
         if (!goodEvent) return;
         
         float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
                                                                       event.getBank("REC::Event").getFloat("startTime", 0)):0;        
-      	DataBank    reccal = event.getBank("REC::Calorimeter");
       	DataBank ecalclust = event.getBank("ECAL::clusters");
-//      	DataBank ecalpeaks = event.getBank("ECAL::peaks");
       	DataBank ecalcalib = event.getBank("ECAL::calib");
+        
+      	DataBank    reccal = event.getBank("REC::Calorimeter");
         DataBank    recpar = event.getBank("REC::Particle");
         
       	Map<Integer,List<Integer>> caloMap = loadMapByIndex(reccal,"pindex");
@@ -513,6 +510,9 @@ public class ECsf extends DetectorMonitor {
             ((H2F) getDG(0,0,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?1f:0);
             ((H2F) getDG(0,1,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(0,2,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sf<0.5?sf:0.);
+            ((H2F) getDG(1,0,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?1f:0);
+            ((H2F) getDG(1,1,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?sff[id]:0.);
+            ((H2F) getDG(1,2,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sf<0.5?sf:0.);
             ((H2F) getDG(id,2,"SLC",run).getData(is-1   ).get(0)).fill(iU[id], e_ecal_u[id]/e_mom);
             ((H2F) getDG(id,2,"SLC",run).getData(is-1+ 6).get(0)).fill(iV[id], e_ecal_v[id]/e_mom);
             ((H2F) getDG(id,2,"SLC",run).getData(is-1+12).get(0)).fill(iW[id], e_ecal_w[id]/e_mom);
@@ -854,7 +854,7 @@ public class ECsf extends DetectorMonitor {
     public void plotXYZHistos(String tab) {
     	int index=getDetectorTabNames().indexOf(tab);
  	    EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
- 	    DataGroup dg = getDataGroup().getItem(0,0,index,getRunNumber());
+ 	    DataGroup dg = getDataGroup().getItem(getActivePC(),0,index,getRunNumber());
  	    
  	    c.setGridX(false); c.setGridY(false);
  	    c.divide(3, 3);
@@ -1075,14 +1075,16 @@ public class ECsf extends DetectorMonitor {
     @Override
     public void timerUpdate() {  
     	
+    	for(int n=0; n<2; n++) {
         for(int i=0; i<3; i++) {
-        H2F e  = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i).get(0);
-        H2F w  = (H2F) getDG(0,1,"XY",getRunNumber()).getData(i).get(0);
-        H2F ww = (H2F) getDG(0,2,"XY",getRunNumber()).getData(i).get(0);
+        H2F e  = (H2F) getDG(n,0,"XY",getRunNumber()).getData(i).get(0);
+        H2F w  = (H2F) getDG(n,1,"XY",getRunNumber()).getData(i).get(0);
+        H2F ww = (H2F) getDG(n,2,"XY",getRunNumber()).getData(i).get(0);
         for(int loop = 0; loop < e.getDataBufferSize(); loop++) {
         	    float ne = e.getDataBufferBin(loop);
-            if (ne>0) {H2F h = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i+3).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
-            if (ne>0) {H2F h = (H2F) getDG(0,0,"XY",getRunNumber()).getData(i+6).get(0); h.setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);}
+            if (ne>0) {H2F h = (H2F) getDG(n,0,"XY",getRunNumber()).getData(i+3).get(0); h.setDataBufferBin(loop,w.getDataBufferBin(loop)/ne);}
+            if (ne>0) {H2F h = (H2F) getDG(n,0,"XY",getRunNumber()).getData(i+6).get(0); h.setDataBufferBin(loop,ww.getDataBufferBin(loop)/ne);}
+        }
         }
         }
         
