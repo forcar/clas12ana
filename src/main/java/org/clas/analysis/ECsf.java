@@ -87,6 +87,7 @@ public class ECsf extends DetectorMonitor {
         EB = getBeamEnergy(run);
         System.out.println("ECsf: EB="+EB);
 	    DataGroup dg = null;
+	    int nx; float xlo,xhi;
 
         this.setNumberOfEvents(0);
         
@@ -100,10 +101,13 @@ public class ECsf extends DetectorMonitor {
         dg = new DataGroup(6,4);
         createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
         createSecHistos("E/P",1,1,50,0.2,EB,  50,0.1,0.35,"ep_p"," Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",1,2,60, 6.2,11, 50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
-        createSecHistos("E/P",1,3,80, 2.5,11, 50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
+        nx=HiRes?60:30; xlo=HiRes?6.2f:3.0f; xhi=HiRes?11:35;
+        createSecHistos("E/P",1,2,nx,xlo,xhi, 50,0.1,0.35,"ep_thv"," VertexTheta (deg)"," E/P",dg);
+        nx=HiRes?60:48; xlo=HiRes?2.5f:3.0f; xhi=HiRes?11:35;
+        createSecHistos("E/P",1,3,nx,xlo,xhi, 50,0.1,0.35,"ep_thd"," Detector Theta (deg)"," E/P",dg);
         createXYZHistos("XY","xyz");
         createXYZHistos("XY","hxyz"); 
+        createXYZHistos("XY","phxyz"); 
         createSLCHistos("SLC",2,0,15,0.,0.30/3,"PEAK PARTIAL SF",false);
         createSLCHistos("SLC",2,1,12,0.,0.15/3,"PEAK PARTIAL SF",false);
         createSLCHistos("SLC",2,2,12,0.,0.06/3,"PEAK PARTIAL SF",false);
@@ -143,7 +147,7 @@ public class ECsf extends DetectorMonitor {
     public void plotAnalysis(int run) {
         setRunNumber(run);
     	if(!isAnalyzeDone) return;
-    	plotPIDFits("PID Fits");
+    	if(!dropSummary) plotPIDFits("PID Fits");
     	if(!dropSummary) {updateFits("PMT Fits");plotMeanHWSummary("Summary");}
     	plotTimeLines("Timeline");
     	if (dumpGraphs) dumpGraphs();
@@ -198,7 +202,7 @@ public class ECsf extends DetectorMonitor {
         String tit3[] = {"TOTAL SF PCAL","TOTAL SF ECIN","TOTAL SF ECOU"};
         
         
-        int nb=200, x=70, y=70;
+        int nb=200; int x,y; x=y=HiRes ? 70:400;
         
         for (int i=1; i<4; i++) {
             h = new H2F("ep_"+xyz+"_w"+i+"_"+run,  nb, -x, x, nb, -y,y);                        dg2.addDataSet(h,i-1); 
@@ -207,7 +211,7 @@ public class ECsf extends DetectorMonitor {
             h = new H2F("ep_"+xyz+"_sf"+i+"_"+run, nb, -x, x, nb, -y,y); h.setTitle(tit2[i-1]); dg1.addDataSet(h,i+2);  
             h = new H2F("ep_"+xyz+"_sff"+i+"_"+run,nb, -x, x, nb, -y,y); h.setTitle(tit3[i-1]); dg1.addDataSet(h,i+5);  
         }
-        int num = xyz=="xyz"?0:1;
+        int num = xyz=="xyz"?0:(xyz=="hxyz"?1:2);
         this.getDataGroup().add(dg1, num,0,k,run);
         this.getDataGroup().add(dg2, num,1,k,run);
         this.getDataGroup().add(dg3, num,2,k,run);
@@ -513,6 +517,11 @@ public class ECsf extends DetectorMonitor {
             ((H2F) getDG(1,0,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?1f:0);
             ((H2F) getDG(1,1,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(1,2,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sf<0.5?sf:0.);
+            if (e_mom>8.5 && e_mom<9.0) {
+                ((H2F) getDG(2,0,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?1f:0);
+                ((H2F) getDG(2,1,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?sff[id]:0.);
+                ((H2F) getDG(2,2,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sf<0.5?sf:0.);            	
+            }
             ((H2F) getDG(id,2,"SLC",run).getData(is-1   ).get(0)).fill(iU[id], e_ecal_u[id]/e_mom);
             ((H2F) getDG(id,2,"SLC",run).getData(is-1+ 6).get(0)).fill(iV[id], e_ecal_v[id]/e_mom);
             ((H2F) getDG(id,2,"SLC",run).getData(is-1+12).get(0)).fill(iW[id], e_ecal_w[id]/e_mom);
@@ -774,7 +783,7 @@ public class ECsf extends DetectorMonitor {
    		    txt = "Sector "+is+" Measured Energy (GeV)";
             if (FitSummary.hasItem(is,0,7,run)) {
             	c.cd(is-1);c.getPad().getAxisZ().setLog(true);  c.draw((H2F) getDG(0,0,"E/P",run).getData(is-1).get(0));
-            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,EB*0.25f,0.15f,0.35f,1,6,1,txt," E/P","same"); //c.draw(sf,"same");
+            	GraphPlot((GraphErrors)FitSummary.getItem(is,0,7,run),c,is-1,0.0f,EB*0.25f,0.15f,0.35f,1,6,1,txt," E/P","same"); //c.draw(sf,"same");            	
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineColor(20); 
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setLineWidth(6);
             	tl.fitData.getItem(is,0,5,run).graph.getFunction().setOptStat("1110");
@@ -1075,7 +1084,7 @@ public class ECsf extends DetectorMonitor {
     @Override
     public void timerUpdate() {  
     	
-    	for(int n=0; n<2; n++) {
+    	for(int n=0; n<3; n++) {
         for(int i=0; i<3; i++) {
         H2F e  = (H2F) getDG(n,0,"XY",getRunNumber()).getData(i).get(0);
         H2F w  = (H2F) getDG(n,1,"XY",getRunNumber()).getData(i).get(0);

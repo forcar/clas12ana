@@ -210,6 +210,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
     public Boolean             SFcorr = false;
+    public Boolean              HiRes = false;
     public Boolean        dbgAnalyzer = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
@@ -676,7 +677,7 @@ public class DetectorMonitor implements ActionListener {
         bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("1"); bC.addActionListener(this); 
         bT = new JRadioButton("T"); buttonPane.add(bT); bT.setActionCommand("0"); bT.addActionListener(this);
         bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC); bG0.add(bT); 
-        bP.setSelected(true);
+        bT.setSelected(true); bT.doClick();
         }
         
         if(usePID) {

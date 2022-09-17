@@ -211,7 +211,7 @@ public class ECperf extends DetectorMonitor {
     	createECkin(3);
     	createECkin(4);
     	createECkin(5);
-    	createECkin(6);
+//    	createECkin(6); 8/29/2022
     	createECelec(0);
     	createECelec(1);
     	createECelec(2);
@@ -961,8 +961,8 @@ public class ECperf extends DetectorMonitor {
         case 1:
         dg = new DataGroup(4,3); int n=0;
     	tag = st+"-"+k+"-"+run;        	
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0,EB*1.01,100,0,40,        "","e- p (GeV)","e- #theta (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0,EB*0.5,100,0,50,         "","#pi+ p (GeV)","#pi+ #theta (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0,EB*1.01,100,0,40,   "","e- p (GeV)","e- #theta (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0,EB*1.01,100,0,50,   "","#pi+ p (GeV)","#pi+ #theta (deg)"),n);n++;
     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,-15,15,100,-15,15,    "","e vz (cm)","pip vz (cm)"),n);n++;
     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,-180,180,100,-15,15,  "","#phi (deg)","#Delta vz (cm)"),n);n++;
     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,   0, 80,100,-15,15,  "","#theta (deg)","#Delta vz (cm)"),n);n++;
@@ -1653,7 +1653,7 @@ public class ECperf extends DetectorMonitor {
 		
 		DataGroup dg02 = this.getDataGroup().getItem(0,2,k1,run);				
 		DataGroup dg04 = this.getDataGroup().getItem(0,4,k1,run);				
-		DataGroup dg06 = this.getDataGroup().getItem(0,6,k1,run);	
+//		DataGroup dg06 = this.getDataGroup().getItem(0,6,k1,run);	
 		
 		// Forward tracking residuals
 		
@@ -1681,9 +1681,9 @@ public class ECperf extends DetectorMonitor {
 				((H2F)dg05.getData(is-1  ).get(0)).fill(lU[0],lU[0]-lU[1]); ((H2F)dg05.getData(is-1+6).get(0)).fill(lV[0],lV[0]-412+lV[1]); ((H2F)dg05.getData(is-1+12).get(0)).fill(lW[0],lW[0]-375+lW[1]);	
 			}
 			
-			if(ic==0 && il<2) {
-				((H2F)dg06.getData(is-1+18*il).get(0)).fill(lU[il],iU[il]); ((H2F)dg06.getData(is-1+6+18*il).get(0)).fill(lV[il],iV[il]); ((H2F)dg06.getData(is-1+12+18*il).get(0)).fill(lW[il],iW[il]);		
-			}
+//			if(ic==0 && il<2) {
+//				((H2F)dg06.getData(is-1+18*il).get(0)).fill(lU[il],iU[il]); ((H2F)dg06.getData(is-1+6+18*il).get(0)).fill(lV[il],iV[il]); ((H2F)dg06.getData(is-1+12+18*il).get(0)).fill(lW[il],iW[il]);		
+//			}
 						
 			if(e_mom>0) {
 			if(ic==3) ((H2F) dg02.getData(e_sect-1+ 6).get(0)).fill(elec_ecal_resid.getItem(e_sect,3,0),e_ecal_sf);

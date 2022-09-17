@@ -4,12 +4,15 @@ import org.clas.tools.KinLib;
 import org.clas.viewer.DetectorMonitor;
 
 import org.jlab.clas.physics.Particle;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ECelas extends DetectorMonitor {
 	
@@ -112,7 +115,8 @@ public class ECelas extends DetectorMonitor {
         	for(int is=1; is<7; is++) dgm.makeH2("wd0"+is, 80,thmin,thmax,100,pmin,pmax,-1,"SECTOR "+is,"#theta neg (deg)","p (GeV)");
             for(int is=1; is<7; is++) dgm.makeH2("wd1"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",          "#theta e- (deg)","p (GeV)");
             for(int is=1; is<7; is++) dgm.makeH2("wd2"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",         "#theta pi- (deg)","p (GeV)");
-            for(int is=1; is<7; is++) dgm.makeH2("wd3"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",        "#theta null (deg)","p (GeV)");
+//          for(int is=1; is<7; is++) dgm.makeH2("wd3"+is, 80,thmin,thmax,100,pmin,pmax,-1," ",        "#theta null (deg)","p (GeV)");
+            for(int is=1; is<7; is++) dgm.makeH2("wd3"+is, 170,0,60,100,pmin,pmax,-1," ",                        "#Hx(cm)","p (GeV)");
     	}
     }
     
@@ -176,12 +180,14 @@ public class ECelas extends DetectorMonitor {
     }
     
     public boolean processFilter(DataEvent event) {
+    	int sec = getElecTriggerSector();
         RecCal   = event.hasBank("REC::Calorimeter") ? event.getBank("REC::Calorimeter"):null;
         RecPart  = event.hasBank("REC::Particle")    ? event.getBank("REC::Particle"):null;       
     	boolean test1 = RecPart!=null && RecPart.rows()!=0;
     	boolean test2 = RecCal !=null && RecCal.rows()!=0;
+    	boolean test3 = sec>0 && sec<7;
     	if(test2) part2calo = mapByIndex(RecCal,"pindex"); 
-    	return test1 && test2;
+    	return test1 && test2 && test3;
     }
     
     public Particle getPart(int ipart) {
@@ -190,6 +196,15 @@ public class ECelas extends DetectorMonitor {
     	double epy  = RecPart.getFloat("py",ipart);
     	double epz  = RecPart.getFloat("pz",ipart);
     	return new Particle(pid>0?pid:-11,epx,epy,epz);    	    	
+    }
+    
+    public Point3D squeeze(Point3D xyz, int det, int e_sect) {        
+        xyz.rotateZ(Math.toRadians(-60*(e_sect-1)));
+        xyz.rotateY(Math.toRadians(-25.));
+        xyz.translateXYZ(-(det==1?40:50),0,0);
+        xyz.rotateY(Math.toRadians(25.));
+//        xyz.rotateZ(Math.toRadians(60*(e_sect-1)));
+        return xyz;
     }
      
     public boolean processWA(DataEvent event) {
@@ -200,17 +215,13 @@ public class ECelas extends DetectorMonitor {
         ArrayList<Integer>    eleEB = new ArrayList<>();
         ArrayList<Integer>    proEB = new ArrayList<>();
         ArrayList<Integer>    pimEB = new ArrayList<>();
-        ArrayList<Integer>    noPID = new ArrayList<>();
 
-        for (int ipart=0; ipart<RecPart.rows(); ipart++) {
-        	
+        for (int ipart=0; ipart<RecPart.rows(); ipart++) {        	
             int pid    = RecPart.getInt("pid",ipart);
             int charge = RecPart.getInt("charge",ipart);
             int status = RecPart.getInt("status",ipart);       
-
             final boolean isFD = (int)(Math.abs(status)/1000) == 2;
 
-            if (isFD && charge < 0 && pid==0)   noPID.add(ipart);
             if (isFD && charge < 0 && Math.abs(pid)>0) eleCandi.add(ipart);
             if (isFD && pid==11)       eleEB.add(ipart);
             if (isFD && pid==-211)     pimEB.add(ipart);
@@ -219,8 +230,12 @@ public class ECelas extends DetectorMonitor {
         
         for (Integer ipart : eleCandi) {
         	neg = getPart(ipart);
-    		int s = part2calo.containsKey(ipart) ? RecCal.getInt("sector", part2calo.get(ipart).get(0)):0; 
-    		if(s>0) dgm.fill("wd0"+s,neg.theta()/kin.d2r,neg.p());	
+    		int s    = part2calo.containsKey(ipart) ? RecCal.getInt("sector", part2calo.get(ipart).get(0)):0; 
+    		float hx = part2calo.containsKey(ipart) ? RecCal.getFloat("hx",   part2calo.get(ipart).get(0)):0; 
+    		float hy = part2calo.containsKey(ipart) ? RecCal.getFloat("hy",   part2calo.get(ipart).get(0)):0; 
+    		float hz = part2calo.containsKey(ipart) ? RecCal.getFloat("hz",   part2calo.get(ipart).get(0)):0; 
+    		Point3D hxyz = squeeze(new Point3D(hx,hy,hz),1,s);
+    		if(s>0) {dgm.fill("wd0"+s,neg.theta()/kin.d2r,neg.p());	dgm.fill("wd3"+s,hxyz.x(),neg.p());}
         }
         
         for (Integer ipart : eleEB) {
@@ -233,12 +248,6 @@ public class ECelas extends DetectorMonitor {
             pineg = getPart(ipart);
     		int s = part2calo.containsKey(ipart) ? RecCal.getInt("sector", part2calo.get(ipart).get(0)):0; 
     		if(s>0) dgm.fill("wd2"+s,pineg.theta()/kin.d2r,pineg.p());	
-        }
-        
-        for (Integer ipart : noPID) {
-            noneg = getPart(ipart);
-    		int s = part2calo.containsKey(ipart) ? RecCal.getInt("sector", part2calo.get(ipart).get(0)):0;   		
-    		if(s>0) dgm.fill("wd3"+s,noneg.theta()/kin.d2r,noneg.p());	
         }
         
         if (eleCandi.size()==1 && proEB.size()==1) {
