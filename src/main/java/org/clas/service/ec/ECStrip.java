@@ -166,17 +166,17 @@ public class ECStrip implements Comparable {
         }
         
         public double getPhaseCorrectedTime() {         	
-            return iTADC - triggerPhase;
+            return iTADC;  
         } 
         
         public double getTWCTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc)          - fTim00;          	
+          	return getRawTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc)          - fTim00;          	
         } 
         
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc) - fTimA0 - fTim00;          	
+          	return getRawTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc) - fTimA0 - fTim00;          	
         }         
     }     
     

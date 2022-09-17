@@ -174,7 +174,7 @@ public class ECPeak implements Comparable {
             double energyLog = Math.log(energyMev);
             peakMoment  += dist*dist*dist*dist*energyLog;           
             peakMoment2 += dist*dist*energyLog;
-            peakMoment3 += energyLog*dist*dist*dist;
+            peakMoment3 += dist*dist*dist*energyLog;
         }
         
         peakMoment = peakMoment/logSumm;
