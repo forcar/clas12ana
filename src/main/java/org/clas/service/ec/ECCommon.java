@@ -154,6 +154,7 @@ public class ECCommon {
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable       ev = manager.getConstants(run, "/calibration/ec/effective_velocity");
         IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");		
+        IndexedTable      fdj = manager.getConstants(run, "/calibration/ec/fdjitter");		
         IndexedTable   r2gain = manager.getConstants(2,   "/calibration/ec/gain");
     
         if (singleEvent) resetHistos();        
@@ -225,7 +226,8 @@ public class ECCommon {
                              0,
                              0);
             strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
-            strip.setGlobalFTimingOffset(tgo.getDoubleValue("offset",0,0,0)-2); //global shift of TDC acceptance window
+            strip.setGlobalFTimingOffset(tgo.getDoubleValue("offset",0,0,0)+
+            		            (double) fdj.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
             
         }  
         
