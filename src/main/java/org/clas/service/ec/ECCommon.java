@@ -225,7 +225,7 @@ public class ECCommon {
                              0,
                              0);
             strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
-            strip.setGlobalFTimingOffset(0); //global shift of TDC acceptance window
+            strip.setGlobalFTimingOffset(tgo.getDoubleValue("offset",0,0,0)-2); //global shift of TDC acceptance window
             
         }  
         
