@@ -94,7 +94,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10,cf11,cf12;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
-    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6; 
+    JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
     
     DataSourceProcessorPane  processorPane = null;
     CodaEventDecoder               decoder = new CodaEventDecoder();
@@ -209,14 +209,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	}
     	} else {
 // 		monitors[n] = new ECperf("ECperf"); 
-    		monitors[n] = new ECelas("ECelas");
+//    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECstatus("ECstatus","ECAL");
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//  	    monitors[n] = new ECt("ECt"); 
+  	    monitors[n] = new ECt("ECt"); 
 //            monitors[n] = new ECperf("ECperf");
 //   		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -327,6 +327,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr4 = new JRadioButtonMenuItem("Muon");     ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
+        ctr7 = new JRadioButtonMenuItem("ElecPion"); ctr7.addItemListener(this);       group.add(ctr7); menu.add(ctr7);      
         menuBar.add(menu);
        
         menu   	= new JMenu("ECstatus");
@@ -447,6 +448,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==ctr4) {TRpid = sc(e)?    0:11; monitors[0].TRpid = TRpid;}
 		if (s==ctr5) {TRpid = sc(e)?   -1:11; monitors[0].TRpid = TRpid;}
 		if (s==ctr6) {TRpid = sc(e)? 2212:11; monitors[0].TRpid = TRpid;}		
+		if (s==ctr7) {TRpid = sc(e)?11211:11; monitors[0].TRpid = TRpid;}		
     }  
 	
     public void actionPerformed(ActionEvent e) {

@@ -88,9 +88,9 @@ public class ECt extends DetectorMonitor {
     
     public ECt(String name) {
         super(name);
-        this.setDetectorTabNames("Raw TDC",
-                                 "PhaseCorr TDC",
-                                 "Triggered TDC",
+        this.setDetectorTabNames("Raw TDC",          
+                                 "PhaseCorr TDC",    
+                                 "Triggered TDC",    
                                  "Matched TDC",
                                  "Calib TDC",
                                  "Calib TMF",
@@ -685,7 +685,7 @@ public class ECt extends DetectorMonitor {
                add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
                add[2] = bank3.getFloat("energy",iid[2]); //peak energy W
                
-               int statc   = bank1.getShort("status", loop);
+               int statc = bank1.getShort("status", loop);
                statp[0]  = bank3.getShort("status", iid[0]);
                statp[1]  = bank3.getShort("status", iid[1]);
                statp[2]  = bank3.getShort("status", iid[2]);
@@ -746,11 +746,16 @@ public class ECt extends DetectorMonitor {
                            tdcs.getItem(is,il+i,ip).add(resid);
                            
                 	   float  radc = (float) Math.sqrt(adc);                	   
-                       float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip); 
+                       float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
+                       
+                       boolean goodSector = dropEsect ? is!=trigger_sect : is==trigger_sect;  
+                       
+                       boolean goodPID = TRpid==11211 ? Math.abs(pid)==211 && is!=trigger_sect || 
+                    		                            Math.abs(pid)==11  && is==trigger_sect : //combine e- and pi+/pi-
+                    		                            Math.abs(pid)==TRpid && goodSector;      //PID from menu selection
                                               
-                       boolean goodSector = dropEsect?is!=trigger_sect:is==trigger_sect;  
                        boolean goodStatus = status>=2000 && status<3000; 
-                       boolean goodHisto  = Math.abs(pid)==TRpid && goodSector && goodStatus;
+                       boolean goodHisto  = goodPID && goodStatus;
                                               
                        if (goodHisto) {
                     	   ((H1F) this.getDataGroup().getItem(is,0,tlnum,run).getData(il+i-1).get(0)).fill(resid); //timelines
@@ -841,10 +846,11 @@ public class ECt extends DetectorMonitor {
         		g=tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).getGraph(); 
         		if(g.getDataSize(0)>0) {
                    c.cd(ipp); c.getPad(ipp); c.getPad(ipp).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
-                                  if(off!=200) {double min = tl.fitData.getItem(is,3*il+iv+1,ipp,getRunNumber()).p0;
-                                                double max = g.getDataY(g.getDataSize(0)-1); double mn=Math.min(min, max); double mx=Math.max(min, max);                                                
-                                                c.getPad(ipp).getAxisY().setRange(mn*0.95,mx*1.05);}
-                                  if(off==200)  c.getPad(ipp).getAxisY().setRange(-5,5);
+                   if(off!=200) {double min = tl.fitData.getItem(is,3*il+iv+1,ipp,getRunNumber()).p0;
+                                 double max = g.getDataY(g.getDataSize(0)-1); double mn=Math.min(min, max); 
+                                 double  mx = Math.max(min, max);                                                
+                                 c.getPad(ipp).getAxisY().setRange(mn*0.95,mx*1.05);}
+                   if(off==200)  c.getPad(ipp).getAxisY().setRange(-5,5);
                    c.draw(g);
                    F1D f1 = new F1D("p0","[a]",0.,g.getDataX(g.getDataSize(0)-1)*1.05); f1.setParameter(0,0);
                    f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
@@ -956,7 +962,7 @@ public class ECt extends DetectorMonitor {
               	   
                    fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
                    fitter2.setRange(-10,50); fitter2.fitSlicesY();
-                   g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0);
+                   g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0); //subtract t0 just fitted
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");  
             	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+200,run); //TW fits            	   
                 }
