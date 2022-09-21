@@ -118,7 +118,7 @@ public class FitData {
 		  if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
-	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ;                   graph.getFunction().setRange(fmin, fmax);}
+	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ;                   graph.getFunction().setRange(fmin, fmax);g_optstat="1110";}
 	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3) ; graph.getFunction().setRange(fmin, fmax);}
 	    if (func==13) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ; graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
 	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
