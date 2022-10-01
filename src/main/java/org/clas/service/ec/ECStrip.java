@@ -34,6 +34,8 @@ public class ECStrip implements Comparable {
     private double    fTimA2,iTimA2 = 0; // time-walk factor (time_ns = time_ns + a2/sqrt(adc))
     private double    fTimA3,iTimA3 = 0; // 0
     private double    fTimA4,iTimA4 = 0; // 0
+    private double    fTimA5,iTimA5 = 0; // 0
+    private double    fTimA6,iTimA6 = 0; // 0
     private int        triggerPhase = 0;
     private double             veff = 18.1; // Effective velocity of scintillator light (cm/ns)
     private int                  id = -1;   // ID (row number) of the corresponding hit in the ADC bank for truth matching
@@ -49,7 +51,7 @@ public class ECStrip implements Comparable {
     
     private static final double coincTIME = 25.; //ns. 	
     private double                   time = 0;
-    private double               fgtw,gtw = 0; //global time walk correction
+    private double              fgtw,dgtw = 0; //global time walk correction
     
     private TimeCorrection             tc = null; 
     
@@ -97,14 +99,6 @@ public class ECStrip implements Comparable {
  	    return phaseCorrection ? tc.getPhaseCorrectedTime():tc.getRawTime();
     }
     
-    public void setGlobalTimeWalk(double val) {
-    	gtw = val;
-    }
-    
-    public void setGlobalFTimeWalk(double val) {
-    	fgtw = val;
-    }  
-    
     public double getTWCTime() {
     	return tc.getTWCTime();    	
     }
@@ -138,6 +132,7 @@ public class ECStrip implements Comparable {
         	double radc = Math.sqrt(iADC);
     		return getPhaseCorrectedTime() - iTimA2/radc - iTimA0;
     	}
+
     }
     
     public class ExtendedTWCTime extends TimeCorrection {    	
@@ -151,13 +146,13 @@ public class ECStrip implements Comparable {
         
         public double getTWCTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc)          - iTim00;          	
+          	return getPhaseCorrectedTime() - dgtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc)          - iTim00;          	
         } 
         
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-          	return getPhaseCorrectedTime() - gtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc) - iTimA0 - iTim00;          	
-        }         
+          	return getPhaseCorrectedTime() - dgtw/radc - iTimA2/radc - iTimA3 - iTimA4/Math.sqrt(radc) - iTimA0 - iTim00;          	
+        }           	
     } 
     
     public class ExtendedTWCFTime extends TimeCorrection {    	
@@ -167,17 +162,22 @@ public class ECStrip implements Comparable {
         
         public double getPhaseCorrectedTime() {         	
             return iTADC;  
-        } 
+        }        
         
-        public double getTWCTime() {
-        	double radc = Math.sqrt(iADC);
-          	return getRawTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc)          - fTim00;          	
-        } 
-        
+    	public double getTWCTime() {
+        	double x = Math.sqrt(iADC);
+        	double corr = 0;
+        	if(fTimA2!=0 && fTimA4!=0) corr = fTimA2 + Math.exp(-(x-fTimA3)/fTimA4)+1-Math.exp( (x-fTimA5)/fTimA6);
+          	return getRawTime() - fgtw/x - corr          - fTim00;          	
+    	} 
+    	
     	public double getTime() {
         	double radc = Math.sqrt(iADC);
-          	return getRawTime() - fgtw/radc - fTimA2/radc - fTimA3 - fTimA4/Math.sqrt(radc) - fTimA0 - fTim00;          	
-        }         
+        	double corr = 0;
+        	if(fTimA2!=0 && fTimA4!=0) corr = fTimA2 + Math.exp(-(radc-fTimA3)/fTimA4)+1-Math.exp( (radc-fTimA5)/fTimA6);
+          	return getRawTime() - fgtw/radc - corr - fTimA0 - fTim00;          	
+    	}
+    	
     }     
     
     
@@ -255,19 +255,29 @@ public class ECStrip implements Comparable {
         iTimA4 = a4;
     } 
     
-    public void setFTiming(double a0, double a1, double a2, double a3, double a4) {
+    public void setFTiming(double a0, double a1, double a2, double a3, double a4, double a5, double a6) {
     	fTimA0 = a0;
     	fTimA1 = a1;
     	fTimA2 = a2;
     	fTimA3 = a3;
     	fTimA4 = a4;
+    	fTimA5 = a5;
+    	fTimA6 = a6;
+    }    
+    
+    public void setDtimeGlobalTimeWalk(double val) {
+    	dgtw = val;
     }
+    
+    public void setFtimeGlobalFTimeWalk(double val) {
+    	fgtw = val;
+    }  
 	
-    public void setGlobalTimingOffset(double val) {
+    public void setDtimeGlobalTimingOffset(double val) {
         iTim00 = val;
     }
     
-    public void setGlobalFTimingOffset(double val) {
+    public void setFtimeGlobalTimingOffset(double val) {
         fTim00 = val;
     }
     
@@ -282,12 +292,14 @@ public class ECStrip implements Comparable {
     }
     
     public double[] getFTiming() {
-        double[] array = new double[5];
+        double[] array = new double[7];
         array[0] = fTimA0;
         array[1] = fTimA1;
         array[2] = fTimA2;
         array[3] = fTimA3;
         array[4] = fTimA4;
+        array[5] = fTimA5;
+        array[6] = fTimA6;
         return array;    
     }	
     
