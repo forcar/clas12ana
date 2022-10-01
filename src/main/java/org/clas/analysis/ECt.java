@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JFrame;
+
 import org.clas.tools.FitData;
 import org.clas.tools.ParallelSliceFitter;
 import org.clas.viewer.DetectorMonitor;
@@ -40,7 +42,7 @@ public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>>  tdcs = new IndexedList<List<Float>>(3);
     IndexedList<List<Float>> tlist = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, ftime=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
+    IndexedTable time=null, oftime=null, ftime=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
     
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -329,6 +331,7 @@ public class ECt extends DetectorMonitor {
                 h = new H2F("uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt); h.setTitleY(ytxt+"V"+ip); 
                 dg5.addDataSet(h,ip-1); dg5.addDataSet(f1,ip-1);
+                if(scaly2) {ymx=0.75*ymax*(0.63+0.37*ip/npmts[1]) ;}
                 h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt); h.setTitleY(ytxt+"W"+ip);
                 dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);
@@ -347,6 +350,7 @@ public class ECt extends DetectorMonitor {
                 h = new H2F("uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt);  h.setTitleY(ytxt+"V"+ip);
                 dg8.addDataSet(h,ip-1); dg8.addDataSet(f1,ip-1);
+                if(scaly2) {ymx=0.75*ymax*(0.63+0.37*ip/npmts[1]) ;}
                 h = new H2F("uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt); h.setTitleY(ytxt+"W"+ip);
                 dg9.addDataSet(h,ip-1); dg9.addDataSet(f1,ip-1);    
@@ -441,7 +445,8 @@ public class ECt extends DetectorMonitor {
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
-        ftime   = cm.getConstants(runno, "/calibration/ec/ftiming");
+        oftime  = cm.getConstants(runno, "/calibration/ec/ftiming");
+        ftime   = cm.getConstants(runno, "/calibration/ec/ftime");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         fo      = cm.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
         fgo     = cm.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
@@ -904,7 +909,8 @@ public class ECt extends DetectorMonitor {
     public void analyzeCalibration() {
         analyzeGraphs(1,7,0,3,0,3);
         System.out.println("analyzeCalibration Finished");
-        writeFile("timing",1,7,0,3,0,3);
+        if (eng.useFADCTime) writeFile("ftiming",1,7,0,3,0,3);
+        if(!eng.useFADCTime) writeFile("timing",1,7,0,3,0,3);
         writeFile("effective_velocity",1,7,0,3,0,3);    
         isAnalyzeDone = true;
     }
@@ -946,8 +952,6 @@ public class ECt extends DetectorMonitor {
        
        int run=getRunNumber();
        
-       double min=0,max=420;
-       
        for (int is=is1; is<is2; is++) {            
           for (int il=il1; il<il2; il++) {
              for (int iv=iv1; iv<iv2; iv++) {
@@ -963,12 +967,32 @@ public class ECt extends DetectorMonitor {
                    fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
                    fitter2.setRange(-10,50); fitter2.fitSlicesY();
                    g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0); //subtract t0 just fitted
-                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");  
-            	   tl.fitData.add(fitEngine(g,13,20),is,3*il+iv+1,ip+200,run); //TW fits            	   
+                   g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY(""); 
+                   if(dumpGraphs) {
+                	   String nam ="s"+is+"l"+il+"v"+iv+"p"+ip;
+                	   System.out.println("Writing "+filPath+"twplots/"+nam+".vec"); dumpGraph(filPath+"twplots/"+nam+".vec",g);
+                   }
+            	   if(!eng.useFADCTime) tl.fitData.add(fitEngine(g,16,20),is,3*il+iv+1,ip+200,run); //TW fits to DISC time           	   
+            	   if( eng.useFADCTime) tl.fitData.add(TWFit(g,is,il,iv), is,3*il+iv+1,ip+200,run); //TW fits to FADC time            	   
                 }
              }
           }
        } 
+    }
+    
+    public FitData TWFit(GraphErrors g, int is, int il, int iv) {
+    	int fnum=13, fmin=10;
+    	FitData fd = new FitData(g);
+    	if(g.getDataSize(0)==0) return fd;
+        fd.initFit(fnum,0,1,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
+        switch (il) {
+        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,18,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180); fd.initFunc(4,20,15,25); break;
+        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,100,180); fd.initFunc(4,15,14,25); break;
+        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
+        }
+        fd.doFit = true; 
+        fd.fitGraph("",true,true); 
+        return fd;
     }
     
     public void getResidualSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
@@ -1209,14 +1233,16 @@ public class ECt extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "setFTiming":         line =  getFTiming(is,il,iv,ip); break;
-							case "A0offset":           line =  getNewA0(is,il,iv,ip); break;
 							case "timing_update":      line =  getA0(is,il,iv,ip,il==il1 ? 0 : A0offset);   break; //RGM pass0 EC Z-plane compensation
 							case "ftiming_update":     line =  getFA0(is,il,iv,ip,il==il1 ? 0 : A0offset);  break; //RGM pass0 EC Z-plane compensation
 							case "timing":             line =  getTW(is,il,iv,ip);  break;
+							case "ftiming":            line =  getFTW(is,il,iv,ip); break;
 							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
 							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
 							case "fadc_offset":        line =  getGTMF(is,il,iv,ip);  
+							case "setFTiming":         line =  getFTiming(is,il,iv,ip); break;
+							case "A0offset":           line =  getNewA0(is,il,iv,ip); break;
+							case "NewFTW":             line =  getNewFTW(is,il,iv,ip); break;
 							}
 							if (line!=null) {
 						      System.out.println(line);
@@ -1238,29 +1264,45 @@ public class ECt extends DetectorMonitor {
 
 	}
 	
-	public String getTW(int is, int il, int iv, int ip) { //Absolution residual calibration
+	public String getTW(int is, int il, int iv, int ip) { //Absolute TDC residual calibration + time walk
 		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0
+				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0 //fits to corrected t vs leff
 				+" 0.02345 "
-				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1)+" "
-				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0)+" "
-				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2)+" ";
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2+" ";
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
 		
 	}
-	
+		
+	public String getFTW(int is, int il, int iv, int ip) { //Absolute FADC residual calibration + time walk
+		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0 //fits to corrected t vs leff
+				+" 0.02345 "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p3+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p4+" ";
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0 0.0 0.0";
+		}
+		
+	}
+
 	public String getA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1)
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residuals
+				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1) //previous a0
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
-				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
-				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
-				+time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" ";
+				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" " //replace with table
+				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" " //replace with table
+				+time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" ";//replace with table
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
@@ -1270,14 +1312,16 @@ public class ECt extends DetectorMonitor {
 	public String getFA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1)
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residuals
+				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) //previous a0
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
-				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
-				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
-				+time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" ";
+				+ftime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
+				+ftime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
+				+ftime.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" "
+				+ftime.getDoubleValue("a5", is, 3*il+iv+1, ip+1)+" "
+				+ftime.getDoubleValue("a6", is, 3*il+iv+1, ip+1)+" ";
 		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0 0.0 0.0";
 		}
 		
 	}
@@ -1297,6 +1341,16 @@ public class ECt extends DetectorMonitor {
 				+time.getDoubleValue("a4", is, 3*il+iv+1, ip+1);		
 	}
 	
+	public String getNewFTW(int is, int il, int iv, int ip) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+(oftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1)+" "
+				+" 0.02345 "
+				+oftime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
+				+oftime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
+				+oftime.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" "
+				+"0.0"+" "
+				+"0.0");		
+	}	
 	public String getFTiming(int is, int il, int iv, int ip) {
 		return is+" "+(3*il+iv+1)+" "+(ip+1)+" 0.0 "+" 0.02345 "+" 0.0 "+" 0.0 "+" 0.0";
 	}
@@ -1539,14 +1593,14 @@ public class ECt extends DetectorMonitor {
     public void timerUpdate() {
     	
     }
+
     
     public static void main(String[] args) {
     	
+    	ECt ect = new ECt("ECt",6684);
+    	ect.writeFile("NewFTW",1,7,0,3,0,3);    
 //    	ECt ect = new ECt("ECt",2385);
-//    	ect.setA0offset(2, -40);
-//    	ect.writeFile("A0offset",1,7,0,3,0,3);    
-    	ECt ect = new ECt("ECt",2385);
-    	ect.writeFile("setFTiming",1,7,0,3,0,3);
+//    	ect.writeFile("setFTiming",1,7,0,3,0,3);
    	
     }
      
