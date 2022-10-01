@@ -30,16 +30,16 @@ public class ECCommon {
     public static List<ECPeak>       myPeaks = new ArrayList<ECPeak>();
     public static List<ECCluster> myClusters = new ArrayList<ECCluster>();
     
-    public static int[]   stripThreshold = new int[3];
-    public static int[]    peakThreshold = new int[3]; 
-    public static int[] clusterThreshold = new int[3];
-    public static float[]    clusterSize = new float[3];
-    public static float[]  clusterDeltaT = new float[3];
+    public static int[]      stripThreshold = new int[3];
+    public static int[]       peakThreshold = new int[3]; 
+    public static int[]    clusterThreshold = new int[3];
+    public static float[]       clusterSize = new float[3];
+    public static float[]     clusterDeltaT = new float[3];
     
-    public static int            touchID = 1;
-    public static int        splitMethod = 0;
-    public static int    stripSortMethod = 0;
-    public static int[]      splitThresh = new int[3];
+    public static int               touchID = 1;
+    public static int           splitMethod = 0;
+    public static int       stripSortMethod = 0;
+    public static int[]         splitThresh = new int[3];
     
     public static Boolean              isMC = false;
     public static Boolean             debug = false;
@@ -48,6 +48,7 @@ public class ECCommon {
     public static Boolean       singleEvent = false;
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
+    public static Boolean  useTWCorrections = true;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
@@ -149,7 +150,8 @@ public class ECCommon {
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
         IndexedTable    dtime = manager.getConstants(run, "/calibration/ec/timing");
-        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftiming");
+//        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftiming");
+        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftime");
         IndexedTable      ggs = manager.getConstants(run, "/calibration/ec/global_gain_shift");
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable       ev = manager.getConstants(run, "/calibration/ec/effective_velocity");
@@ -213,21 +215,43 @@ public class ECCommon {
             double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);  
             
             strip.setGain(useCCDBGain ? ccdbGain : run2Gain);             
-            strip.setGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
+            strip.setDtimeGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
             strip.setVeff(ev.getDoubleValue("veff",sector,layer,component));
-            strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
-                             dtime.getDoubleValue("a1", sector, layer, component),
-                             dtime.getDoubleValue("a2", sector, layer, component),
-                             dtime.getDoubleValue("a3", sector, layer, component),
-                             dtime.getDoubleValue("a4", sector, layer, component));
-            strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
-                             1,
-                             0,
-                             0,
-                             0);
-            strip.setGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
-            strip.setGlobalFTimingOffset(tgo.getDoubleValue("offset",0,0,0)+
-            		            (double) fdj.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
+
+            if(!useTWCorrections) {
+                strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
+                		         dtime.getDoubleValue("a1", sector, layer, component),
+                                 0,
+                                 0,
+                                 0);
+                strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
+                		         1,
+                		         0,
+                		         0,
+                		         0,
+                		         0,
+                		         0);
+            }
+            
+            if(useTWCorrections) {    
+                strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
+                		         dtime.getDoubleValue("a1", sector, layer, component),
+                                 dtime.getDoubleValue("a2", sector, layer, component),
+                                 dtime.getDoubleValue("a3", sector, layer, component),
+                                 dtime.getDoubleValue("a4", sector, layer, component));                
+                strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
+                		         1,
+                		         ftime.getDoubleValue("a2", sector, layer, component),
+                                 ftime.getDoubleValue("a3", sector, layer, component),
+                                 ftime.getDoubleValue("a4", sector, layer, component),
+                                 ftime.getDoubleValue("a5", sector, layer, component),
+                                 ftime.getDoubleValue("a6", sector, layer, component));
+            }
+
+            
+            strip.setDtimeGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)); //global shift of TDC acceptance window
+            strip.setFtimeGlobalTimingOffset(tgo.getDoubleValue("offset",0,0,0)+  //global shift of TDC acceptance window
+            		                (double) fdj.getDoubleValue("offset",0,0,0)); //jitter correction (usually +/- 2ns)
             
         }  
         
@@ -239,11 +263,11 @@ public class ECCommon {
       	List<ECStrip>  strips = new ArrayList<ECStrip>();
       	
         IndexedTable    jitter = manager.getConstants(run, "/calibration/ec/time_jitter");
-        IndexedTable        fo = manager.getConstants(run, "/calibration/ec/fadc_offset"); // TDC-FADC offset (sector, layer) 
-        IndexedTable       tmf = manager.getConstants(run, "/calibration/ec/tmf_offset");  // TDC-FADC offset (sector, layer, PMT)
-        IndexedTable       fgo = manager.getConstants(run, "/calibration/ec/fadc_global_offset"); //used only for FADC-TDC window
+        IndexedTable        fo = manager.getConstants(run, "/calibration/ec/fadc_offset");        // TDC-FADC offset (sector, layer) 
+        IndexedTable       tmf = manager.getConstants(run, "/calibration/ec/tmf_offset");         // TDC-FADC offset (sector, layer, PMT)
+        IndexedTable       fgo = manager.getConstants(run, "/calibration/ec/fadc_global_offset"); // TDC-FADC global offset (trigger)
+        IndexedTable    tmfcut = manager.getConstants(run, "/calibration/ec/tmf_window");         // TDC-FADC cut
         IndexedTable       gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
-        IndexedTable    tmfcut = manager.getConstants(run, "/calibration/ec/tmf_window");
         IndexedTable    status = manager.getConstants(run, "/calibration/ec/status");
         
         double PERIOD  = jitter.getDoubleValue("period",0,0,0);
@@ -323,7 +347,8 @@ public class ECCommon {
     	
         List<ECPeak>  peakList = new ArrayList<ECPeak>();  
         
-        if(!(stripList.size()>1)) return peakList;  //Require minimum of 2 strips/event to reject uncorrelated hot channels         	
+        if(!(stripList.size()>1)) return peakList;  //Require minimum of 2 strips/event to reject uncorrelated hot channels 
+        
         peakList.add(new ECPeak(stripList.get(0))); //Seed the first peak with the first strip
         
         int n=1;
