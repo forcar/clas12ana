@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10,cf11,cf12;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10,cf11,cf12,cf13;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -140,6 +140,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean        normPix = false;
     public Boolean         SFcorr = false;
     public Boolean          HiRes = false;
+    public Boolean         TWcorr = true;
     public Boolean     fitVerbose = false;
     public String          TLname = "UVW";
     public Boolean         TLflag = false;
@@ -341,7 +342,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menu   	= new JMenu("ECsf");
         cf11 = new JCheckBoxMenuItem("SFcorr"); cf11.addItemListener(this); menu.add(cf11);
         cf12 = new JCheckBoxMenuItem("HiRes");  cf12.addItemListener(this); menu.add(cf12);
-        menuBar.add(menu);   
+        menuBar.add(menu);
+        
+        menu   	= new JMenu("ECt");
+        cf13 = new JCheckBoxMenuItem("TWcorr"); cf13.addItemListener(this); menu.add(cf13); cf13.doClick();
+        menuBar.add(menu); 
         
         menu     = new JMenu("ECEngine");
         co2      = new JCheckBoxMenuItem("Enable");              co2.addItemListener(this);  menu.add(co2);;
@@ -435,6 +440,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf10){normPix        = sc(e); monitors[0].normPix     = normPix;}
 		if (s==cf11){SFcorr         = sc(e); monitors[0].SFcorr      = SFcorr;}
 		if (s==cf12){HiRes          = sc(e); monitors[0].HiRes       = HiRes;}
+		if (s==cf13){TWcorr         = sc(e); monitors[0].eng.setUseTWcorr(TWcorr);}
 		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
 		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}

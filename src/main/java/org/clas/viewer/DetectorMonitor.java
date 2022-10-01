@@ -210,6 +210,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
     public Boolean             SFcorr = false;
+    public Boolean             TWcorr = false;
     public Boolean              HiRes = false;
     public Boolean        dbgAnalyzer = false;
     
@@ -249,6 +250,7 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
             "/calibration/ec/ftiming",
+            "/calibration/ec/ftime",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
             "/calibration/ec/fadc_global_offset",
@@ -1296,21 +1298,20 @@ public class DetectorMonitor implements ActionListener {
     	writer.close();    	
     }
     
-    public GraphErrors getGraph(String filename, int nlines) {   
+    public GraphErrors getGraph(String filename) {   
         
     	GraphErrors g = new GraphErrors();
         try{
             FileReader       file = new FileReader(filename);
-            BufferedReader reader = new BufferedReader(file);
-            int n = 0 ;
-            while (n<nlines) {
-              String line = reader.readLine();
-              String[] col = line.trim().split("\\s+"); 
+            BufferedReader     br = new BufferedReader(file);
+            String s; int n = 0 ;
+            while ((s = br.readLine()) != null) {              
+              String[] col = s.trim().split("\\s+"); 
               float i = Float.parseFloat(col[0]); float j = Float.parseFloat(col[1]);float k = Float.parseFloat(col[2]);
               g.addPoint(i,j,0,k);
               n++;
             }    
-            reader.close();
+            br.close();
             file.close();
          }  
          
@@ -1434,7 +1435,7 @@ public class DetectorMonitor implements ActionListener {
         FitData fd = new FitData(g);        
     	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,0,0,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
-        fd.doFit = true; 
+        fd.doFit = true; 	
         fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      }
