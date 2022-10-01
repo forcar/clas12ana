@@ -1,5 +1,9 @@
 package org.clas.tools;
 
+import javax.swing.JFrame;
+
+import org.clas.analysis.ECt;
+import org.clas.viewer.DetectorMonitor;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -22,7 +26,7 @@ public class FitData {
 	public double meane;
 	public double sigma;
 	public double sigmae;
-	public double p0,p1,p2,p3,p0e,p1e,p2e,p3e;
+	public double p0,p1,p2,p3,p4,p0e,p1e,p2e,p3e,p4e;
 	public double sig1=2.5;
 	public double sig2=1.7;
 	public int func;
@@ -43,9 +47,11 @@ public class FitData {
 			                       "[a]*exp(x,[b])",
 			                       "[a]+[b]*cos(x*[c])",
 			                       "[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])",
-			                       "1/((1-[p])+[p]/x)","[p0]+[p1]/x +[p2]/x^0.5",
+			                       "1/((1-[p])+[p]/x)",
+                                   "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])",
                                    "[sf1]*(1+[sf3]/x+[sf4]/x/x)",
-                                   "[sf1]*(1+[sf3]*0.1/x+[sf4]*0.001/x/x)"};
+                                   "[sf1]*(1+[sf3]*0.1/x+[sf4]*0.001/x/x)",
+                                   "[p0]+[p1]/x +[p2]/x^0.5"};
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
@@ -118,11 +124,12 @@ public class FitData {
 		  if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
-	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ;                   graph.getFunction().setRange(fmin, fmax);g_optstat="1110";}
-	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3) ; graph.getFunction().setRange(fmin, fmax);}
-	    if (func==13) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ; graph.getFunction().setRange(fmin, fmax);g_optstat="1100";}
+	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ;                  graph.getFunction().setRange(fmin, fmax);g_optstat="1110";}
+	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3); graph.getFunction().setRange(fmin, fmax);}
 	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
-	    if (func==15) {initFunc(0,0.27); initFunc(1,-0.146); initFunc(2,0.117); graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
+	    if (func==15) {initFunc(0,0.27); initFunc(1,-0.146);initFunc(2,0.117);graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
+	    if (func==16) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ;graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
+	    if (func==13) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="111110";}
 	}
 	
 	public void initFunc(int par, double val) {
@@ -136,17 +143,15 @@ public class FitData {
 
 	public void fitGraph(String opt, Boolean fitEnable, Boolean fitVerbose) {
 	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, "Q");
-	    if (func==6)  {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); 
-                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error();}
-	    if (func==7)  {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
-                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
-	    if (func==13) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
-                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
-	    if (func==14) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
-                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
-	    if (func==15) {p0 = graph.getFunction().parameter(0).value(); p1  = graph.getFunction().parameter(1).value(); p2  = graph.getFunction().parameter(2).value();  
-                      p0e = graph.getFunction().parameter(0).error(); p1e = graph.getFunction().parameter(1).error(); p2e = graph.getFunction().parameter(2).error();}
-	                  
+	    if (func>4) {
+	    	for (int i=0; i<graph.getFunction().getNPars(); i++) {
+	    		if(i==0) {p0 = graph.getFunction().parameter(0).value(); p0e  = graph.getFunction().parameter(0).error();}
+	    		if(i==1) {p1 = graph.getFunction().parameter(1).value(); p1e  = graph.getFunction().parameter(1).error();}
+	    		if(i==2) {p2 = graph.getFunction().parameter(2).value(); p2e  = graph.getFunction().parameter(2).error();}
+	    		if(i==3) {p3 = graph.getFunction().parameter(3).value(); p3e  = graph.getFunction().parameter(3).error();}
+	    		if(i==4) {p4 = graph.getFunction().parameter(4).value(); p4e  = graph.getFunction().parameter(4).error();}
+	    	}
+	    }	                  
 	    if (func<5) {
 	       amp   = graph.getFunction().getParameter(0);
 	       mean  = graph.getFunction().parameter(1).value();
@@ -155,8 +160,9 @@ public class FitData {
 	      sigmae = graph.getFunction().parameter(2).error();  
 	    }
 	    graph.getFunction().setLineColor(fitcol);
-//	    graph.getAttributes().setOptStat(g_optstat);
-	    graph.getFunction().setOptStat(opt=="Q"?"0":g_optstat);
+	    graph.getAttributes().setOptStat(g_optstat);
+	    graph.getFunction().setOptStat(opt=="Q"?"0":f_optstat);
+//	    graph.getFunction().setOptStat("1110");
 	}
 
 	public void plotGraph(EmbeddedCanvas c, int col) {
@@ -216,8 +222,44 @@ public class FitData {
 	        }
 	    }
 	    return Math.sqrt(sum / (double) nEntries);
-	}         
+	}
 
+    
+    public static void fitTest(int is, int il, int iv, int nmax) {
+    	int fnum=13, fmin=10;
+    	GraphErrors g;
+    	DetectorMonitor mon = new DetectorMonitor("ECt");
+    	mon.cfitEnable = true; mon.fitVerbose = true;
+        JFrame frame = new JFrame("fitTest");
+        frame.setSize(2100,1700);
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        if (il==0) canvas.divide(9,8);
+        if (il>0)  canvas.divide(6,6);
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        for (int i=0; i<nmax; i++) {
+            String nam ="s"+is+"l"+il+"v"+iv+"p"+i;
+        	g = mon.getGraph("/Users/colesmith/CLAS12ANA/ECt/twplots/"+nam+".vec");
+        	canvas.cd(i); canvas.getPad(i).getAxisY().setRange(-3,6);
+        	if(g.getDataSize(0)==0) continue;
+        	FitData fd = new FitData(g);
+            fd.initFit(fnum,0,1,fmin,g.getDataX(g.getDataSize(0)-1)*1.05);
+            switch (il) {
+            case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,18,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180); fd.initFunc(4,20,15,25); break;
+            case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,100,180); fd.initFunc(4,15,14,25); break;
+            case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
+            }
+            fd.doFit = true; 
+            fd.fitGraph("",true,true);fd.getGraph().setTitle(nam);
+            canvas.draw(fd.getGraph());
+//        	canvas.draw(mon.fitEngine(g,fnum,fmin).getGraph());
+        }
+    }
+	
+    public static void main(String[] args) {
+    	fitTest(6,0,1,36);   	
+    }
         
 }
 
