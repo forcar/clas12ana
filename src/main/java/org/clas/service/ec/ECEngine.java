@@ -2,15 +2,15 @@ package org.clas.service.ec;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorCollection;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
-import org.jlab.geom.base.Detector;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.io.base.DataBank;
@@ -21,6 +21,8 @@ import org.jlab.io.base.DataEvent;
  * @author gavalian
  */
 public class ECEngine extends ReconstructionEngine {
+	
+	public static Logger LOGGER = Logger.getLogger(ECEngine.class.getName());
     
     public ECEngine(){
         super("EC","gavalian","1.0");
@@ -38,7 +40,7 @@ public class ECEngine extends ReconstructionEngine {
         ecClusters.addAll(ECCommon.createClusters(ecPeaks,7)); //ECouter
         
         ECCommon.shareClustersEnergy(ecClusters); // Repair 2 clusters which share the same peaks
-        
+
         for (int iCl = 0; iCl < ecClusters.size(); iCl++) {
             // As clusters are already defined at this point, we can fill the clusterID of ECStrips belonging to the given cluster
             // === U strips ===
@@ -246,22 +248,27 @@ public class ECEngine extends ReconstructionEngine {
     }
     
     public void setUseUnsharedEnergy(boolean val) {
-    	System.out.println("ECengine: UseUnsharedEnergy = "+val);   	
+    	System.out.println("ECengine: useUnsharedEnergy = "+val);   	
     	ECCommon.useUnsharedEnergy = val;
     } 
     
     public void setUnsharedEnergyCut(int val) {
-    	System.out.println("ECengine: UnsharedEnergyCut = "+val);   	
+    	System.out.println("ECengine: unsharedEnergyCut = "+val);   	
     	ECCommon.UnsharedEnergyCut = val;
     } 
     
     public void setUseUnsharedTime(boolean val) {
-    	System.out.println("ECengine: UseUnsharedTime = "+val);   	
+    	System.out.println("ECengine: useUnsharedTime = "+val);   	
     	ECCommon.useUnsharedTime = val;
     }
     
+    public void setTWCorrections(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useTWCorrections = "+val);
+    	ECCommon.useTWCorrections = val;
+    }
+    
     public void setUseFADCTime(boolean val) {
-    	System.out.println("ECengine: UseFADCTime = "+val);   	
+    	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
     	ECCommon.useFADCTime = val;
     } 
     
@@ -336,6 +343,7 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
             "/calibration/ec/ftiming",
+            "/calibration/ec/ftime",
             "/calibration/ec/fdjitter",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
@@ -362,7 +370,7 @@ public class ECEngine extends ReconstructionEngine {
         setStripThresholds(10,9,8);
         setPeakThresholds(18,20,15);
         setClusterThresholds(0,0,0);
-        setClusterCuts(4.5f,11f,13f);
+        setClusterCuts(4.5f,11f,13f); //pass1 7,15,20
         setSplitThresh(3,3,3);
         setTouchID(2);
         
