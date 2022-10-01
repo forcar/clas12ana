@@ -165,7 +165,7 @@ public class ECperf extends DetectorMonitor {
     	System.out.println("ECperf.localinit()");
     	tl.setFitData(Fits);      	   	
     	eng.engine.setGeomVariation("rga_fall2018");
-    	neuteff = getGraph(outPath+"files/neuteff.vec",50); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
+    	neuteff = getGraph(outPath+"files/neuteff.vec"); neuteff.setMarkerColor(1); neuteff.setLineColor(1);
     }  
     
     public void localclear() {
