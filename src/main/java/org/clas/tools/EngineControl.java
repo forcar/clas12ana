@@ -32,13 +32,13 @@ public class EngineControl implements ActionListener {
     ButtonGroup                bG1 = null;
 	
 	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0";
-	public String variation="rga_fall2018_bg",geomVariation="rga_fall2018";
+	public String variation="rga_fall2018_bg",geomVariation="rga_fall2018",pass="pass1";
 	public int pcS,eciS,ecoS,pcP,eciP,ecoP;
 	public int PCTrackingPlane,ECTrackingPlane;
 	public float pcT,eciT,ecoT;
 	public double wlogPar=3.0;
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
-	public boolean useFADCTime, useUnsharedEnergy, useTWCorrections;
+	public boolean useFADCTime, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Time;
 	
 	public ECEngine engine = null;
 	
@@ -68,7 +68,7 @@ public class EngineControl implements ActionListener {
 		engine.setIsSingleThreaded(true);
 	    engine.setIsMC(isMC);     
 	    engine.setVariation(variation);
-	    engine.setGeomVariation(geomVariation);
+	    engine.setGeomVariation(geomVariation);	    
 	    engine.init();
 	    setEngineConfig(ECCommon.config);
 	    System.out.println("isMC: "+isMC+" "+mcpart);
@@ -192,7 +192,7 @@ public class EngineControl implements ActionListener {
      }		
 	 
 	public String getConfigField() {
-		return mcpart+"    "+config+"+"+split+"+"+spthr+"+"+touch+"    "+variation+"+"+geomVariation;
+		return mcpart+"    "+config+"+"+split+"+"+spthr+"+"+touch+"    "+variation+"+"+geomVariation+"+"+pass;
 	}
 	
     public String getConfig(int val) {
@@ -224,11 +224,22 @@ public class EngineControl implements ActionListener {
     public void setUseFADCTime(Boolean val) {
     	engine.setUseFADCTime(val);
     	useFADCTime = val;
+    }
+    
+    public void setUsePass2Timing(Boolean val) {
+    	engine.setUsePass2Timing(val);
+    	pass=val?"pass2":"pass1"; configDisplay();
+    	usePass2Time = val;
     } 
     
     public void setUseTWcorr(Boolean val) {
     	engine.setTWCorrections(val);
     	useTWCorrections = val;
+    }
+    
+    public void setUseDTcorr(Boolean val) {
+    	engine.setDTCorrections(val);
+    	useDTCorrections = val;
     }
     
     public void setPCTrackingPlane(int val) {
