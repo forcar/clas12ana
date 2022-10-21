@@ -42,6 +42,7 @@ public class DataSourceProcessorPane extends JPanel implements ActionListener {
     private DataSourceProcessor  dataProcessor = new DataSourceProcessor();
     private String               dataFile      = null;
     private String               fileName      = null;
+    private String               histoName     = null;
     private int                  nevents       = 0;
     private int                  dataPaneStyle = DataSourceProcessorPane.TOOLBAR;
     private JLabel               statusLabel   = null;    
@@ -408,6 +409,15 @@ public class DataSourceProcessorPane extends JPanel implements ActionListener {
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
+    
+    public void setHistoName(String fileName) {
+        this.histoName = fileName;
+        statusLabel.setText(" Source: "+getHistoName());
+    } 
+    
+    public String getHistoName() {
+        return histoName;
+    } 
     
     public void setNevents(int nevents) {
     	this.nevents = nevents;
