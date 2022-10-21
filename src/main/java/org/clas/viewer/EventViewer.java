@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf7,cf8,cf9,cf10,cf11,cf12,cf13;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -141,6 +141,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean         SFcorr = false;
     public Boolean          HiRes = false;
     public Boolean         TWcorr = true;
+    public Boolean         DTcorr = true;
     public Boolean     fitVerbose = false;
     public String          TLname = "UVW";
     public Boolean         TLflag = false;
@@ -148,6 +149,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Integer          TRpid = 11;
     public Boolean      useATDATA = false;
     public Boolean    useFADCTime = false;
+    public Boolean usePass2Timing = true;
     
     public JFileChooser      fc = null; 
     
@@ -346,6 +348,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         
         menu   	= new JMenu("ECt");
         cf13 = new JCheckBoxMenuItem("TWcorr"); cf13.addItemListener(this); menu.add(cf13); cf13.doClick();
+        cf14 = new JCheckBoxMenuItem("RepairMissingDT"); cf14.addItemListener(this); menu.add(cf14); cf14.doClick();
         menuBar.add(menu); 
         
         menu     = new JMenu("ECEngine");
@@ -354,6 +357,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a); cf6a.doClick(); 
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         cf6c     = new JCheckBoxMenuItem("Use FADC time");       cf6c.addItemListener(this); menu.add(cf6c);
+        cf6d     = new JCheckBoxMenuItem("PASS 2");              cf6d.addItemListener(this); menu.add(cf6d);
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set Hit Thresh");              menuItem.addActionListener(this); menu.add(menuItem);   
@@ -434,6 +438,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf6a){unsharedTime   = sc(e); monitors[0].eng.setUseUnsharedTime(unsharedTime);} 
 		if (s==cf6b){unsharedEnergy = sc(e); monitors[0].eng.setUseUnsharedEnergy(unsharedEnergy);}
 		if (s==cf6c){useFADCTime    = sc(e); monitors[0].eng.setUseFADCTime(useFADCTime);}
+		if (s==cf6d){usePass2Timing = sc(e); monitors[0].eng.setUsePass2Timing(usePass2Timing);}
 		if (s==cf7) {dbgECEngine    = sc(e); monitors[0].eng.setDbgECEngine(dbgECEngine);}
 		if (s==cf8) {dbgAnalyzer    = sc(e); monitors[0].dbgAnalyzer = dbgAnalyzer;}
 		if (s==cf9) {useATDATA      = sc(e); monitors[0].useATDATA   = useATDATA;}
@@ -441,6 +446,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf11){SFcorr         = sc(e); monitors[0].SFcorr      = SFcorr;}
 		if (s==cf12){HiRes          = sc(e); monitors[0].HiRes       = HiRes;}
 		if (s==cf13){TWcorr         = sc(e); monitors[0].eng.setUseTWcorr(TWcorr);}
+		if (s==cf14){DTcorr         = sc(e); monitors[0].eng.setUseDTcorr(DTcorr);}
 		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
 		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}
@@ -968,12 +974,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void loadHistosFromFile(String fileName) {
-        System.out.println("EventViwer.loadHistosFromFile("+fileName+")");
+        System.out.println("EventViewer.loadHistosFromFile("+fileName+")");
         
         runNumber = getFileRunNumber(fileName); 
         
         TDirectory dir = new TDirectory(); dir.readFile(fileName); dir.cd(); dir.pwd();
-        
+        processorPane.setHistoName(fileName);
+
         for(int k=0; k<this.monitors.length; k++) {  
             if(isCalibrationFile(fileName)) this.monitors[k].detcal[getFileCalibrationIndex(fileName)]=runNumber;
          	this.monitors[k].setRunNumber(runNumber);
