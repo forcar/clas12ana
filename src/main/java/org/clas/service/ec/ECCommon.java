@@ -49,6 +49,9 @@ public class ECCommon {
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
+    public static Boolean  useDTCorrections = true;
+    public static Boolean     usePass2Recon = false;
+    public static Boolean    usePass2Timing = true;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
@@ -149,14 +152,16 @@ public class ECCommon {
 
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
-        IndexedTable    dtime = manager.getConstants(run, "/calibration/ec/timing");
-//        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftiming");
-        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftime");
+        IndexedTable    itime = manager.getConstants(run, "/calibration/ec/timing"); 
+        IndexedTable    ftime = manager.getConstants(run, "/calibration/ec/ftime");    //pass2
+        IndexedTable    dtime = manager.getConstants(run, "/calibration/ec/dtime");    //pass2
+        IndexedTable     veff = manager.getConstants(run, "/calibration/ec/effective_velocity");
+        IndexedTable      fev = manager.getConstants(run, "/calibration/ec/fveff");    //pass2
+        IndexedTable      dev = manager.getConstants(run, "/calibration/ec/dveff");    //pass2
+        IndexedTable      fdj = manager.getConstants(run, "/calibration/ec/fdjitter"); //pass2		
         IndexedTable      ggs = manager.getConstants(run, "/calibration/ec/global_gain_shift");
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
-        IndexedTable       ev = manager.getConstants(run, "/calibration/ec/effective_velocity");
         IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");		
-        IndexedTable      fdj = manager.getConstants(run, "/calibration/ec/fdjitter");		
         IndexedTable   r2gain = manager.getConstants(2,   "/calibration/ec/gain");
     
         if (singleEvent) resetHistos();        
@@ -216,16 +221,30 @@ public class ECCommon {
             
             strip.setGain(useCCDBGain ? ccdbGain : run2Gain);             
             strip.setDtimeGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
-            strip.setVeff(ev.getDoubleValue("veff",sector,layer,component));
+            
+            strip.setVeff(veff.getDoubleValue("veff",sector,layer,component));            
+            strip.setDVeff(dev.getDoubleValue("veff",sector,layer,component));
+            strip.setFVeff(fev.getDoubleValue("veff",sector,layer,component));
 
-            if(!useTWCorrections) {
-                strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
-                		         dtime.getDoubleValue("a1", sector, layer, component),
+            if(!useTWCorrections) { //For TWC calibration must start from scratch as corrections cannot be iterated
+                  strip.setITime(itime.getDoubleValue("a0", sector, layer, component),
+                		         itime.getDoubleValue("a1", sector, layer, component),
                                  0,
                                  0,
                                  0);
-                strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
-                		         1,
+
+                  strip.setDTime(dtime.getDoubleValue("a0", sector, layer, component),
+		                         dtime.getDoubleValue("a1", sector, layer, component),
+                                 0,
+                                 0,
+                                 0, 
+                                 0, 
+                                 0, 
+                                 0, 
+                                 0); 
+                
+                  strip.setFTime(ftime.getDoubleValue("a0", sector, layer, component),
+                                 1,
                 		         0,
                 		         0,
                 		         0,
@@ -234,12 +253,23 @@ public class ECCommon {
             }
             
             if(useTWCorrections) {    
-                strip.setDTiming(dtime.getDoubleValue("a0", sector, layer, component),
-                		         dtime.getDoubleValue("a1", sector, layer, component),
+                  strip.setITime(itime.getDoubleValue("a0", sector, layer, component),
+                		         itime.getDoubleValue("a1", sector, layer, component),
+                		         itime.getDoubleValue("a2", sector, layer, component),
+                		         itime.getDoubleValue("a3", sector, layer, component),
+                		         itime.getDoubleValue("a4", sector, layer, component)); 
+                
+                  strip.setDTime(dtime.getDoubleValue("a0", sector, layer, component),
+       		                     dtime.getDoubleValue("a1", sector, layer, component),
                                  dtime.getDoubleValue("a2", sector, layer, component),
                                  dtime.getDoubleValue("a3", sector, layer, component),
-                                 dtime.getDoubleValue("a4", sector, layer, component));                
-                strip.setFTiming(ftime.getDoubleValue("a0", sector, layer, component),
+                                 dtime.getDoubleValue("a4", sector, layer, component), 
+                                 dtime.getDoubleValue("a5", sector, layer, component), 
+                                 dtime.getDoubleValue("a6", sector, layer, component), 
+                                 dtime.getDoubleValue("a7", sector, layer, component), 
+                                 dtime.getDoubleValue("a8", sector, layer, component));
+                  
+                  strip.setFTime(ftime.getDoubleValue("a0", sector, layer, component),
                 		         1,
                 		         ftime.getDoubleValue("a2", sector, layer, component),
                                  ftime.getDoubleValue("a3", sector, layer, component),
@@ -316,6 +346,7 @@ public class ECCommon {
                 
                 ECStrip  strip = new ECStrip(is, il, ip); 
                 
+                strip.setDBStatus(status.getIntValue("status",is,il,ip));
                 strip.setADC(adc);
                 strip.setTriggerPhase(triggerPhase);
                 strip.setID(i+1);
@@ -324,10 +355,11 @@ public class ECCommon {
                 
                 strips.add(strip); 
                 
-                float  tmax = 1000; int tdc = 0;
-                
                 float ftdc_corr = t+FTOFFSET;
+                strip.setTADC(ftdc_corr);
                 
+                float  tmax = 1000; int tdc = 0;
+                               
                 if (tdcs.hasItem(is,il,ip)) {
                     float radc = (float)Math.sqrt(adc);
                     for (float tdcc : tdcs.getItem(is,il,ip)) {
@@ -336,7 +368,6 @@ public class ECCommon {
                     }                    
                     strip.setTDC(tdc); 
                 }              
-                strip.setTADC(ftdc_corr);
             }
         }  
         
@@ -380,14 +411,11 @@ public class ECCommon {
     
     public static List<ECPeak>  getPeaks(int sector, int layer, List<ECPeak> peaks){
     	
-        List<ECPeak> selected = new ArrayList<ECPeak>();
+        List<ECPeak> peakList = new ArrayList<ECPeak>();
         
-        for(ECPeak peak : peaks){
-            if(peak.getDescriptor().getSector()==sector&&peak.getDescriptor().getLayer()==layer){
-                selected.add(peak);
-            }
-        }
-        return selected;
+        for(ECPeak peak : peaks) if(peak.getDescriptor().getSector()==sector && peak.getDescriptor().getLayer()==layer) peakList.add(peak);
+
+        return peakList;
     }
     
     public static List<ECCluster>  createClusters(List<ECPeak>  peaks, int layer){ 
@@ -437,10 +465,7 @@ public class ECCommon {
     	
         List<ECCluster> filtClusters = new ArrayList<ECCluster>();
 
-    	for (ECCluster c : clusters) {
-    		if(!c.getError() && isGoodCluster(c)) filtClusters.add(c);
-        } 
-    	
+    	for (ECCluster c : clusters) if(!c.getError() && isGoodCluster(c)) filtClusters.add(c);            	
         for (ECCluster c : filtClusters) c.setEnergy();
 
         return filtClusters;   

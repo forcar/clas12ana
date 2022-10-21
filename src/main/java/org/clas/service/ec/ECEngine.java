@@ -20,6 +20,7 @@ import org.jlab.io.base.DataEvent;
  *
  * @author gavalian
  */
+
 public class ECEngine extends ReconstructionEngine {
 	
 	public static Logger LOGGER = Logger.getLogger(ECEngine.class.getName());
@@ -42,7 +43,7 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.shareClustersEnergy(ecClusters); // Repair 2 clusters which share the same peaks
 
         for (int iCl = 0; iCl < ecClusters.size(); iCl++) {
-            // As clusters are already defined at this point, we can fill the clusterID of ECStrips belonging to the given cluster
+            // Set the clusterID of ECStrips belonging to the given cluster
             // === U strips ===
             for (ECStrip curStrip : ecClusters.get(iCl).getPeak(0).getStrips()) {
                 curStrip.setClusterId(iCl + 1);
@@ -57,25 +58,9 @@ public class ECEngine extends ReconstructionEngine {
             }
         }
         
-        
-        if (ECCommon.debug) {
-        	if (ecClusters.size()<5) {
-        	for(ECCluster c : ecClusters) {
-        		if (c.getStatus()>0) {
-        			System.out.println("\nSTRIPS SIZE = " + ecStrips.size());
-        			for(ECStrip strip : ecStrips) System.out.println(strip);
-        			System.out.println("\nPEAKS  SIZE = " + ecPeaks.size());
-        			for(ECPeak p : ecPeaks) System.out.println(p);
-        			System.out.println("\nEC CLUSTERS SIZE = " + ecClusters.size());
-        			System.out.println(c);	
-        		}
-        	
-        	}
-            System.out.println("\nEND\n");
-        	}
-        }
-        
         this.writeHipoBanks(de,ecStrips,ecPeaks,ecClusters);    
+                
+        if (ECCommon.debug) printDebug(ecStrips,ecPeaks,ecClusters);
         
         if (ECCommon.isSingleThreaded) {
         	ECCommon.clearMyStructures();
@@ -85,6 +70,23 @@ public class ECEngine extends ReconstructionEngine {
         }
         
         return true;
+    }
+    
+    public void printDebug(List<ECStrip> ecStrips, List<ECPeak> ecPeaks, List<ECCluster> ecClusters) {
+    	if (ecClusters.size()<5) {
+    	for(ECCluster c : ecClusters) {
+    		if (c.getStatus()==0) {
+    			System.out.println("\nSTRIPS SIZE = " + ecStrips.size());
+    			for(ECStrip strip : ecStrips) System.out.println(strip);
+    			System.out.println("\nPEAKS  SIZE = " + ecPeaks.size());
+    			for(ECPeak p : ecPeaks) System.out.println(p);
+    			System.out.println("\nEC CLUSTERS SIZE = " + ecClusters.size());
+    			System.out.println(c);	
+    		}
+    	
+    	}
+        System.out.println("\nEND\n");
+    	}    	
     }
     
     public List<ECStrip> getStrips() {
@@ -137,7 +139,7 @@ public class ECEngine extends ReconstructionEngine {
             bankC.setShort("status", c, (short) clusters.get(c).getStatus());
             bankC.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
             bankC.setFloat("energy", c, (float) clusters.get(c).getEnergy());           
-            bankC.setFloat("time",   c, (float) clusters.get(c).getTime()); //System.out.println(c+" "+clusters.get(c).getTime());
+            bankC.setFloat("time",   c, (float) clusters.get(c).getTime()); 
             bankC.setByte("idU",     c,  (byte) clusters.get(c).UVIEW_ID);
             bankC.setByte("idV",     c,  (byte) clusters.get(c).VVIEW_ID);
             bankC.setByte("idW",     c,  (byte) clusters.get(c).WVIEW_ID);
@@ -149,8 +151,7 @@ public class ECEngine extends ReconstructionEngine {
             bankC.setFloat("widthW", c,         clusters.get(c).getPeak(2).getMultiplicity());
             bankC.setInt("coordU",   c,         clusters.get(c).getPeak(0).getCoord());
             bankC.setInt("coordV",   c,         clusters.get(c).getPeak(1).getCoord());
-            bankC.setInt("coordW",   c,         clusters.get(c).getPeak(2).getCoord());
-  
+            bankC.setInt("coordW",   c,         clusters.get(c).getPeak(2).getCoord());  
         }
 /*     
         DataBank bankM = de.createBank("ECAL::moments", clusters.size());
@@ -168,22 +169,46 @@ public class ECEngine extends ReconstructionEngine {
             bankM.setFloat("m3v", c,   (float) clusters.get(c).clusterPeaks.get(1).getMoment3());
             bankM.setFloat("m3w", c,   (float) clusters.get(c).clusterPeaks.get(2).getMoment3());
         }
-*/               
+*/ 
         DataBank  bankD =  de.createBank("ECAL::calib", clusters.size());
-         for(int c = 0; c < clusters.size(); c++){
-            bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
-            bankD.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
-            bankD.setFloat("energy", c, (float) clusters.get(c).getEnergy());
-            bankD.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
-            bankD.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
-            bankD.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
-            bankD.setFloat("recEU",  c, (float) clusters.get(c).getEnergy(0));
-            bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
-            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));            
+        for(int c = 0; c < clusters.size(); c++){
+           bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
+           bankD.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
+           bankD.setFloat("energy", c, (float) clusters.get(c).getEnergy());
+           bankD.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
+           bankD.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
+           bankD.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
+           bankD.setFloat("recEU",  c, (float) clusters.get(c).getEnergy(0));
+           bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
+           bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
+        
+        DataBank  bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
+        for(int c = 0; c < clusters.size(); c++){
+           bankD2.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
+           bankD2.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
+           bankD2.setShort("dbstU",  c, (short) clusters.get(c).clusterPeaks.get(0).getDBStatus());
+           bankD2.setShort("dbstV",  c, (short) clusters.get(c).clusterPeaks.get(1).getDBStatus());
+           bankD2.setShort("dbstW",  c, (short) clusters.get(c).clusterPeaks.get(2).getDBStatus());
+           bankD2.setFloat("energy", c, (float) clusters.get(c).getEnergy());
+           bankD2.setFloat("ftime",  c, (float) clusters.get(c).getTime(true));
+           bankD2.setFloat("time",   c, (float) clusters.get(c).getTime(false));
+           bankD2.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
+           bankD2.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
+           bankD2.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
+           bankD2.setFloat("recEU",  c, (float) clusters.get(c).getEnergy(0));
+           bankD2.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
+           bankD2.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));  
+           bankD2.setFloat("recDTU", c, (float) clusters.get(c).getDTime(0));
+           bankD2.setFloat("recDTV", c, (float) clusters.get(c).getDTime(1));
+           bankD2.setFloat("recDTW", c, (float) clusters.get(c).getDTime(2));  
+           bankD2.setFloat("recFTU", c, (float) clusters.get(c).getFTime(0));
+           bankD2.setFloat("recFTV", c, (float) clusters.get(c).getFTime(1));
+           bankD2.setFloat("recFTW", c, (float) clusters.get(c).getFTime(2));              
+       }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-         de.appendBanks(bankP,bankC,bankD);
+         de.appendBanks(bankP,bankC,bankD2);
 //         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
@@ -213,52 +238,52 @@ public class ECEngine extends ReconstructionEngine {
     }
     
     public void setConfig(String val) {
-        System.out.println("ECEngine: Configuration = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: Configuration = "+val);
         ECCommon.config = val;    	
     }
     
     public void setVariation(String val) {
-        System.out.println("ECEngine: Calibration Variation = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: Calibration Variation = "+val);
         ECCommon.variation = val;
     } 
     
     public void setGeomVariation(String val) {
-        System.out.println("ECEngine: Geometry Variation = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: Geometry Variation = "+val);
         ECCommon.geomVariation = val;
     } 
     
     public void setVeff(float val) {
-        System.out.println("ECEngine: Veff = "+val+" CM/NS");
+    	LOGGER.log(Level.INFO,"ECEngine: Veff = "+val+" CM/NS");
     	ECCommon.veff = val;
     }
     
     public void setPCTrackingPlane(int val) {
-        System.out.println("ECEngine: PC tracking plane = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: PC tracking plane = "+val);
     	ECCommon.pcTrackingPlane = val;
     }
     
     public void setECTrackingPlane(int val) {
-        System.out.println("ECEngine: EC tracking plane = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: EC tracking plane = "+val);
     	ECCommon.ecTrackingPlane = val;
     } 
     
     public void setNewTimeCal(boolean val) {
-        System.out.println("ECEngine: useNewTimeCal = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: useNewTimeCal = "+val);
     	ECCommon.useNewTimeCal = val;
     }
     
     public void setUseUnsharedEnergy(boolean val) {
-    	System.out.println("ECengine: useUnsharedEnergy = "+val);   	
+    	LOGGER.log(Level.INFO,"ECengine: useUnsharedEnergy = "+val);   	
     	ECCommon.useUnsharedEnergy = val;
     } 
     
     public void setUnsharedEnergyCut(int val) {
-    	System.out.println("ECengine: unsharedEnergyCut = "+val);   	
+    	LOGGER.log(Level.INFO,"ECengine: unsharedEnergyCut = "+val);   	
     	ECCommon.UnsharedEnergyCut = val;
     } 
     
     public void setUseUnsharedTime(boolean val) {
-    	System.out.println("ECengine: useUnsharedTime = "+val);   	
+    	LOGGER.log(Level.INFO,"ECengine: useUnsharedTime = "+val);   	
     	ECCommon.useUnsharedTime = val;
     }
     
@@ -267,61 +292,76 @@ public class ECEngine extends ReconstructionEngine {
     	ECCommon.useTWCorrections = val;
     }
     
+    public void setDTCorrections(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useDTCorrections = "+val);
+    	ECCommon.useDTCorrections = val;
+    }
+    
+    public void setUsePass2Timing(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: usePass2Timing = "+val);
+    	ECCommon.usePass2Timing = val;
+    }
+    
+    public void setUsePass2Recon(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: usePass2Recon = "+val);
+    	ECCommon.usePass2Recon = val;
+    }
+        
     public void setUseFADCTime(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
     	ECCommon.useFADCTime = val;
     } 
     
     public void setCCDBGain(boolean val) {
-        System.out.println("ECEngine: useCCDBGain = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: useCCDBGain = "+val);
         ECCommon.useCCDBGain = val;    	
     }
     
     public void setLogParam(double val) {
-        System.out.println("ECEngine: logParam = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: logParam = "+val);
     	ECCommon.logParam = val;
     }
     
     public void setSplitMethod(int val) {
-        System.out.println("ECEngine: splitMethod = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: splitMethod = "+val);
         ECCommon.splitMethod = val;    	
     }
     
     public void setSplitThresh(int thr0, int thr1, int thr2) {
-        System.out.println("ECEngine: Peak Split thresholds = "+thr0+" "+thr1+" "+thr2);
+    	LOGGER.log(Level.INFO,"ECEngine: Peak Split thresholds = "+thr0+" "+thr1+" "+thr2);
         ECCommon.splitThresh[0] = thr0;
         ECCommon.splitThresh[1] = thr1;
         ECCommon.splitThresh[2] = thr2;   	
     }
     
     public void setTouchID(int val) {
-        System.out.println("ECEngine: touchID = "+val);
+    	LOGGER.log(Level.INFO,"ECEngine: touchID = "+val);
         ECCommon.touchID = val;    	
     } 
     
     public void setStripThresholds(int thr0, int thr1, int thr2) {
-        System.out.println("ECEngine: Strip ADC thresholds = "+thr0+" "+thr1+" "+thr2+" MeV*10");  
+    	LOGGER.log(Level.INFO,"ECEngine: Strip ADC thresholds = "+thr0+" "+thr1+" "+thr2+" MeV*10");  
         ECCommon.stripThreshold[0] = thr0;
         ECCommon.stripThreshold[1] = thr1;
         ECCommon.stripThreshold[2] = thr2;
     }
     
     public void setPeakThresholds(int thr0, int thr1, int thr2) {
-        System.out.println("ECEngine: Peak ADC thresholds = "+thr0+" "+thr1+" "+thr2+" MeV*10");  
+    	LOGGER.log(Level.INFO,"ECEngine: Peak ADC thresholds = "+thr0+" "+thr1+" "+thr2+" MeV*10");  
         ECCommon.peakThreshold[0] = thr0;
         ECCommon.peakThreshold[1] = thr1;
         ECCommon.peakThreshold[2] = thr2;
     }   
     
     public void setClusterCuts(float err0, float err1, float err2) {
-        System.out.println("ECEngine: Cluster Size Cuts = "+err0+" "+err1+" "+err2+" CM"); 
+    	LOGGER.log(Level.INFO,"ECEngine: Cluster Size Cuts = "+err0+" "+err1+" "+err2+" CM"); 
         ECCommon.clusterSize[0] = err0;
         ECCommon.clusterSize[1] = err1;
         ECCommon.clusterSize[2] = err2;
     }
     
     public void setClusterThresholds(int thr0, int thr1, int thr2) {
-        System.out.println("ECEngine: Cluster peak energy threshold scale factors = "+thr0+" "+thr1+" "+thr2);  
+    	LOGGER.log(Level.INFO,"ECEngine: Cluster peak energy threshold scale factors = "+thr0+" "+thr1+" "+thr2);  
         ECCommon.clusterThreshold[0] = thr0;
         ECCommon.clusterThreshold[1] = thr1;
         ECCommon.clusterThreshold[2] = thr2;    	
@@ -342,8 +382,8 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/attenuation", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
-            "/calibration/ec/ftiming",
             "/calibration/ec/ftime",
+            "/calibration/ec/dtime",
             "/calibration/ec/fdjitter",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
@@ -353,6 +393,8 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/torus_gain_shift",
             "/calibration/ec/global_time_walk",
             "/calibration/ec/effective_velocity",
+            "/calibration/ec/fveff",
+            "/calibration/ec/dveff",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
             "/calibration/ec/status"
@@ -363,21 +405,38 @@ public class ECEngine extends ReconstructionEngine {
         getConstantsManager().setVariation(ECCommon.variation);
         String variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
         if(!(ECCommon.geomVariation.equals("default"))) variationName = ECCommon.geomVariation;
-        System.out.println("GEOMETRY VARIATION IS "+variationName);
+        LOGGER.log(Level.INFO,"GEOMETRY VARIATION IS "+variationName);
         ECCommon.ecDetector =  GeometryFactory.getDetector(DetectorType.ECAL,11,variationName);
 
         setConfig("test");
-        setStripThresholds(10,9,8);
-        setPeakThresholds(18,20,15);
+        
+        if(ECCommon.usePass2Recon) {  //for testing pass2 recon peak splitting methods
+        setStripThresholds(10,9,8);   //pass1 10,9,8
+        setPeakThresholds(18,20,15);  //pass1 18,20,15
         setClusterThresholds(0,0,0);
         setClusterCuts(4.5f,11f,13f); //pass1 7,15,20
-        setSplitThresh(3,3,3);
-        setTouchID(2);
+        setSplitMethod(3);            //pass1 0=gagik method
+        setSplitThresh(3,3,3);        //pass1 3,3,3
+        setTouchID(2);                //pass1 1
+        }
+        
+        if(!ECCommon.usePass2Recon) { // use pass1 recon but pass2 timing 
+        setStripThresholds(10,9,8);   //pass1 10,9,8
+        setPeakThresholds(18,20,15);  //pass1 18,20,15
+        setClusterThresholds(0,0,0);
+        setClusterCuts(7,15,20);      //pass1 7,15,20
+        setDTCorrections(true);
+        setUsePass2Timing(true);      //pass1 false
+        setSplitMethod(0);            //pass1 0=gagik method
+        setSplitThresh(3,3,3);        //pass1 3,3,3
+        setTouchID(1);                //pass1 1
+        }
         
         this.registerOutputBank("ECAL::hits");
         this.registerOutputBank("ECAL::peaks");
         this.registerOutputBank("ECAL::clusters");
         this.registerOutputBank("ECAL::calib");
+        this.registerOutputBank("ECAL::calibpass2");
         this.registerOutputBank("ECAL::moments"); 
         
         if (ECCommon.isSingleThreaded) ECCommon.initHistos();

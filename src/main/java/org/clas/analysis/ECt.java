@@ -42,7 +42,7 @@ public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>>  tdcs = new IndexedList<List<Float>>(3);
     IndexedList<List<Float>> tlist = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, oftime=null, ftime=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
+    IndexedTable time=null, oftime=null, ftime=null, dtime=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
     
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -447,6 +447,7 @@ public class ECt extends DetectorMonitor {
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         oftime  = cm.getConstants(runno, "/calibration/ec/ftiming");
         ftime   = cm.getConstants(runno, "/calibration/ec/ftime");
+        dtime   = cm.getConstants(runno, "/calibration/ec/dtime");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         fo      = cm.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
         fgo     = cm.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
@@ -645,14 +646,35 @@ public class ECt extends DetectorMonitor {
        
 //   	   HashMap<Integer,ArrayList<Integer>>  mapPndex = mapByIndex(bankc,"pindex"); //maps part bank index to REC::Calorimeter
 //   	   HashMap<Integer,ArrayList<Integer>>  mapCndex = mapByIndex(bankc,"index");  //maps clus bank index to REC::Calorimeter 
-
+       
+/*       if(event.hasBank("ECAL::calibpass2")) {
+    	   DataBank bank = event.getBank("ECAL::calibpass2");
+    	   for (int loop =0; loop<bank.rows(); loop++) {
+    		   int is = bank.getByte("sector",loop);
+    		   int il = bank.getByte("layer", loop);
+    		   float e2 = bank.getFloat("energy",loop);
+    		   float t2 = bank.getFloat("time",loop);
+    		   float ft2 = bank.getFloat("ftime",loop);
+    		   short db1 = bank.getShort("dbstU",loop);
+    		   short db2 = bank.getShort("dbstV",loop);
+    		   short db3 = bank.getShort("dbstW",loop);
+    		   float dt2u = bank.getFloat("recDTU",loop);
+    		   float dt2v = bank.getFloat("recDTV",loop);
+    		   float dt2w = bank.getFloat("recDTW",loop);
+    		   float ft2u = bank.getFloat("recFTU",loop);
+    		   float ft2v = bank.getFloat("recFTV",loop);
+    		   float ft2w = bank.getFloat("recFTW",loop);
+    		   System.out.println(is+" "+il+" "+e2+" "+t2+" "+ft2+" "+db1+" "+db2+" "+db3+" "+dt2u+" "+dt2v+" "+dt2w+" "+ft2u+" "+ft2v+" "+ft2w);
+    	   }    
+       }
+*/
        pathlist.clear();
        tdcs.clear();
        
        for(int loop = 0; loop < bankc.rows(); loop++){ //loop over REC::Calorimeter
           int     is = bankc.getByte("sector",loop);
           int     il = bankc.getByte("layer",loop);
-          int     in = bankc.getShort("index",loop); // index to cooked ECAL::clusters (now replaced by dropBanks version)
+          int     in = bankc.getShort("index",loop); // index to cooked ECAL::clusters (now replaced by dropBanks re-cooking)
           int    det = bankc.getByte("detector",loop);
           if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in); // associate ECAL::cluster index to REC::Calorimeter index               
        }
@@ -712,13 +734,13 @@ public class ECt extends DetectorMonitor {
                    for (int i=0; i<3; i++) { //loop over U,V,W
                 	   float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
                 	   if (clusters.size()>0) { // use ECEngine structure clusters
-                         tu    = (float) clusters.get(loop).getTime(i); 
+                         tu    = (float) clusters.get(loop).getTime(i);
                          ip    =         clusters.get(loop).getPeak(i).getMaxStrip();
                          adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
                          tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
                          tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
 //                         tdcc = tdc-tw[il+i-1]/(float)Math.sqrt(adc);
-                         tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
+//                         tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
                          leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
 //                         System.out.println("C Layer "+il+" "+clusters.get(loop).getPeak(i).getMaxECStrip().getLine().toString());
 //                         System.out.println("C Layer "+il+" "+clusters.get(loop).getPeak(i).getLine().toString());
@@ -764,7 +786,7 @@ public class ECt extends DetectorMonitor {
                                               
                        if (goodHisto) {
                     	   ((H1F) this.getDataGroup().getItem(is,0,tlnum,run).getData(il+i-1).get(0)).fill(resid); //timelines
-                           ((H2F) this.getDataGroup().getItem(is,0,10,run).getData(il+i-1).get(0)).fill(resid, ip);
+                           ((H2F) this.getDataGroup().getItem(is,0,   10,run).getData(il+i-1).get(0)).fill(resid, ip);
                        }
                        
                        if (!dropSummary && goodHisto) {  //Menu selection
@@ -909,17 +931,18 @@ public class ECt extends DetectorMonitor {
     public void analyzeCalibration() {
         analyzeGraphs(1,7,0,3,0,3);
         System.out.println("analyzeCalibration Finished");
-        if (eng.useFADCTime) writeFile("ftiming",1,7,0,3,0,3);
-        if(!eng.useFADCTime) writeFile("timing",1,7,0,3,0,3);
-        writeFile("effective_velocity",1,7,0,3,0,3);    
+        if (eng.useFADCTime &&  eng.usePass2Time) {writeFile("ftime",1,7,0,3,0,3);  writeFile("fveff",1,7,0,3,0,3);}
+        if(!eng.useFADCTime &&  eng.usePass2Time) {writeFile("dtime",1,7,0,3,0,3);  writeFile("dveff",1,7,0,3,0,3);}
+        if(!eng.useFADCTime && !eng.usePass2Time) {writeFile("timing",1,7,0,3,0,3); writeFile("effective_velocity",1,7,0,3,0,3);}    
         isAnalyzeDone = true;
     }
     
     public void analyzeResiduals() {
         getResidualSummary(1,7,0,3,0,3);
         System.out.println("analyzeResiduals Finished");
-        if (eng.useFADCTime) writeFile("ftiming_update",1,7,0,3,0,3);
-        if(!eng.useFADCTime) writeFile("timing_update",1,7,0,3,0,3);
+        if (eng.useFADCTime &&  eng.usePass2Time) writeFile("ftime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime &&  eng.usePass2Time) writeFile("dtime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime && !eng.usePass2Time) writeFile("timing_update",1,7,0,3,0,3);
         isResidualDone = true;
     }
     
@@ -969,18 +992,21 @@ public class ECt extends DetectorMonitor {
                    g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0); //subtract t0 just fitted
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY(""); 
                    if(dumpGraphs) {
-                	   String nam ="s"+is+"l"+il+"v"+iv+"p"+ip;
+                	   String nam =eng.useFADCTime?"ftime/":"dtime/"+"s"+is+"l"+il+"v"+iv+"p"+ip;
                 	   System.out.println("Writing "+filPath+"twplots/"+nam+".vec"); dumpGraph(filPath+"twplots/"+nam+".vec",g);
                    }
-            	   if(!eng.useFADCTime) tl.fitData.add(fitEngine(g,16,20),is,3*il+iv+1,ip+200,run); //TW fits to DISC time           	   
-            	   if( eng.useFADCTime) tl.fitData.add(TWFit(g,is,il,iv), is,3*il+iv+1,ip+200,run); //TW fits to FADC time            	   
+//            	   if(!eng.useFADCTime && il>2) tl.fitData.add(fitEngine(g,16,20),is,3*il+iv+1,ip+200,run); //TW fits to DISC time 
+                   boolean doFit = true;
+            	   if(is==6&&il==1&&iv==2&&ip==35) {System.out.println("Rejecting Sector "+is+" Layer "+il+" View "+iv+" PMT "+ip);doFit=false;}
+            	   if(!eng.useFADCTime) tl.fitData.add(DTWFit(g,is,il,iv,doFit),is,3*il+iv+1,ip+200,run); //TW fits to DISC time           	   
+            	   if( eng.useFADCTime) tl.fitData.add(FTWFit(g,is,il,iv),is,3*il+iv+1,ip+200,run);       //TW fits to FADC time            	   
                 }
              }
           }
        } 
     }
     
-    public FitData TWFit(GraphErrors g, int is, int il, int iv) {
+    public FitData FTWFit(GraphErrors g, int is, int il, int iv) {
     	int fnum=13, fmin=10;
     	FitData fd = new FitData(g);
     	if(g.getDataSize(0)==0) return fd;
@@ -994,6 +1020,27 @@ public class ECt extends DetectorMonitor {
         fd.fitGraph("",true,true); 
         return fd;
     }
+   
+    public FitData DTWFit(GraphErrors g, int is, int il, int iv, boolean doFit) {
+    	int fitnum = 17;   
+    	int fmin = il==0 ? 23:is==5 ? 12:15; if(il==2 && iv>0) fmin=10;
+    	FitData fd = new FitData(g);
+    	if(g.getDataSize(0)==0) return fd;
+        fd.initFit(fitnum,0,1,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
+        switch (il) {
+        case 0: fd.initFunc(0,-0.5);       fd.initFunc(1,25,25,27);  fd.initFunc(2,5,3,8);     fd.initFunc(3,160,140,180); fd.initFunc(4,30,15,35); 
+                fd.initFunc(5, 15,10,18);  fd.initFunc(6,0.3,0,2); break;
+        case 1: fd.initFunc(0,-0.5,-1,1);  fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,2,11);  fd.initFunc(3,155,80,220);  fd.initFunc(4,15,20,145); 
+                fd.initFunc(5, 0.5,0.3,1); fd.initFunc(6,0.7,0,1); break;
+        case 2: fd.initFunc(0,-0.5);       fd.initFunc(1,20,19,21);  fd.initFunc(2,4,3.2,4.8); fd.initFunc(3,260,120,261); fd.initFunc(4,34,30,40); 
+                fd.initFunc(5, 6,5.9,6.1); fd.initFunc(6,0.3,-1,1); 
+        }
+        if(il==2 && iv>0) {fd.initFunc(0,-0.5,-1,1);  fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,2,11); fd.initFunc(3,155,80,220); fd.initFunc(4,15,20,145);         
+                           fd.initFunc(5, 0.5,0.3,1); fd.initFunc(6,0.7,0,1);}
+        fd.doFit = doFit; 
+        fd.fitGraph("",true,true); 
+        return fd;
+    } 
     
     public void getResidualSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
     	
@@ -1233,16 +1280,20 @@ public class ECt extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "timing_update":      line =  getA0(is,il,iv,ip,il==il1 ? 0 : A0offset);   break; //RGM pass0 EC Z-plane compensation
-							case "ftiming_update":     line =  getFA0(is,il,iv,ip,il==il1 ? 0 : A0offset);  break; //RGM pass0 EC Z-plane compensation
+							case "timing_update":      line =  getA0( is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
+							case "dtime_update":       line =  getDA0(is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
+							case "ftime_update":       line =  getFA0(is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
 							case "timing":             line =  getTW(is,il,iv,ip);  break;
-							case "ftiming":            line =  getFTW(is,il,iv,ip); break;
+							case "dtime":              line =  getDTW(is,il,iv,ip,false); break; //true: update TWC but not offset
+							case "ftime":              line =  getFTW(is,il,iv,ip); break;
 							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
+							case "fveff":              line =  getEV(is,il,iv,ip);  break;
 							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
 							case "fadc_offset":        line =  getGTMF(is,il,iv,ip);  
 							case "setFTiming":         line =  getFTiming(is,il,iv,ip); break;
 							case "A0offset":           line =  getNewA0(is,il,iv,ip); break;
 							case "NewFTW":             line =  getNewFTW(is,il,iv,ip); break;
+							case "NewDTW":             line =  getNewDTW(is,il,iv,ip); break;
 							}
 							if (line!=null) {
 						      System.out.println(line);
@@ -1264,21 +1315,39 @@ public class ECt extends DetectorMonitor {
 
 	}
 	
-	public String getTW(int is, int il, int iv, int ip) { //Absolute TDC residual calibration + time walk
+	public String getTW(int is, int il, int iv, int ip) { //Absolute TDC residual calibration + pass1 time walk
 		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0 //fits to corrected t vs leff
 				+" 0.02345 "
-				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1+" "
-				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0+" "
-				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2+" ";
+				+(time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1)+" "
+				+(time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0)+" "
+				+(time.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2)+" ";
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0";
 		}
 		
 	}
+	
+	public String getDTW(int is, int il, int iv, int ip, boolean update) { //Absolute TDC residual calibration + pass2 time walk
+		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+
+		    	(update ? dtime.getDoubleValue("a0",is,3*il+iv+1,ip+1):tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0)				
+				+" 0.02345 "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1+" "
+				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p2+" "
+			    +tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p3+" "
+			    +tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p4+" "
+			    +tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p5+" "
+			    +tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p6+" ";
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0 0.0 0.0 0.0 0.0";
+		}
 		
-	public String getFTW(int is, int il, int iv, int ip) { //Absolute FADC residual calibration + time walk
+	}
+		
+	public String getFTW(int is, int il, int iv, int ip) { //Absolute FADC residual calibration + pass 2 time walk
 		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0 //fits to corrected t vs leff
@@ -1297,7 +1366,7 @@ public class ECt extends DetectorMonitor {
 	public String getA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1) //previous a0
+				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
 				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" " //replace with table
@@ -1309,10 +1378,29 @@ public class ECt extends DetectorMonitor {
 		
 	}
 	
+	public String getDA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
+		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+(dtime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
+				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
+				+" 0.02345 "
+				+dtime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
+				+dtime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
+				+dtime.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" "
+				+dtime.getDoubleValue("a5", is, 3*il+iv+1, ip+1)+" "
+				+dtime.getDoubleValue("a6", is, 3*il+iv+1, ip+1)+" "
+			    +dtime.getDoubleValue("a7", is, 3*il+iv+1, ip+1)+" "
+			    +dtime.getDoubleValue("a8", is, 3*il+iv+1, ip+1)+" ";
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0 0.0 0.0";
+		}
+		
+	}
+	
 	public String getFA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) //previous a0
+				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
 				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+ftime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
@@ -1326,6 +1414,7 @@ public class ECt extends DetectorMonitor {
 		
 	}
 
+	
 	public void setA0offset(int sector, float offset) {
 		A0sector = sector;
 		A0offset = offset;
@@ -1350,7 +1439,21 @@ public class ECt extends DetectorMonitor {
 				+oftime.getDoubleValue("a4", is, 3*il+iv+1, ip+1)+" "
 				+"0.0"+" "
 				+"0.0");		
-	}	
+	}
+	
+	public String getNewDTW(int is, int il, int iv, int ip) {
+	    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+			+(oftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1)+" "
+			+" 0.02345 "
+			+"0.0"+" "
+			+"0.0"+" "
+			+"0.0"+" "
+			+"0.0"+" "
+			+"0.0"+" "
+			+"0.0"+" "
+			+"0.0");		
+    }	
+	
 	public String getFTiming(int is, int il, int iv, int ip) {
 		return is+" "+(3*il+iv+1)+" "+(ip+1)+" 0.0 "+" 0.02345 "+" 0.0 "+" 0.0 "+" 0.0";
 	}
@@ -1597,11 +1700,10 @@ public class ECt extends DetectorMonitor {
     
     public static void main(String[] args) {
     	
-    	ECt ect = new ECt("ECt",6684);
-    	ect.writeFile("NewFTW",1,7,0,3,0,3);    
+//    	ECt ect = new ECt("ECt",6684);
+//    	ect.writeFile("NewFTW",1,7,0,3,0,3);    
 //    	ECt ect = new ECt("ECt",2385);
-//    	ect.writeFile("setFTiming",1,7,0,3,0,3);
-   	
+//    	ect.writeFile("NewDTW",1,7,0,3,0,3);   	
     }
      
 }

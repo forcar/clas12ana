@@ -12,7 +12,6 @@ import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 
-
 /**
  *
  * @author gavalian
@@ -86,9 +85,33 @@ public class ECPeak implements Comparable {
 		if(indexMaxStrip >= 0 && indexMaxStrip < peakStrips.size()) return peakStrips.get(indexMaxStrip).getTime(point);
 		return 0.0;
 	}
-	
+    
+    public double getFTime(){
+        if(indexMaxStrip >= 0 && indexMaxStrip < peakStrips.size()) return peakStrips.get(indexMaxStrip).getFTime();
+        return 0.0;
+    }
+    
+    public double getFTime(Point3D point) {
+		if(indexMaxStrip >= 0 && indexMaxStrip < peakStrips.size()) return peakStrips.get(indexMaxStrip).getFTime(point);
+		return 0.0;
+	}
+    
+    public double getDTime(){
+        if(indexMaxStrip >= 0 && indexMaxStrip < peakStrips.size()) return peakStrips.get(indexMaxStrip).getDTime();
+        return 0.0;
+    }
+    
+    public double getDTime(Point3D point) {
+		if(indexMaxStrip >= 0 && indexMaxStrip < peakStrips.size()) return peakStrips.get(indexMaxStrip).getDTime(point);
+		return 0.0;
+	}   
+    
     public DetectorDescriptor getDescriptor(){
         return desc;
+    }
+    
+    public short getDBStatus() {
+        return peakStrips.get(indexMaxStrip).getDBStatus();
     }
     
     public ECStrip getMaxECStrip() {
@@ -478,8 +501,8 @@ public class ECPeak implements Comparable {
     @Override
     public String toString(){
         StringBuilder str = new StringBuilder();
-        str.append(String.format("----> peak  ( %3d %3d) STATUS=%1d ENERGY=%6.4f TIME=%6.2f\n", 
-                desc.getSector(),desc.getLayer(), getStatus(), getEnergy(), getTime()));
+        str.append(String.format("----> peak  ( %3d %3d) STATUS=%1d ENERGY=%6.4f TIME=%6.2f FTIME=%6.2f\n", 
+                desc.getSector(),desc.getLayer(), getStatus(), getEnergy(), getTime(), getFTime() ));
         str.append(peakLine.toString());
         str.append("\n");
         for(ECStrip strip : peakStrips){
@@ -490,4 +513,5 @@ public class ECPeak implements Comparable {
         
         return str.toString();
     }
+    
 }

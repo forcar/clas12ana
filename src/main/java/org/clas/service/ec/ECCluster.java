@@ -36,6 +36,7 @@ public class ECCluster implements Comparable {
     public byte    sharedCluster = -1;
     private byte      sharedView =  0; //1=U, 2=V, 3=W, 4=UV, 5=UW, 6=VW
     public int            zone   = 0;
+    public boolean         useFT = false;
        
     public ECCluster(ECPeak u, ECPeak v, ECPeak w){
         
@@ -118,15 +119,30 @@ public class ECCluster implements Comparable {
  
     public double getEnergy(int view){ //0+1+2 = clusterEnergy only if getStatus()=0 (5/1/2022)
         return clusterPeaks.get(view).getEnergy(clusterHitPosition);
-    }  
+    }
     
     public double getTime() {
     	return ECCommon.useUnsharedTime? getUnsharedRawADCTime():getRawADCTime();
     }
+    
+    public double getTime(Boolean val) {
+    	useFT = val;
+    	return ECCommon.useUnsharedTime? getUnsharedRawADCTime():getRawADCTime();
+    }
 	
-    public double getTime(int view){
-        return clusterPeaks.get(view).getTime(clusterHitPosition);
-    }	
+    public double getTime(int view){ 
+    	if (ECCommon.useFADCTime || useFT) return getFTime(view);
+    	Boolean reject = ECCommon.useDTCorrections && getDTime(view)<=0; 
+        return reject ? getFTime(view):getDTime(view);
+    }
+     
+    public double getFTime(int view) {
+    	return clusterPeaks.get(view).getFTime(clusterHitPosition);
+    }
+    
+    public double getDTime(int view) {
+    	return clusterPeaks.get(view).getDTime(clusterHitPosition);
+    }
     
 	public double getMaxEnergyTime() {
 		// For cluster time use timing from U,V,W peak with largest reconstructed energy		
@@ -248,8 +264,8 @@ public class ECCluster implements Comparable {
     @Override
     public String toString(){
         StringBuilder str = new StringBuilder();
-        str.append(String.format("[****] CLUSTER >>>>> RE=%6.3f E=%6.3f Tr=%6.2f T=%6.2f Tc=%6.2f ShC=%1d ShV=%1d    >>> ",
-        getRawEnergy(),getEnergy(),getRawADCTime(),getTime(),getUnsharedRawADCTime(),sharedCluster,sharedView));
+        str.append(String.format("[****] CLUSTER >>>>> RE=%6.3f E=%6.3f DT=%6.2f DT123=%6.2f %6.2f %6.2f FT123=%6.2f %6.2f %6.2f ShC=%1d ShV=%1d    >>> ",
+        getRawEnergy(),getEnergy(),getTime(),getDTime(0),getDTime(1),getDTime(2),getFTime(0),getFTime(1),getFTime(2),sharedCluster,sharedView));
         str.append(clusterHitPosition.toString());
         str.append(String.format("  error = %6.5f\n",clusterSize));
         for(int view = 0; view < 3; view++){
