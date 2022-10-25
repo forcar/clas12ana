@@ -50,6 +50,7 @@ public class ECCommon {
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
     public static Boolean  useDTCorrections = true;
+    public static Boolean     useCalibPass2 = false;
     public static Boolean     usePass2Recon = false;
     public static Boolean    usePass2Timing = true;
     public static int     UnsharedEnergyCut = 6;

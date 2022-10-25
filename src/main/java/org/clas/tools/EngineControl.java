@@ -38,7 +38,7 @@ public class EngineControl implements ActionListener {
 	public float pcT,eciT,ecoT;
 	public double wlogPar=3.0;
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
-	public boolean useFADCTime, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Time;
+	public boolean useFADCTime, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Time, useCalibPass2;
 	
 	public ECEngine engine = null;
 	
@@ -230,7 +230,12 @@ public class EngineControl implements ActionListener {
     	engine.setUsePass2Timing(val);
     	pass=val?"pass2":"pass1"; configDisplay();
     	usePass2Time = val;
-    } 
+    }
+    
+    public void setUseCalibPass2(Boolean val) {
+    	engine.setUseCalibPass2(val);
+    	useCalibPass2 = val;
+    }
     
     public void setUseTWcorr(Boolean val) {
     	engine.setTWCorrections(val);

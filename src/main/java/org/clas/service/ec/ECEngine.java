@@ -153,6 +153,7 @@ public class ECEngine extends ReconstructionEngine {
             bankC.setInt("coordV",   c,         clusters.get(c).getPeak(1).getCoord());
             bankC.setInt("coordW",   c,         clusters.get(c).getPeak(2).getCoord());  
         }
+        
 /*     
         DataBank bankM = de.createBank("ECAL::moments", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
@@ -183,7 +184,10 @@ public class ECEngine extends ReconstructionEngine {
            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
         
-        DataBank  bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
+        DataBank bankD2 = null;
+        
+        if(ECCommon.useCalibPass2) {
+        bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
            bankD2.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
            bankD2.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
@@ -206,9 +210,10 @@ public class ECEngine extends ReconstructionEngine {
            bankD2.setFloat("recFTV", c, (float) clusters.get(c).getFTime(1));
            bankD2.setFloat("recFTW", c, (float) clusters.get(c).getFTime(2));              
        }
+       }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-         de.appendBanks(bankP,bankC,bankD2);
+           de.appendBanks(bankP,bankC,bankD2);
 //         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
@@ -306,7 +311,11 @@ public class ECEngine extends ReconstructionEngine {
     	LOGGER.log(Level.INFO,"ECengine: usePass2Recon = "+val);
     	ECCommon.usePass2Recon = val;
     }
-        
+    
+    public void setUseCalibPass2(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useCalibPass2 = "+val);
+    	ECCommon.useCalibPass2 = val;
+    }        
     public void setUseFADCTime(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
     	ECCommon.useFADCTime = val;
@@ -436,7 +445,7 @@ public class ECEngine extends ReconstructionEngine {
         this.registerOutputBank("ECAL::peaks");
         this.registerOutputBank("ECAL::clusters");
         this.registerOutputBank("ECAL::calib");
-        this.registerOutputBank("ECAL::calibpass2");
+        if(ECCommon.useCalibPass2) this.registerOutputBank("ECAL::calibpass2");
         this.registerOutputBank("ECAL::moments"); 
         
         if (ECCommon.isSingleThreaded) ECCommon.initHistos();

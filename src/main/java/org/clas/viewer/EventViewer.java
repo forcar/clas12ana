@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -150,6 +150,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean      useATDATA = false;
     public Boolean    useFADCTime = false;
     public Boolean usePass2Timing = true;
+    public Boolean  useCalibPass2 = false;
     
     public JFileChooser      fc = null; 
     
@@ -219,8 +220,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-  	    monitors[n] = new ECt("ECt"); 
-//            monitors[n] = new ECperf("ECperf");
+//  	    monitors[n] = new ECt("ECt"); 
+            monitors[n] = new ECperf("ECperf");
 //   		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
@@ -358,6 +359,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         cf6c     = new JCheckBoxMenuItem("Use FADC time");       cf6c.addItemListener(this); menu.add(cf6c);
         cf6d     = new JCheckBoxMenuItem("PASS 2");              cf6d.addItemListener(this); menu.add(cf6d);
+        cf6e     = new JCheckBoxMenuItem("calibpass2");          cf6e.addItemListener(this); menu.add(cf6e);
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set Hit Thresh");              menuItem.addActionListener(this); menu.add(menuItem);   
@@ -439,6 +441,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf6b){unsharedEnergy = sc(e); monitors[0].eng.setUseUnsharedEnergy(unsharedEnergy);}
 		if (s==cf6c){useFADCTime    = sc(e); monitors[0].eng.setUseFADCTime(useFADCTime);}
 		if (s==cf6d){usePass2Timing = sc(e); monitors[0].eng.setUsePass2Timing(usePass2Timing);}
+		if (s==cf6e){useCalibPass2  = sc(e); monitors[0].eng.setUseCalibPass2(useCalibPass2);}
 		if (s==cf7) {dbgECEngine    = sc(e); monitors[0].eng.setDbgECEngine(dbgECEngine);}
 		if (s==cf8) {dbgAnalyzer    = sc(e); monitors[0].dbgAnalyzer = dbgAnalyzer;}
 		if (s==cf9) {useATDATA      = sc(e); monitors[0].useATDATA   = useATDATA;}
