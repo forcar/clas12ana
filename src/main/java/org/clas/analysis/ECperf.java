@@ -784,21 +784,24 @@ public class ECperf extends DetectorMonitor {
         F1D   f11 = new F1D("f11_ECtime"+run,"[a]", 0.2,EB*1.0);   f11.setParameter(0,0);  f11.setLineColor(1);    f11.setLineStyle(1);   
         F1D     f = new F1D("f00_ECtime"+run,"[a]", 0.2,EB*0.6);     f.setParameter(0,0);    f.setLineColor(1);      f.setLineStyle(1);   
         F1D   f22 = new F1D("f22_ECtime"+run,"[a]", 0.0,2.0);      f22.setParameter(0,0);  f22.setLineColor(1);    f22.setLineStyle(1);   
-        F1D f2212 = new F1D("f2212_ECtime"+run,"[a]", 0.2,max);  f2212.setParameter(0,0); f2212.setLineColor(1); f2212.setLineStyle(1);   
+        F1D   f220 = new F1D("f220_ECtime"+run,"[a]", 0.0,1.0);   f220.setParameter(0,0); f220.setLineColor(1);   f220.setLineStyle(1);   
+        F1D   f221 = new F1D("f221_ECtime"+run,"[a]", 0.0,0.7);   f221.setParameter(0,0); f221.setLineColor(1);   f221.setLineStyle(1);   
+        F1D   f222 = new F1D("f222_ECtime"+run,"[a]", 0.0,0.5);   f222.setParameter(0,0); f222.setLineColor(1);   f222.setLineStyle(1);   
+        F1D f2212 = new F1D("f2212_ECtime"+run,"[a]", 0.2,max);  f2212.setParameter(0,0);f2212.setLineColor(1);  f2212.setLineStyle(1);   
 		
     	switch (st) {
     	
         case 0:
             dg = new DataGroup(4,5);     	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f11,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f11,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f11,n); n++;        	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#Delta#beta FTOF"),n);dg.addDataSet(f11,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 PCAL"),n);dg.addDataSet(f11,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 ECIN"),n);dg.addDataSet(f11,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 ECOU"),n);dg.addDataSet(f11,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 FTOF"),n);dg.addDataSet(f11,n); n++;        	
         	        	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f22,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f22,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f22,n); n++;  
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","p (GeV)","#Delta#beta FTOF"),n);dg.addDataSet(f22,n); n++;  
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,1.0,35,-0.12,0.12,"PHOT","Edep (GeV)","#beta-1 PCAL"),n);dg.addDataSet(f220,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,0.7,35,-0.12,0.12,"PHOT+NEUT","Edep (GeV)","#beta-1 ECIN"),n);dg.addDataSet(f221,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,0.5,35,-0.12,0.12,"NEUT","Edep (GeV)","#beta-1 ECOU"),n);dg.addDataSet(f222,n); n++;  
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","Edep (GeV)","#beta-1 FTOF"),n);dg.addDataSet(f22,n); n++;  
          	
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIP","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f,n); n++;
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIP","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f,n); n++;
@@ -995,7 +998,7 @@ public class ECperf extends DetectorMonitor {
 			for(int i=0; i<3; i++) { //P1A, P1B, PCAL
 				for(int is=1;is<7;is++){  //sector 
 					tag = is+"-"+i+"-"+st+"-"+k+"-"+run;
-					dg.addDataSet(makeH2(tab+"-1-",tag,60,0.5,0.9,40,-50,50,"","S"+is+" p_p_i_+",fdet[i]+" Y(CM)"),inn); inn++;
+					dg.addDataSet(makeH2(tab+"-1-",tag,60,0.5,0.9,40,-50,50,"","S"+is+" p_pi+",fdet[i]+" Y(CM)"),inn); inn++;
 				}
 			}
         break;
@@ -1005,7 +1008,7 @@ public class ECperf extends DetectorMonitor {
 			for(int i=0; i<3; i++) { //P1A, P1B, PCAL
 				for(int is=1;is<7;is++){  //sector 
 					tag = is+"-"+i+"-"+st+"-"+k+"-"+run;
-					dg.addDataSet(makeH2(tab+"-1-",tag,60,25,35,40,-50,50,"","S"+is+" #theta_p_i_+",fdet[i]+" Y(CM)"),inn); inn++;
+					dg.addDataSet(makeH2(tab+"-1-",tag,60,25,35,40,-50,50,"","S"+is+" #theta_pi+",fdet[i]+" Y(CM)"),inn); inn++;
 				}
 			} 
     	}
@@ -1035,18 +1038,18 @@ public class ECperf extends DetectorMonitor {
         case 1:		
         dg = new DataGroup(4,3);  
         tag = st+"-"+k+"-"+run;        	
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0.0,5.5,50,0,100,   "pizero","p_m_m (GeV)","#theta_m_m (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_m_m - cx_e_c_a_l","cy_m_m - cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cx_m_m - cx_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cy_m_m - cy_e_c_a_l"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0.0,5.5,50,0,100,   "pizero","p_mm (GeV)","#theta_mm (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,15,50,0,8,             " ","Opening Angle (deg)","E1*E2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,5.5,50,0,5.5,          " ","p_m_m (GeV)","p_e_c_a_l (GeV)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,5.5,50,0,5.5,          " ","p_mm (GeV)","p_ecal (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,60,0,0.3,                   " ","IVM (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,60,0,0.3,                   " ","IVM (GeV)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_m_m","cy_m_m"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_e_c_a_l","cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_m_m (GeV)"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_m_m (GeV)"),n-1);n++;  
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_mm (GeV)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_mm (GeV)"),n-1);n++;  
     	((H1F)dg.getData(10).get(1)).setFillColor(4);
     	}
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -1063,18 +1066,18 @@ public class ECperf extends DetectorMonitor {
         case 1:		
         dg = new DataGroup(4,3); int n=0;
         tag = st+"-"+k+"-"+run;        	
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0.0,5.5,50,0,100,      "eta","p_m_m (GeV)","#theta_m_m (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_m_m - cx_e_c_a_l","cy_m_m - cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cx_m_m - cx_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cy_m_m - cy_e_c_a_l"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0.0,5.5,50,0,100,      "eta","p_mm (GeV)","#theta_mm (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cx_mm - cx_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                " ","cy_mm - cy_ecal"),n);n++;
     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,45,50,0,4,             " ","Opening Angle (deg)","E1*E2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,5.5,50,0,5.5,          " ","p_m_m (GeV)","p_e_c_a_l (GeV)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,5.5,50,0,5.5,          " ","p_mm (GeV)","p_ecal (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,60,0,0.8,                   " ","IVM (GeV)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,60,0,0.8,                   " ","IVM (GeV)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_m_m","cy_m_m"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_e_c_a_l","cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_m_m (GeV)"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_m_m (GeV)"),n-1);n++;  
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_mm","cy_mm"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,    " ","cx_ecal","cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_mm (GeV)"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,0,5.5,                   " ","p_mm (GeV)"),n-1);n++;  
     	((H1F)dg.getData(10).get(1)).setFillColor(4);
     	}
     	this.getDataGroup().add(dg,0,st,k,run);      
@@ -1093,33 +1096,34 @@ public class ECperf extends DetectorMonitor {
     	dg = new DataGroup(6,4); 
         for(int is=1;is<7;is++){ 
         	tag = is+"-"+st+"-"+k+"-"+run;        	
-        	dg.addDataSet(makeH2(tab+"-0-",tag,50,0,2.5,50,0.,100,"S"+is,"p_m_m (GeV)","PCAL #pi^+-n (cm)"),is-1); 
-        	dg.addDataSet(makeH2(tab+"-1-",tag,50,0,2.5,50,0.,100,"",    "p_m_m (GeV)","ECIN #pi^+-n (cm)"),is-1+6); 
-        	dg.addDataSet(makeH2(tab+"-2-",tag,50,0,2.5,50,0.,100,"",    "p_m_m (GeV)","ECOU #pi^+-n (cm)"),is-1+12); 
-        	dg.addDataSet(makeH2(tab+"-3-",tag,50,-0.5,2.0,50,-0.5,0.5,"",    "Mass^2 (GeV^2)","cx_m_m - cx_e_c_a_l"),is-1+18); 
+        	dg.addDataSet(makeH2(tab+"-0-",tag,50,0,2.5,50,0.,100,"S"+is,"P_mm (GeV)","PCAL #pi^+-n (cm)"),is-1); 
+        	dg.addDataSet(makeH2(tab+"-1-",tag,50,0,2.5,50,0.,100,"",    "P_mm (GeV)","ECIN #pi^+-n (cm)"),is-1+6); 
+        	dg.addDataSet(makeH2(tab+"-2-",tag,50,0,2.5,50,0.,100,"",    "P_mm (GeV)","ECOU #pi^+-n (cm)"),is-1+12); 
+        	dg.addDataSet(makeH2(tab+"-3-",tag,50,-0.5,2.0,50,-0.5,0.5,"",    "Mass^2 (GeV^2)","cx_mm - cx_ecal"),is-1+18); 
         }
         break;
         case 1:		
         dg = new DataGroup(4,4); int n=0;
         tag = st+"-"+k+"-"+run;        	
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0,40,             "neutron","p_m_m (GeV)","#theta_m_m (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_m_m - cx_e_c_a_l","cy_m_m - cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                "cycut.M2cut ","cx_m_m - cx_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                "cxcut.M2cut ","cy_m_m - cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,  "no electron","p_m_m (GeV)","#beta_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_m_m (GeV)","#beta_p_c_a_l"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0,40,             "neutron","p_m_m (GeV)","#theta-mm (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.5,0.5,50,-0.5,0.5,    " ","cx_mm - cx_ecal","cy_mm - cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                "cycut.M2cut ","cx_mm - cx_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.5,0.5,                "cxcut.M2cut ","cy_mm - cy_ecal"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,  "no electron","p_mm (GeV)","#beta_ecal"),n);n++;
     	dg.addDataSet(f1, n-1);
-  	    dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_m_m (GeV)","#beta_e_c_i_n"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_mm (GeV)","#beta_pcal"),n);n++;
     	dg.addDataSet(f1, n-1);
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_m_m (GeV)","#beta_e_c_o_u"),n);n++;
+  	    dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_mm (GeV)","#beta_ecin"),n);n++;
+    	dg.addDataSet(f1, n-1);
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,0,4,50,0.3,1.2,            " ","p_mm (GeV)","#beta_ecou"),n);n++;
     	dg.addDataSet(f1, n-1);
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.2,2.0,          "no electron","Mass^2 (GeV^2)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,50,-0.2,2.0,            "cx,cy cut","Mass^2 (GeV^2)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,         " ","cx_m_m","cy_m_m"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,     " ","cx_e_c_a_l","cy_e_c_a_l"),n);n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_m_m (GeV)"),n  );n++;
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_m_m (GeV)"),n-1);n++;  
-    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_m_m (GeV)"),n-2);n++;  
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,         " ","cx_mm","cy_mm"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,-0.6,0.0,50,-0.3,0.3,     " ","cx_ecal","cy_ecal"),n);n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_mm (GeV)"),n  );n++;
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_mm (GeV)"),n-1);n++;  
+    	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,80,0,4,                   " ","p_mm (GeV)"),n-2);n++;  
     	((H1F)dg.getData(12).get(1)).setFillColor(4);
     	((H1F)dg.getData(12).get(2)).setFillColor(2);
     	}
@@ -1156,19 +1160,19 @@ public class ECperf extends DetectorMonitor {
         case 1:    	
         dg = new DataGroup(5,3); n=0;
         tag = st+"-"+k+"-"+run;        	
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,500,60,5,25,   "electron","esum_e_c_a_l (MeV)",  "#theta_e_c_a_l (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,5,35,   "electron","esum_e_c_a_l (MeV)",  "#theta_e_c_a_l (deg)"),n);n++;
-       	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,5,35,"no electron","esum_e_c_a_l (MeV)",  "#theta_e_c_a_l (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,25, 50,5,25,   "electron","#theta_e_l_e_c (deg)","#theta_e_c_a_l (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,25, 50,5,25,"no electron","#theta_e_l_e_c (deg)","#theta_e_c_a_l (deg)"),n);n++;
-     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,0,35,"no electron","esum_e_c_a_l (MeV)",  "#theta_e_c_a_l (deg)"),n);n++;
-       	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,0,35,"no electron","esum_e_c_a_l (MeV)",  "#theta_e_c_a_l (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,500,60,5,25,   "electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,5,35,   "electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
+       	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,5,35,"no electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,25, 50,5,25,   "electron","#theta_elec (deg)","#theta_ecal (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,25, 50,5,25,"no electron","#theta_elec (deg)","#theta_ecal (deg)"),n);n++;
+     	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,0,35,"no electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
+       	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,50,0,300,50,0,35,"no electron","esum_ecal (MeV)",  "#theta_ecal (deg)"),n);n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,6,1,7,               "electron","Multiplicity"),n)                         ;n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,6,1,7,            "no electron","Multiplicity"),n)                         ;n++;
     	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,6,1,7,         "tagged neutron","Multiplicity"),n)                         ;n++;
        	dg.addDataSet(makeH1(tab+"-"+n+"-",tag,6,1,7,   "tagged neutron < 1.2","Multiplicity"),n)                         ;n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,-180,180,80,5,22,"electron","#phi_e_c_a_l (deg)",  "#theta_e_c_a_l (deg)"),n);n++;
-    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,-180,180,80,5,22,"electron","#phi_e (deg)"   ,  "#theta_e_c_a_l (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,-180,180,80,5,22,"electron","#phi_ecal (deg)",  "#theta_ecal (deg)"),n);n++;
+    	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,80,-180,180,80,5,22,"electron","#phi_e (deg)"   ,  "#theta_ecal (deg)"),n);n++;
     	break;
     	
     	case 2:
@@ -1733,7 +1737,7 @@ public class ECperf extends DetectorMonitor {
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECtime"),getRunNumber());
 		
 		int  off = 0;
-		float rm = 0;
+		float rm=0;
 		
 		switch (id) {
 			case   11: plist =    e_ecal; rm = 0.000511f; off=0; break;
@@ -1744,21 +1748,21 @@ public class ECperf extends DetectorMonitor {
 		}
 		
 		for (Particle pl : plist){
-			float p_beta_pcal=0,p_beta_ecin=0,p_beta_ecou=0,p_beta_ftof=0;
+			float p_beta_pcal=0,p_beta_ecin=0,p_beta_ecou=0,p_beta_ftof=0,edep1=0,edep2=0,edep3=0;
 			ev.debug=true; pECAL = ev.getECAL((int)pl.getProperty("pindex")); ev.debug=false;
 			p_beta_ftof = id!=22 ? (float) ev.part.get((int)pl.getProperty("pindex")).getProperty("beta"):0;
 			float pl_mom = (float) pl.p(); float beta_mom = (float) Math.sqrt(1/(1+rm*rm/pl_mom/pl_mom));
 	        for (Particle p : pECAL) {
 	        	int mult = ev.getECALMULT((int)p.getProperty("sector"),(int)p.getProperty("layer")); //count number of clusters in sector,layer
-	        	if(p_beta_pcal==0) p_beta_pcal = (mult>0 && p.getProperty("layer")==1) ? (float) p.getProperty("beta"):0;
-	        	if(p_beta_ecin==0) p_beta_ecin = (mult>0 && p.getProperty("layer")==4) ? (float) p.getProperty("beta"):0;
-	        	if(p_beta_ecou==0) p_beta_ecou = (mult>0 && p.getProperty("layer")==7) ? (float) p.getProperty("beta"):0;
+	        	if(p_beta_pcal==0) {p_beta_pcal = (mult>0 && p.getProperty("layer")==1) ? (float) p.getProperty("beta"):0;edep1 = (float) (0.001*p.getProperty("energy"));}
+	        	if(p_beta_ecin==0) {p_beta_ecin = (mult>0 && p.getProperty("layer")==4) ? (float) p.getProperty("beta"):0;edep2 = (float) (0.001*p.getProperty("energy"));}
+	        	if(p_beta_ecou==0) {p_beta_ecou = (mult>0 && p.getProperty("layer")==7) ? (float) p.getProperty("beta"):0;edep3 = (float) (0.001*p.getProperty("energy"));}
 	        }
 	        if(p_beta_pcal>0 || p_beta_ecin>0 || p_beta_ecou>0) {
 //	        	System.out.println(id+" "+p_beta_pcal+" "+p_beta_ecin+" "+p_beta_ecou);
-	        	((H2F)dg0.getData(off  ).get(0)).fill(pl_mom,p_beta_pcal-beta_mom);  	
-	        	((H2F)dg0.getData(off+1).get(0)).fill(pl_mom,p_beta_ecin-beta_mom);  	
-	        	((H2F)dg0.getData(off+2).get(0)).fill(pl_mom,p_beta_ecou-beta_mom);  
+	        	((H2F)dg0.getData(off  ).get(0)).fill(id==22?edep1:pl_mom,p_beta_pcal-beta_mom);  	
+	        	((H2F)dg0.getData(off+1).get(0)).fill(id==22?edep2:pl_mom,p_beta_ecin-beta_mom);  	
+	        	((H2F)dg0.getData(off+2).get(0)).fill(id==22?edep3:pl_mom,p_beta_ecou-beta_mom);  
 	        }
         	((H2F)dg0.getData(off+3).get(0)).fill(pl_mom,p_beta_ftof-beta_mom);  
 		}
