@@ -31,6 +31,7 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
 import org.clas.service.ec.ECCluster;
+import org.clas.service.ec.ECCommon;
 import org.clas.service.ec.ECPeak;
 import org.clas.service.ec.ECStrip;
 
@@ -42,7 +43,8 @@ public class ECt extends DetectorMonitor {
 
     IndexedList<List<Float>>  tdcs = new IndexedList<List<Float>>(3);
     IndexedList<List<Float>> tlist = new IndexedList<List<Float>>(3);
-    IndexedTable time=null, oftime=null, ftime=null, dtime=null, gtw=null, fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
+    IndexedTable time=null, oftime=null, ftime=null, dtime=null, fveff=null, dveff=null, gtw=null;
+    IndexedTable   fo=null, fgo=null, tmf=null, tgo=null, gain=null, veff=null, rfT=null;
     
     int[]     npmt = {68,62,62,36,36,36,36,36,36};    
     int[]    npmts = new int[]{68,36,36};
@@ -82,12 +84,9 @@ public class ECt extends DetectorMonitor {
     static float BEAM_BUCKET = 2.004f;
     static float           c = 29.98f;
     static float    A0offset = 0f;  //RGM pass0 only
-    static float    A0sector = 0;
-    
-    float               tps =  (float) 0.02345;
-    float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration
-    float[] tw = {300,300,300,100,100,100,100,100,100};
-    
+    static float    A0sector = 0;  
+    static float         tps =  (float) 0.02345;
+    float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration    
     public ECt(String name) {
         super(name);
         this.setDetectorTabNames("Raw TDC",          
@@ -439,7 +438,11 @@ public class ECt extends DetectorMonitor {
             this.getDataGroup().add(dg,is,0,k,run);
         }            
 
-    } 
+    }
+        
+    public IndexedTable getVeff() {
+      return (eng.useFADCTime ? fveff : (eng.usePass2Timing ? dveff:veff));
+    }
     
     public void initCCDB(int runno) {
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
@@ -449,6 +452,8 @@ public class ECt extends DetectorMonitor {
         ftime   = cm.getConstants(runno, "/calibration/ec/ftime");
         dtime   = cm.getConstants(runno, "/calibration/ec/dtime");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
+        fveff   = cm.getConstants(runno, "/calibration/ec/fveff");
+        dveff   = cm.getConstants(runno, "/calibration/ec/dveff");
         fo      = cm.getConstants(runno, "/calibration/ec/fadc_offset");        //Crate/fiber FADC offsets 
         fgo     = cm.getConstants(runno, "/calibration/ec/fadc_global_offset"); //FADC capture window 
         tgo     = cm.getConstants(runno, "/calibration/ec/tdc_global_offset");  //TDC capture window
@@ -623,7 +628,7 @@ public class ECt extends DetectorMonitor {
        List<ECCluster> clusters = eng.engine.getClusters();
        
        if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
-       
+      
        if(!dropSummary) {
 /*    	   
        if(event.hasBank("ECAL::hits")){
@@ -705,14 +710,14 @@ public class ECt extends DetectorMonitor {
                lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
                lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
                lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
-               tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)veff.getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
-               tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)veff.getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
-               tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)veff.getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+               tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
+               tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
+               tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
                add[0] = bank3.getFloat("energy",iid[0]); //peak energy U
                add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
                add[2] = bank3.getFloat("energy",iid[2]); //peak energy W
                
-               int statc = bank1.getShort("status", loop);
+//               int statc = bank1.getShort("status", loop);
                statp[0]  = bank3.getShort("status", iid[0]);
                statp[1]  = bank3.getShort("status", iid[1]);
                statp[2]  = bank3.getShort("status", iid[2]);
@@ -721,14 +726,7 @@ public class ECt extends DetectorMonitor {
                    int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
                    float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); 
                    int    pid = bankp.getInt("pid",pin);
-                   float beta = bankp.getFloat("beta",pin); 
-                   
-//                   Point3D  vc = new Point3D(bankp.getFloat("vx",pin),
-//                                             bankp.getFloat("vy",pin),
-//                                             bankp.getFloat("vz",pin));
- 
-//                   if(pid==22 || pid==2112) path = (float) pc.distance(vc);
-                   
+                   float beta = bankp.getFloat("beta",pin);                    
                    int status = Math.abs(bankp.getInt("status",pin));
                    
                    for (int i=0; i<3; i++) { //loop over U,V,W
@@ -739,14 +737,7 @@ public class ECt extends DetectorMonitor {
                          adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
                          tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
                          tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
-//                         tdcc = tdc-tw[il+i-1]/(float)Math.sqrt(adc);
-//                         tdccc = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTime(); 
                          leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-//                         System.out.println("C Layer "+il+" "+clusters.get(loop).getPeak(i).getMaxECStrip().getLine().toString());
-//                         System.out.println("C Layer "+il+" "+clusters.get(loop).getPeak(i).getLine().toString());
-//                         System.out.println("P Layer "+il+" "+peaks.get(iid[i]).getLine().toString());
-//                         System.out.println("P Layer "+il+" "+getPeakline(iid[i],pc,bank3).toString());
-//                         System.out.println("Layer "+il+" "+tu+" "+tid[i]+" "+leff+ " "+lef[i]);
                 	   } else { // use ECAL::clusters bank
                 		 tu    = tid[i];
                 		 ip    = iip[i];
@@ -772,8 +763,8 @@ public class ECt extends DetectorMonitor {
                        if(!tdcs.hasItem(is,il+i,ip)) tdcs.add(new ArrayList<Float>(),is,il+i,ip);
                            tdcs.getItem(is,il+i,ip).add(resid);
                            
-                	   float  radc = (float) Math.sqrt(adc);                	   
-                       float lcorr = leff/(float)veff.getDoubleValue("veff", is, il+i, ip);
+                	   float  radc = (float) Math.sqrt(adc);  
+                       float lcorr = leff/(float)getVeff().getDoubleValue("veff", is, il+i, ip);
                        
                        boolean goodSector = dropEsect ? is!=trigger_sect : is==trigger_sect;  
                        
@@ -931,18 +922,18 @@ public class ECt extends DetectorMonitor {
     public void analyzeCalibration() {
         analyzeGraphs(1,7,0,3,0,3);
         System.out.println("analyzeCalibration Finished");
-        if (eng.useFADCTime &&  eng.usePass2Time) {writeFile("ftime",1,7,0,3,0,3);  writeFile("fveff",1,7,0,3,0,3);}
-        if(!eng.useFADCTime &&  eng.usePass2Time) {writeFile("dtime",1,7,0,3,0,3);  writeFile("dveff",1,7,0,3,0,3);}
-        if(!eng.useFADCTime && !eng.usePass2Time) {writeFile("timing",1,7,0,3,0,3); writeFile("effective_velocity",1,7,0,3,0,3);}    
+        if (eng.useFADCTime &&  eng.usePass2Timing) {writeFile("ftime",1,7,0,3,0,3);  writeFile("fveff",1,7,0,3,0,3);}
+        if(!eng.useFADCTime &&  eng.usePass2Timing) {writeFile("dtime",1,7,0,3,0,3);  writeFile("dveff",1,7,0,3,0,3);}
+        if(!eng.useFADCTime && !eng.usePass2Timing) {writeFile("timing",1,7,0,3,0,3); writeFile("effective_velocity",1,7,0,3,0,3);}    
         isAnalyzeDone = true;
     }
     
     public void analyzeResiduals() {
         getResidualSummary(1,7,0,3,0,3);
         System.out.println("analyzeResiduals Finished");
-        if (eng.useFADCTime &&  eng.usePass2Time) writeFile("ftime_update",1,7,0,3,0,3);
-        if(!eng.useFADCTime &&  eng.usePass2Time) writeFile("dtime_update",1,7,0,3,0,3);
-        if(!eng.useFADCTime && !eng.usePass2Time) writeFile("timing_update",1,7,0,3,0,3);
+        if (eng.useFADCTime &&  eng.usePass2Timing) writeFile("ftime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime &&  eng.usePass2Timing) writeFile("dtime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime && !eng.usePass2Timing) writeFile("timing_update",1,7,0,3,0,3);
         isResidualDone = true;
     }
     

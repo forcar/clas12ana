@@ -252,6 +252,8 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/ftiming",
             "/calibration/ec/ftime",
             "/calibration/ec/dtime",
+            "/calibration/ec/fveff",
+            "/calibration/ec/dveff",
             "/calibration/ec/time_jitter",
             "/calibration/ec/fadc_offset",
             "/calibration/ec/fadc_global_offset",
