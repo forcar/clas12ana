@@ -149,7 +149,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Integer          TRpid = 11;
     public Boolean      useATDATA = false;
     public Boolean    useFADCTime = false;
-    public Boolean usePass2Timing = true;
+    public Boolean usePass2Timing = false;
     public Boolean  useCalibPass2 = false;
     
     public JFileChooser      fc = null; 
@@ -220,8 +220,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//  	    monitors[n] = new ECt("ECt"); 
-            monitors[n] = new ECperf("ECperf");
+  	    monitors[n] = new ECt("ECt"); 
+//            monitors[n] = new ECperf("ECperf");
 //   		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
