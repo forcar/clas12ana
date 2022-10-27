@@ -358,7 +358,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf6a     = new JCheckBoxMenuItem("RejectSharedTime");    cf6a.addItemListener(this); menu.add(cf6a); cf6a.doClick(); 
         cf6b     = new JCheckBoxMenuItem("RejectSharedEnergy");  cf6b.addItemListener(this); menu.add(cf6b); cf6b.doClick();
         cf6c     = new JCheckBoxMenuItem("Use FADC time");       cf6c.addItemListener(this); menu.add(cf6c);
-        cf6d     = new JCheckBoxMenuItem("PASS 2");              cf6d.addItemListener(this); menu.add(cf6d);
+        cf6d     = new JCheckBoxMenuItem("PASS 2 Timing");       cf6d.addItemListener(this); menu.add(cf6d); cf6d.doClick();
         cf6e     = new JCheckBoxMenuItem("calibpass2");          cf6e.addItemListener(this); menu.add(cf6e);
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
