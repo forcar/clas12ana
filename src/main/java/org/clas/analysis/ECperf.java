@@ -60,7 +60,7 @@ public class ECperf extends DetectorMonitor {
     
 	float n_neut_ecal = 0, n_neut_mm = 0, n_neut_mm_save=0;
 
-	public float EB, Eb, Mp;
+	public float EB, Eb, Mp=0.93827f;
 	public float RFT, STT;
 	public long TriggerWord;
 	public float rfPeriod;
@@ -182,7 +182,6 @@ public class ECperf extends DetectorMonitor {
     
     public void dstinit(int run) {
     	System.out.println("ECperf:dstinit("+run+")");
-    	Mp = 0.93827f;
     	Eb = EB = getBeamEnergy(run);
     	System.out.println("Eb="+Eb+" run="+runNum);
     	rfPeriod = 4.008f;       
@@ -252,8 +251,6 @@ public class ECperf extends DetectorMonitor {
     
     @Override
     public void processEvent(DataEvent event) {
-    	
-//    	System.out.println(getEventNumber());
     	
         if(dropBanks) dropBanks(event);
             	
@@ -779,7 +776,8 @@ public class ECperf extends DetectorMonitor {
     	String tab = "ECtime", tag = null;
     	int run = getRunNumber(), n=0, k=getDetectorTabNames().indexOf(tab);
     	
-    	float max=Math.min(EB*0.8f, 3f);
+    	
+    	float max=Math.min(EB*0.8f, 3f), b1=-0.1f, b2=0.1f;
 
         F1D   f11 = new F1D("f11_ECtime"+run,"[a]", 0.2,EB*1.0);   f11.setParameter(0,0);  f11.setLineColor(1);    f11.setLineStyle(1);   
         F1D     f = new F1D("f00_ECtime"+run,"[a]", 0.2,EB*0.6);     f.setParameter(0,0);    f.setLineColor(1);      f.setLineStyle(1);   
@@ -793,29 +791,29 @@ public class ECperf extends DetectorMonitor {
     	
         case 0:
             dg = new DataGroup(4,5);     	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 PCAL"),n);dg.addDataSet(f11,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 ECIN"),n);dg.addDataSet(f11,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 ECOU"),n);dg.addDataSet(f11,n); n++;        	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,-0.1,0.1,"ELEC","p (GeV)","#beta-1 FTOF"),n);dg.addDataSet(f11,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,b1,b2,"ELEC","p (GeV)","#beta-1 PCAL"),n);dg.addDataSet(f11,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,b1,b2,"ELEC","p (GeV)","#beta-1 ECIN"),n);dg.addDataSet(f11,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,b1,b2,"ELEC","p (GeV)","#beta-1 ECOU"),n);dg.addDataSet(f11,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*1.0,30,b1,b2,"ELEC","p (GeV)","#beta-1 FTOF"),n);dg.addDataSet(f11,n); n++;        	
         	        	
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,1.0,35,-0.12,0.12,"PHOT","Edep (GeV)","#beta-1 PCAL"),n);dg.addDataSet(f220,n); n++;
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,0.7,35,-0.12,0.12,"PHOT+NEUT","Edep (GeV)","#beta-1 ECIN"),n);dg.addDataSet(f221,n); n++;
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,0.5,35,-0.12,0.12,"NEUT","Edep (GeV)","#beta-1 ECOU"),n);dg.addDataSet(f222,n); n++;  
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.,2.0,35,-0.12,0.12,"PHOT","Edep (GeV)","#beta-1 FTOF"),n);dg.addDataSet(f22,n); n++;  
          	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIP","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIP","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIP","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIP","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIP","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIP","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f,n); n++;        	
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.03,0.03,"PIP","p (GeV)","#Delta#beta FTOF"),n);dg.addDataSet(f,n); n++;        	
         	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIM","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIM","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.1,0.1,"PIM","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f,n); n++;        	
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIM","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIM","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,b1,b2,"PIM","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f,n); n++;        	
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,0.2,EB*0.6,30,-0.03,0.03,"PIM","p (GeV)","#Delta#beta FTOF"),n);dg.addDataSet(f,n); n++;        	
         	
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,-0.1,0.1,"PROT","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f2212,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,-0.1,0.1,"PROT","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f2212,n); n++;
-        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,-0.1,0.1,"PROT","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f2212,n); n++; 
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,b1,b2,"PROT","p (GeV)","#Delta#beta PCAL"),n);dg.addDataSet(f2212,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,b1,b2,"PROT","p (GeV)","#Delta#beta ECIN"),n);dg.addDataSet(f2212,n); n++;
+        	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,b1,b2,"PROT","p (GeV)","#Delta#beta ECOU"),n);dg.addDataSet(f2212,n); n++; 
         	dg.addDataSet(makeH2(tab+"-"+n+"-",tag,150,0.2,max,30,-0.03,0.03,"PROT","p (GeV)","#Delta#beta FTOF"),n);dg.addDataSet(f2212,n); n++; 
    	}
     	

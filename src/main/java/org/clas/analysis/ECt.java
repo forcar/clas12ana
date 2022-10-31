@@ -206,7 +206,7 @@ public class ECt extends DetectorMonitor {
     public void plotSummary(int run) {  
         setRunNumber(run);
         plotTLHistos(tlnum);  	
-        plotTLHistos(22);
+        plotBetaHistos(22);
         plotTDCHistos(10); 
         if(dropSummary) return;
         plotTDCHistos(0);
@@ -251,17 +251,22 @@ public class ECt extends DetectorMonitor {
         int run = getRunNumber();
         H1F h;
    
+        for (int ic=0; ic<2; ic++) {
+        for (int iv=0; iv<3; iv++) {
         DataGroup dg = new DataGroup(3,3);
         for (int id=1; id<4; id++) {
     	for (int il=1; il<4; il++) {
         for (int is=1; is<7 ; is++) {
-           h = new H1F("beta-"+k+"-"+is+"-"+il+"-"+id+"-"+run,"beta-"+k+"-"+is+"-"+il+"-"+id+"-"+run,100,0.4,1.5);
-           h.setTitleX(pid[id-1]+" "+det[il-1]+" beta "); h.setTitleY("Counts"); h.setLineColor(is==6?9:is);
+           h = new H1F("beta-"+k+"-"+is+"-"+il+"-"+id+"-"+iv+"-"+ic+"-"+run,"beta-"+k+"-"+is+"-"+il+"-"+id+"-"+iv+"-"+ic+"-"+run,100,0.4,1.5);
+           h.setTitleX(pid[id-1]+" "+det[il-1]+" "+v[iv]+" "+" beta "); h.setTitleY("Counts"); h.setLineColor(is==6?9:is);
+           h.setOptStat("1000000");
            dg.addDataSet(h,id*3+il-4);
         }
     	}
         }
-        this.getDataGroup().add(dg,0,0,k,run);  
+        this.getDataGroup().add(dg,ic,iv,k,run); 
+        }
+        }
                 
     }
     
@@ -731,14 +736,14 @@ public class ECt extends DetectorMonitor {
                    
                    for (int i=0; i<3; i++) { //loop over U,V,W
                 	   float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
-                	   if (clusters.size()>0) { // use ECEngine structure clusters
+                	   if (clusters.size()>0) { // use ECEngine 'clusters'
                          tu    = (float) clusters.get(loop).getTime(i);
                          ip    =         clusters.get(loop).getPeak(i).getMaxStrip();
                          adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
                          tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
-                         tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime();
+                         tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime(); 
                          leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-                	   } else { // use ECAL::clusters bank
+                	   } else { // use ECAL::clusters bank from hipo file
                 		 tu    = tid[i];
                 		 ip    = iip[i];
                 		 leff  = lef[i];
@@ -747,18 +752,23 @@ public class ECt extends DetectorMonitor {
                 	   
                 	   float vcorr = STT - phase + TVOffset;  // phase=0 unless STT is not phase corrected (early engineering runs)
                        float tvcor = tu  - vcorr;
+                      
                        float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots and neutral residuals
                        
-                       if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
-                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
-                       if(pid==11)           ((H1F) this.getDataGroup().getItem(0,0,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
+                       if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
+                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
+                       if(pid==11)           ((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
+                       
+                       if(Math.abs(t-tu)<0.001) { //Choose U,V,W time tu used for cluster time
+                       if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
+                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
+                       if(pid==11)           ((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
+                       }
                       
-                       float vel=c; 
-                       if(Math.abs(pid)==211 || Math.abs(pid)==2212) vel=Math.abs(beta*c); //use EB beta for pion or proton calibration residuals                       
+                       float vel = (Math.abs(pid)==211 || Math.abs(pid)==2212) ? Math.abs(beta*c):c; //use EB beta for pion or proton calibration residuals                       
                        
                 	   float pcorr = path/vel;
                        float resid = tvcor - pcorr;  
-                       float residt = t-vcorr-pcorr;
                        
                        if(!tdcs.hasItem(is,il+i,ip)) tdcs.add(new ArrayList<Float>(),is,il+i,ip);
                            tdcs.getItem(is,il+i,ip).add(resid);
@@ -796,10 +806,10 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,20,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr, leff);
                            ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET+(isMC?50:0),leff);  	
                        }                        
-                   } 
-               }
-           }
-       }
+                   } //loop over U,V,W
+               } //pathList check
+           } //dummy boolean
+       } //loop over ECAL::clusters
        
        IndexGenerator ig = new IndexGenerator();
        
@@ -1496,6 +1506,11 @@ public class ECt extends DetectorMonitor {
     public void plotTLHistos(int index) {
        int run = getRunNumber();
        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActivePC()==1?getActiveSector():0,0,index,run));	    
+    }
+    
+    public void plotBetaHistos(int index) {
+        int run = getRunNumber();
+        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActivePC(),getActiveView(),index,run));	    
     }  
     
 /*   TIMELINES */

@@ -64,7 +64,7 @@ public class ECStrip implements Comparable {
     
     public ECStrip(int sector, int layer, int component){
         desc.setSectorLayerComponent(sector, layer, component);
-        ftc = new ExtendedTWCFTime();
+        ftc = new ExtendedTWCFTime(); //FADC timing calibration
         tc1 = new ExtendedTWCTime();
         dtc = ECCommon.usePass2Timing ? new ExtendedTWCDTime() : new ExtendedTWCTime(); //choose pass2 or pass1 for TDC timing
         tc  = ECCommon.useFADCTime ? ftc : dtc; //user selected calibration of FADC or TDC timing
