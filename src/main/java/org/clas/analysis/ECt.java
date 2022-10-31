@@ -472,7 +472,9 @@ public class ECt extends DetectorMonitor {
     }
     
     @Override
-    public void processEvent(DataEvent event) {   
+    public void processEvent(DataEvent event) {  
+    	
+       if(!ECCalibWagon(event,false)) return;
     	
        isMC = (getRunNumber()<100) ? true:false;
        
@@ -487,7 +489,8 @@ public class ECt extends DetectorMonitor {
        if(goodHTCCSector) trigger_sect = htcc_trigger_sect;
        if(goodECALSector) trigger_sect = elec_trigger_sect;
        
-       boolean goodSector = goodECALSector || goodHTCCSector;
+//       boolean goodSector = goodECALSector || goodHTCCSector;
+       boolean goodSector = goodECALSector;
        
        if(!goodSector) return;
        
@@ -506,6 +509,34 @@ public class ECt extends DetectorMonitor {
        
        processRec(event);       
        
+    }
+        
+    public boolean ECCalibWagon(DataEvent event, Boolean flag) {
+        
+    	if(!event.hasBank("REC::Particle")) return false; 
+
+    	DataBank  RecPart = event.getBank("REC::Particle");
+    	
+        ArrayList<Integer>  eleCandi = new ArrayList<>();
+        ArrayList<Integer> pionCandi = new ArrayList<>();
+
+        for (int ipart=0; ipart<RecPart.rows(); ipart++) {
+           
+            final int    pid = RecPart.getInt("pid",ipart);
+            final int status = RecPart.getInt("status",ipart);       
+
+            final boolean isFD = (int)(Math.abs(status)/1000) == 2;
+
+            if (isFD && pid==11)                  eleCandi.add(ipart);
+            if (isFD && (pid==212 || pid==211))  pionCandi.add(ipart);
+
+        }
+        
+        if (eleCandi.isEmpty()) return false;
+        
+        if (eleCandi.size()==1 && (flag?pionCandi.size()>0:true)) return true;
+
+        return false;
     }
     
     public void processTL(DataEvent event) {
@@ -606,7 +637,7 @@ public class ECt extends DetectorMonitor {
            }
        }    	
     }
-    
+  
     public void processRec(DataEvent event) { // process reconstructed timing
     	
        RF = event.hasBank("REC::Event") ? event.getBank("REC::Event").getFloat("RFTime",0):0;
@@ -755,14 +786,14 @@ public class ECt extends DetectorMonitor {
                       
                        float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots and neutral residuals
                        
-                       if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
-                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
-                       if(pid==11)           ((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
-                       
-                       if(Math.abs(t-tu)<0.001) { //Choose U,V,W time tu used for cluster time
                        if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
                        if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
                        if(pid==11)           ((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
+                       
+                       if(Math.abs(t-tu)<0.001) { //Choose U,V,W time tu used for cluster time
+                       if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
+                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
+                       if(pid==11)           ((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
                        }
                       
                        float vel = (Math.abs(pid)==211 || Math.abs(pid)==2212) ? Math.abs(beta*c):c; //use EB beta for pion or proton calibration residuals                       
