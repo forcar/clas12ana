@@ -213,7 +213,7 @@ public class ECEngine extends ReconstructionEngine {
        }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-           de.appendBanks(bankP,bankC,bankD2);
+           de.appendBanks(bankP,bankC,bankD,bankD2);
 //         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
