@@ -93,7 +93,7 @@ public class EngineControl implements ActionListener {
 	    engine.setPeakThresholds( pcP,eciP,ecoP); 
 	    engine.setClusterCuts(pcT,eciT,ecoT); 
 	    split   = "Split"+ECCommon.splitMethod;
-	    spthr   = "SpThr"+ECCommon.splitThresh[0]+ECCommon.splitThresh[1]+ECCommon.splitThresh[2];
+	    spthr   = "SpThr"+ECCommon.splitThresh[0]+ECCommon.splitThresh[1]+ECCommon.splitThresh[2]+pass;
 	    touch   = "touchID"+ECCommon.touchID;
 	    cfigLB.setText(getConfigField()); 		
 	}
@@ -228,7 +228,7 @@ public class EngineControl implements ActionListener {
     
     public void setUsePass2Timing(Boolean val) {
     	engine.setUsePass2Timing(val);
-    	pass=val?"pass2":"pass1"; configDisplay();
+    	pass=val?"pass2":"pass1"; 
     	usePass2Timing = val;
     }
     
