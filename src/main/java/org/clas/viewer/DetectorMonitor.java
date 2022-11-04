@@ -1093,19 +1093,22 @@ public class DetectorMonitor implements ActionListener {
     	return 0.00f;
     } 
     
-    public int getRunGroup(int run) {
-    	if (run>=5674&&run<=6000) return getRGIndex("rgk");
-    	if (run>=6132&&run<=6604) return getRGIndex("rgb");
-    	if (run>=11000)           return getRGIndex("rgb");
-    	if (run>=15000)           return getRGIndex("rgm");
-    	return getRGIndex("rga");
+    public String getRunGroup(int run) {
+    	if (run>=5674&&run<=6000) return "rgk";
+    	if (run>=6132&&run<=6604) return "rgb-s19";
+    	if (run>=6604)            return "rga-s19";
+    	if (run>=11000)           return "rgb";
+    	if (run>=15000)           return "rgm";
+    	return "rga";
     }
     
     public int getRGIndex(String val) {
     	switch (val) {
     	case "rgk": return 6;
     	case "rgb": return 3;
+    	case "rgb-s19": return 3;
     	case "rga": return 1;
+    	case "rga-s19": return 1;
     	case "rgm": return 2;
     	}
     	return 0;    	
@@ -1360,7 +1363,7 @@ public class DetectorMonitor implements ActionListener {
 	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
 	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
 	    for (int i=0; i<runlist.size(); i++) {
-	    	int it = getTorusPolarity(runlist.get(i)); int im = getRunGroup(runlist.get(i));
+	    	int it = getTorusPolarity(runlist.get(i)); int im = getRGIndex(getRunGroup(runlist.get(i)));
 	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); 
 	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerStyle(im); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
 	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
