@@ -1017,15 +1017,17 @@ public class ECt extends DetectorMonitor {
                    fitter1.setRange(0,50); fitter1.fitSlicesY();
                    g = fitter1.getMeanSlices(); 
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
-               	   tl.fitData.add(fitEngine(g,6,0),is,3*il+iv+1,ip,run); //LEFF fits
+                   
+               	   tl.fitData.add(fitEngine(g,6,0),is,3*il+iv+1,ip,run); //LEFF fits to obtain t0 and veff
               	   
                    fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
                    fitter2.setRange(-10,50); fitter2.fitSlicesY();
                    g = graphShift(fitter2.getMeanSlices(),-tl.fitData.getItem(is,3*il+iv+1,ip,run).p0); //subtract t0 just fitted
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY(""); 
                    if(dumpGraphs) {
-                	   String nam =eng.useFADCTime?"ftime/":"dtime/"+"s"+is+"l"+il+"v"+iv+"p"+ip;
-                	   System.out.println("Writing "+filPath+"twplots/"+nam+".vec"); dumpGraph(filPath+"twplots/"+nam+".vec",g);
+                	   String nam = (eng.useFADCTime ? "ftime/":"dtime/")+"s"+is+"l"+il+"v"+iv+"p"+ip;
+                	   String out = filPath+"twplots/"+getRunGroup(run)+"/"+nam+".vec";
+                	   System.out.println("Writing "+out); dumpGraph(out,g);
                    }
 //            	   if(!eng.useFADCTime && il>2) tl.fitData.add(fitEngine(g,16,20),is,3*il+iv+1,ip+200,run); //TW fits to DISC time 
                    boolean doFit = true;
@@ -1044,9 +1046,14 @@ public class ECt extends DetectorMonitor {
     	if(g.getDataSize(0)==0) return fd;
         fd.initFit(fnum,0,1,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
         switch (il) {
-        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,18,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180); fd.initFunc(4,20,15,25); break;
-        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,100,180); fd.initFunc(4,15,14,25); break;
-        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
+        //rgb
+        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,15,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180);fd.initFunc(4,20,15,25); break;
+        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,10,300); fd.initFunc(4,15,5,30); break;
+        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,2,11); fd.initFunc(3,125,10,300); fd.initFunc(4,15,5,30); break;
+        //rga
+//        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,18,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180); fd.initFunc(4,20,15,25); break;
+//        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,100,180); fd.initFunc(4,15,14,25); break;
+//        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
         }
         fd.doFit = true; 
         fd.fitGraph("",true,true); 
