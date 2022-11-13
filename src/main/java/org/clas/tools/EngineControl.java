@@ -38,7 +38,7 @@ public class EngineControl implements ActionListener {
 	public float pcT,eciT,ecoT;
 	public double wlogPar=3.0;
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
-	public boolean useFADCTime, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Timing, useCalibPass2;
+	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Timing, useCalibPass2;
 	
 	public ECEngine engine = null;
 	
@@ -246,6 +246,11 @@ public class EngineControl implements ActionListener {
     	engine.setDTCorrections(val);
     	useDTCorrections = val;
     }
+    
+    public void setUseFTpcal(Boolean val) {
+    	engine.setUseFTpcal(val);
+    	useFTpcal = val;
+    } 
     
     public void setPCTrackingPlane(int val) {
     	engine.setPCTrackingPlane(val);
