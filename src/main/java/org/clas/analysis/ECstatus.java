@@ -52,6 +52,7 @@ public class ECstatus extends DetectorMonitor {
     IndexedList<ArrayList<H1F>>             ATData = new IndexedList<>(3);  
     IndexedList<H1F>                       NATData = new IndexedList<>(3);  
     IndexedList<Integer>                    status = new IndexedList<>(3);
+    IndexedList<Integer>                status_hot = new IndexedList<>(3);
     
     HipoDataSync  writer = null;	
     
@@ -290,10 +291,11 @@ public class ECstatus extends DetectorMonitor {
     public void analyze() {
     	System.out.println(getDetectorName()+".analyze() ");
     	if(dumpFiles) {writer.close(); return;}
-    	analyzeSTATUS("ECAL",1,7);
+    	analyzeSTATUS("ECAL",1,7,1); // pass1: flag hot channels
+    	analyzeSTATUS("ECAL",1,7,2); // pass2: avoid hot channels for sector sum
     	if(!useATDATA) analyzeNORM("ECAL",1,7);
     	System.out.println(occLo+" "+occHi);
-    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,9);
+    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,10);
     	isAnalyzeDone = true;
     }	
     
@@ -561,26 +563,36 @@ public class ECstatus extends DetectorMonitor {
         }            
     }
     
-    public void analyzeSTATUS(String detName, int is1, int is2) {  
+    public void analyzeSTATUS(String detName, int is1, int is2, int pass) {  
         System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+")");
-        DetectorCollection<Float> asum = new DetectorCollection<Float>();
-        DetectorCollection<Float> tsum = new DetectorCollection<Float>(); 
+        DetectorCollection<Float>  asum = new DetectorCollection<Float>();
+        DetectorCollection<Float>  tsum = new DetectorCollection<Float>(); 
+        DetectorCollection<Float> sasum = new DetectorCollection<Float>();
+        DetectorCollection<Float> stsum = new DetectorCollection<Float>(); 
         String aname = isNorm?"SADC":"ADC", tname = isNorm?"STDC":"TDC"; //SADC is runs used for norm, ADC is all runs
         if(useATDATA) {aname="ADD"; tname="TDD";}
     	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
     		for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {
-    			float aint = 0, tint = 0; int acnt=0, tcnt=0;
                 for (int is=is1; is<is2; is++) {
                 	int hl = 10*is+sl;
                     asum.add(is,sl,ip,(float) dgm.getH2F(aname+hl).sliceY(ip-1).integral()); 
-                    tsum.add(is,sl,ip,(float) dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
-                    acnt+=(asum.get(is,sl,ip)>0?1:0);
-                    tcnt+=(tsum.get(is,sl,ip)>0?1:0);
-            		aint+=(asum.get(is,sl,ip)>0?asum.get(is,sl,ip):0);
-            		tint+=(tsum.get(is,sl,ip)>0?tsum.get(is,sl,ip):0); 
+        			tsum.add(is,sl,ip,(float) dgm.getH2F(tname+hl).sliceY(ip-1).integral()); 
                 }
-                asum.add(7,sl,ip,aint/acnt);
-                tsum.add(7,sl,ip,tint/tcnt);
+                for (int is=is1; is<is2; is++) {
+        			float aint = 0, tint = 0; int acnt=0, tcnt=0;
+                	for (int iis=is1; iis<is2; iis++) {
+                		if(iis!=is) { // sum over sectors excluding is
+                			aint+=(asum.get(iis,sl,ip)>0?asum.get(iis,sl,ip):0);
+                			acnt+=(asum.get(iis,sl,ip)>0?1:0);
+                			if(pass==1 || (pass==2 && status_hot.getItem(iis,sl,ip)!=7)) {
+                				tcnt+=(tsum.get(iis,sl,ip)>0?1:0);
+                				tint+=(tsum.get(iis,sl,ip)>0?tsum.get(iis,sl,ip):0); 
+                			}
+                		}        
+                	}
+                	sasum.add(is,sl,ip,aint/acnt);
+                	stsum.add(is,sl,ip,tint/tcnt);                	
+                }
             }
         }
   	
@@ -591,18 +603,19 @@ public class ECstatus extends DetectorMonitor {
             	for(int il=1; il<4; il++) {
                 	int sl = il+(im-1)*3;  
                 	for (int ip=1; ip<nlayMap.get(detName)[sl-1]+1; ip++) {  
-                    	float Asum = asum.get(7, sl, ip), A = asum.get(is, sl, ip);
-                    	float Tsum = tsum.get(7, sl, ip), T = tsum.get(is, sl, ip);
-                		Integer stat = getStatus(Asum,A,Tsum,T);
-                		status.add(stat,is,sl,ip);  
+                    	float Asum = sasum.get(is, sl, ip), A = asum.get(is, sl, ip);
+                    	float Tsum = stsum.get(is, sl, ip), T = tsum.get(is, sl, ip);
+                		int   stat = getStatus(Asum,A,Tsum,T);
+                		status.add(stat,is,sl,ip); status_hot.add(stat,is,sl,ip);  
                 		dgm.fill("STATUS"+is+im,(float)ip, (float)il, getPlotStatus(stat));
                 	}
                 }   
             }
-        }      
+        }
+        if(pass==2) status_hot.clear();
     }
     
-    public Integer getStatus(float Asum,float A,float Tsum,float T) {
+    public int getStatus(float Asum,float A,float Tsum,float T) {
     	float aAsym = (A-Asum)/(A+Asum), tAsym = (T-Tsum)/(T+Tsum);
     	Boolean   badA = A==0 && T>0;   //dead ADC good TDC
         Boolean   badT = T==0 && A>0;   //dead TDC good ADC
@@ -612,7 +625,7 @@ public class ECstatus extends DetectorMonitor {
     	Boolean  nbadA = aAsym < -0.30; //low gain, bad cable, high threshold
     	Boolean  nbadT = tAsym < -0.30; //low gain, bad cable, high threshold
     	Boolean  pbadA = aAsym >  0.30; //noisy, light leak
-    	Boolean  pbadT = tAsym >  0.30; //noisy, light leak
+    	Boolean  pbadT = tAsym >  0.50; //noisy, light leak
     	if (badA && !badT) return 1;
     	if (badT && !badA) return 2;
     	if (badAT)         return 3;
@@ -641,6 +654,21 @@ public class ECstatus extends DetectorMonitor {
         
     }
     
+    public int getTableStatus(int stat) {
+        switch (stat) 
+        {
+        case 0: return 0;  
+        case 1: return 1; 
+        case 2: return 2;  
+        case 3: return 3;  
+        case 4: return 4;
+        case 5: return 5; 
+        case 6: return 6;
+        case 7: return 2; //treat noisy and dead TDC as the same
+        }
+    return 0;    	
+    }
+    
     public Boolean goodA() {return aYS>10000;}
     public Boolean goodT() {return tYS>200;}
     public Boolean badA()  {return (aYS<10000)&&(tYS>200);}
@@ -661,7 +689,7 @@ public class ECstatus extends DetectorMonitor {
 			for (int is=is1; is<is2; is++) {
 				for (int il=il1; il<il2; il++ ) {
 					for (int ip=0; ip<npmt[il-1]; ip++) {
-						    line = is+" "+il+" "+(ip+1)+" "+status.getItem(is,il,ip+1);
+						    line = is+" "+il+" "+(ip+1)+" "+getTableStatus(status.getItem(is,il,ip+1));
 						    outputBw.write(line);
 						    outputBw.newLine();
 					}
@@ -788,7 +816,7 @@ public class ECstatus extends DetectorMonitor {
     public void NormRunFunction() {
     	isNorm = true;
     	if(!useATDATA) {getATNData("ECAL",1,7); fillNormHist("ECAL",1,7);}
-    	analyzeSTATUS("ECAL",1,7);
+    	analyzeSTATUS("ECAL",1,7,1);analyzeSTATUS("ECAL",1,7,2);
     	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
     }
     
