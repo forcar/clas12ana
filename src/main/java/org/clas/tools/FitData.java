@@ -233,7 +233,7 @@ public class FitData {
 	}
 
     
-    public static void fitTest(int is, int il, int iv, int nmax) { 
+    public static void fitTest(String run, String tim, int is, int il, int iv, int nmax) { 
     	GraphErrors g;
     	DetectorMonitor mon = new DetectorMonitor("ECt");
     	mon.cfitEnable = true; mon.fitVerbose = true;
@@ -247,10 +247,12 @@ public class FitData {
         frame.setVisible(true);
         for (int i=0; i<nmax; i++) {
             String nam ="s"+is+"l"+il+"v"+iv+"p"+i;
-        	g = mon.getGraph("/Users/colesmith/CLAS12ANA/ECt/twplots/dtime/"+nam+".vec");
+        	g = mon.getGraph("/Users/colesmith/CLAS12ANA/ECt/twplots/"+run+"/"+tim+"/"+nam+".vec");
         	canvas.cd(i); canvas.getPad(i).getAxisY().setRange(-3,6);
         	if(g.getDataSize(0)==0) continue;
-        	FitData fd = DTWFit(g,is,il,iv);   
+        	FitData fd = null;
+        	if(tim=="dtime") fd = DTWFit(g,is,il,iv);   
+        	if(tim=="ftime") fd = FTWFit(g,is,il,iv);   
         	if(fd==null) continue;
             fd.getGraph().setTitle(nam);
             canvas.draw(fd.getGraph());
@@ -261,14 +263,17 @@ public class FitData {
     }
     
     public static FitData FTWFit(GraphErrors g, int is, int il, int iv) {
+    	fitnum = 13;
     	int fmin=10;
     	FitData fd = new FitData(g);
     	if(g.getDataSize(0)==0) return null;
         fd.initFit(fitnum,0,1,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
         switch (il) {
-        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,15,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180); fd.initFunc(4,20,15,25); break;
-        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,100,180); fd.initFunc(4,15,14,25); break;
-        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
+        case 0: fd.initFunc(0,-0.5); fd.initFunc(1,20,15,22);  fd.initFunc(2,9,7,11);   fd.initFunc(3,170,160,180);fd.initFunc(4,20,15,25); break;
+        case 1: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,5,11); fd.initFunc(3,125,10,300); fd.initFunc(4,15,5,30); break;
+        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,13.9,5,22); fd.initFunc(2,5.4,2,11); fd.initFunc(3,125,61,300); fd.initFunc(4,15,5,30); break;
+//        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,11);   fd.initFunc(3,145,110,180); fd.initFunc(4,15,14,20);
+//        case 2: fd.initFunc(0,-0.5); fd.initFunc(1,17,10,18);  fd.initFunc(2,5,3,7);   fd.initFunc(3,145,125,180); fd.initFunc(4,15,10,25);
         }
         fd.doFit = true; 
         fd.fitGraph("",true,true); 
@@ -302,7 +307,7 @@ public class FitData {
     }	
     
     public static void main(String[] args) {
-    	fitTest(6,2,2,36);   	
+    	fitTest("rgb-s19","ftime",1,2,1,36);   	
     }
         
 }
