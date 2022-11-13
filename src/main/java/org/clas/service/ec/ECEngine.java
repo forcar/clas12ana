@@ -171,6 +171,7 @@ public class ECEngine extends ReconstructionEngine {
             bankM.setFloat("m3w", c,   (float) clusters.get(c).clusterPeaks.get(2).getMoment3());
         }
 */ 
+/*        
         DataBank  bankD =  de.createBank("ECAL::calib", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
            bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
@@ -183,8 +184,8 @@ public class ECEngine extends ReconstructionEngine {
            bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
-        
-        DataBank bankD2 = null;
+*/        
+        DataBank bankD2 = null, bankD = null;
         
         if(ECCommon.useCalibPass2) {
         bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
@@ -194,9 +195,6 @@ public class ECEngine extends ReconstructionEngine {
            bankD2.setShort("dbstU",  c, (short) clusters.get(c).clusterPeaks.get(0).getDBStatus());
            bankD2.setShort("dbstV",  c, (short) clusters.get(c).clusterPeaks.get(1).getDBStatus());
            bankD2.setShort("dbstW",  c, (short) clusters.get(c).clusterPeaks.get(2).getDBStatus());
-           bankD2.setFloat("energy", c, (float) clusters.get(c).getEnergy());
-           bankD2.setFloat("ftime",  c, (float) clusters.get(c).getTime(true));
-           bankD2.setFloat("time",   c, (float) clusters.get(c).getTime(false));
            bankD2.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
            bankD2.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
            bankD2.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
@@ -315,10 +313,16 @@ public class ECEngine extends ReconstructionEngine {
     public void setUseCalibPass2(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useCalibPass2 = "+val);
     	ECCommon.useCalibPass2 = val;
-    }        
+    }
+    
     public void setUseFADCTime(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
     	ECCommon.useFADCTime = val;
+    }
+
+    public void setUseFTpcal(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useFTpcal = "+val);   	
+    	ECCommon.useFTpcal = val;
     } 
     
     public void setCCDBGain(boolean val) {
@@ -434,8 +438,9 @@ public class ECEngine extends ReconstructionEngine {
         setPeakThresholds(18,20,15);  //pass1 18,20,15
         setClusterThresholds(0,0,0);
         setClusterCuts(7,15,20);      //pass1 7,15,20
-        setDTCorrections(true);
-        setUsePass2Timing(true);      //pass1 false
+        setDTCorrections(ECCommon.useDTCorrections);
+        setUsePass2Timing(ECCommon.usePass2Timing);      //pass1 false        
+        setUseFTpcal(ECCommon.useFTpcal);
         setSplitMethod(0);            //pass1 0=gagik method
         setSplitThresh(3,3,3);        //pass1 3,3,3
         setTouchID(1);                //pass1 1

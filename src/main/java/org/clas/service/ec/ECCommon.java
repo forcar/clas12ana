@@ -50,12 +50,13 @@ public class ECCommon {
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
     public static Boolean  useDTCorrections = true;
-    public static Boolean     useCalibPass2 = false;
+    public static Boolean     useCalibPass2 = false; //local only
     public static Boolean     usePass2Recon = false;
     public static Boolean    usePass2Timing = true;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
+    public static Boolean         useFTpcal = true;
     public static Boolean       useCCDBGain = true;
     public static double           logParam = 3.0;
     public static String             config = "";
@@ -149,6 +150,8 @@ public class ECCommon {
     	
         int run = getRunNumber(event);
         
+        if(run<=100) usePass2Timing = false;
+               
         manager.setVariation(variation);
 
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
@@ -347,7 +350,7 @@ public class ECCommon {
                 
                 ECStrip  strip = new ECStrip(is, il, ip); 
                 
-                strip.setDBStatus(status.getIntValue("status",is,il,ip));
+                strip.setStatus(status.getIntValue("status",is,il,ip));                
                 strip.setADC(adc);
                 strip.setTriggerPhase(triggerPhase);
                 strip.setID(i+1);
