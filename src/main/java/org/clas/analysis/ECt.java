@@ -476,11 +476,11 @@ public class ECt extends DetectorMonitor {
     	
        if(!ECCalibWagon(event,false)) return;
     	
-       isMC = (getRunNumber()<100) ? true:false;
+       isMC = getRunNumber()<100;
        
-       BGOFFSET = isMC ? 102:0; 
+       BGOFFSET = isMC ? 0:0; 
        
-       int elec_trigger_sect = isMC ? 5 : getElecTriggerSector();       
+       int elec_trigger_sect = isMC ? 1 : getElecTriggerSector();       
        int htcc_trigger_sect = getHTCCTriggerSector()-1;
        
        boolean goodECALSector = elec_trigger_sect>0 && elec_trigger_sect<7; 
@@ -609,6 +609,7 @@ public class ECt extends DetectorMonitor {
                int  il = bank.getByte("layer",i);
                int  ip = bank.getShort("component",i);
                int adc = Math.abs(bank.getInt("ADC",i));
+               if(adc==0) continue;
                float t = bank.getFloat("time",i) + (float) tmf.getDoubleValue("offset",is,il,ip)  // FADC-TDC offset (sector, layer, PMT) 
                                                  + (float)  fo.getDoubleValue("offset",is,il,0)   // FADC-TDC offset (sector, layer) 
                                                  + FTOFFSET-BGOFFSET;
@@ -626,11 +627,10 @@ public class ECt extends DetectorMonitor {
                    double a2 = time.getDoubleValue("a2", is, il, ip);
                    double a3 = time.getDoubleValue("a3", is, il, ip);
                    double a4 = time.getDoubleValue("a4", is, il, ip);
-                   
-                   double tdcmc = tdcm - a0 -  (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - a2/radc - a3 - a4/Math.sqrt(radc);
+                   double corr = isMC ? 0:(a3 - a4/Math.sqrt(radc));
+                   double tdcmc = tdcm - a0 -  a2/radc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - corr;
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm-FTOFFSET,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
-          	       
           	       ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(tdcmc-t+a0,ip); // calibrated TDC-FADC time
           	       if(isGoodTL && il==1 && ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
                }
@@ -828,7 +828,7 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,13,run).getData(ip-1).get(0)).fill(leff, resid);
-                           ((H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0)).fill(tu+TOFFSET,   resid);  
+                           ((H2F) this.getDataGroup().getItem(is,il+i,14,run).getData(ip-1).get(0)).fill(tu+TOFFSET, resid);  
                            ((H2F) this.getDataGroup().getItem(is,il+i,15,run).getData(ip-1).get(0)).fill(adc,  resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,16,run).getData(ip-1).get(0)).fill(tdc- vcorr-pcorr-lcorr, radc);
                            ((H2F) this.getDataGroup().getItem(is,il+i,17,run).getData(ip-1).get(0)).fill(tdcc-vcorr-pcorr-lcorr, radc);
