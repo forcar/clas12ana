@@ -30,11 +30,6 @@ import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
-import org.clas.service.ec.ECCluster;
-import org.clas.service.ec.ECCommon;
-import org.clas.service.ec.ECPeak;
-import org.clas.service.ec.ECStrip;
-
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
@@ -659,10 +654,6 @@ public class ECt extends DetectorMonitor {
         
        if(dropBanks) dropBanks(event); // rerun ECEngine with updated CCDB constants
        
-       List<ECStrip>     strips = eng.engine.getStrips();
-       List<ECPeak>       peaks = eng.engine.getPeaks(); 
-       List<ECCluster> clusters = eng.engine.getClusters();
-       
        if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
       
        if(!dropSummary) {
@@ -767,13 +758,13 @@ public class ECt extends DetectorMonitor {
                    
                    for (int i=0; i<3; i++) { //loop over U,V,W
                 	   float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
-                	   if (clusters.size()>0) { // use ECEngine 'clusters'
-                         tu    = (float) clusters.get(loop).getTime(i);
-                         ip    =         clusters.get(loop).getPeak(i).getMaxStrip();
-                         adc   =         clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
-                         tdc   = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
-                         tdcc  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime(); 
-                         leff  = (float) clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
+                	   if (eng.clusters.size()>0) { // use ECEngine 'clusters'
+                         tu    = (float) eng.clusters.get(loop).getTime(i);
+                         ip    =         eng.clusters.get(loop).getPeak(i).getMaxStrip();
+                         adc   =         eng.clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
+                         tdc   = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
+                         tdcc  = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime(); 
+                         leff  = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
                 	   } else { // use ECAL::clusters bank from hipo file
                 		 tu    = tid[i];
                 		 ip    = iip[i];
