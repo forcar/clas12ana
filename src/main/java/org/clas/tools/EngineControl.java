@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -15,8 +17,9 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
-import org.clas.service.ec.ECCommon;
-import org.clas.service.ec.ECEngine;
+//import org.jlab.service.ec.*;
+import org.clas.service.ec.*;
+import org.jlab.io.base.DataEvent;
 
 public class EngineControl implements ActionListener {
 	
@@ -41,6 +44,9 @@ public class EngineControl implements ActionListener {
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections, useDTCorrections, usePass2Timing, useCalibPass2;
 	
 	public ECEngine engine = null;
+    public List<ECStrip>     strips = new ArrayList<ECStrip>();
+    public List<ECPeak>       peaks = new ArrayList<ECPeak>(); 
+    public List<ECCluster> clusters = new ArrayList<ECCluster>();
 	
     int[][] sthrMuon = {{15,15,15},{15,15,15},{15,15,15}}; //15,20,20
     int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
@@ -59,8 +65,8 @@ public class EngineControl implements ActionListener {
     double[] cerrElec = {10.,10.,10.};
     double[] cerrTest = {4.5,11.,13.};
 	
-	public EngineControl(ECEngine val) {
-		engine = val;		
+	public EngineControl() {
+		engine = new ECEngine();		
 	}
 	
 	public void initEngine() {
@@ -233,7 +239,7 @@ public class EngineControl implements ActionListener {
     }
     
     public void setUseCalibPass2(Boolean val) {
-    	engine.setUseCalibPass2(val);
+   // 	engine.setUseCalibPass2(val);
     	useCalibPass2 = val;
     }
     
@@ -411,6 +417,13 @@ public class EngineControl implements ActionListener {
 		   if(e.getActionCommand().compareTo("ECO")==0){ecoT = Float.valueOf(ecouTF.getText()); engine.setClusterCuts(pcT,eciT,ecoT);}		   
 		   pcalTF.setText(Float.toString(pcT)); ecinTF.setText(Float.toString(eciT));ecouTF.setText(Float.toString(ecoT));
 	   }	   
+	}
+	
+	public void processDataEvent(DataEvent de) {
+		engine.processDataEvent(de);
+		strips   = engine.getStrips();
+		peaks    = engine.getPeaks();
+		clusters = engine.getClusters();
 	}
 	   
 	public void actionPerformed(ActionEvent e) {
