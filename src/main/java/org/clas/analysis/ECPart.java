@@ -104,9 +104,11 @@ public class ECPart extends EBEngine {
   
     public int n2mc=0, MCpid=11, MCsec=2;
     
-    public int[] mip = {0,0,0,0,0,0};
+    public float mip[][] = {{0,0,0,0,0,0},{0,0,0,0,0,0}};
     public int runNumber=11;
     public float starttime=0;
+    
+    public boolean FTOFveto;
     
     int photonMult = 12;
     
@@ -265,7 +267,7 @@ public class ECPart extends EBEngine {
         singleMIPs.clear();
         for (int is=1; is<7; is++) {
             rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is);  //look in PCAL only          
-            if(rPC.size()==1&&mip[is-1]==1) singleMIPs.add(rPC,is);
+            if(rPC.size()==1&&(FTOFveto?mip[0][is-1]>0&&mip[1][is-1]>0:true)) singleMIPs.add(rPC,is);
         }     	
     }   
     
@@ -302,7 +304,7 @@ public class ECPart extends EBEngine {
         singleNeutrals.clear();
         for (int is=1; is<7; is++) {
             rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is); //look in PCAL only
-            if(rPC.size()==1&&mip[is-1]!=1) singleNeutrals.add(rPC,is);
+            if(rPC.size()==1&&(FTOFveto?mip[0][is-1]==0&&mip[1][is-1]==0:true)) singleNeutrals.add(rPC,is);
         } 
     }
     

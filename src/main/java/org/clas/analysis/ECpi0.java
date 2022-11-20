@@ -138,23 +138,26 @@ public class ECpi0 extends DetectorMonitor{
         setRunNumber(run);	     
         runlist.add(run);
         float EB = getBeamEnergy(run);
-        createUVWHistos(0, 1, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 1 strips
-    	createUVWHistos(0, 2, 30,50.,250.," Inv. Mass (MeV)"); // invm vs. photon 2 strips
-    	create1DHistos(1,75,5.,400.,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
-    	createSIJHistos(2,130,5.,700.,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
-    	create2DHistos(3,1,50,0.,20.,50,0.,5*EB/10.6,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
-    	addFunctions(3,"IM1","0.13495*0.13495/2/(1-cos(x*3.14159/180.))",3.65,20.,1,2);
-    	addFunctions(3,"IM2","0.12495*0.12495/2/(1-cos(x*3.14159/180.))",3.4,20.,5,2);
-    	addFunctions(3,"IM3","0.14495*0.14495/2/(1-cos(x*3.14159/180.))",4.0,20.,5,2);
-    	create2DHistos(4,3,30,0.,20.,30,-1.,1.,      "opax",   "Two Photon Opening Angle (deg)","X:(E1-E2)/(E1+E2)");
-    	create2DHistos(5,1,60,-150.,150.,60,1.,20.,  "imopa",  "Inv. Mass Error (MeV)",         "Two Photon Opening Angle (deg)");
-    	create2DHistos(6,1,60,-150.,150.,60,0.,5*EB/10.6,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
-    	create2DHistos(7,1,60,-150.,150.,60,0.,10*EB/10.6,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
-    	create2DHistos(8,1,60,-150.,150.,60,-15.,15.,"tij",    "Inv. Mass Error (MeV)",         "Time Difference (Phot1-Phot2) (ns)");
-    	create2DHistos(9,1,60,3.,32.,60,0.,10*EB/10.6,      "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
+        createUVWHistos(0, 1, 30,50,250," Inv. Mass (MeV)"); // invm vs. photon 1 strips
+    	createUVWHistos(0, 2, 30,50,250," Inv. Mass (MeV)"); // invm vs. photon 2 strips
+    	create1DHistos(1,0,75,5,400,"uvw","Two Photon Inv. Mass (MeV)"); // Sector ij photons i==j
+    	createSIJHistos(2,130,5,700,"sij","Two Photon Inv. Mass (MeV)"); // Sector ij photons i!=j
+    	create2DHistos(3,1,50,0,20,50,0.,5*EB/10.6,"opae","Two Photon Opening Angle (deg)","E1*E2 (GeV^2)");
+    	addFunctions(3,"IM1","0.13495*0.13495/2/(1-cos(x*3.14159/180.))",3.65,20,1,2);
+    	addFunctions(3,"IM2","0.12495*0.12495/2/(1-cos(x*3.14159/180.))",3.4,20,5,2);
+    	addFunctions(3,"IM3","0.14495*0.14495/2/(1-cos(x*3.14159/180.))",4.0,20,5,2);
+    	create2DHistos(4,3,30,0,20,30,-1,1,      "opax",   "Two Photon Opening Angle (deg)","X:(E1-E2)/(E1+E2)");
+    	create2DHistos(5,1,60,-150,150,60,1,20,  "imopa",  "Inv. Mass Error (MeV)",         "Two Photon Opening Angle (deg)");
+    	create2DHistos(6,1,60,-150,150,60,0,5*EB/10.6,   "ime1e2", "Inv. Mass Error (MeV)",         "E1*E2 (GeV^2)");
+    	create2DHistos(7,1,60,-150,150,60,0,10*EB/10.6,  "imepi",  "Inv. Mass Error (MeV)",         "Pizero Energy (GeV)");
+    	create2DHistos(8,1,60,-150,150,60,-15,15,"tij",    "Inv. Mass Error (MeV)",         "Time Difference (Phot1-Phot2) (ns)");
+    	create2DHistos(9,1,60,3,32,    60,0,10*EB/10.6,     "pite",   "Pizero Theta (deg)",            "Pizero Energy (GeV)");
     	createXYHistos(10,1,60,410);
     	createXYHistos(10,2,60,410);
-    	create1DHistos(11,100,0.,50.,"ftof","Energy (MeV)");
+//    	create1DHistos(11,0,100,0.,50.,"ftof1a","Energy (MeV)");
+//    	create1DHistos(11,1,100,0.,50.,"ftof1b","Energy (MeV)");
+    	create2DHisto(11,0,60,-130,130,60,0,60,"Inv. Mass Error (MeV)","P1A Energy (MeV)");
+    	create2DHisto(11,1,60,-130,130,60,0,60,"Inv. Mass Error (MeV)","P1B Energy (MeV)");
     	createMCHistos(12);
     }
     
@@ -241,19 +244,35 @@ public class ECpi0 extends DetectorMonitor{
        }            
    }
     
-    public void create1DHistos(int k, int nch, double x1, double x2, String var, String txt) {
+    public void create1DHistos(int k, int n, int nch, double x1, double x2, String var, String txt) {
     	
 	    int run = getRunNumber();
+        
         dg = new DataGroup(3,2);
         GStyle.getH1FAttributes().setOptStat("1000000");
-        
+       
         for (int is=1; is<7; is++) {
-            String tag = var+"-"+is+"-"+k+"-"+run;
+            String tag = var+"-"+is+"-"+n+"-"+k+"-"+run;
             h1 = new H1F("pi0-"+tag,"pi0-"+tag, nch, x1, x2);
             h1.setTitleX("Sector "+is+" "+txt);  
             dg.addDataSet(h1,is-1);   
         }
-        this.getDataGroup().add(dg,0,0,k,run);
+        this.getDataGroup().add(dg,0,n,k,run);
+    }
+    
+    public void create2DHisto(int k, int n, int nchx, double x1, double x2, int nchy, double y1, double y2, String txtx, String txty) {
+    	
+	    int run = getRunNumber();
+        
+        dg = new DataGroup(3,2);
+        
+        for (int is=1; is<7; is++) {
+            String tag = "ftof"+"-"+is+"-"+n+"-"+k+"-"+run;
+            h2 = new H2F("pi0-"+tag,"pi0-"+tag, nchx, x1, x2, nchy, y1, y2);
+            h2.setTitleX("Sector "+is+" "+txtx); h2.setTitleY(txty);  
+            dg.addDataSet(h2,is-1);   
+        }
+        this.getDataGroup().add(dg,0,n,k,run);
     }
     
     public void create2DHistos(int k, int imax, int nchx, double x1, double x2, int nchy, double y1, double y2, String var, String txtx, String txty) {
@@ -548,68 +567,73 @@ public class ECpi0 extends DetectorMonitor{
         
         boolean goodrec = recpar!=null && reccal!=null;
         
+        for (int i=0; i<6; i++) {part.mip[0][i]=0; part.mip[1][i]=0;} 
+        
         if(event.hasBank("MIP::event")){          
             DataBank bank = event.getBank("MIP::event");
-            for(int i=0; i < bank.rows(); i++) part.mip[i]=bank.getByte("mip", i);   
+            for(int i=0; i < bank.rows(); i++) part.mip[0][i]=bank.getByte("mip", i);   
             
         } else if (event.hasBank("REC::Scintillator")) {
             double[] thresh = {7,8,8}; 
-            for (int i=0; i<6; i++) part.mip[i]=0;       
             DataBank bank = event.getBank("REC::Scintillator");
             for (int i=0; i<bank.rows(); i++) {
       		   if (bank.getByte("detector", i)==12) {
                   int   toflay = bank.getByte("layer", i);
                   int     isec = bank.getByte("sector", i);
                   float energy = bank.getFloat("energy",i);
-                  if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(energy); 
-                  part.mip[isec-1] = (toflay<3&&energy>thresh[toflay-1]) ? 1:0;
+                  part.mip[toflay-1][isec-1] = toflay<3&&energy>thresh[toflay-1] ? energy:0;
                }
             } 
             
         } else if (event.hasBank("FTOF::adc")) {
             paddleList = DataProvider.getPaddleList(event);          
             double[] thresh = {500,1000,1000}; 
-            for (int i=0; i<6; i++) part.mip[i]=0;       
             if (paddleList!=null) {
                 for (TOFPaddle paddle : paddleList){           
                     int toflay = paddle.getDescriptor().getLayer();            
                     int   isec = paddle.getDescriptor().getSector();   
                     double gmean = paddle.geometricMean();
-                    if(toflay==2)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(isec-1).get(0)).fill(gmean); 
-                    part.mip[isec-1] = (gmean>thresh[toflay-1]) ? 1:0;
+                    part.mip[toflay-1][isec-1] = toflay<3&&gmean>thresh[toflay-1] ? (float) gmean:0;
                 }
             }
             
         } else if(goodrec) {        	
         	HashMap<Integer,ArrayList<Integer>> part2calo = mapByIndex(reccal,"pindex"); 
             ArrayList<Integer> chargeHit = new ArrayList<>();
-            for (int i=0; i<6; i++) part.mip[i]=0;                  
             for (int ipart=0; ipart<recpar.rows(); ipart++) {
                 final int charge = recpar.getInt("charge",ipart);
                 final int status = recpar.getInt("status",ipart);       
                 final boolean isFD = (int)(Math.abs(status)/1000) == 2;
                 if (isFD && charge != 0) {
                 	int s = part2calo.containsKey(ipart) ? reccal.getInt("sector", part2calo.get(ipart).get(0)):0;
-                	if(s>0) part.mip[s-1]=1;
+                	if(s>0) part.mip[0][s-1]=1;
                 }
             }
         }
         
+        part.FTOFveto = FTOFveto;
         part.getNeutralResponses();
         
         int trigger_sect = isMC ? trSEC : getElecTriggerSector();
         
         for (int is=isMC?mcSEC:1; is<(isMC?mcSEC+1:7); is++) {
            
-            if (part.mip[is-1]!=1) {  // No FTOF MIP in sector
-                double invmass = Math.sqrt(part.getTwoPhotonInvMass(is));
-                double    inv3 = invmass*1e3;
-                double    invd = (invmass-part.mpi0)*1e3;
-                double     opa = Math.acos(part.cth)*180/3.14159;
+              double invmass = Math.sqrt(part.getTwoPhotonInvMass(is));
+              double    inv3 = invmass*1e3;
+              double    invd = (invmass-part.mpi0)*1e3;
+              double     opa = Math.acos(part.cth)*180/3.14159;
+              
+              if(part.mip[0][is-1]>0)((H2F) this.getDataGroup().getItem(0,0,11,run).getData(is-1).get(0)).fill(invd,part.mip[0][is-1]); 
+              if(part.mip[1][is-1]>0)((H2F) this.getDataGroup().getItem(0,1,11,run).getData(is-1).get(0)).fill(invd,part.mip[1][is-1]); 
+              
+              if (FTOFveto ? (part.mip[0][is-1]==0 && part.mip[1][is-1]==0) : true) {  // Use FTOF as MIP veto
                 
                 boolean     ivmcut = inv3>pmin && inv3<pmax;
                 boolean  badPizero = part.X>1 || opa<0;
-                boolean goodSector = dropEsect ? is!=trigger_sect : is==trigger_sect;
+                boolean goodSector = dropEsect ? is!=trigger_sect : onlyEsect ? is==trigger_sect : true;
+                 
+//                if(part.mip[0][is-1]>0)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(is-1).get(0)).fill(part.mip[0][is-1]); 
+//                if(part.mip[1][is-1]>0)((H1F) this.getDataGroup().getItem(0,1,11,run).getData(is-1).get(0)).fill(part.mip[1][is-1]); 
                 
                 if(invmass>0 && part.iis[0]>0 && part.iis[1]>0 && !badPizero && goodSector) {                                                    
                     if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);   
@@ -926,7 +950,7 @@ public class ECpi0 extends DetectorMonitor{
     }   
     
     public void plotPI0Summary(int index) {
-      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));
+      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,getActivePC(),index,getRunNumber()));
     }
     
     public void plotMCSummary(int index) {
