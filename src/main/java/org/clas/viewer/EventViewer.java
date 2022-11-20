@@ -90,8 +90,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
-    JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14,cf15;   
+    JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14,cf15,cf16;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -127,6 +127,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean    defaultGain = false;
     public Boolean       fiduCuts = false;
     public Boolean      dropEsect = false;
+    public Boolean      onlyEsect = false;
+    public Boolean       FTOFveto = true;
     public Boolean     cfitEnable = false;
     public Boolean     sfitEnable = false;
     public Boolean     dfitEnable = false;
@@ -216,12 +218,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 // 		monitors[n] = new ECperf("ECperf"); 
 //    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECmc2("ECmc2");
-    		monitors[n] = new ECstatus("ECstatus","ECAL");
+//    		monitors[n] = new ECstatus("ECstatus","ECAL");
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//  	    monitors[n] = new ECt("ECt"); 
+  	    monitors[n] = new ECt("ECt"); 
 //            monitors[n] = new ECperf("ECperf");
 //   		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
@@ -259,6 +261,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co5  = new JCheckBoxMenuItem("DefaultGains");  co5.addItemListener(this);       menu.add(co5);
         co6  = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
         co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
+        co8  = new JCheckBoxMenuItem("OnlyEsect");     co8.addItemListener(this);       menu.add(co8);
         menuBar.add(menu);
         
         if(!monitors[0].getDetectorName().equals("ECstatus")) co0.doClick(); //must use .equals here
@@ -352,6 +355,10 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf13 = new JCheckBoxMenuItem("TWcorr"); cf13.addItemListener(this); menu.add(cf13); cf13.doClick();
         menuBar.add(menu); 
         
+        menu   	= new JMenu("ECpi0");
+        cf16 = new JCheckBoxMenuItem("FTOFveto"); cf16.addItemListener(this); menu.add(cf16); cf16.doClick();
+        menuBar.add(menu); 
+        
         menu     = new JMenu("ECEngine");
         co2      = new JCheckBoxMenuItem("Enable");              co2.addItemListener(this);  menu.add(co2);;
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
@@ -432,6 +439,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==co5) {defaultGain    = sc(e); monitors[0].defaultGain = defaultGain;}
 		if (s==co6) {fiduCuts       = sc(e); monitors[0].fiduCuts    = fiduCuts;}
 		if (s==co7) {dropEsect      = sc(e); monitors[0].dropEsect   = dropEsect;}
+		if (s==co7) {onlyEsect      = sc(e); monitors[0].onlyEsect   = onlyEsect;}
 		if (s==cf)  {fitVerbose     = sc(e); monitors[0].fitVerbose  = fitVerbose;}
 		if (s==cf0) {cfitEnable     = sc(e); monitors[0].cfitEnable  = cfitEnable;}
 		if (s==cf1) {sfitEnable     = sc(e); monitors[0].sfitEnable  = sfitEnable;}
@@ -453,6 +461,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf13){TWcorr         = sc(e); monitors[0].eng.setUseTWcorr(TWcorr);}
 		if (s==cf14){DTcorr         = sc(e); monitors[0].eng.setUseDTcorr(DTcorr);}
 		if (s==cf15){FTpcal         = sc(e); monitors[0].eng.setUseFTpcal(FTpcal);}
+		if (s==cf16){FTOFveto       = sc(e); monitors[0].FTOFveto    = FTOFveto;}
 		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
 		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}
