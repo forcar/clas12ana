@@ -57,7 +57,6 @@ import org.jlab.groot.ui.RangeSlider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
-import org.clas.service.ec.ECEngine;
 
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
@@ -197,6 +196,8 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          dumpFiles = false; 
     public Boolean        defaultGain = false; 
     public Boolean          dropEsect = false;
+    public Boolean          onlyEsect = false;
+    public Boolean           FTOFveto = false;
     public Boolean           fiduCuts = false;
     public Boolean         cfitEnable = false; 
     public Boolean         dfitEnable = false; 
@@ -243,7 +244,7 @@ public class DetectorMonitor implements ActionListener {
 	Map<String,Object[]> map = new HashMap<String,Object[]>();
     Object[] can = {false, false, 0, 0, 0, 0};
     
-    public EngineControl eng = new EngineControl(new ECEngine());
+    public EngineControl eng = new EngineControl();
     
     String[]  ccdbTables = new String[]{
             "/calibration/ec/attenuation", 
@@ -412,7 +413,7 @@ public class DetectorMonitor implements ActionListener {
         if( isHipo3Event&&de.hasBank("ECAL::calib"))    de.removeBank("ECAL::calib");
         if( isHipo3Event&&de.hasBank("ECAL::moments"))  de.removeBank("ECAL::moments");
         
-        if(de.hasBank("ECAL::adc")) eng.engine.processDataEvent(de);     	
+        if(de.hasBank("ECAL::adc")) eng.processDataEvent(de);     	
     }
     
     public void analyze() {
