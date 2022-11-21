@@ -73,8 +73,6 @@ public class ECCommon {
     public static DetectorCollection<H1F> H1_ecEng = new DetectorCollection<H1F>();
     public static DetectorCollection<H2F> H2_ecEng = new DetectorCollection<H2F>();
     
-    static IndexedList<List<Integer>>  tdcs = new IndexedList<List<Integer>>(3);  
-        
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     static float               tps = 0.02345f;
     public static float       veff = 18.1f;
@@ -294,6 +292,8 @@ public class ECCommon {
         
     public static List<ECStrip>  readStripsHipo(DataEvent event, int run, ConstantsManager manager){ 
     	
+        IndexedList<List<Integer>>  tdcs = new IndexedList<List<Integer>>(3);          
+
       	List<ECStrip>  strips = new ArrayList<ECStrip>();
       	
         IndexedTable    jitter = manager.getConstants(run, "/calibration/ec/time_jitter");
@@ -311,7 +311,6 @@ public class ECCommon {
         float  TMFCUT  = (float) tmfcut.getDoubleValue("window", 0,0,0); //acceptance window for TDC-FADC cut
         
         int triggerPhase = 0;
-        tdcs.clear();
     	
         if(CYCLES>0&&event.hasBank("RUN::config")==true){
             DataBank bank = event.getBank("RUN::config");
@@ -404,10 +403,10 @@ public class ECCommon {
        
     public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
     	
+        ECPeakAnalysis epa = new ECPeakAnalysis() ;
         List<ECPeak> peakList = new ArrayList<ECPeak>();
-        
         for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);
-        ECPeakAnalysis.splitPeaks(peakList);       //Split peak if strip members have an adc valley       
+        epa.splitPeaks(peakList);       //Split peak if strip members have an adc valley       
         for(ECPeak p : peakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
                 
         return peakList;
