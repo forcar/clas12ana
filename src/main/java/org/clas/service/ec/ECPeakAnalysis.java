@@ -1,19 +1,19 @@
 package org.clas.service.ec;
 
 import java.util.List;
-
+	
 /**
  *
  * @author gavalian
- * modified lcsmith 2/22/22
+ * modified lcsmith 
  */
 
 public class ECPeakAnalysis {
 	
-	static int splitIndex;
-	static int splitStrip;
+	int splitIndex;
+	int splitStrip;
     
-    public static int getPeakSplitIndex(List<ECPeak> peaks){        
+    public int getPeakSplitIndex(List<ECPeak> peaks){        
         for(int i = 0; i < peaks.size(); i++){
             splitIndex = peaks.get(i).getSplitIndex(ECCommon.splitMethod); //index of strip used to split peak
             splitStrip = peaks.get(i).getSplitStrip(); //strip used to split peak
@@ -22,7 +22,7 @@ public class ECPeakAnalysis {
         return -1;
     }
     
-    public static void splitPeaks(List<ECPeak> peaks){
+    public void splitPeaks(List<ECPeak> peaks){
         
         while(true){ //repeat processing all peaks until no split found
         	if(ECCommon.debugSplit) System.out.println(" ");
@@ -37,7 +37,5 @@ public class ECPeakAnalysis {
             }
         }
     }
-    
-    
-    
+       
 }
