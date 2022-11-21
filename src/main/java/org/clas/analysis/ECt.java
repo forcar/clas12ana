@@ -622,7 +622,7 @@ public class ECt extends DetectorMonitor {
                    double a2 = time.getDoubleValue("a2", is, il, ip);
                    double a3 = time.getDoubleValue("a3", is, il, ip);
                    double a4 = time.getDoubleValue("a4", is, il, ip);
-                   double corr = isMC ? 0:(a3 - a4/Math.sqrt(radc));
+                   double corr = isMC ? 0:(a3 + a4/Math.sqrt(radc));
                    double tdcmc = tdcm - a0 -  a2/radc - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - corr;
           	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdcm-FTOFFSET,ip);  // matched FADC/TDC
           	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
