@@ -1397,7 +1397,7 @@ public class ECt extends DetectorMonitor {
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" " //replace with table
 				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" " //replace with table
@@ -1412,7 +1412,7 @@ public class ECt extends DetectorMonitor {
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(dtime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+dtime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+dtime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
@@ -1431,7 +1431,7 @@ public class ECt extends DetectorMonitor {
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+ftime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+ftime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
@@ -1442,6 +1442,11 @@ public class ECt extends DetectorMonitor {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" 10.0 0.02345"+" 0.0 0.0 0.0 0.0 0.0";
 		}
 		
+	}
+	
+	public float rejectLoVW(int is, int il, int iv, int ip) { // poorly populated V,W strips
+		if ((iv==1 || iv==2) && ip<5) return 0f;
+		return (float) FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip);
 	}
 
 	
