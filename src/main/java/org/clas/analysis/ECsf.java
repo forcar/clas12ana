@@ -57,6 +57,7 @@ public class ECsf extends DetectorMonitor {
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
         this.useSliderPane(true);
+        useECEnginePane(true);
         this.init();
         this.localinit();
     }
@@ -73,8 +74,10 @@ public class ECsf extends DetectorMonitor {
     	runlist.clear();
     	FitSummary.clear();
     	Fits.clear();
+    	tl.fitData.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
+        eng.engine.setCCDBGain(!defaultGain);
     }
     
     @Override
