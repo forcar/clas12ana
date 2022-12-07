@@ -166,6 +166,7 @@ public class ECt extends DetectorMonitor {
         createTLHistos(tlnum,t1,t2,t3,t4);
         
         if(dropSummary) return;
+        
         createTDCHistos(0,t3,t4,"TIME (ns)");
         createTDCHistos(1,t3,t4,"TIME (ns)");
         createTDCHistos(2,t3,t4,"TIME (ns)");
@@ -445,6 +446,7 @@ public class ECt extends DetectorMonitor {
     }
     
     public void initCCDB(int runno) {
+    	if(dropSummary) return;
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
