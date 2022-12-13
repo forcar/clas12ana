@@ -90,31 +90,31 @@ public class ECcalib extends DetectorMonitor {
 	
     public ECcalib(String name) {
         super(name);
-        this.setDetectorTabNames("MIP",
-                                 "UVW",
-                                 "Fits",
-                                 "Mean",
-                                 "RMS",
-                                 "Maps",
-                                 "PID",
-                                 "MOM",
-                                 "PCAL/ECTOT",
-                                 "PathIJ",
-                                 "PIXEL",
-                                 "Timeline",
-                                 "ATT",
-                                 "MIPvP",
-                                 "VAR",
-                                 "Align",
-                                 "Align2");
+        setDetectorTabNames("MIP",
+                            "UVW",
+                            "Fits",
+                            "Mean",
+                            "RMS",
+                            "Maps",
+                            "PID",
+                            "MOM",
+                            "PCAL/ECTOT",
+                            "PathIJ",
+                            "PIXEL",
+                            "Timeline",
+                            "ATT",
+                            "MIPvP",
+                            "VAR",
+                            "Align",
+                            "Align2");
         
-        this.useRDIFButtons(true);
-        this.usePCCheckBox(true);
-        this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
+        useRDIFButtons(true);
+        usePCCheckBox(true);
+        useCALUVWSECButtons(true);
+        useSliderPane(true);
         useECEnginePane(true);
-        this.init();
-        this.localinit();
+        init();
+        localinit();
     }
     
     public void localinit() {
@@ -209,7 +209,8 @@ public class ECcalib extends DetectorMonitor {
 
      public void dumpFiles(String val) {
     	 if(dumpFiles) writeFile(val,1,7,0,3,0,3);
-     }		      
+     }	
+     
      public void createXYHistos(int k, int nb, int bx1, int bx2, int by1, int by2) {
     	 
  	     int run = getRunNumber();
@@ -752,11 +753,11 @@ public class ECcalib extends DetectorMonitor {
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
     		
 			is = ig.getIndex(entry.getKey(), 0);
-			
+						
             if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
-            
-            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));
-          	            	
+            	
+            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));       	
+                      	            	
                 Vector3  v1 = new Vector3(e.get(0).rl.x(),e.get(0).rl.y(),e.get(0).rl.z());
             	Vector3  v2 = new Vector3(e.get(1).rl.x(),e.get(1).rl.y(),e.get(1).rl.z());
             	Vector3  v3 = new Vector3(e.get(2).rl.x(),e.get(2).rl.y(),e.get(2).rl.z());
@@ -791,6 +792,8 @@ public class ECcalib extends DetectorMonitor {
             	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
             	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
             	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
+            	
+
             	
 // Below are FTOF/ECAL alignment histos           	
 /*
@@ -852,7 +855,7 @@ public class ECcalib extends DetectorMonitor {
     	for (int i=0; i<3; i++) {
     		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(fidc?ec:-10,uvw[i]);    	
         	if (!fid[i]) {
-    			((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]);	
+    			((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]); //used for calibration	
     			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	
 //    	    	float z1 = ep[i]<mxp[il3]?mipp[il3]:0, z2 = ep[i]<mxp[il3]?ep[i]:0;
     			float z1 = ep[i]<mxp[il3]?1:0, z2 = ep[i]<mxp[il3]?ep[i]/mipp[il3]:0;
@@ -1459,7 +1462,7 @@ public class ECcalib extends DetectorMonitor {
                 H2F h2 = (H2F) this.getDataGroup().getItem(1,ind1,5,run).getData(ind2).get(0); 
                 H2F h3 = (H2F) this.getDataGroup().getItem(2,ind1,5,run).getData(ind2).get(0); 
                 h3 = h2.divide(h2, h1); h3.setTitle(h1.getName());
-                c.cd(4*i+j); c.getPad(4*i+j).getAxisZ().setLog(false); c.getPad(4*i+j).getAxisZ().setRange(0., 2.);
+                c.cd(4*i+j); c.getPad(4*i+j).getAxisZ().setLog(false); c.getPad(4*i+j).getAxisZ().setRange(0.9, 1.1);
                 c.draw(h3);            
         	}
     	}
