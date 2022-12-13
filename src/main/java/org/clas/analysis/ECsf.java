@@ -25,6 +25,7 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
 
 public class ECsf extends DetectorMonitor {
@@ -38,6 +39,8 @@ public class ECsf extends DetectorMonitor {
     float     EB = 0;
     boolean isMC = false;
     int nelec=0, trigger_sect=0;
+    
+    IndexedList<Integer> pathlist = new IndexedList<Integer>(3);
     
     public double[][] par = {{0.105,0.039},{0.099,0.040},{0.100,0.034},{0.093,0.044},{0.085,0.046},{0.113,0.028}};
     
@@ -410,7 +413,18 @@ public class ECsf extends DetectorMonitor {
       	
         int tpid = 11;
 
-        if (!partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return;      	
+        if (!partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return; 
+/*        
+        pathlist.clear(); 
+        
+        for(int loop = 0; loop < reccal.rows(); loop++){ //loop over REC::Calorimeter
+            int     is = reccal.getByte("sector",loop);
+            int     il = reccal.getByte("layer",loop);
+            int     in = reccal.getShort("index",loop); // index to cooked ECAL::clusters (now replaced by dropBanks re-cooking)
+            int    det = reccal.getByte("detector",loop);
+            if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in); // associate ECAL::cluster index to REC::Calorimeter index               
+         }
+*/
         
         for (int ipart : partMap.get(tpid)) {			
             float px = recpar.getFloat("px", ipart);
@@ -427,6 +441,9 @@ public class ECsf extends DetectorMonitor {
                for (int icalo : caloMap.get(ipart)) {
 				    int  det = reccal.getInt("layer", icalo);
 	                short ic = reccal.getShort("index",icalo);
+ //           	    int  iss = ecalclust.getByte("sector",ic);
+ //           	    int  ill = ecalclust.getByte("layer", ic);
+ //           	    if (!pathlist.hasItem(iss,ill,icalo)) continue;
                     float  x = reccal.getFloat("x",icalo);
                     float  y = reccal.getFloat("y",icalo);
                     float  z = reccal.getFloat("z",icalo);					         
