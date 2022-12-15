@@ -46,23 +46,23 @@ public class ECsf extends DetectorMonitor {
     
     public ECsf(String name) {
         super(name);
-        this.setDetectorTabNames("E/P",
-                				 "SLC",
-                				 "UVW",
-                				 "Timing",
-                                 "XY",
-                                 "PMT Fits",
-                                 "Summary",
-                                 "PID Fits",
-                                 "Timeline",
-                                 "MC");
+        setDetectorTabNames("E/P",
+                		    "SLC",
+                		    "UVW",
+                			"Timing",
+                            "XY",
+                            "PMT Fits",
+                            "Summary",
+                            "PID Fits",
+                            "Timeline",
+                            "MC");
 
-        this.usePCCheckBox(true);
-        this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
+        usePCCheckBox(true);
+        useCALUVWSECButtons(true);
+        useSliderPane(true);
         useECEnginePane(true);
-        this.init();
-        this.localinit();
+        init();
+        localinit();
     }
     
     public void localinit() {
@@ -154,7 +154,7 @@ public class ECsf extends DetectorMonitor {
         setRunNumber(run);
     	if(!isAnalyzeDone) return;
     	if(!dropSummary) plotPIDFits("PID Fits");
-    	if(!dropSummary) {updateFits("PMT Fits");plotMeanHWSummary("Summary");}
+    	if(!dropSummary) {updateFits("PMT Fits"); plotMeanHWSummary("Summary");}
     	plotTimeLines("Timeline");
     	if (dumpGraphs) dumpGraphs();
     }
@@ -367,6 +367,19 @@ public class ECsf extends DetectorMonitor {
         return xyz;
     }
     
+    public void printEC(String name, DataBank bank) {
+      	for(int loop = 0; loop < bank.rows(); loop++){ 
+            int     is = bank.getByte("sector",loop);
+            int     il = bank.getByte("layer",loop);
+            float   el = bank.getFloat("energy", loop);
+            float   ti = bank.getFloat("time", loop);
+            float    x = bank.getFloat("x", loop);
+            int ind = name=="RECCAL:"?bank.getShort("index",loop):loop;
+            System.out.println(name+" "+ind+" "+is+" "+il+" "+el+" "+ti+" "+x);
+      	}  
+      	System.out.println(" ");
+    }
+    
     @Override
     public void processEvent(DataEvent event) {
     	
@@ -393,10 +406,14 @@ public class ECsf extends DetectorMonitor {
     	int[] iU = new int[3], idU = new int[3]; float[] tU = new float[3];
     	int[] iV = new int[3], idV = new int[3]; float[] tV = new float[3];
     	int[] iW = new int[3], idW = new int[3]; float[] tW = new float[3];
-    	
+
+//      	printEC("Before: ", event.getBank("ECAL::clusters"));      	
+
+    	int nec0 = event.getBank("ECAL::clusters").rows();
         if(dropBanks) dropBanks(event);
+    	int nec1 = event.getBank("ECAL::clusters").rows();
         
-        boolean goodEvent = event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
+        boolean goodEvent = nec0==nec1 && event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
         
         if (!goodEvent) return;
         
@@ -414,9 +431,12 @@ public class ECsf extends DetectorMonitor {
         int tpid = 11;
 
         if (!partMap.containsKey(tpid) || partMap.get(tpid).size()!=1) return; 
-/*        
+        
         pathlist.clear(); 
         
+//      	printEC("After: ", ecalclust); 
+//      	printEC("RECCAL:", reccal);
+
         for(int loop = 0; loop < reccal.rows(); loop++){ //loop over REC::Calorimeter
             int     is = reccal.getByte("sector",loop);
             int     il = reccal.getByte("layer",loop);
@@ -424,7 +444,7 @@ public class ECsf extends DetectorMonitor {
             int    det = reccal.getByte("detector",loop);
             if (det==7 && !pathlist.hasItem(is,il,in)) pathlist.add(loop,is,il,in); // associate ECAL::cluster index to REC::Calorimeter index               
          }
-*/
+
         
         for (int ipart : partMap.get(tpid)) {			
             float px = recpar.getFloat("px", ipart);
