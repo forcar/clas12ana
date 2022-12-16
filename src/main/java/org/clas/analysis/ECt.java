@@ -579,6 +579,17 @@ public class ECt extends DetectorMonitor {
  	  
        tdcs.clear();
        
+       if(event.hasBank("ECAL::hits")){
+           DataBank  bank = event.getBank("ECAL::hits");
+           for(int loop = 0; loop < bank.rows(); loop++){
+              int   is = bank.getByte("sector", loop);
+              int   il = bank.getByte("layer", loop); 
+              int   ip = bank.getByte("strip", loop);
+              float  t = bank.getFloat("time", loop);
+              ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(t+TOFFSET-FTOFFSET, ip); //calibrated triggered matched hits
+           }
+      }
+       
        if(event.hasBank("ECAL::tdc")==true){
            DataBank  bank = event.getBank("ECAL::tdc");
            for(int i = 0; i < bank.rows(); i++){
@@ -589,7 +600,7 @@ public class ECt extends DetectorMonitor {
                float tdcdc = tdcd-phase; // phase corrected time
                if(is>0 && is<7 && tdcd>0) {
                    if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Float>(),is,il,ip);    
-              	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd-FTOFFSET, ip); 
+//              	       ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tdcd-FTOFFSET, ip); 
               	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc-FTOFFSET,ip); 
                        if (is==trigger_sect || isMC) {
                     	       tdcs.getItem(is,il,ip).add((float)tdcdc);
