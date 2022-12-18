@@ -115,7 +115,8 @@ public class ECt extends DetectorMonitor {
                                  "TL",
                                  "Timeline",
                                  "EV",
-                                 "T0");
+                                 "T0",
+                                 "STATUS");
         
 
         
@@ -137,7 +138,7 @@ public class ECt extends DetectorMonitor {
     public void localinit() {
     	System.out.println(getDetectorName()+".localinit()");
     	tl.setFitData(Fits);
-    	eng.engine.setGeomVariation("rga_spring2018");
+//    	eng.engine.setGeomVariation("rga_spring2018");
     }  
     
     public void localclear() {
@@ -162,7 +163,7 @@ public class ECt extends DetectorMonitor {
         
         int t1=-70, t2=150, t3=50, t4=250;
         createTDCHistos(10,-30.,30.,"T-TVERT-PATH/#beta*c (ns)"); 
-        createBETAHistos(22);
+        createBETAHistos(22); createStatus(32);
         createTLHistos(tlnum,t1,t2,t3,t4);
         
         if(dropSummary) return;
@@ -189,7 +190,7 @@ public class ECt extends DetectorMonitor {
         createUVWHistos(18,60,50,-10,50,0,12000,"TTW","ADCHI ");
         createUVWHistos(19,50,50,0,50,0,430,"T","LEFF ");
         createUVWHistos(20,50,50,0,50,0,430,"TTW","LEFF ");
-        createUVWHistos(21,50,50,160,190,0,430,"TVERT","LEFF ");   
+        createUVWHistos(21,50,50,160,190,0,430,"TVERT","LEFF ");        
     }
     
     @Override       
@@ -203,6 +204,7 @@ public class ECt extends DetectorMonitor {
         setRunNumber(run);
         plotTLHistos(tlnum);  	
         plotBetaHistos(22);
+        plotStatusHistos(32);
         plotTDCHistos(10); 
         if(dropSummary) return;
         plotTDCHistos(0);
@@ -264,7 +266,25 @@ public class ECt extends DetectorMonitor {
         }
         }
                 
+    }    
+    
+    public void createStatus(int k) {
+    	
+        int run = getRunNumber(), n=0;
+        H2F h;
+    	DataGroup dg = new DataGroup(3,6);
+
+    	for(int is=1; is<7; is++) {
+    		for(int im=1; im<4; im++) {
+    			int nx = im==1 ? 68:36;
+    			h = new H2F("STATUS"+is+im, "STATUS"+is+im, nx, 1, nx+1, 3, 1, 4);
+    			h.setTitleX("SECTOR "+is);h.setTitle(is==1 ? det[im-1]:" ");
+    			dg.addDataSet(h, n);n++;
+            }
+        }      	
+        this.getDataGroup().add(dg,0,0,k,run);
     }
+      
     
     public void createTLHistos(int k, int t1, int t2, int t3, int t4) {
 
@@ -440,7 +460,7 @@ public class ECt extends DetectorMonitor {
         }            
 
     }
-        
+  
     public IndexedTable getVeff() {
       return (eng.useFADCTime ? fveff : (eng.usePass2Timing ? dveff:veff));
     }
@@ -579,17 +599,6 @@ public class ECt extends DetectorMonitor {
  	  
        tdcs.clear();
        
-       if(event.hasBank("ECAL::hits")){
-           DataBank  bank = event.getBank("ECAL::hits");
-           for(int loop = 0; loop < bank.rows(); loop++){
-              int   is = bank.getByte("sector", loop);
-              int   il = bank.getByte("layer", loop); 
-              int   ip = bank.getByte("strip", loop);
-              float  t = bank.getFloat("time", loop);
-              ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(t+TOFFSET-FTOFFSET, ip); //calibrated triggered matched hits
-           }
-      }
-       
        if(event.hasBank("ECAL::tdc")==true){
            DataBank  bank = event.getBank("ECAL::tdc");
            for(int i = 0; i < bank.rows(); i++){
@@ -665,24 +674,24 @@ public class ECt extends DetectorMonitor {
        
        int run = getRunNumber(); 
         
-       if(dropBanks) dropBanks(event); // rerun ECEngine with updated CCDB constants
+       if(dropBanks) dropBanks(event); // rerun ECEngine with updated CCDB constants       
+       
+       if(event.hasBank("ECAL::hits")){
+           DataBank  bank = event.getBank("ECAL::hits");
+           for(int loop = 0; loop < bank.rows(); loop++){
+              int   is = bank.getByte("sector", loop);
+              int   il = bank.getByte("layer", loop); 
+              int   ip = bank.getByte("strip", loop);
+              float  t = bank.getFloat("time", loop);
+              float tt = t+TOFFSET-FTOFFSET;
+              if (tt>0) { 
+                ((H2F) this.getDataGroup().getItem(is,0, 0,run).getData(il-1               ).get(0)).fill(tt, ip); 
+                ((H2F) this.getDataGroup().getItem( 0,0,32,run).getData(3*(is-1)+getDet(il)).get(0)).fill(ip,getLay(il));
+              }
+           }
+      }
        
        if (run>=2000) {phase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
-      
-       if(!dropSummary) {
-/*    	   
-       if(event.hasBank("ECAL::hits")){
-          	DataBank  bank = event.getBank("ECAL::hits");
-            for(int loop = 0; loop < bank.rows(); loop++){
-               int   is = bank.getByte("sector", loop);
-               int   il = bank.getByte("layer", loop); 
-               int   ip = bank.getByte("strip", loop);
-               float  t = bank.getFloat("time", loop);
-               ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(t+TOFFSET-FTOFFSET, ip); //calibrated triggered matched hits
-            }
-       }
-*/       
-       }
        
        if(!(event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter") && event.hasBank("ECAL::clusters"))) return;
               
@@ -1559,6 +1568,11 @@ public class ECt extends DetectorMonitor {
         int run = getRunNumber();
         drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActivePC(),getActiveView(),index,run));	    
     }  
+    
+    public void plotStatusHistos(int index) {
+        int run = getRunNumber();
+        drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,run));	        	
+    }
     
 /*   TIMELINES */
     
