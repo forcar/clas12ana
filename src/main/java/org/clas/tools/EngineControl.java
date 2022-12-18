@@ -35,7 +35,7 @@ public class EngineControl implements ActionListener {
     ButtonGroup                bG1 = null;
 	
 	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0";
-	public String variation="rga_fall2018_bg",geomVariation="rga_fall2018",pass="pass1";
+	public String variation="default",geomVariation="default",pass="pass1";
 	public int pcS,eciS,ecoS,pcP,eciP,ecoP;
 	public int PCTrackingPlane,ECTrackingPlane;
 	public float pcT,eciT,ecoT;
