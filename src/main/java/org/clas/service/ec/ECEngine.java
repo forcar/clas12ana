@@ -105,7 +105,7 @@ public class ECEngine extends ReconstructionEngine {
                                 List<ECStrip>   strips, 
                                 List<ECPeak>    peaks, 
                                 List<ECCluster> clusters){
-/*	    
+	    
         DataBank bankS = de.createBank("ECAL::hits", strips.size());
         for(int h = 0; h < strips.size(); h++){
             bankS.setByte("sector",     h,  (byte) strips.get(h).getDescriptor().getSector());
@@ -117,7 +117,7 @@ public class ECEngine extends ReconstructionEngine {
             bankS.setFloat("energy",    h, (float) strips.get(h).getEnergy());
             bankS.setFloat("time",      h, (float) strips.get(h).getTime());                
         }
-*/       
+       
         DataBank  bankP =  de.createBank("ECAL::peaks", peaks.size());
         for(int p = 0; p < peaks.size(); p++){
             bankP.setByte("sector",  p,  (byte) peaks.get(p).getDescriptor().getSector());
@@ -185,7 +185,8 @@ public class ECEngine extends ReconstructionEngine {
            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
 */        
-        DataBank bankD2 = null, bankD = null;
+        DataBank bankD2 = null;
+//        DataBank bankD = null;
         
         if(ECCommon.useCalibPass2) {
         bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
@@ -211,7 +212,7 @@ public class ECEngine extends ReconstructionEngine {
        }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-           de.appendBanks(bankP,bankC,bankD,bankD2);
+           de.appendBanks(bankS,bankP,bankC,bankD2);
 //         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
