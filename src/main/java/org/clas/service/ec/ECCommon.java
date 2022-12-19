@@ -107,7 +107,7 @@ public class ECCommon {
                 H2_ecEng.get(is,il,1).reset();
                 if(il==1) for (int i=10; i<14; i++) H1_ecEng.get(is,il,i).reset();
            }
-        }       
+        } 
     }
     
     public static void setDebug(boolean val) {
@@ -148,10 +148,12 @@ public class ECCommon {
     	
         int run = getRunNumber(event);
         
-        if(run<=100) usePass2Timing = false;
-               
+        isMC = run<=100;
+        
+        if(isMC) {usePass2Timing = false; useDTCorrections = false; useFTpcal = false;}
+        
         manager.setVariation(variation);
-
+        
         IndexedTable    atten = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
         IndexedTable    itime = manager.getConstants(run, "/calibration/ec/timing"); 
@@ -165,7 +167,7 @@ public class ECCommon {
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");		
         IndexedTable   r2gain = manager.getConstants(2,   "/calibration/ec/gain");
-    
+   
         if (singleEvent) resetHistos();        
         
         List<ECStrip>  ecStrips = null;
@@ -317,7 +319,7 @@ public class ECCommon {
             long timestamp = bank.getLong("timestamp", 0);
             triggerPhase = (int) (PERIOD*((timestamp+PHASE)%CYCLES));
         }
-
+        
         if(event.hasBank("ECAL::tdc")==true){
             DataBank  bank = event.getBank("ECAL::tdc");
             for(int i = 0; i < bank.rows(); i++){
@@ -368,8 +370,8 @@ public class ECCommon {
                     for (float tdcc : tdcs.getItem(is,il,ip)) {
                          float tdif = tps*tdcc - triggerPhase - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - ftdc_corr; 
                          if (Math.abs(tdif)<TMFCUT&&tdif<tmax) {tmax = tdif; tdc = (int)tdcc;}
-                    }                    
-                    strip.setTDC(tdc); 
+                    }
+                    strip.setTDC(tdc);
                 }              
             }
         }  
