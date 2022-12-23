@@ -721,9 +721,13 @@ public class ECcalib extends DetectorMonitor {
     		uvw[2] = (float) p.getProperty("iw");
     		
     		if(is==1) {
+            System.out.println(getEventNumber());
         	Point3D point = new Point3D(x,y,z);        		
+    		if (il==1 && uvw[0]==59) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
+    		if (il==4 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
+    		if (il==7 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
             point.rotateZ(Math.toRadians(-60*(is-1)));
-            point.rotateY(Math.toRadians(-25));         
+            point.rotateY(Math.toRadians(-25));
     		if (il==1 && uvw[0]==59) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
     		if (il==4 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
     		if (il==7 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
