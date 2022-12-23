@@ -667,6 +667,9 @@ public class Event {
 				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
 				
 				if(caliBank!=null) {					
+					p.setProperty("raweu", caliBank.getFloat("rawEU", ical)*1e3);
+					p.setProperty("rawev", caliBank.getFloat("rawEV", ical)*1e3);
+					p.setProperty("rawew", caliBank.getFloat("rawEW", ical)*1e3);
 					p.setProperty("receu", caliBank.getFloat("recEU", ical)*1e3);
 					p.setProperty("recev", caliBank.getFloat("recEV", ical)*1e3);
 					p.setProperty("recew", caliBank.getFloat("recEW", ical)*1e3);
