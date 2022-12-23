@@ -11,7 +11,7 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
-
+import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 
 public class Event {
@@ -638,38 +638,49 @@ public class Event {
 				
 				int ical = (int) p.getProperty("index");
 				
+				int  is = (int) p.getProperty("sector");
 				int lay = (int) p.getProperty("layer"); 
 				int   pid = part.get((int)p.getProperty("pindex")).pid();
 				float bet = (float) part.get((int)p.getProperty("pindex")).getProperty("beta");
 				float tim1 = (float) p.getProperty("time"), tim2=0;
 				float pat = (float) p.getProperty("path");
 				boolean good = debug && lay>1 && Math.abs(pid)==211;
-								
+				
+//				boolean goodMatch = clusBank!=null && is==clusBank.getByte("sector", ical) && lay==clusBank.getByte("layer",ical);
+				boolean goodMatch = clusBank!=null ;
+				
+//				if(!goodMatch) continue;								
+				
 				if(clusBank!=null) {
-					p.setProperty("cstat",  clusBank.getInt("status", ical));					
-					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
-					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
-					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);					
-					p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
-					p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
-					p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
-					p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
-					p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
-					tim2 = (float) p.getProperty("time");
+				p.setProperty("cstat",  clusBank.getInt("status", ical));					
+				p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
+				p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
+				p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);					
+				p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
+				p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
+				p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
+				p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
+				p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
+				tim2 = (float) p.getProperty("time");
 				}
 				
 				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
 				
 				if(caliBank!=null) {					
-					p.setProperty("receu",    caliBank.getFloat("recEU", ical)*1e3);
-					p.setProperty("recev",    caliBank.getFloat("recEV", ical)*1e3);
-					p.setProperty("recew",    caliBank.getFloat("recEW", ical)*1e3);
+					p.setProperty("receu", caliBank.getFloat("recEU", ical)*1e3);
+					p.setProperty("recev", caliBank.getFloat("recEV", ical)*1e3);
+					p.setProperty("recew", caliBank.getFloat("recEW", ical)*1e3);
 				}
 				
 				if(peakBank!=null && clusBank!=null) {
-					p.setProperty("ustat", peakBank.getInt("status", clusBank.getInt("idU",ical)-1));					
-					p.setProperty("vstat", peakBank.getInt("status", clusBank.getInt("idV",ical)-1));					
-					p.setProperty("wstat", peakBank.getInt("status", clusBank.getInt("idW",ical)-1));					
+					int idu = clusBank.getInt("idU",ical)-1, idv = clusBank.getInt("idV",ical)-1, idw = clusBank.getInt("idW",ical)-1;
+					Point3D pc = new Point3D(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+					p.setProperty("ustat", peakBank.getInt("status", idu));					
+					p.setProperty("vstat", peakBank.getInt("status", idv));					
+					p.setProperty("wstat", peakBank.getInt("status", idw));
+					p.setProperty("leffu", getLeff(pc,getPeakline(idu,pc,peakBank))); //readout distance U
+					p.setProperty("leffv", getLeff(pc,getPeakline(idv,pc,peakBank))); //readout distance V
+					p.setProperty("leffw", getLeff(pc,getPeakline(idw,pc,peakBank))); //readout distance W
 				}
 				
 				p.setProperty("beta", getBeta(p)); //override caloBank with clusBank if it exists
@@ -692,8 +703,22 @@ public class Event {
 			}
 		}
 		return ecalpart;
-	}	
-	
+	}
+	    
+    public Line3D getPeakline(int iid, Point3D point, DataBank bank) {    	
+        Point3D  po = new Point3D(bank.getFloat("xo",iid),
+                                  bank.getFloat("yo",iid),
+                                  bank.getFloat("zo",iid));
+        Point3D  pe = new Point3D(bank.getFloat("xe",iid),
+                                  bank.getFloat("ye",iid),
+                                  bank.getFloat("ze",iid));
+        return  new Line3D(po,pe);
+    }
+    
+    public float getLeff(Point3D point, Line3D peakline) {
+    	return (float) point.distance(peakline.end());
+    }
+    	
 	public float getVar(List<Particle> list, String property, int layer) {
 		for (Particle p: list ) {
 			if (p.getProperty("layer") == layer) {

@@ -1404,7 +1404,7 @@ public class DetectorMonitor implements ActionListener {
 		 dir.writeFile(tlPath+fname+".hipo");		 
     }
     
-    //Generalization of H2F method rebinY for list of non-equal ngroups. 
+    //Generalization of H2F rebinY method for list of non-equal ngroups. 
     public H2F rebinY(H2F h, int... ngroups) {
 	    List<Integer> ig = new ArrayList<Integer>();
         for (int i: ngroups) ig.add(i);
@@ -1425,7 +1425,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     
-    //Performs a vertical merge of a list of H2F
+    //Performs a y-axis concatenation of a list of H2F
     public H2F CombineH2F(H2F...hlist) {    	
     	int   xbins=0,ybins=0;
     	double xmin=0,xmax=0;
@@ -1470,7 +1470,7 @@ public class DetectorMonitor implements ActionListener {
         return fd;
      }
 
-    public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax) {
+    public FitData fitEngine(H1F h, int ff, double pmin, double pmax, double fmin, double fmax) {
        FitData fd = new FitData(h.getGraph()); 
        fd.setInt((int)h.getIntegral());
        fd.setHist(h);
@@ -1488,7 +1488,7 @@ public class DetectorMonitor implements ActionListener {
         return fd;
     }
     
-    public FitData fitEngine(H1F h,int ff, double pmin, double pmax, double fmin, double fmax, double sig1, double sig2) {
+    public FitData fitEngine(H1F h, int ff, double pmin, double pmax, double fmin, double fmax, double sig1, double sig2) {
         FitData fd = new FitData(h.getGraph()); 
         fd.setInt((int)h.getIntegral());
         fd.setHist(h);

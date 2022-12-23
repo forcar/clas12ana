@@ -21,6 +21,8 @@ import org.clas.viewer.DetectorMonitor;
 
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
+import org.jlab.geom.prim.Line3D;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -103,7 +105,7 @@ public class ECcalib extends DetectorMonitor {
                             "PIXEL",
                             "Timeline",
                             "ATT",
-                            "MIPvP",
+                            "ATT2",
                             "VAR",
                             "Align",
                             "Align2");
@@ -154,8 +156,9 @@ public class ECcalib extends DetectorMonitor {
 	     createMIPHistos(7,6,25,0,5.0," - Momentum (GeV)");
 	     createPathHistos(9);
 	     createPixHistos(10);	
-	     createUVWHistos(12,25,0.,2.," MIP ");
-	     createMIPvPHistos(13);
+	     createATTHistos(12,false,25,0.,2.," MIP ");
+	     createATTHistos(13,true,25,0.,2.," MIP ");
+//	     createMIPvPHistos(13);
 	     createBARHistos(15,1);
      }
      
@@ -176,7 +179,8 @@ public class ECcalib extends DetectorMonitor {
     	 plotPathSummary(9,getActivePC()==1?getActiveView()+1:0);
     	 plotPathSummary(10,0);
     	 plotUVW(12);    
-    	 plotPIDSummary(13);
+    	 plotUVW(13);
+//    	 plotPIDSummary(13);
     	 plotMIP(15);
      }
      
@@ -239,56 +243,68 @@ public class ECcalib extends DetectorMonitor {
           
      }
      
-     public void createUVWHistos(int k, int ybins, double ymin, double ymax, String ytxt) {
+     public void createATTHistos(int k, boolean scalx, int ybins, double ymin, double ymax, String ytxt) {
      	
-         F1D f1; 
-         
+         F1D f1,f2; 
+         int uvw,xbns;
+         double xmx;
+
          int run = getRunNumber();
          
-         for (int is=1; is<7; is++) {      
-             DataGroup dg1 = new DataGroup(8,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
-             f1 = new F1D("p0"+is+1+k,"[a]",1,68); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
-            
+         for (int is=1; is<7; is++) {        	 
+             DataGroup dg1 = new DataGroup(9,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
+             f1 = new F1D("p0"+is+1+k,"[a]",1,68);  f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);           
+             f2 = new F1D("p0"+is+1+k,"[a]",1,430); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);           
              for (int ip=1; ip<npmts[0]+1; ip++) {
-                 h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" PCAL W"); h.setTitleY(ytxt+"U"+ip);       
-                 dg1.addDataSet(h,ip-1); dg1.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" PCAL U"); h.setTitleY(ytxt+"V"+ip);
-                 dg2.addDataSet(h,ip-1); dg2.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,68,1,69,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" PCAL V"); h.setTitleY(ytxt+"W"+ip); 
-                 dg3.addDataSet(h,ip-1); dg3.addDataSet(f1,ip-1);
+            	 uvw = (ip>52)?(52+(ip-52)*2):ip; xmx=scalx?2*uvw*4.5*0.51:69; xbns=scalx?((ip>6)?68*ip/npmts[0]:5):68;
+            	 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
+                 h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" PCAL "+(scalx?"LEFF":"W")); h.setTitleY(ytxt+"U"+ip);       
+                 dg1.addDataSet(h,ip-1); dg1.addDataSet(scalx?f2:f1,ip-1);
+                 uvw = (ip>15)?(30+(ip-15)):2*ip; xmx=scalx?uvw*4.5*1.23:69;
+            	 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
+                 h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" PCAL "+(scalx?"LEFF":"U")); h.setTitleY(ytxt+"V"+ip);
+                 dg2.addDataSet(h,ip-1); dg2.addDataSet(scalx?f2:f1,ip-1);
+                 h = new H2F("uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-w"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" PCAL "+(scalx?"LEFF":"V")); h.setTitleY(ytxt+"W"+ip); 
+                 dg3.addDataSet(h,ip-1); dg3.addDataSet(scalx?f2:f1,ip-1);
       	     }
              this.getDataGroup().add(dg1,is,1,k,run); this.getDataGroup().add(dg2,is,2,k,run); this.getDataGroup().add(dg3,is,3,k,run);
              
              DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
-             f1 = new F1D("p0"+is+2+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
-      	     for (int ip=1; ip<npmts[1]+1; ip++) {
-                 h = new H2F("uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECIN W");  h.setTitleY(ytxt+"U"+ip); 
-                 dg4.addDataSet(h,ip-1); dg4.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECIN U"); h.setTitleY(ytxt+"V"+ip); 
-                 dg5.addDataSet(h,ip-1); dg5.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECIN V"); h.setTitleY(ytxt+"W"+ip);
-                 dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);                 
+             f1 = new F1D("p0"+is+2+k,"[a]",1,37);  f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f2 = new F1D("p0"+is+2+k,"[a]",1,430); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);           
+     	     for (int ip=1; ip<npmts[1]+1; ip++) {
+      	    	 xmx=scalx?430*ip/npmts[1]:37; xbns=scalx?((ip>4)?36*ip/npmts[1]:5):36;
+                 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}           
+                 h = new H2F("uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECIN "+(scalx?"LEFF":"W"));  h.setTitleY(ytxt+"U"+ip); 
+                 dg4.addDataSet(h,ip-1); dg4.addDataSet(scalx?f2:f1,ip-1);
+                 h = new H2F("uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-v"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECIN "+(scalx?"LEFF":"U")); h.setTitleY(ytxt+"V"+ip); 
+                 dg5.addDataSet(h,ip-1); dg5.addDataSet(scalx?f2:f1,ip-1);
+                 h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECIN "+(scalx?"LEFF":"V")); h.setTitleY(ytxt+"W"+ip);
+                 dg6.addDataSet(h,ip-1); dg6.addDataSet(scalx?f2:f1,ip-1);                 
       	     }
              this.getDataGroup().add(dg4,is,4,k,run); this.getDataGroup().add(dg5,is,5,k,run); this.getDataGroup().add(dg6,is,6,k,run);
       	   
              DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
-             f1 = new F1D("p0"+is+3+k,"[a]",1,37); f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f1 = new F1D("p0"+is+3+k,"[a]",1,37);  f1.setParameter(0,1); f1.setLineColor(1); f1.setLineStyle(1);
+             f2 = new F1D("p0"+is+3+k,"[a]",1,430); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);           
       	     for (int ip=1; ip<npmts[2]+1; ip++) {
-                 h = new H2F("uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECOU W"); h.setTitleY(ytxt+"U"+ip);
-                 dg7.addDataSet(h,ip-1); dg7.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECOU U");  h.setTitleY(ytxt+"V"+ip);
-                 dg8.addDataSet(h,ip-1); dg8.addDataSet(f1,ip-1);
-                 h = new H2F("uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,36,1,37,ybins,ymin,ymax);
-                 h.setTitleX("Sector "+is+" ECOU V"); h.setTitleY(ytxt+"W"+ip);
-                 dg9.addDataSet(h,ip-1); dg9.addDataSet(f1,ip-1);    
+      	    	 xmx=scalx?430*ip/npmts[2]:37; xbns=scalx?((ip>4)?36*ip/npmts[2]:5):36;
+                 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}           
+                 h = new H2F("uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECOU "+(scalx?"LEFF":"W")); h.setTitleY(ytxt+"U"+ip);
+                 dg7.addDataSet(h,ip-1); dg7.addDataSet(scalx?f2:f1,ip-1);
+                 h = new H2F("uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-v"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECOU "+(scalx?"LEFF":"U"));  h.setTitleY(ytxt+"V"+ip);
+                 dg8.addDataSet(h,ip-1); dg8.addDataSet(scalx?f2:f1,ip-1);
+                 h = new H2F("uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-w"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
+                 h.setTitleX("Sector "+is+" ECOU "+(scalx?"LEFF":"V")); h.setTitleY(ytxt+"W"+ip);
+                 dg9.addDataSet(h,ip-1); dg9.addDataSet(scalx?f2:f1,ip-1);    
       	     }
              this.getDataGroup().add(dg7,is,7,k,run); this.getDataGroup().add(dg8,is,8,k,run); this.getDataGroup().add(dg9,is,9,k,run);     	    
          }        
@@ -684,7 +700,7 @@ public class ECcalib extends DetectorMonitor {
     	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,35,35,36,36,36},{36,35,35,35,35,35}}; //W far cuts   
     	
     	public Vector3 rl;    	
-       	public float[]   uvw = new float[3]; float[]  wuv = new float[3]; float[] ep = new float[3];
+       	public float[] uvw=new float[3], wuv=new float[3], ep=new float[3], lef=new float[3];
        	public boolean[] fid = new boolean[3];
        	public boolean wpix=false, w;
        	public int ip,il;
@@ -703,6 +719,19 @@ public class ECcalib extends DetectorMonitor {
     		uvw[0] = (float) p.getProperty("iu");
     		uvw[1] = (float) p.getProperty("iv");
     		uvw[2] = (float) p.getProperty("iw");
+    		
+    		if(is==1) {
+        	Point3D point = new Point3D(x,y,z);        		
+            point.rotateZ(Math.toRadians(-60*(is-1)));
+            point.rotateY(Math.toRadians(-25));         
+    		if (il==1 && uvw[0]==59) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
+    		if (il==4 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
+    		if (il==7 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
+    		}
+    		    		
+    		lef[0] = (float) p.getProperty("leffu");
+    		lef[1] = (float) p.getProperty("leffv");
+    		lef[2] = (float) p.getProperty("leffw");
     		
     		wuv[0] = uvw[2]; // use W strips to measure U readout distance
     		wuv[1] = uvw[0]; // use U strips to measure V readout distance
@@ -769,6 +798,8 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float)  v3.mag();
             	v23mag = (float) v23.mag();
             	
+//            	System.out.println(v12mag+" "+v13mag+" "+v23mag);
+            	
             	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==4;
             	Boolean pixeci = ev.isMuon? e.get(1).wpix : e.get(1).wsum==3||e.get(1).wsum==4;
             	Boolean pixeco = ev.isMuon? e.get(2).wpix : e.get(2).wsum==3||e.get(2).wsum==4;  
@@ -788,10 +819,10 @@ public class ECcalib extends DetectorMonitor {
             		fillPATH(is,e.get(1).il,run,e.get(1).ecl,e.get(1).ep,e.get(1).wsum,v12mag,v13mag,v23mag,e.get(1).e_cz,e.get(1).fid);
             		fillPATH(is,e.get(2).il,run,e.get(2).ecl,e.get(2).ep,e.get(2).wsum,v12mag,v13mag,v23mag,e.get(2).e_cz,e.get(2).fid);
             	}
-            		
-            	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
-            	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
-            	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
+//	            System.out.println(pixpc+" "+e.get(0).wsum);
+            	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
+            	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).lef,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
+            	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).lef,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
             	
 
             	
@@ -842,21 +873,24 @@ public class ECcalib extends DetectorMonitor {
     	}
     }
     
-    public void fillMIP(int is, int il, int run, float[] uvw, float[] wuv, boolean fid[], float ec, float[] ep, float p, float x, float y) {
+    public void fillMIP(int is, int il, int run, float[] uvw, float[] lef, float[] wuv, boolean fid[], float ec, float[] ep, float p, float x, float y) {
     	
     	boolean fidc = !(fid[0] || fid[1] || fid[2]);
     	
     	int il3=il/3;
+    	
     	((H2F) this.getDataGroup().getItem(0,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]&&fidc?mipc[il3]:0);
     	((H2F) this.getDataGroup().getItem(1,  2,5,run).getData(il3).get(0)).fill(-x,y,ec<mxc[il3]&&fidc?ec:0); 
     	
-    	if(il==1) ((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is+(p<0?0:6)-1).get(0)).fill(Math.abs(p),fidc?ec:0/mipc[0]);
-
+//    	if(il==1) ((H2F) this.getDataGroup().getItem(0,0,13,run).getData(is+(p<0?0:6)-1).get(0)).fill(Math.abs(p),fidc?ec:0/mipc[0]);
     	for (int i=0; i<3; i++) {
-    		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(fidc?ec:-10,uvw[i]);    	
+    		((H2F) this.getDataGroup().getItem(is,2,0,run).getData(i+il-1).get(0)).fill(fidc?ec:-10,uvw[i]);  
+//    		System.out.println(il+" "+i+" "+fid[i]+" "+ep[i]+" "+uvw[i]+" "+lef[i]);
         	if (!fid[i]) {
+//        		if(il==1) System.out.println(i+" "+ep[i]+" "+wuv[i]);
     			((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]); //used for calibration	
     			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	
+     			((H2F) this.getDataGroup().getItem(is,i+il,13,run).getData((int)uvw[i]-1).get(0)).fill(lef[i],ep[i]/mipp[il3]);	
 //    	    	float z1 = ep[i]<mxp[il3]?mipp[il3]:0, z2 = ep[i]<mxp[il3]?ep[i]:0;
     			float z1 = ep[i]<mxp[il3]?1:0, z2 = ep[i]<mxp[il3]?ep[i]/mipp[il3]:0;
     			((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z1);		  
@@ -1026,7 +1060,7 @@ public class ECcalib extends DetectorMonitor {
     	 }
     	
     }
-    
+
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
