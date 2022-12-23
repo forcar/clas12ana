@@ -104,8 +104,8 @@ public class ECcalib extends DetectorMonitor {
                             "PathIJ",
                             "PIXEL",
                             "Timeline",
-                            "ATT",
-                            "ATT2",
+                            "ATTRAW",
+                            "ATTCOR",
                             "VAR",
                             "Align",
                             "Align2");
@@ -156,7 +156,7 @@ public class ECcalib extends DetectorMonitor {
 	     createMIPHistos(7,6,25,0,5.0," - Momentum (GeV)");
 	     createPathHistos(9);
 	     createPixHistos(10);	
-	     createATTHistos(12,false,25,0.,2.," MIP ");
+	     createATTHistos(12,true,25,0.,2.," MIP "); //x-axis: false=UVW true=LEFF(cm)
 	     createATTHistos(13,true,25,0.,2.," MIP ");
 //	     createMIPvPHistos(13);
 	     createBARHistos(15,1);
@@ -257,12 +257,12 @@ public class ECcalib extends DetectorMonitor {
              f2 = new F1D("p0"+is+1+k,"[a]",1,430); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);           
              for (int ip=1; ip<npmts[0]+1; ip++) {
             	 uvw = (ip>52)?(52+(ip-52)*2):ip; xmx=scalx?2*uvw*4.5*0.51:69; xbns=scalx?((ip>6)?68*ip/npmts[0]:5):68;
-            	 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
+            	 if(scalx) {f2 = new F1D("p0u"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
                  h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL "+(scalx?"LEFF":"W")); h.setTitleY(ytxt+"U"+ip);       
                  dg1.addDataSet(h,ip-1); dg1.addDataSet(scalx?f2:f1,ip-1);
                  uvw = (ip>15)?(30+(ip-15)):2*ip; xmx=scalx?uvw*4.5*1.23:69;
-            	 if(scalx) {f2 = new F1D("p0"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
+            	 if(scalx) {f2 = new F1D("p0vw"+is+ip+k,"[a]",1,xmx); f2.setParameter(0,1); f2.setLineColor(1); f2.setLineStyle(1);}
                  h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,xbns,1,xmx,ybins,ymin,ymax);
                  h.setTitleX("Sector "+is+" PCAL "+(scalx?"LEFF":"U")); h.setTitleY(ytxt+"V"+ip);
                  dg2.addDataSet(h,ip-1); dg2.addDataSet(scalx?f2:f1,ip-1);
@@ -700,7 +700,7 @@ public class ECcalib extends DetectorMonitor {
     	int[][] fwcut = new int[][]{{67,66,67,67,67,67},{36,35,35,36,36,36},{36,35,35,35,35,35}}; //W far cuts   
     	
     	public Vector3 rl;    	
-       	public float[] uvw=new float[3], wuv=new float[3], ep=new float[3], lef=new float[3];
+       	public float[] uvw=new float[3], wuv=new float[3], ep=new float[3], rep=new float[3], lef=new float[3];
        	public boolean[] fid = new boolean[3];
        	public boolean wpix=false, w;
        	public int ip,il;
@@ -719,7 +719,7 @@ public class ECcalib extends DetectorMonitor {
     		uvw[0] = (float) p.getProperty("iu");
     		uvw[1] = (float) p.getProperty("iv");
     		uvw[2] = (float) p.getProperty("iw");
-    		
+/*    		
     		if(is==1) {
             System.out.println(getEventNumber());
         	Point3D point = new Point3D(x,y,z);        		
@@ -732,7 +732,7 @@ public class ECcalib extends DetectorMonitor {
     		if (il==4 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
     		if (il==7 && uvw[0]==28) System.out.println(il+" "+point.x()+" "+point.y()+" "+point.z());
     		}
-    		    		
+*/    		    		
     		lef[0] = (float) p.getProperty("leffu");
     		lef[1] = (float) p.getProperty("leffv");
     		lef[2] = (float) p.getProperty("leffw");
@@ -759,7 +759,11 @@ public class ECcalib extends DetectorMonitor {
     		ecl    = (float) p.getProperty("energy")/d;	    	   
     		ep[0]  = (float) p.getProperty("receu")/d;
     		ep[1]  = (float) p.getProperty("recev")/d;
-    		ep[2]  = (float) p.getProperty("recew")/d;    	    		
+    		ep[2]  = (float) p.getProperty("recew")/d;  
+    		
+    		rep[0] = (float) p.getProperty("raweu")/d;
+    		rep[1] = (float) p.getProperty("rawev")/d;
+    		rep[2] = (float) p.getProperty("rawew")/d;    	    		
     	};
     }
     
@@ -824,9 +828,9 @@ public class ECcalib extends DetectorMonitor {
             		fillPATH(is,e.get(2).il,run,e.get(2).ecl,e.get(2).ep,e.get(2).wsum,v12mag,v13mag,v23mag,e.get(2).e_cz,e.get(2).fid);
             	}
 //	            System.out.println(pixpc+" "+e.get(0).wsum);
-            	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
-            	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).lef,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
-            	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).lef,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
+            	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).rep,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
+            	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).lef,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).rep,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
+            	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).lef,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).rep,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
             	
 
             	
@@ -877,7 +881,7 @@ public class ECcalib extends DetectorMonitor {
     	}
     }
     
-    public void fillMIP(int is, int il, int run, float[] uvw, float[] lef, float[] wuv, boolean fid[], float ec, float[] ep, float p, float x, float y) {
+    public void fillMIP(int is, int il, int run, float[] uvw, float[] lef, float[] wuv, boolean fid[], float ec, float[] rep, float[] ep, float p, float x, float y) {
     	
     	boolean fidc = !(fid[0] || fid[1] || fid[2]);
     	
@@ -892,9 +896,10 @@ public class ECcalib extends DetectorMonitor {
 //    		System.out.println(il+" "+i+" "+fid[i]+" "+ep[i]+" "+uvw[i]+" "+lef[i]);
         	if (!fid[i]) {
 //        		if(il==1) System.out.println(i+" "+ep[i]+" "+wuv[i]);
-    			((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]); //used for calibration	
-    			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	
-     			((H2F) this.getDataGroup().getItem(is,i+il,13,run).getData((int)uvw[i]-1).get(0)).fill(lef[i],ep[i]/mipp[il3]);	
+    			((H2F) this.getDataGroup().getItem(is,1,0,run).getData(i+il-1).get(0)).fill(ep[i],uvw[i]); //used to fit attcor MIP distributions	
+//    			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	 //obsolete
+     			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(lef[i],rep[i]/mipp[il3]); //att correction off	
+     			((H2F) this.getDataGroup().getItem(is,i+il,13,run).getData((int)uvw[i]-1).get(0)).fill(lef[i], ep[i]/mipp[il3]); //att correction on
 //    	    	float z1 = ep[i]<mxp[il3]?mipp[il3]:0, z2 = ep[i]<mxp[il3]?ep[i]:0;
     			float z1 = ep[i]<mxp[il3]?1:0, z2 = ep[i]<mxp[il3]?ep[i]/mipp[il3]:0;
     			((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z1);		  
