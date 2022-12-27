@@ -26,6 +26,7 @@ public class FitData {
 	public double meane;
 	public double sigma;
 	public double sigmae;
+	public double[] p = new double[3], pe = new double[7], ip = new double[3];
 	public double p0,p1,p2,p3,p4,p5,p6,p0e,p1e,p2e,p3e,p4e,p5e,p6e;
 	public double sig1=2.5;
 	public double sig2=1.7;
@@ -33,7 +34,7 @@ public class FitData {
 	public int integral;
 	public int intmin=30;
 	public int fitcol=4;
-	public String f_optstat="1110";
+	public String f_optstat="1100";
 	public String g_optstat="1100";
 	public String h_optstat="100";
 	public Boolean doFit = false;
@@ -46,8 +47,9 @@ public class FitData {
 			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
 			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
 			                       "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x","[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x",
-			                       "[a]*exp(x,[b])",
-			                       "[a]+[b]*cos(x*[c])",
+			                       "[p0]*exp(-x/[p1])",
+//			                       "[p0]*(exp(-x/[p1])+[p2]*exp(-x/[p3]))",
+			                       "[p0]*(exp(-x/70)+[p1]*exp(-x/400))",
 			                       "[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])",
 			                       "1/((1-[p])+[p]/x)",
                                    "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])",
@@ -128,36 +130,50 @@ public class FitData {
 		  if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
 	    }
-	    if (func==6)  {initFunc(0,20.0); initFunc(1,0.057) ;                  graph.getFunction().setRange(fmin, fmax);g_optstat="1110";}
-	    if (func==7)  {initFunc(0,0.23); initFunc(1,0.56) ; initFunc(2,-0.3); graph.getFunction().setRange(fmin, fmax);}
-	    if (func==14) {initFunc(0,0.25); initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
-	    if (func==15) {initFunc(0,0.27); initFunc(1,-0.146);initFunc(2,0.117);graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
-	    if (func==16) {initFunc(0,0.5);  initFunc(1,0.001); initFunc(2,100)  ;graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";}
+	    if (func==6)  {initFunc(0,20.0);   initFunc(1,0.057) ;                  graph.getFunction().setRange(fmin,fmax);g_optstat="1110";}
+	    if (func==7)  {initFunc(0,0.23);   initFunc(1,0.56) ; initFunc(2,-0.3); graph.getFunction().setRange(fmin,fmax);}
+	    if (func==9)  {initFunc(0,1,0,1.5);initFunc(1,200,100,400) ;            graph.getFunction().setRange(fmin,fmax);f_optstat="110";}
+	    if (func==10) {initFunc(0,0.343,0.1,0.5);initFunc(1,1.91,1,4) ;         graph.getFunction().setRange(fmin,fmax);f_optstat="110";}
+//	    if (func==10) {initFunc(0,0.3,0.1,0.5);initFunc(1,70,65,75) ; initFunc(3,400,380,420) ;initFunc(2,1.9,1,4) ; graph.getFunction().setRange(fmin,fmax);f_optstat="11110";}
+	    if (func==14) {initFunc(0,0.25);   initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
+	    if (func==15) {initFunc(0,0.27);   initFunc(1,-0.146);initFunc(2,0.117);graph.getFunction().setRange(fmin,fmax);g_optstat="";f_optstat="1110";}
+	    if (func==16) {initFunc(0,0.5);    initFunc(1,0.001); initFunc(2,100)  ;graph.getFunction().setRange(fmin,fmax);g_optstat="";f_optstat="1110";}
 	    if (func==13) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="111110";}
 	    if (func==17) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11111110";}
-	    if (func==18) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11111110";}
+	    if (func==18) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11111110";} 
 	}
 	
 	public void initFunc(int par, double val) {
+		ip[par] = val;
         graph.getFunction().setParameter(par, val);
 	}
 	
 	public void initFunc(int par, double val, double min, double max) {
+		ip[par] = val;
         graph.getFunction().setParameter(par, val);
         graph.getFunction().setParLimits(par, min, max);
 	}
+	
+	public void loadFits(GraphErrors g) {
+    	for (int i=0; i<g.getFunction().getNPars(); i++) {
+    		p[i] = g.getFunction().parameter(i).value(); 
+    		pe[i]= g.getFunction().parameter(i).error();
+    	    if(p[i]==0.0) p[i]=ip[i];
+    	}		
+	}
 
 	public void fitGraph(String opt, Boolean fitEnable, Boolean fitVerbose) {
-	    if (doFit&&fitEnable) DataFitter.fit(graph.getFunction(), graph, "Q");
+	    if (doFit && fitEnable) DataFitter.fit(graph.getFunction(), graph, "Q");
 	    if (func>4) {
+	    	loadFits(graph);
 	    	for (int i=0; i<graph.getFunction().getNPars(); i++) {
-	    		if(i==0) {p0 = graph.getFunction().parameter(0).value(); p0e  = graph.getFunction().parameter(0).error();}
-	    		if(i==1) {p1 = graph.getFunction().parameter(1).value(); p1e  = graph.getFunction().parameter(1).error();}
-	    		if(i==2) {p2 = graph.getFunction().parameter(2).value(); p2e  = graph.getFunction().parameter(2).error();}
-	    		if(i==3) {p3 = graph.getFunction().parameter(3).value(); p3e  = graph.getFunction().parameter(3).error();}
-	    		if(i==4) {p4 = graph.getFunction().parameter(4).value(); p4e  = graph.getFunction().parameter(4).error();}
-	    		if(i==5) {p5 = graph.getFunction().parameter(5).value(); p5e  = graph.getFunction().parameter(5).error();}
-	    		if(i==6) {p6 = graph.getFunction().parameter(6).value(); p6e  = graph.getFunction().parameter(6).error();}
+	    		if(i==0) {p0 = p[i]; p0e = pe[i];}
+	    		if(i==1) {p1 = p[i]; p1e = pe[i];}
+	    		if(i==2) {p2 = p[i]; p2e = pe[i];}
+	    		if(i==3) {p3 = p[i]; p3e = pe[i];}
+	    		if(i==4) {p4 = p[i]; p4e = pe[i];}
+	    		if(i==5) {p5 = p[i]; p5e = pe[i];}
+	    		if(i==6) {p6 = p[i]; p6e = pe[i];}
 	    	}
 	    }	                  
 	    if (func<5) {

@@ -108,7 +108,8 @@ public class ECcalib extends DetectorMonitor {
                             "ATTCOR",
                             "VAR",
                             "Align",
-                            "Align2");
+                            "Align2",
+                            "ATTFIT");
         
         useRDIFButtons(true);
         usePCCheckBox(true);
@@ -144,7 +145,7 @@ public class ECcalib extends DetectorMonitor {
 	     setRunNumber(run);
 	     runlist.add(run);
 	     createMIPHistos(0,1,50,0, 40," Peak Energy (MeV)");
-	     createMIPHistos(0,2,50,0,100," Cluster Energy (MeV)");	     
+	     createMIPHistos(0,2,50,0,100," Cluster Energy (MeV)");     
 	     if(dropSummary) return;
 	     createXYHistos(5,80,-420,420,-420,420);    
 	     createPIDHistos(6);
@@ -189,10 +190,11 @@ public class ECcalib extends DetectorMonitor {
     	 if(!isAnalyzeDone) return;
     	 if(!dropSummary) {
     		 updateFITS(2); 
-//    		 updateFITS(15); 
-    		 if(runlist.size()==1) dumpFiles("piongain");
-    		 if(runlist.size()==1) dumpFiles("hvgain");
-    		 if(runlist.size()==3) dumpFiles("muongain");
+//    		 updateFITS(15);
+    		 updateFITS(17);
+    		 if(dumpFiles) {dumpFiles("piongain"); dumpFiles("attgain"); dumpFiles("atten"); dumpFiles=false;}
+//    		 if(runlist.size()==1) dumpFiles("hvgain");
+//    		 if(runlist.size()==3) dumpFiles("muongain");
     		 if(TLname=="UVW") {
     			     /*plotMean();*/ plotVarSummary(14); plotMeanSummary(3); plotRmsSummary(4);
     			 } else {
@@ -212,7 +214,7 @@ public class ECcalib extends DetectorMonitor {
 //   }
 
      public void dumpFiles(String val) {
-    	 if(dumpFiles) writeFile(val,1,7,0,3,0,3);
+    	 writeFile(val,1,7,0,3,0,3);
      }	
      
      public void createXYHistos(int k, int nb, int bx1, int bx2, int by1, int by2) {
@@ -311,7 +313,7 @@ public class ECcalib extends DetectorMonitor {
      }     
     
      public void createMIPHistos(int k, int n, int nch, double x1, double x2, String txt) {
-    	
+     	
 	    int run = getRunNumber();
     
         for (int is=1; is<7; is++) {
@@ -1073,18 +1075,18 @@ public class ECcalib extends DetectorMonitor {
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        c.clear(); c.divide(4, 3);
+        H1F h; FitData fd;
+        String det[] = {" PCAL"," ECIN"," ECOU"}, uvw[] = {" U "," V "," W "};
+        int is = getActiveSector();
         
-        int    pc = getActivePC()==2 ? 1 : getActivePC();
-        int    is = getActiveSector(); 
-        
-        c.clear();
-        c.divide(3, 3);
-
         for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) {
-            c.cd(3*i+j); c.getPad(3*i+j).getAxisY().setLog(false); 
-            c.draw(tl.fitData.getItem(is,i+10*pc*(j+1),0,getRunNumber()).getHist());
-            c.draw(tl.fitData.getItem(is,i+10*pc*(j+1),0,getRunNumber()).getGraph(),"same");
+        for (int j=0; j<4; j++) {
+            c.cd(4*i+j); c.getPad(4*i+j).getAxisY().setLog(false);
+            fd = tl.fitData.getItem(is,i+10*(j==3?0:1)*(j+1),0,getRunNumber()); h = fd.getHist(); 
+            h.setFillColor(j==3?0:j+2); h.setTitleX("Sector "+is+det[i]+(j<3?uvw[j]:" ")+(j<3?"Peak":"Cluster")+" Energy (MeV)");
+            h.setOptStat("100"); fd.getGraph().getFunction().setOptStat("1100");
+            c.draw(h); c.draw(fd.getGraph(),"same");
         }
         }
         
@@ -1093,7 +1095,8 @@ public class ECcalib extends DetectorMonitor {
     public void updateFITS(int index) {
     	switch (index) {
     	case  2: updateFITS2(index); break;
-    	case 15: updateFITS15(index);
+    	case 15: updateFITS15(index);break;
+    	case 17: updateFITS17(index);
     	}
     }
     
@@ -1106,12 +1109,10 @@ public class ECcalib extends DetectorMonitor {
         int     i = getActiveLayer();
         int     j = getActiveView();
         
-        if (pc==2) pc=1;
-        
         int    np = npmt[i*3+j];
         
         c.clear();
-        if (np==36) c.divide(6,6); if (np>36) c.divide(8,9);
+        if (np==36) c.divide(6,6); if (np==68) c.divide(9,8); if (np==62) c.divide(8,8); 
         
         for (int ip=0; ip<np ; ip++) {
             c.cd(ip); c.getPad(ip).getAxisY().setLog(false);
@@ -1143,6 +1144,34 @@ public class ECcalib extends DetectorMonitor {
        			}
        		}       	
        	}            	
+    }
+    
+    public void updateFITS17(int index) {
+        
+    	GraphErrors g = null;
+        EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+       
+        int    is = getActiveSector(); 
+        int    il = getActiveLayer();
+        int    iv = getActiveView();
+        
+        int    np = npmt[3*il+iv];
+        
+        c.clear();
+        if (np==36) c.divide(6,6); if (np==68) c.divide(9,8); if (np==62) c.divide(8,8);
+        
+        for (int ip=0; ip<np ; ip++) {        	
+        	if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,getRunNumber())) {
+        		g=tl.fitData.getItem(is,100+3*il+iv+1,ip+1,getRunNumber()).getGraph();
+        		if(g.getDataSize(0)>0) {
+                   c.cd(ip); c.getPad(ip).getAxisY().setLog(false); c.getPad(ip).getAxisY().setRange(0,2);
+                   c.getPad(ip).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
+                   c.draw(g);
+                   F1D f1 = new F1D("p0","[a]",0.,g.getDataX(g.getDataSize(0)-1)*1.05); f1.setParameter(0,1);
+                   f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+        		}
+        	}
+        }
     }
     
     @Override
@@ -1194,29 +1223,6 @@ public class ECcalib extends DetectorMonitor {
         }
     }
     
-    public void analyzeGraphs() {
-    	
-    	ParallelSliceFitter fitter1, fitter2;
-        GraphErrors g = new GraphErrors();
-        
-        int run=getRunNumber(); 
-        
-        int[] np = {0,3,6,9,10,11,12,13,14};      
-        int[] xy = {0,0,0,0, 0, 0, 0, 0, 0};
-        int[] fl = {35,56,56,52,15,15,52,15,15};
-        
-        for (int is=1; is<7; is++) {
-        	for (int i=0; i<np.length; i++ ) {
-        		H2F h = (H2F) this.getDataGroup().getItem(is,1,15,run).getData(np[i]).get(0);
-        		fitter1 = new ParallelSliceFitter(h);
-        		fitter1.setRange(0,62); 
-        		if(xy[i]==0) {fitter1.fitSlicesX(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleX()); g.setTitleY(h.getTitleY());}
-        		if(xy[i]==1) {fitter1.fitSlicesY(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleY()); g.setTitleY(h.getTitleX());}
-        		Fits.add(fitEngine(g,6,0,fl[i]), is,np[i],0,run);        		
-        	}        	       	
-        }
-    }
-    
     public void fitStore(int is, int id, int il, int pc, int run, double nrm) {
     	FitData fd=null;  
     	int np = npmt[id*3+il];
@@ -1254,6 +1260,66 @@ public class ECcalib extends DetectorMonitor {
         FitSummary.add(meanc, is,id+10*(pc+1)*(pc+1)*(il+1),6,run); VarSummary.add(h6,  is,id+10*(pc+1)*(pc+1)*(il+1),6,run);       	        
         FitSummary.add(Meanc, is,id+10*(pc+1)*(pc+1)*(il+1),7,run); VarSummary.add(h7,  is,id+10*(pc+1)*(pc+1)*(il+1),7,run);
         
+    }
+    
+    public void analyzeGraphs() {
+    	analyzeAlignment();
+    	analyzeATT(1,7,0,3,0,3);
+    }
+    
+    public void analyzeAlignment() {
+    	
+    	ParallelSliceFitter fitter1, fitter2;
+        GraphErrors g = new GraphErrors();
+        
+        int run=getRunNumber(); 
+        
+        int[] np = {0,3,6,9,10,11,12,13,14};      
+        int[] xy = {0,0,0,0, 0, 0, 0, 0, 0};
+        int[] fl = {35,56,56,52,15,15,52,15,15};
+        
+        for (int is=1; is<7; is++) {
+        	for (int i=0; i<np.length; i++ ) {
+        		H2F h = (H2F) this.getDataGroup().getItem(is,1,15,run).getData(np[i]).get(0);
+        		fitter1 = new ParallelSliceFitter(h);
+        		fitter1.setRange(0,62); 
+        		if(xy[i]==0) {fitter1.fitSlicesX(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleX()); g.setTitleY(h.getTitleY());}
+        		if(xy[i]==1) {fitter1.fitSlicesY(); g = fitter1.getMeanSlices(); g.setTitleX(h.getTitleY()); g.setTitleY(h.getTitleX());}
+        		Fits.add(fitEngine(g,6,0,fl[i]), is,np[i],0,run);        		
+        	}        	       	
+        }
+    }
+    
+    public void analyzeATT(int is1, int is2, int il1, int il2, int iv1, int iv2) { //ATTRAW vs LEFF fits to obtain gain and atten length 
+
+        ParallelSliceFitter fitter1;
+        H2F h2; GraphErrors g;
+        int[] fmax = {400,150,220};
+        int run=getRunNumber();
+        
+        for (int is=is1; is<is2; is++) {            
+           for (int il=il1; il<il2; il++) {
+              for (int iv=iv1; iv<iv2; iv++) {
+            	 int np = npmt[3*il+iv]; double[] x=new double[np],  xe=new double[np], y=new double[np], ye=new double[np]; 
+                 for (int ip=0; ip<np; ip++) { x[ip] = ip+1; xe[ip]=0; y[ip]=0; ye[ip]=0;
+                    System.out.println("analyzdATT: Fitting Sector "+is+" Layer "+il+" View "+iv+" PMT "+ip+" "+this.getDataGroup().hasItem(is,3*il+iv+1,12,run)); 
+                    h2 = (H2F)this.getDataGroup().getItem(is,3*il+iv+1,12,run).getData(ip).get(0); 
+                    fitter1 = new ParallelSliceFitter(h2);
+                    fitter1.setRange(0,h2.getXAxis().max()); fitter1.fitSlicesX();
+                    g = fitter1.getMeanSlices(); 
+                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
+                    int gmax = g.getDataSize(0)>0 ?(int) (g.getDataX(g.getDataSize(0)-1)*1.05):0;
+                    tl.fitData.add(fitEngine(g,il==0?10:9,0,Math.min(fmax[il],gmax)),is,100+3*il+iv+1,ip+1,run); 
+                    double p0  = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0,   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
+                    double p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e, p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
+                    if(il==0) {y[ip] = p0*(1+p1); ye[ip]=y[ip]*Math.sqrt(Math.pow(p0e/p0,2)+Math.pow(p1e/p1,2));}
+                    if(il>0)  {y[ip] = p0;        ye[ip]=p0e;}
+                 }
+                 FitSummary.add(new GraphErrors("MIP3-"+is+"-"+il+" "+iv,x,y,xe,ye),is,il+10*(1+1)*(1+1)*(iv+1),3,run);                 
+              }
+           }
+        }
+    
     }
     
     public boolean varcut(int id, int il, int ip) {
@@ -1303,14 +1369,16 @@ public class ECcalib extends DetectorMonitor {
         for (int il=0; il<3; il++) {           	
             F1D f1 = new F1D("p0","[a]",0.,npmt[id*3+il]); f1.setParameter(0,1);
             
-            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber());            
-            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?5:7,getRunNumber());
-            plot1.setMarkerColor(1);
+            GraphErrors plot1 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?1:6,getRunNumber()); plot1.setMarkerSize(2); plot1.setMarkerColor(1); plot1.setLineColor(1);            
+            GraphErrors plot2 = FitSummary.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),getActiveRDIF()==0?5:7,getRunNumber()); plot2.setMarkerSize(2);
+            GraphErrors plot3 = FitSummary.getItem(is,id+10*( 1+1)*( 1+1)*(il+1),                     3,getRunNumber()); plot3.setMarkerSize(2); plot3.setMarkerColor(4); plot3.setLineColor(4);
+
             c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
             c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
             if(n==0||n==9||n==18||n==27||n==36||n==45) plot1.getAttributes().setTitleY("MEAN / MIP");
             plot1.getAttributes().setTitleX("S"+is+" "+det[id]+" "+v[il].toUpperCase()+" PMT");
-            c.draw(plot1); c.draw(plot2,"same");f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+            c.draw(plot1); c.draw(plot2,"same"); f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+            if(pc==1)      c.draw(plot3,"same");
             n++;
         }
         }
@@ -1765,10 +1833,12 @@ public class ECcalib extends DetectorMonitor {
 							case "muongain": line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
 							case "piongain": line = getGAIN(is,il,iv,ip,runlist.get(0)); break;
 							case "hvgain":   line = getHVGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "attgain":  line = getATTGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "atten":    line = getATTEN(is,il,iv,ip,runlist.get(0)); break;
 							case "rdif":     line = getRDIF(is,il,iv,ip); break;
 							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
 							}
-						    if(table=="piongain") System.out.println(line);
+//						    if(table=="piongain") System.out.println(line);
 						    outputBw.write(line);
 						    outputBw.newLine();
 						}
@@ -1811,6 +1881,39 @@ public class ECcalib extends DetectorMonitor {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
 			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
 			      +" 0.0";			
+		}
+		
+	}
+	
+	public String getATTGAIN(int is, int il, int iv, int ip, int run) { //from fits to MIP yield vs LEFF  
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
+			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
+			double     g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
+			double    ge = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
+				  +ge;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
+			      +" 0.0";			
+		}
+		
+	}
+	
+	public String getATTEN(int is, int il, int iv, int ip, int run) {  //from fits to MIP yield vs LEFF  
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
+			double   p0 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
+			double  p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
+			double   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
+			double  p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
+				  +p0+" "+p0e+" "+p1+" "+p1e;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 200. 0.0");  
 		}
 		
 	}
