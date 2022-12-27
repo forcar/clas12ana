@@ -105,7 +105,7 @@ public class ECEngine extends ReconstructionEngine {
                                 List<ECStrip>   strips, 
                                 List<ECPeak>    peaks, 
                                 List<ECCluster> clusters){
-	    
+/*	    
         DataBank bankS = de.createBank("ECAL::hits", strips.size());
         for(int h = 0; h < strips.size(); h++){
             bankS.setByte("sector",     h,  (byte) strips.get(h).getDescriptor().getSector());
@@ -117,7 +117,7 @@ public class ECEngine extends ReconstructionEngine {
             bankS.setFloat("energy",    h, (float) strips.get(h).getEnergy());
             bankS.setFloat("time",      h, (float) strips.get(h).getTime());                
         }
-       
+*/       
         DataBank  bankP =  de.createBank("ECAL::peaks", peaks.size());
         for(int p = 0; p < peaks.size(); p++){
             bankP.setByte("sector",  p,  (byte) peaks.get(p).getDescriptor().getSector());
@@ -171,7 +171,7 @@ public class ECEngine extends ReconstructionEngine {
             bankM.setFloat("m3w", c,   (float) clusters.get(c).clusterPeaks.get(2).getMoment3());
         }
 */ 
-/*        
+        
         DataBank  bankD =  de.createBank("ECAL::calib", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
            bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
@@ -184,8 +184,8 @@ public class ECEngine extends ReconstructionEngine {
            bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
-*/        
-        DataBank bankD2 = null;
+        
+        DataBank bankD2 = null, bankS=null;
 //        DataBank bankD = null;
         
         if(ECCommon.useCalibPass2) {
@@ -212,7 +212,7 @@ public class ECEngine extends ReconstructionEngine {
        }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-           de.appendBanks(bankS,bankP,bankC,bankD2);
+        de.appendBanks(bankS,bankP,bankC,bankD);
 //         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
@@ -304,6 +304,11 @@ public class ECEngine extends ReconstructionEngine {
     public void setUsePass2Timing(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: usePass2Timing = "+val);
     	ECCommon.usePass2Timing = val;
+    }  
+    
+    public void setUsePass2Energy(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: usePass2Energy = "+val);
+    	ECCommon.usePass2Energy = val;
     }
     
     public void setUsePass2Recon(boolean val) {
@@ -394,6 +399,7 @@ public class ECEngine extends ReconstructionEngine {
     	
         String[]  ecTables = new String[]{
             "/calibration/ec/attenuation", 
+            "/calibration/ec/attenpass2", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
             "/calibration/ec/ftime",
@@ -440,6 +446,7 @@ public class ECEngine extends ReconstructionEngine {
         setClusterThresholds(0,0,0);
         setClusterCuts(7,15,20);      //pass1 7,15,20
         setDTCorrections(ECCommon.useDTCorrections);
+        setUsePass2Energy(ECCommon.usePass2Energy);      //pass1 false        
         setUsePass2Timing(ECCommon.usePass2Timing);      //pass1 false        
         setUseFTpcal(ECCommon.useFTpcal);
         setSplitMethod(0);            //pass1 0=gagik method
