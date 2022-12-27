@@ -1445,27 +1445,24 @@ public class DetectorMonitor implements ActionListener {
     
     public FitData fitEngine(GraphErrors g, int ff, int fmin) {
         FitData fd = new FitData(g);        
-    	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,0,0,fmin,g.getDataX(g.getDataSize(0)-1)*1.05); 
-        fd.doFit = true; 	
+        fd.doFit = g.getDataSize(0)==0 ? false:true; 	
         fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      }
     
     public FitData fitEngine(GraphErrors g, int ff, int fmin, int fmax) {
         FitData fd = new FitData(g);        
-    	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,0,1,fmin,fmax); 
-        fd.doFit = true; 
+        fd.doFit = g.getDataSize(0)==0 ? false:true; 	
         fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      } 
     
     public FitData fitEngine(GraphErrors g, int ff, double pmin, double pmax, double fmin, double fmax ) {
         FitData fd = new FitData(g);        
-    	if(g.getDataSize(0)==0) return fd;
         fd.initFit(ff,pmin,pmax,fmin,fmax); 
-        fd.doFit = true; 
+        fd.doFit = g.getDataSize(0)==0 ? false:true; 	
         fd.fitGraph("",cfitEnable,fitVerbose); 
         return fd;
      }
