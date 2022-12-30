@@ -18,6 +18,8 @@ import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Line3D;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.GraphErrors;
@@ -88,6 +90,7 @@ public class ECPart extends EBEngine {
     public int[][]  iip = new int[2][3];
     public double[][] x = new double[2][3];
     public double[][] y = new double[2][3];
+    public double[][] z = new double[2][3];
     public double[][] t = new double[2][3];
     public double[] distance1 = new double[2];
     public double[] distance2 = new double[2];
@@ -206,12 +209,12 @@ public class ECPart extends EBEngine {
     	
         eb = new EventBuilder(ccdb);    	   	
         eb.initEvent(); //don't bother with event header  
-        
+       
         rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
-        
+       
         eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));
-        
+       
         eb.getPindexMap().put(0, 0); 
         eb.getPindexMap().put(1, 0); 
         
@@ -302,7 +305,7 @@ public class ECPart extends EBEngine {
     public void getSingleNeutralResponses() {
         List<DetectorResponse> rPC = new ArrayList<>();
         singleNeutrals.clear();
-        for (int is=1; is<7; is++) {
+        for (int is=1; is<7; is++) {        	
             rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0),  DetectorType.ECAL, is); //look in PCAL only
             if(rPC.size()==1&&(FTOFveto?mip[0][is-1]==0&&mip[1][is-1]==0:true)) singleNeutrals.add(rPC,is);
         } 
@@ -357,6 +360,7 @@ public class ECPart extends EBEngine {
             iis[ii]    = rPC.getDescriptor().getSector();
               x[ii][0] = rPC.getPosition().x();
               y[ii][0] = rPC.getPosition().y();
+              z[ii][0] = rPC.getPosition().z();
               t[ii][0] = rPC.getTime()-rPC.getPath()/c;;
              
             distance1[ii] = doPCECMatch(p,ii,"Inner");
@@ -365,8 +369,8 @@ public class ECPart extends EBEngine {
         }
    
         return particles;
-    }  
-    
+    }
+       
     // doPCECMatch: Similar to EBMatching.addResponsesECAL
     public double doPCECMatch(DetectorParticle p, int ii, String io) {
         
@@ -382,7 +386,7 @@ public class ECPart extends EBEngine {
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,4,eb.ccdb.getDouble(EBCCDBEnum.ECIN_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
                       iip[ii][1] = rEC.get(index).getHitIndex(); 
-                      x[ii][1]   = rEC.get(index).getPosition().x(); y[ii][1] = rEC.get(index).getPosition().y();                      
+                      x[ii][1]   = rEC.get(index).getPosition().x(); y[ii][1] = rEC.get(index).getPosition().y(); z[ii][1] = rEC.get(index).getPosition().z();                      
                       t[ii][1]   = rEC.get(index).getTime()-rEC.get(index).getPath()/c;
                       distance = p.getDistance(rEC.get(index)).length(); eec1=rEC.get(index).getEnergy();} break;
                       
@@ -390,7 +394,7 @@ public class ECPart extends EBEngine {
                       index  = p.getDetectorHit(rEC,DetectorType.ECAL,7,eb.ccdb.getDouble(EBCCDBEnum.ECOUT_MATCHING));
                       if(index>=0){p.addResponse(rEC.get(index),true); rEC.get(index).setAssociation(0);
                       iip[ii][2] = rEC.get(index).getHitIndex();
-                      x[ii][2]   = rEC.get(index).getPosition().x(); y[ii][2] = rEC.get(index).getPosition().y(); 
+                      x[ii][2]   = rEC.get(index).getPosition().x(); y[ii][2] = rEC.get(index).getPosition().y(); z[ii][2] = rEC.get(index).getPosition().z();  
                       t[ii][2]   = rEC.get(index).getTime()-rEC.get(index).getPath()/c;                      
                       distance = p.getDistance(rEC.get(index)).length(); eec2=rEC.get(index).getEnergy();}
                       
