@@ -26,7 +26,7 @@ public class FitData {
 	public double meane;
 	public double sigma;
 	public double sigmae;
-	public double[] p = new double[3], pe = new double[7], ip = new double[3];
+	public double[] p = new double[7], pe = new double[7], ip = new double[7];
 	public double p0,p1,p2,p3,p4,p5,p6,p0e,p1e,p2e,p3e,p4e,p5e,p6e;
 	public double sig1=2.5;
 	public double sig2=1.7;
