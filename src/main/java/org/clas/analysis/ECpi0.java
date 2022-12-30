@@ -17,6 +17,7 @@ import org.clas.viewer.DetectorMonitor;
 import org.jlab.clas.detector.CalorimeterResponse;
 import org.jlab.clas.detector.DetectorResponse;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
@@ -88,7 +89,8 @@ public class ECpi0 extends DetectorMonitor{
                                  "MCPHOT",
                                  "Fits",
                                  "Summary",
-                                 "Timeline");
+                                 "Timeline",
+                                 "IMLEFF");
         
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
@@ -121,7 +123,7 @@ public class ECpi0 extends DetectorMonitor{
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212); 
-        part.setCCDB(run);
+        part.setCCDB(run==0?15024:run);
         isPARTReady = true;
     }
     
@@ -159,6 +161,8 @@ public class ECpi0 extends DetectorMonitor{
     	create2DHisto(11,0,60,-130,130,60,0,60,"Inv. Mass Error (MeV)","P1A Energy (MeV)");
     	create2DHisto(11,1,60,-130,130,60,0,60,"Inv. Mass Error (MeV)","P1B Energy (MeV)");
     	createMCHistos(12);
+    	createLEFFHistos(16,1,60,-150,150,40,0,400);
+    	createLEFFHistos(16,2,60,-150,150,40,0,400);
     }
     
     @Override       
@@ -183,6 +187,7 @@ public class ECpi0 extends DetectorMonitor{
         plotPI0Summary(9);
         plotXYSummary(10);
         plotPI0Summary(11);
+        plotUVW(16);
 //        plotMCPHOT(12);
     }
     
@@ -202,6 +207,45 @@ public class ECpi0 extends DetectorMonitor{
        dg = new DataGroup(1,1);
        dg.addDataSet(h1, 0);
        this.getDataGroup().add(dg,is,n,k,run);        	
+    }
+    
+    public void createLEFFHistos(int k, int n, int nchx, double x1, double x2, int nchy, double y1, double y2) {
+ 	   int run = getRunNumber();
+ 	   String txt = " Inv. Mass Error (MeV)";
+       for (int is=1; is<7; is++) {
+           String tag = is+"-"+n+"-"+k+"-"+run;
+           dg = new DataGroup(3,3);
+           h2 = new H2F("pi0-pcal-u-"+tag,"pi0-pcal-u-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL U LEFF"); 
+           dg.addDataSet(h2,0);  
+           h2 = new H2F("pi0-pcal-v-"+tag,"pi0-pcal-v-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL V LEFF");        
+           dg.addDataSet(h2,1);            
+           h2 = new H2F("pi0-pcal-w-"+tag,"pi0-pcal-w-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("PCAL W LEFF");  
+           dg.addDataSet(h2,2); 
+       
+           h2 = new H2F("pi0-ecin-u-"+tag,"pi0-ecin-u-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN U LEFF");    
+           dg.addDataSet(h2,3);  
+           h2 = new H2F("pi0-ecin-v-"+tag,"pi0-ecin-v-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN V LEFF");        
+           dg.addDataSet(h2,4);            
+           h2 = new H2F("pi0-ecin-w-"+tag,"pi0-ecin-w-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECIN W LEFF");  
+           dg.addDataSet(h2,5); 
+       
+           h2 = new H2F("pi0-ecou-u-"+tag,"pi0-ecou-u-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU U LEFF");    
+           dg.addDataSet(h2,6);  
+           h2 = new H2F("pi0-ecou-v-"+tag,"pi0-ecou-v-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU V LEFF");        
+           dg.addDataSet(h2,7);            
+           h2 = new H2F("pi0-ecou-w-"+tag,"pi0-ecou-w-"+tag, nchx, x1, x2, nchy, y1, y2);
+           h2.setTitleX("Sector "+is+txt); h2.setTitleY("ECOU W LEFF");  
+           dg.addDataSet(h2,8);   
+           this.getDataGroup().add(dg,is,n,k,run);
+       }
     }
     
     public void createUVWHistos(int k, int n, int nch, double x1, double x2, String txt) {
@@ -528,10 +572,11 @@ public class ECpi0 extends DetectorMonitor{
         if (!isPARTReady) initPART(run);
         
         if (dropBanks) dropBanks(event); //rerun ECEngine, recreate REC::Particle,Calorimeter - input file must contain ECAL::adc,tdc
-                
+                       
         part.processDataEvent(event); // input file must contain ECAL::clusters OR dropBanks=true
         
         DataBank ecBank = event.getBank("ECAL::clusters");
+        DataBank pcBank = event.getBank("ECAL::peaks");
                
         if(event.hasBank("MC::Particle")) {processMC(event, ecBank);}
         
@@ -662,9 +707,19 @@ public class ECpi0 extends DetectorMonitor{
                                     float ipU = (ecBank.getInt("coordU", part.iip[im][id])-4)/8+1;
                                     float ipV = (ecBank.getInt("coordV", part.iip[im][id])-4)/8+1;
                                     float ipW = (ecBank.getInt("coordW", part.iip[im][id])-4)/8+1;
+                                    int   idU = (ecBank.getInt("idU",    part.iip[im][id]));
+                                    int   idV = (ecBank.getInt("idV",    part.iip[im][id]));
+                                    int   idW = (ecBank.getInt("idW",    part.iip[im][id]));
+                                    Point3D pc = new Point3D(part.x[im][id],part.y[im][id],part.z[im][id]);
+                                    float leffu = getLeff(pc,getPeakline(idU,pc,pcBank));
+                                    float leffv = getLeff(pc,getPeakline(idV,pc,pcBank));
+                                    float leffw = getLeff(pc,getPeakline(idW,pc,pcBank));
                                     ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(id*3+0).get(0)).fill(inv3,ipU);
                                     ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(id*3+1).get(0)).fill(inv3,ipV);
                                     ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,0,run).getData(id*3+2).get(0)).fill(inv3,ipW);    
+                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,16,run).getData(id*3+0).get(0)).fill(invd,leffu);
+                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,16,run).getData(id*3+1).get(0)).fill(invd,leffv);
+                                    ((H2F) this.getDataGroup().getItem(part.iis[im],im+1,16,run).getData(id*3+2).get(0)).fill(invd,leffw);    
                                 }
                                 if (ivmcut) {
                                 	((H2F) this.getDataGroup().getItem(id,im+1,10,run).getData(0).get(0)).fill(-part.x[im][id], part.y[im][id],1.);
@@ -677,6 +732,20 @@ public class ECpi0 extends DetectorMonitor{
             }        
         }        
     }
+           
+    public Line3D getPeakline(int iid, Point3D point, DataBank bank) {    	
+        Point3D  po = new Point3D(bank.getFloat("xo",iid),
+                                  bank.getFloat("yo",iid),
+                                  bank.getFloat("zo",iid));
+        Point3D  pe = new Point3D(bank.getFloat("xe",iid),
+                                  bank.getFloat("ye",iid),
+                                  bank.getFloat("ze",iid));
+        return  new Line3D(po,pe);
+    }
+    
+    public float getLeff(Point3D point, Line3D peakline) {
+    	return (float) point.distance(peakline.end());
+    } 
     
     public DataGroup getDG(int i, int j, String tab, int run) {
     	return this.getDataGroup().getItem(i,j,getDetectorTabNames().indexOf(tab),run);
