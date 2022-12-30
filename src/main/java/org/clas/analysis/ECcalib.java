@@ -63,7 +63,7 @@ public class ECcalib extends DetectorMonitor {
     List<Float>                       pmap = new ArrayList<Float>();	
     List<Particle>                    part = new ArrayList<Particle>();
     
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null;
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten=null;;
     
     IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
     IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
@@ -565,7 +565,8 @@ public class ECcalib extends DetectorMonitor {
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
         goffset = cm.getConstants(runno, "/calibration/ec/fadc_global_offset");    	
-        shift   = cm.getConstants(runno, "/calibration/ec/torus_gain_shift");        
+        shift   = cm.getConstants(runno, "/calibration/ec/torus_gain_shift");   
+        atten   = cm.getConstants(runno, "/calibration/ec/attenuation");
     }
     
 	public void myinit(){
@@ -1169,6 +1170,13 @@ public class ECcalib extends DetectorMonitor {
                    c.draw(g);
                    F1D f1 = new F1D("p0","[a]",0.,g.getDataX(g.getDataSize(0)-1)*1.05); f1.setParameter(0,1);
                    f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+                   double A = atten.getDoubleValue("A", is, 3*il+iv+1, ip+1);
+                   double B = atten.getDoubleValue("B", is, 3*il+iv+1, ip+1);
+                   double C = atten.getDoubleValue("C", is, 3*il+iv+1, ip+1);
+                   F1D f2 = new F1D("AT","[p0]*exp(-x/[p1])+[p2]",0,g.getDataX(g.getDataSize(0)-1)*1.05); 
+                   f2.setOptStat(il==0?"1110":"110");
+                   f2.setParameter(0, A); f2.setParameter(1, B); f2.setParameter(2, C);
+                   f2.setLineColor(1); f2.setLineWidth(2); c.draw(f2,"same");
         		}
         	}
         }
@@ -1905,12 +1913,14 @@ public class ECcalib extends DetectorMonitor {
 	public String getATTEN(int is, int il, int iv, int ip, int run) {  //from fits to MIP yield vs LEFF  
 		int pc = 1; 		
 		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
+			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
+			double     g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
 			double   p0 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
 			double  p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
 			double   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
 			double  p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
-				  +p0+" "+p0e+" "+p1+" "+p1e;
+				  +p0/g+" "+p0e/g+" "+p1+" "+p1e;
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
 			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 200. 0.0");  
