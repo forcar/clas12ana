@@ -197,6 +197,14 @@ public class FitData {
 	public GraphErrors getGraph() {
 	    return graph;
 	}
+	
+	public F1D getFunction() {
+		F1D fnew = new F1D("fnew",predefFunctionsF1D[func], fmin, fmax);
+		F1D fold = (F1D) graph.getFunction();
+		fnew.setLineColor(fold.getLineColor());fnew.setLineWidth(fold.getLineWidth());fnew.setOptStat(f_optstat);
+		fnew.setParameter(0,p0); fnew.setParameter(1,p1);
+		return fnew;
+	}
 
 	private double getMaxYIDataSet(IDataSet data, double min, double max, boolean opt) {
 	    double max1 = 0;
