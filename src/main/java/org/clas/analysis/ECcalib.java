@@ -60,13 +60,14 @@ public class ECcalib extends DetectorMonitor {
         
     List<IndexedList<List<Float>>> RDIFmap = new ArrayList<IndexedList<List<Float>>>();
     IndexedList<Float>           PixLength = new IndexedList<Float>(3);    
-    List<Float>                       pmap = new ArrayList<Float>();	
-    List<Particle>                    part = new ArrayList<Particle>();
-    
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten=null;;
-    
-    IndexedList<List<Particle>>     ecpart = new IndexedList<List<Particle>>(2);    
     IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
+    List<Float>                       pmap = new ArrayList<Float>();	
+    List<Particle>                    part = new ArrayList<Particle>();    
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten=null;;       
+	IndexGenerator                      ig = new IndexGenerator();  
+	
+    List<ECALdet>                    e = new ArrayList<ECALdet>(); 
+    IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);		
     
 	public boolean goodELEC,goodPROT,goodPBAR,goodPIP,goodPIM,goodMIP,goodNEUT,goodPHOT,goodPHOTR,goodPHOT2,goodPIPP,goodPI0;
 	
@@ -709,8 +710,8 @@ public class ECcalib extends DetectorMonitor {
        	public int ip,il;
        	public float x,y,z,wu,wv,ww,wsum,e_cz,d,ecl;
        	
-    	public ECALdet (int is, Particle p) {
-    		this.p = p;
+    	public ECALdet (int is, Particle part) {
+    		this.p = part;
     		rl     = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
     		ip     = (int)   p.getProperty("pindex");
     		il     = (int)   p.getProperty("layer"); int ild = getDet(il);
@@ -772,15 +773,9 @@ public class ECcalib extends DetectorMonitor {
     
     public void fillHists(int run, List<Particle> list, DataEvent event) {
     	
-    	List<ECALdet> e = new ArrayList<ECALdet>();
-		IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);
-		
-    	IndexGenerator ig = new IndexGenerator();
-		       	
        	float[] puvw = new float[3];       	
 		int is,trigger=0,trig=TRpid;
-	    float v12mag,v13mag,v23mag;
-		float pmip=0,beta,mass2=0;
+	    float v12mag,v13mag,v23mag,pmip=0,beta,mass2=0;
 		
 		if (ev.isPhys) {
 	        trigger = (int) ev.part.get(0).getProperty("ppid");
@@ -788,7 +783,7 @@ public class ECcalib extends DetectorMonitor {
 			fillPID(run,0,0);
 		}
 		
-		ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
+		ecpart.clear(); ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
     	
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
     		
@@ -809,8 +804,6 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float)  v3.mag();
             	v23mag = (float) v23.mag();
             	
-//            	System.out.println(v12mag+" "+v13mag+" "+v23mag);
-            	
             	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==4;
             	Boolean pixeci = ev.isMuon? e.get(1).wpix : e.get(1).wsum==3||e.get(1).wsum==4;
             	Boolean pixeco = ev.isMuon? e.get(2).wpix : e.get(2).wsum==3||e.get(2).wsum==4;  
@@ -823,37 +816,41 @@ public class ECcalib extends DetectorMonitor {
             		fillPID(run,2,ip);
             	}
             	
-            	Boolean  pid = ev.isMuon ? true : pmip!=0 && Math.abs(mass2-0.0193)<0.03;
+//            	Boolean  pid = ev.isMuon ? true : pmip!=0 && Math.abs(mass2-0.0193)<0.03;
             		
             	if(this.getDataGroup().hasItem(0,0,9,run)) {
             		fillPATH(is,e.get(0).il,run,e.get(0).ecl,e.get(0).ep,e.get(0).wsum,v12mag,v13mag,v23mag,e.get(0).e_cz,e.get(0).fid);
             		fillPATH(is,e.get(1).il,run,e.get(1).ecl,e.get(1).ep,e.get(1).wsum,v12mag,v13mag,v23mag,e.get(1).e_cz,e.get(1).fid);
             		fillPATH(is,e.get(2).il,run,e.get(2).ecl,e.get(2).ep,e.get(2).wsum,v12mag,v13mag,v23mag,e.get(2).e_cz,e.get(2).fid);
             	}
-//	            System.out.println(pixpc+" "+e.get(0).wsum);
+            	
             	if(pixpc)            fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).rep,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
             	if(pixeci && pixeco) fillMIP(is,4,run,e.get(1).uvw,e.get(1).lef,e.get(1).wuv,e.get(1).fid,e.get(1).ecl,e.get(1).rep,e.get(1).ep,pmip,e.get(1).x,e.get(1).y);
             	if(pixeci && pixeco) fillMIP(is,7,run,e.get(2).uvw,e.get(2).lef,e.get(2).wuv,e.get(2).fid,e.get(2).ecl,e.get(2).rep,e.get(2).ep,pmip,e.get(2).x,e.get(2).y); 
-            	
-
-            	
-// Below are FTOF/ECAL alignment histos           	
-/*
-        		getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
-        		
-                if(pixpc) for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(0).il-1).get(0)).fill(bar,e.get(0).uvw[i]);            		
-                if(pixeci)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1).get(0)).fill(bar,e.get(1).uvw[i]);            		
-                if(pixeco)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1).get(0)).fill(bar,e.get(2).uvw[i]);  
-                
-                puvw[0]=e.get(0).uvw[0]; puvw[1]=e.get(0).uvw[1]; puvw[2]=e.get(0).uvw[2];
-                	                	
-                if(pixpc && pixeci)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1+6).get(0)).fill(puvw[i],e.get(1).uvw[i]);
-                if(pixpc && pixeco)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1+6).get(0)).fill(puvw[i],e.get(2).uvw[i]);
-*/                
-			}  
+              
+			}
+            
+            if(ecpart.getItem(is).size()==1 || ecpart.getItem(is).size()==2) { //to recapture PCAL hits where overlap with EC is vanishing           
+            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p)); 
+            	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).il==1 && (e.get(0).wsum==3||e.get(0).wsum==4);
+            	if(pixpc) fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).rep,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
+            }
     	}
     }
     
+//Below are FTOF/ECAL alignment histos           	
+/*
+	getFTOFADC(run,is,event); List<Integer> fbars = getFTOFBAR(100);
+	
+    if(pixpc) for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(0).il-1).get(0)).fill(bar,e.get(0).uvw[i]);            		
+    if(pixeci)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1).get(0)).fill(bar,e.get(1).uvw[i]);            		
+    if(pixeco)for (Integer bar : fbars) for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1).get(0)).fill(bar,e.get(2).uvw[i]);  
+    
+    puvw[0]=e.get(0).uvw[0]; puvw[1]=e.get(0).uvw[1]; puvw[2]=e.get(0).uvw[2];
+    	                	
+    if(pixpc && pixeci)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(1).il-1+6).get(0)).fill(puvw[i],e.get(1).uvw[i]);
+    if(pixpc && pixeco)for (int i=0; i<3; i++) ((H2F) this.getDataGroup().getItem(is,1,15,run).getData(i+e.get(2).il-1+6).get(0)).fill(puvw[i],e.get(2).uvw[i]);
+*/  
     
   //Target-PCAL: 6977.8 mm CCDB:/geometry/pcal/dist2tgt
   //Target-ECAL: 7303.3 mm CCDB:/geometry/ec/dist2tgt
@@ -1151,7 +1148,8 @@ public class ECcalib extends DetectorMonitor {
         
     	GraphErrors g = null;
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-       
+        int run = getRunNumber();
+        
         int    is = getActiveSector(); 
         int    il = getActiveLayer();
         int    iv = getActiveView();
@@ -1163,13 +1161,27 @@ public class ECcalib extends DetectorMonitor {
         
         for (int ip=0; ip<np ; ip++) {        	
         	if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,getRunNumber())) {
-        		g=tl.fitData.getItem(is,100+3*il+iv+1,ip+1,getRunNumber()).getGraph();
+        		FitData fd = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,getRunNumber());
+        		g=fd.getGraph();
         		if(g.getDataSize(0)>0) {
                    c.cd(ip); c.getPad(ip).getAxisY().setLog(false); c.getPad(ip).getAxisY().setRange(0,2);
                    c.getPad(ip).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
+        		   if(normAtt) {
+        		   double  fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
+        		   double gfac = fd.p0*(1+fac);        		  
+        		   GraphErrors gc = scaleGraph(g,gfac); gc.setTitleX(g.getTitleX()); gc.setMarkerColor(g.getMarkerColor());
+        		   F1D f1c = fd.getFunction(); f1c.setParameter(0,f1c.getParameter(0)/gfac); gc.setFunction(f1c);
+        		   gc.getFunction().setOptStat(g.getFunction().getOptStat()); 
+                   c.cd(ip); c.getPad(ip).getAxisY().setLog(false); c.getPad(ip).getAxisY().setRange(0,2);
+                   c.getPad(ip).getAxisX().setRange(-1,g.getDataX(g.getDataSize(0)-1)*1.05);
+                   c.draw(gc);
+       		       } else {
                    c.draw(g);
+        		   }
+                   
                    F1D f1 = new F1D("p0","[a]",0.,g.getDataX(g.getDataSize(0)-1)*1.05); f1.setParameter(0,1);
                    f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
+                   
                    double A = atten.getDoubleValue("A", is, 3*il+iv+1, ip+1);
                    double B = atten.getDoubleValue("B", is, 3*il+iv+1, ip+1);
                    double C = atten.getDoubleValue("C", is, 3*il+iv+1, ip+1);
@@ -1311,12 +1323,12 @@ public class ECcalib extends DetectorMonitor {
             	 int np = npmt[3*il+iv]; double[] x=new double[np],  xe=new double[np], y=new double[np], ye=new double[np]; 
                  for (int ip=0; ip<np; ip++) { x[ip] = ip+1; xe[ip]=0; y[ip]=0; ye[ip]=0;
                     System.out.println("analyzdATT: Fitting Sector "+is+" Layer "+il+" View "+iv+" PMT "+ip+" "+this.getDataGroup().hasItem(is,3*il+iv+1,12,run)); 
+                    
                     h2 = (H2F)this.getDataGroup().getItem(is,3*il+iv+1,12,run).getData(ip).get(0); 
-                    fitter1 = new ParallelSliceFitter(h2);
-                    fitter1.setRange(0,h2.getXAxis().max()); fitter1.fitSlicesX();
-                    g = fitter1.getMeanSlices(); 
-                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
+                    fitter1 = new ParallelSliceFitter(h2); fitter1.setRange(0,h2.getXAxis().max()); fitter1.fitSlicesX();
+                    g = fitter1.getMeanSlices(); g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
                     int gmax = g.getDataSize(0)>0 ?(int) (g.getDataX(g.getDataSize(0)-1)*1.05):0;
+                    
                     tl.fitData.add(fitEngine(g,il==0?10:9,0,Math.min(fmax[il],gmax)),is,100+3*il+iv+1,ip+1,run); 
                     double p0  = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0,   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
                     double p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e, p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
@@ -1329,6 +1341,141 @@ public class ECcalib extends DetectorMonitor {
         }
     
     }
+    
+    
+/* CALIBRATION FILES */    
+    
+    @Override
+	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
+   	
+		String path = filPath+"ccdb/";
+		String line = new String();
+		
+		try { 
+			File outputFile = new File(path+table+"_"+getRunNumber());
+			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
+			BufferedWriter outputBw = new BufferedWriter(outputFw);
+			
+			System.out.println(getDetectorName()+".writefile("+table+")");
+
+			for (int is=is1; is<is2; is++) {
+				for (int il=il1; il<il2; il++ ) { //pcal,ecin,ecou
+					for (int iv=iv1; iv<iv2; iv++) { //u,v,w
+						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
+							switch (table) {
+							case "muongain": line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
+							case "piongain": line = getGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "hvgain":   line = getHVGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "attgain":  line = getATTGAIN(is,il,iv,ip,runlist.get(0)); break;
+							case "atten":    line = getATTEN(is,il,iv,ip,runlist.get(0)); break;
+							case "rdif":     line = getRDIF(is,il,iv,ip); break;
+							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
+							}
+//						    if(table=="piongain") System.out.println(line);
+						    outputBw.write(line);
+						    outputBw.newLine();
+						}
+					}
+				}
+			}
+
+			outputBw.close();
+			outputFw.close();
+		}
+		catch(IOException ex) {
+			System.out.println("Error writing file '" );                   
+			ex.printStackTrace();
+		}
+
+	}
+    
+	public String getHVGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
+			double     i = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getHist().getIntegral();
+			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
+			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+g+" "+ge+" "+i;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  1.0  0.0 0.0";		
+		}
+		
+	}
+    
+	public String getGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
+			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
+			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
+				  +ge;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
+			      +" 0.0";			
+		}
+		
+	}
+	
+	public String getATTGAIN(int is, int il, int iv, int ip, int run) { //from fits to MIP yield vs LEFF  
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
+			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
+			double     g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
+			double    ge = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
+				  +ge;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
+			      +" 0.0";			
+		}
+		
+	}
+	
+	public String getATTEN(int is, int il, int iv, int ip, int run) {  //from fits to MIP yield vs LEFF  
+		int pc = 1; 		
+		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
+			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
+			double    g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
+			double   p0 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
+			double  p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
+			double   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
+			double  p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
+				  +p0/g+" "+p0e/g+" "+p1+" "+p1e;
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 200. 0.0");  
+		}
+		
+	}
+	public String defATTEN(int is, int il, int iv, int ip, int run) {  //default (MC) table  
+		int pc = 1; 		
+	    return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 376. 0.0");  //376 for MC 200 for data
+		
+	}	
+	public String getRDIF(int is, int il, int iv, int ip) {	
+		int pc = 1;
+		if(RDIFmap.get(pc).hasItem(is,il,iv,ip) && il>0) {
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(1)+" "
+				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(3);
+		} else {
+			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
+		        + "1.0"
+		        +" 0.0";
+		}	    
+	}
+	
+	public String getRDIFGAIN(int is, int il, int iv, int ip) {	
+		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
+				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gain",   is, 3*il+iv+1, ip+1)+" "
+				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gainErr",is, 3*il+iv+1, ip+1);    
+	}    
     
     public boolean varcut(int id, int il, int ip) {
     	if (id==0 && il==0 && ip<5 && ip>67) return false;
@@ -1817,135 +1964,6 @@ public class ECcalib extends DetectorMonitor {
     		drawTimeLine(c,is,(pc==0)?10*(il+1):3*il+iv+1,1f,"Sector "+is+((pc==0)?" Mean/MIP":l[il]+v[iv]+" Mean/MIP"));
     	}
     }
-    
-/* CALIBRATION FILES */    
-    
-    @Override
-	public void writeFile(String table, int is1, int is2, int il1, int il2, int iv1, int iv2) {
-   	
-		String path = filPath+"ccdb/";
-		String line = new String();
-		
-		try { 
-			File outputFile = new File(path+table+"_"+getRunNumber());
-			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
-			BufferedWriter outputBw = new BufferedWriter(outputFw);
-			
-			System.out.println(getDetectorName()+".writefile("+table+")");
-
-			for (int is=is1; is<is2; is++) {
-				for (int il=il1; il<il2; il++ ) { //pcal,ecin,ecou
-					for (int iv=iv1; iv<iv2; iv++) { //u,v,w
-						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
-							switch (table) {
-							case "muongain": line = getGAIN(is,il,iv,ip,runlist.get(il)); break;
-							case "piongain": line = getGAIN(is,il,iv,ip,runlist.get(0)); break;
-							case "hvgain":   line = getHVGAIN(is,il,iv,ip,runlist.get(0)); break;
-							case "attgain":  line = getATTGAIN(is,il,iv,ip,runlist.get(0)); break;
-							case "atten":    line = getATTEN(is,il,iv,ip,runlist.get(0)); break;
-							case "rdif":     line = getRDIF(is,il,iv,ip); break;
-							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
-							}
-//						    if(table=="piongain") System.out.println(line);
-						    outputBw.write(line);
-						    outputBw.newLine();
-						}
-					}
-				}
-			}
-
-			outputBw.close();
-			outputFw.close();
-		}
-		catch(IOException ex) {
-			System.out.println("Error writing file '" );                   
-			ex.printStackTrace();
-		}
-
-	}
-    
-	public String getHVGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
-		int pc = 1; 		
-		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
-			double     i = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getHist().getIntegral();
-			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
-			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+g+" "+ge+" "+i;
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  1.0  0.0 0.0";		
-		}
-		
-	}
-    
-	public String getGAIN(int is, int il, int iv, int ip, int run) { //needs option to write default CCDB gains for selected ECAL layers
-		int pc = 1; 		
-		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
-			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
-			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
-				  +ge;
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
-			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
-			      +" 0.0";			
-		}
-		
-	}
-	
-	public String getATTGAIN(int is, int il, int iv, int ip, int run) { //from fits to MIP yield vs LEFF  
-		int pc = 1; 		
-		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
-			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
-			double     g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
-			double    ge = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
-				  +ge;
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
-			      + gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)
-			      +" 0.0";			
-		}
-		
-	}
-	
-	public String getATTEN(int is, int il, int iv, int ip, int run) {  //from fits to MIP yield vs LEFF  
-		int pc = 1; 		
-		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
-			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
-			double     g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
-			double   p0 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
-			double  p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
-			double   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
-			double  p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
-				  +p0/g+" "+p0e/g+" "+p1+" "+p1e;
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
-			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 200. 0.0");  
-		}
-		
-	}
-	
-	public String getRDIF(int is, int il, int iv, int ip) {	
-		int pc = 1;
-		if(RDIFmap.get(pc).hasItem(is,il,iv,ip) && il>0) {
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(1)+" "
-				+RDIFmap.get(pc).getItem(is,il,iv,ip).get(3);
-		} else {
-			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
-		        + "1.0"
-		        +" 0.0";
-		}	    
-	}
-	
-	public String getRDIFGAIN(int is, int il, int iv, int ip) {	
-		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gain",   is, 3*il+iv+1, ip+1)+" "
-				+shift.getDoubleValue("shift", is, 3*il+iv+1, ip+1)*gain.getDoubleValue("gainErr",is, 3*il+iv+1, ip+1);    
-	}
 
 /*  
  * 
@@ -2106,6 +2124,14 @@ public class ECcalib extends DetectorMonitor {
     public void timerUpdate() {
     	
     } 
+    
+    public static void main(String[] args) {
+    	
+//    	ECt ect = new ECt("ECt",6684);
+//    	ect.writeFile("NewFTW",1,7,0,3,0,3);    
+//    	ECt ect = new ECt("ECt",2385);
+//    	ect.writeFile("NewDTW",1,7,0,3,0,3);   	
+    }
   
 }
 

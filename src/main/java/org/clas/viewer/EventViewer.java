@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf7,cf8,cf9,cf10,cf11,cf12,cf13,cf14,cf15,cf16;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf7,cf8,cf9,cf10a,cf10b,cf11,cf12,cf13,cf14,cf15,cf16;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -140,6 +140,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   unsharedTime = true;
     public Boolean unsharedEnergy = true;
     public Boolean        normPix = false;
+    public Boolean        normAtt = false;
     public Boolean         SFcorr = false;
     public Boolean          HiRes = false;
     public Boolean         TWcorr = true;
@@ -226,7 +227,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmcn("ECmcn");
 //  	    monitors[n] = new ECt("ECt"); 
 //            monitors[n] = new ECperf("ECperf");
-//   		monitors[n] = new ECsf("ECsf"); 
+//  		monitors[n] = new ECsf("ECsf"); 
     		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -344,7 +345,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
         
         menu   	= new JMenu("ECcalib");
-        cf10 = new JCheckBoxMenuItem("NormPix");cf10.addItemListener(this); menu.add(cf10);
+        cf10a = new JCheckBoxMenuItem("NormPix");cf10a.addItemListener(this); menu.add(cf10a);
+        cf10b = new JCheckBoxMenuItem("NormAtt");cf10b.addItemListener(this); menu.add(cf10b);
         menuBar.add(menu); 
         
         menu   	= new JMenu("ECsf");
@@ -458,7 +460,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf7) {dbgECEngine    = sc(e); monitors[0].eng.setDbgECEngine(dbgECEngine);}
 		if (s==cf8) {dbgAnalyzer    = sc(e); monitors[0].dbgAnalyzer = dbgAnalyzer;}
 		if (s==cf9) {useATDATA      = sc(e); monitors[0].useATDATA   = useATDATA;}
-		if (s==cf10){normPix        = sc(e); monitors[0].normPix     = normPix;}
+		if (s==cf10a){normPix       = sc(e); monitors[0].normPix     = normPix;}
+		if (s==cf10b){normAtt       = sc(e); monitors[0].setNormAtt(normAtt);}
 		if (s==cf11){SFcorr         = sc(e); monitors[0].SFcorr      = SFcorr;}
 		if (s==cf12){HiRes          = sc(e); monitors[0].HiRes       = HiRes;}
 		if (s==cf13){TWcorr         = sc(e); monitors[0].eng.setUseTWcorr(TWcorr);}

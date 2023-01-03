@@ -44,6 +44,7 @@ import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.detector.view.DetectorPane2D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
+import org.jlab.groot.data.DataVector;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -210,6 +211,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          dgmActive = false;
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
+    public Boolean            normAtt = false;
     public Boolean             SFcorr = false;
     public Boolean             TWcorr = false;
     public Boolean              HiRes = false;
@@ -647,6 +649,11 @@ public class DetectorMonitor implements ActionListener {
 	    dgm.detectorLogZ = flag;
 	    if(histosExist) {plotHistos(getRunNumber()); plotScalers(getRunNumber());}
     }
+    
+    public void setNormAtt(boolean flag) {
+	    normAtt = flag;
+	    if(histosExist) {plotHistos(getRunNumber()); plotScalers(getRunNumber());}
+    } 
     
     public Boolean getLogY() {
 	    return detectorLogY;
@@ -1225,7 +1232,7 @@ public class DetectorMonitor implements ActionListener {
     	}    	
     	return graph;
     }
-    
+
     public H1F projectionX(H2F h2, float ymin, float ymax ) {
         String name = "X Projection";
         Axis xAxis = h2.getXAxis(), yAxis = h2.getYAxis();
@@ -1284,6 +1291,15 @@ public class DetectorMonitor implements ActionListener {
     			                                    fitter.getSigmaSlices().getVectorY().getArray());
     	graph.setTitleX(h.getTitleX()); graph.setTitleY(h.getTitleY()); graph.setMarkerColor(col);
     	return graph;
+    }
+    
+    
+    public GraphErrors scaleGraph(GraphErrors g, double sca) {
+        int np = g.getDataSize(0);
+    	double[] x = new double[np]; double[] xe = new double[np]; 
+    	double[] y = new double[np]; double[] ye = new double[np];
+    	for (int i=0; i<np; i++) {x[i]=g.getDataX(i); y[i]=g.getDataY(i)/sca; xe[i]=g.getDataEX(i); ye[i]=g.getDataEY(i)/sca;}     	
+    	return new GraphErrors("SCALED",x,y,xe,ye);
     }  
     
     public GraphErrors sliceToGraph(GraphErrors gin, int il, int iv) {
@@ -1312,7 +1328,7 @@ public class DetectorMonitor implements ActionListener {
     
     public GraphErrors getGraph(String filename) {   
         
-    	GraphErrors g = new GraphErrors();
+    	GraphErrors g = new GraphErrors(); 
         try{
             FileReader       file = new FileReader(filename);
             BufferedReader     br = new BufferedReader(file);
