@@ -49,11 +49,11 @@ public class ECCommon {
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
-    public static Boolean  useDTCorrections = true;
+    public static Boolean  useDTCorrections = true;    
     public static Boolean     useCalibPass2 = false; //local only
     public static Boolean     usePass2Recon = false;
     public static Boolean    usePass2Timing = true;
-    public static Boolean    usePass2Energy = false;
+    public static Boolean    usePass2Energy = true;
     public static int     UnsharedEnergyCut = 6;
     public static Boolean   useUnsharedTime = true;
     public static Boolean       useFADCTime = false;
@@ -151,7 +151,7 @@ public class ECCommon {
         
         isMC = run<=100;
         
-        if(isMC) {usePass2Timing = false; useDTCorrections = false; useFTpcal = false;}
+        if(isMC) {usePass2Timing = false; usePass2Energy = false; useDTCorrections = false; useFTpcal = false;}
         
         manager.setVariation(variation);
         
