@@ -1483,6 +1483,18 @@ public class DetectorMonitor implements ActionListener {
         return fd;
      }
 
+    public FitData fitEngine(H1F h, int ff, double hmax) {
+       FitData fd = new FitData(h.getGraph()); 
+       fd.setInt((int)h.getIntegral());
+       fd.setHist(h);
+       fd.graph.getAttributes().setTitleX(h.getTitleX()); 
+       fd.hist.getAttributes().setTitleX(h.getTitleX()); 
+       fd.doMeanHist(hmax);
+       fd.initFit(ff,hmax); 
+       fd.fitGraph("",cfitEnable,fitVerbose); 
+       return fd;
+    }
+    
     public FitData fitEngine(H1F h, int ff, double pmin, double pmax, double fmin, double fmax) {
        FitData fd = new FitData(h.getGraph()); 
        fd.setInt((int)h.getIntegral());

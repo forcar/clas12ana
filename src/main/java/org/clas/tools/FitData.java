@@ -14,8 +14,10 @@ import org.jlab.groot.math.F1D;
 
 public class FitData {
 	
-	public GraphErrors graph = null;
-	public H1F          hist = null;
+	public GraphErrors     graph = null;
+	public GraphErrors meangraph = null;
+	public H1F              hist = null;
+	public H1F          meanhist = null;
 
 	public double pmin;
 	public double pmax;
@@ -32,7 +34,7 @@ public class FitData {
 	public double sig2=1.7;
 	public int func;
 	public int integral;
-	public int intmin=30;
+	public int intmin=10;
 	public int fitcol=4;
 	public String f_optstat="1100";
 	public String g_optstat="1100";
@@ -79,8 +81,20 @@ public class FitData {
 		return this.hist;
 	}
 	
+	public H1F getMeanHist() {
+		return this.meanhist;
+	}
+	
+	public void doMeanHist(double hmax) {
+		meanhist = hist.histClone("HistMean"); meanhist.setFillColor(4); meanhist.setOptStat(h_optstat);
+		for (int i = 0; i < meanhist.getDataSize(0); i++) {
+           if(meanhist.getDataX(i)>hmax) meanhist.setBinContent(i, 0.0);
+		}
+		meangraph = meanhist.getGraph();	
+	}
+	
 	public double getMean() {
-		return this.hist.getMean();
+		return this.meanhist.getMean();
 	}
 
 	public void setInt(int integral) {
@@ -111,6 +125,18 @@ public class FitData {
 //	    hist.getFunction().setRange(mean-2*sigma, mean+2*sigma);
 	    DataFitter.fit(hist.getFunction(), hist, "Q");
 	}
+	
+	public void initFit(int func, double hmax) {
+		if(func==0) {
+		    graph.setFunction(new F1D("f",predefFunctionsF1D[func], 0, hmax)); 
+		    graph.getFunction().setLineWidth(1);
+		    amp   = getMaxYIDataSet(meangraph,0,hmax,true);
+		    mean  = getMaxYIDataSet(meangraph,0,hmax,false); 
+		    sigma = getRMSIDataSet(meangraph,0,hmax);		      
+		    initFunc(0,amp); initFunc(1,mean,0,hmax); initFunc(2,sigma,0,hmax);
+			graph.getFunction().setRange(mean-sig1*sigma, Math.min(hmax, mean+sig2*sigma));		      
+		}
+	}
 
 	public void initFit(int func, double pmin, double pmax, double fmin, double fmax) {
 		this.func = func;
@@ -123,9 +149,7 @@ public class FitData {
 	      mean  = getMaxYIDataSet(graph,pmin,pmax,false);
 //	      mean  = getMeanIDataSet(graph,pmin,pmax); 
 	      sigma = getRMSIDataSet(graph,pmin,pmax);
-	      initFunc(0,amp);
-	      initFunc(1,mean);
-	      initFunc(2,sigma);
+	      initFunc(0,amp); initFunc(1,mean); initFunc(2,sigma);
 		  if(func==3) {initFunc(3,-5); initFunc(4,0.3); initFunc(5, -1e-3);}	    
 		  if(func==0) graph.getFunction().setRange(mean-sig1*sigma, mean+sig2*sigma);
 		  if(func==3) graph.getFunction().setRange(fmin,fmax);
@@ -219,18 +243,16 @@ public class FitData {
 	            }
 	        }
 	    }
-	    return opt?max1:xMax;
+	    return opt ? max1:xMax;
 	}
 
 	private double getMeanIDataSet(IDataSet data, double min, double max) {
-	    int nsamples = 0;
 	    double sum = 0;
 	    double nEntries = 0;
 	    for (int i = 0; i < data.getDataSize(0); i++) {
 	        double x = data.getDataX(i);
 	        double y = data.getDataY(i);
 	        if (x > min && x < max && y != 0) {
-	            nsamples++;
 	            sum += x * y;
 	            nEntries += y;
 	        }
@@ -239,7 +261,6 @@ public class FitData {
 	}
 
 	private double getRMSIDataSet(IDataSet data, double min, double max) {
-	    int nsamples = 0;
 	    double mean = getMeanIDataSet(data, min, max);
 	    double sum = 0;
 	    double nEntries = 0;
@@ -248,7 +269,6 @@ public class FitData {
 	        double x = data.getDataX(i);
 	        double y = data.getDataY(i);
 	        if (x > min && x < max && y != 0) {
-	            nsamples++;
 	            sum += (x-mean)*(x-mean)* y;
 	            nEntries += y;
 	        }
@@ -256,6 +276,7 @@ public class FitData {
 	    return Math.sqrt(sum / (double) nEntries);
 	}
 
+	//PASS2 FADC/TDC TIMING FITS
     
     public static void fitTest(String run, String tim, int is, int il, int iv, int nmax) { 
     	GraphErrors g;

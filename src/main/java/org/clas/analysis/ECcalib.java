@@ -49,10 +49,9 @@ public class ECcalib extends DetectorMonitor {
     String[]           v = new String[]{"u","v","w"};
     float[]         mipc = {30,30,48};  
     float[]         mipp = {10,10,16};  
-    double[]         mxc = {60,60,96};  
-    double[]         mxp = {20,20,32};  
-    double[]     fitLimp = { 5, 3, 6,17,17,27};
-    double[]     fitLimc = {20,17,35,40,48,75};
+    int[]            mxc = {60,60,96};  
+    int[]            mxp = {20,20,32};      
+
     int[]           npmt = {68,62,62,36,36,36,36,36,36};    
     int[]          npmts = new int[]{68,36,36};
     
@@ -1115,6 +1114,7 @@ public class ECcalib extends DetectorMonitor {
         for (int ip=0; ip<np ; ip++) {
             c.cd(ip); c.getPad(ip).getAxisY().setLog(false);
             c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getHist());
+            c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getMeanHist(),"same");
             c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getGraph(),"same");
        }
     }
@@ -1211,6 +1211,12 @@ public class ECcalib extends DetectorMonitor {
     
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
     	
+        double[] fitLimc = {20,17,35,40,48,75};
+        double[] fitLimp = { 5, 3, 6,17,17,27};
+        double[]    smxc = {0.15,0.20,0.17}; //cluster rms/mean pcal,ecin,ecou 
+        double[]    smxp = {0.25,0.3,0.3};   //peak    rms/mean pcal,ecin,ecou
+        float         mf = 4.0f;
+        
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
         int ipc=0, run=getRunNumber();
         double min=1, max=20, mip=10;
@@ -1219,7 +1225,8 @@ public class ECcalib extends DetectorMonitor {
             for (int id=id1; id<id2; id++) {
             	for (int pc=0; pc<2; pc++) {
                     if(pc==0) {min = fitLimc[id]; max = fitLimc[id+3]; mip=mipc[id]; ipc=2;}
-                    if(pc==1) {min = fitLimp[id]; max = fitLimp[id+3]; mip=mipp[id]; ipc=1;}  
+                    if(pc==1) {min = fitLimp[id]; max = fitLimp[id+3]; mip=mipp[id]; ipc=1;} 
+                    double hmax = pc==0 ? mipc[id]*(1+mf*smxc[id]):mipp[id]*(1+mf*smxp[id]);
                     h2 = CombineH2F((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+0).get(0),  //U
 		                            (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+1).get(0),  //V        
 		                            (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+2).get(0)); //W    
@@ -1235,7 +1242,7 @@ public class ECcalib extends DetectorMonitor {
                     }
                     for (int il=il1; il<il2; il++) { //PMT slices               	
                         h2b = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
-                    	for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h2b.sliceY(i),0,min,max,min,max),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); //PMT slices
+                    	for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h2b.sliceY(i),0,hmax),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); //PMT slices
             		    fitStore(is, id, il, pc, run, mip);
                     }   
                }
@@ -1246,6 +1253,8 @@ public class ECcalib extends DetectorMonitor {
     public void fitStore(int is, int id, int il, int pc, int run, double nrm) {
     	FitData fd=null;  
     	int np = npmt[id*3+il];
+    	float mf = 2.0f;
+    	
         double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
         double[]     xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
         double[]  yMean = new double[np]; double[] yMeanc = new double[np]; double[]  ymeanc = new double[np];
@@ -1257,7 +1266,7 @@ public class ECcalib extends DetectorMonitor {
             x[i] = i+1; xe[i]=0; ye[i]=0; yrms[i]=0; 
             fd = tl.fitData.getItem(is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); 
             fd.graph.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
-            fd.hist.getAttributes().setTitleX("Sector "+is+" "+det[id]+" "+v[il]+(i+1));
+            fd.hist.getAttributes().setTitleX(fd.graph.getTitleX());
             double mean = fd.mean;       
                  yrms[i] =  mean>0 ? fd.sigma/mean:0; 
             	ymean[i] =          mean/nrm;
@@ -1654,7 +1663,7 @@ public class ECcalib extends DetectorMonitor {
         }        
     }   
 
-    public void getMeanRDIF() {
+    public void getMeanRDIF() { //store ratio of run1 (torus on) and run2 (torus off) in RDIFMAP to correct EC gains
         RDIFmap.clear();
         for (int pc=0; pc<2; pc++) {
         	RDIFmap.add(new IndexedList<List<Float>>(4));
