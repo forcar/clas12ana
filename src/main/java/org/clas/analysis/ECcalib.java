@@ -560,7 +560,7 @@ public class ECcalib extends DetectorMonitor {
     public void initCCDB(int runno) {
     	if(dropSummary) return;
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
-        gain    = cm.getConstants(2,     "/calibration/ec/gain");       
+        gain    = cm.getConstants(runno,     "/calibration/ec/gain");       
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
@@ -1253,7 +1253,6 @@ public class ECcalib extends DetectorMonitor {
     public void fitStore(int is, int id, int il, int pc, int run, double nrm) {
     	FitData fd=null;  
     	int np = npmt[id*3+il];
-    	float mf = 2.0f;
     	
         double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
         double[]     xe = new double[np]; double[] ymeane = new double[np]; double[]   ye = new double[np]; 
