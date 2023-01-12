@@ -171,8 +171,10 @@ public class ECEngine extends ReconstructionEngine {
             bankM.setFloat("m3w", c,   (float) clusters.get(c).clusterPeaks.get(2).getMoment3());
         }
 */ 
+        DataBank bankD = null;
         
-        DataBank  bankD =  de.createBank("ECAL::calib", clusters.size());
+        if(!ECCommon.useCalibPass2) {
+        bankD =  de.createBank("ECAL::calib", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
            bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
            bankD.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
@@ -184,30 +186,30 @@ public class ECEngine extends ReconstructionEngine {
            bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
            bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));
         }
+        }
         
-        DataBank bankD2 = null, bankS=null;
-//        DataBank bankD = null;
+        DataBank bankS=null;
         
         if(ECCommon.useCalibPass2) {
-        bankD2 =  de.createBank("ECAL::calibpass2", clusters.size());
+        bankD =  de.createBank("ECAL::calib", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
-           bankD2.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
-           bankD2.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
-           bankD2.setShort("dbstU",  c, (short) clusters.get(c).clusterPeaks.get(0).getDBStatus());
-           bankD2.setShort("dbstV",  c, (short) clusters.get(c).clusterPeaks.get(1).getDBStatus());
-           bankD2.setShort("dbstW",  c, (short) clusters.get(c).clusterPeaks.get(2).getDBStatus());
-           bankD2.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
-           bankD2.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
-           bankD2.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
-           bankD2.setFloat("recEU",  c, (float) clusters.get(c).getEnergy(0));
-           bankD2.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
-           bankD2.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));  
-           bankD2.setFloat("recDTU", c, (float) clusters.get(c).getDTime(0));
-           bankD2.setFloat("recDTV", c, (float) clusters.get(c).getDTime(1));
-           bankD2.setFloat("recDTW", c, (float) clusters.get(c).getDTime(2));  
-           bankD2.setFloat("recFTU", c, (float) clusters.get(c).getFTime(0));
-           bankD2.setFloat("recFTV", c, (float) clusters.get(c).getFTime(1));
-           bankD2.setFloat("recFTW", c, (float) clusters.get(c).getFTime(2));              
+           bankD.setByte("sector",  c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
+           bankD.setByte("layer",   c,  (byte) clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
+           bankD.setShort("dbstU",  c, (short) clusters.get(c).clusterPeaks.get(0).getDBStatus());
+           bankD.setShort("dbstV",  c, (short) clusters.get(c).clusterPeaks.get(1).getDBStatus());
+           bankD.setShort("dbstW",  c, (short) clusters.get(c).clusterPeaks.get(2).getDBStatus());
+           bankD.setFloat("rawEU",  c, (float) clusters.get(c).getRawEnergy(0));
+           bankD.setFloat("rawEV",  c, (float) clusters.get(c).getRawEnergy(1));
+           bankD.setFloat("rawEW",  c, (float) clusters.get(c).getRawEnergy(2));
+           bankD.setFloat("recEU",  c, (float) clusters.get(c).getEnergy(0));
+           bankD.setFloat("recEV",  c, (float) clusters.get(c).getEnergy(1));
+           bankD.setFloat("recEW",  c, (float) clusters.get(c).getEnergy(2));  
+           bankD.setFloat("recDTU", c, (float) clusters.get(c).getDTime(0));
+           bankD.setFloat("recDTV", c, (float) clusters.get(c).getDTime(1));
+           bankD.setFloat("recDTW", c, (float) clusters.get(c).getDTime(2));  
+           bankD.setFloat("recFTU", c, (float) clusters.get(c).getFTime(0));
+           bankD.setFloat("recFTV", c, (float) clusters.get(c).getFTime(1));
+           bankD.setFloat("recFTW", c, (float) clusters.get(c).getFTime(2));              
        }
        }
          
