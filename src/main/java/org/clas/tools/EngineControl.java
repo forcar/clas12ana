@@ -246,7 +246,7 @@ public class EngineControl implements ActionListener {
     } 
     
     public void setUseCalibPass2(Boolean val) {
-   // 	engine.setUseCalibPass2(val);
+    	engine.setUseCalibPass2(val);
     	useCalibPass2 = val;
     }
     
