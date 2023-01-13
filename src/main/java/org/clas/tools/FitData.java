@@ -18,6 +18,7 @@ public class FitData {
 	public GraphErrors meangraph = null;
 	public H1F              hist = null;
 	public H1F          meanhist = null;
+	public boolean   useMeanHist = false;
 
 	public double pmin;
 	public double pmax;
@@ -90,11 +91,13 @@ public class FitData {
 		for (int i = 0; i < meanhist.getDataSize(0); i++) {
            if(meanhist.getDataX(i)>hmax) meanhist.setBinContent(i, 0.0);
 		}
+		useMeanHist = true;
 		meangraph = meanhist.getGraph();	
 	}
 	
 	public double getMean() {
-		return this.meanhist.getMean();
+		if(useMeanHist) return this.meanhist.getMean();
+		return this.hist.getMean();
 	}
 
 	public void setInt(int integral) {
