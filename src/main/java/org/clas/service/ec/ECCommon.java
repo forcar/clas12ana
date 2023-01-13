@@ -220,10 +220,10 @@ public class ECCommon {
             
             if(!usePass2Energy) { 
             strip.setAttenuation(atten1.getDoubleValue("A", sector,layer,component),
-                                 0,
-                                 atten1.getDoubleValue("C", sector,layer,component),
                                  atten1.getDoubleValue("B", sector,layer,component),
-                                 0);
+                                 atten1.getDoubleValue("C", sector,layer,component),
+                                 0,
+                               100);
             }
             
             if(usePass2Energy) { 
