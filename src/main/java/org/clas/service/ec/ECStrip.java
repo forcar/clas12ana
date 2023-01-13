@@ -67,7 +67,6 @@ public class ECStrip implements Comparable {
     
     public ECStrip(int sector, int layer, int component){
         desc.setSectorLayerComponent(sector, layer, component);
-//        ecc = ECCommon.usePass2Energy ? new pass2Energy() : new pass1Energy(); 
         ecc = new corrEnergy(); 
         ftc = ECCommon.usePass2Timing ? new ExtendedTWCFTime() : new ExtendedTWCTime(); //FADC timing calibration
         dtc = ECCommon.usePass2Timing ? new ExtendedTWCDTime() : new ExtendedTWCTime(); //choose pass2 or pass1 for TDC timing
@@ -86,35 +85,14 @@ public class ECStrip implements Comparable {
         public abstract double getTWCTime();    	
         public abstract double getTime();
     }
-
-    public class pass1Energy extends EnergyCorrection {
-        public double getRawEnergy() {
-            return iADC*iGain*iADC_to_MEV;
-        }
-        public double getEcorr(double dist) {
-            return iAttenA*Math.exp(-dist/iAttenB) + iAttenC;    	
-        }
-        
-        public double getEnergy(Point3D point) {
-            edist = point.distance(stripLine.end());
-            return getRawEnergy()/getEcorr(edist);
-        }
-    }
     
     public class corrEnergy extends EnergyCorrection {    	
         public double getRawEnergy() {
     	    return iADC*iGain*iADC_to_MEV;
         }
-    	
-        public double getOldEcorr(double dist) {
-            return desc.getLayer()<4 ? iAttenA*(Math.exp(-dist/40) + iAttenB*Math.exp(-dist/400)):
-                                       iAttenA* Math.exp(-dist/iAttenB);    	
-        }
-        
+
         public double getEcorr(double dist) {
-        	double corr1 = Math.exp(-dist/iAttenD), corr2 = iAttenB*Math.exp(-dist/iAttenE);
-            return desc.getLayer()<4 ? iAttenA*(corr1+corr2) + iAttenC:
-                                       iAttenA* corr1        + iAttenC;    	
+            return iAttenA*(Math.exp(-dist/iAttenB)+iAttenD*Math.exp(-dist/iAttenE)) + iAttenC;   	
         } 
         
         public double getEnergy(Point3D point) {
