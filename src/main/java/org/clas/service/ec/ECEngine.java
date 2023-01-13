@@ -401,7 +401,7 @@ public class ECEngine extends ReconstructionEngine {
     	
         String[]  ecTables = new String[]{
             "/calibration/ec/attenuation", 
-            "/calibration/ec/attenpass2", 
+            "/calibration/ec/atten", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
             "/calibration/ec/ftime",
@@ -460,7 +460,6 @@ public class ECEngine extends ReconstructionEngine {
         this.registerOutputBank("ECAL::peaks");
         this.registerOutputBank("ECAL::clusters");
         this.registerOutputBank("ECAL::calib");
-        if(ECCommon.useCalibPass2) this.registerOutputBank("ECAL::calibpass2");
         this.registerOutputBank("ECAL::moments"); 
         
         if (ECCommon.isSingleThreaded) ECCommon.initHistos();
