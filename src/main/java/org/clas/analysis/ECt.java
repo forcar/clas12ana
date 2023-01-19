@@ -81,7 +81,8 @@ public class ECt extends DetectorMonitor {
     static float    A0offset = 0f;  //RGM pass0 only
     static float    A0sector = 0;  
     static float         tps =  (float) 0.02345;
-    float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration    
+    float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration  
+    
     public ECt(String name) {
         super(name);
         this.setDetectorTabNames("Raw TDC",          
@@ -313,23 +314,23 @@ public class ECt extends DetectorMonitor {
     	
         H2F h;  F1D f1; 
         
-        double sca1=1.0,sca2=1.0; double xoff=0; boolean scaly=false; boolean scaly2=false;
+        int uvw,ybns;
+        double ymx,sca1=1.0,sca2=1.0; double xoff=0; boolean scaly=false; boolean scaly2=false;
         int run = getRunNumber();
         if (k==12) {sca1=0.7; sca2=0.6;}
         if (k==19||k==20) {scaly=true;}
         if (k==16||k==17) {scaly2=true;}
         
-        for (int is=1; is<7; is++) {      
-        	
+        for (int is=1; is<7; is++) {              	
             DataGroup dg1 = new DataGroup(9,8); DataGroup dg2 = new DataGroup(8,8); DataGroup dg3 = new DataGroup(8,8);        	    
             f1 = new F1D("p0"+is+1+k,"[a]",xmin,xmax); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);          
-            for (int ip=1; ip<npmts[0]+1; ip++) {int uvw = (ip>52)?(52+(ip-52)*2):ip; double ymx=(scaly)?2*uvw*4.5*0.51:ymax;int ybns=(scaly)?((ip>6)?ybins*ip/npmts[0]:5):ybins;
+            for (int ip=1; ip<npmts[0]+1; ip++) {
+            	uvw = (ip>52)?(52+(ip-52)*2):ip; ymx=scaly?2*uvw*4.5*0.51:ymax; ybns=scaly?((ip>6)?ybins*ip/npmts[0]:5):ybins;
                 if(scaly2) {ymx=ymax*(1-0.4*ip/npmt[0]);}
                 h = new H2F("uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin,xmax,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"U"+ip);       
                 dg1.addDataSet(h,ip-1); dg1.addDataSet(f1,ip-1);
-                uvw = (ip>15)?(30+(ip-15)):2*ip;
-                ymx=(scaly)?uvw*4.5*1.23:ymax;
+                uvw = (ip>15)?(30+(ip-15)):2*ip; ymx=scaly?uvw*4.5*1.23:ymax;
                 if(scaly2) {ymx=0.82*ymax*(0.75+0.25*ip/npmt[1]) ;}
                 h = new H2F("uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,"uvw-pcal-v"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin,xmax,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" PCAL "+xtxt); h.setTitleY(ytxt+"V"+ip);
@@ -342,7 +343,8 @@ public class ECt extends DetectorMonitor {
             
             DataGroup dg4 = new DataGroup(6,6); DataGroup dg5 = new DataGroup(6,6); DataGroup dg6 = new DataGroup(6,6);        	         	   
             f1 = new F1D("p0"+is+2+k,"[a]",xmin*sca1-xoff,xmax*sca1-xoff); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
-     	    for (int ip=1; ip<npmts[1]+1; ip++) {double ymx=(scaly)?ymax*ip/npmts[1]:ymax;int ybns=(scaly)?((ip>4)?ybins*ip/npmts[1]:5):ybins;
+     	    for (int ip=1; ip<npmts[1]+1; ip++) {
+     	    	ymx=scaly?ymax*ip/npmts[1]:ymax; ybns=scaly?((ip>4)?ybins*ip/npmts[1]:5):ybins;
                 if(scaly2) {ymx=0.75*ymax*(1-0.47*ip/npmts[1]);}
                 h = new H2F("uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt);  h.setTitleY(ytxt+"U"+ip); 
@@ -354,14 +356,14 @@ public class ECt extends DetectorMonitor {
                 if(scaly2) {ymx=0.75*ymax*(0.63+0.37*ip/npmts[1]) ;}
                 h = new H2F("uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecin-w"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca1-xoff,xmax*sca1-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECIN "+xtxt); h.setTitleY(ytxt+"W"+ip);
-                dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);
-                
+                dg6.addDataSet(h,ip-1); dg6.addDataSet(f1,ip-1);                
      	    }
             this.getDataGroup().add(dg4,is,4,k,run); this.getDataGroup().add(dg5,is,5,k,run); this.getDataGroup().add(dg6,is,6,k,run);
      	   
             DataGroup dg7 = new DataGroup(6,6); DataGroup dg8 = new DataGroup(6,6); DataGroup dg9 = new DataGroup(6,6);        	         	   
             f1 = new F1D("p0"+is+3+k,"[a]",xmin*sca2-xoff,xmax*sca2-xoff); f1.setParameter(0,0); f1.setLineColor(1); f1.setLineStyle(1);
-     	    for (int ip=1; ip<npmts[2]+1; ip++) {double ymx=(scaly)?ymax*ip/npmts[2]:ymax;int ybns=(scaly)?((ip>4)?ybins*ip/npmts[2]:5):ybins;
+     	    for (int ip=1; ip<npmts[2]+1; ip++) {
+     	    	ymx=scaly?ymax*ip/npmts[2]:ymax; ybns=scaly?((ip>4)?ybins*ip/npmts[2]:5):ybins;
                 if(scaly2) {ymx=0.75*ymax*(1-0.47*ip/npmts[2]);}
                 h = new H2F("uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,"uvw-ecou-u"+ip+"-s"+is+"-"+k+"-"+run,xbins,xmin*sca2-xoff,xmax*sca2-xoff,ybns,ymin,ymx);
                 h.setTitleX("Sector "+is+" ECOU "+xtxt); h.setTitleY(ytxt+"U"+ip);
@@ -881,7 +883,7 @@ public class ECt extends DetectorMonitor {
     public float getLeff(Point3D point, Line3D peakline) {
     	return (float) point.distance(peakline.end());
     }
-
+    
     private void updateUVW(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
