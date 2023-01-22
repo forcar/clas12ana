@@ -106,9 +106,10 @@ public class ECEngine extends ReconstructionEngine {
                                 List<ECPeak>    peaks, 
                                 List<ECCluster> clusters){
         
-//        DataBank bankS=null;
+        DataBank bankS=null;
 
-        DataBank bankS = de.createBank("ECAL::hits", strips.size());
+        if(ECCommon.outputECHITS) {    	
+        bankS = de.createBank("ECAL::hits", strips.size());
         for(int h = 0; h < strips.size(); h++){
             bankS.setByte("sector",     h,  (byte) strips.get(h).getDescriptor().getSector());
             bankS.setByte("layer",      h,  (byte) strips.get(h).getDescriptor().getLayer());
@@ -118,6 +119,7 @@ public class ECEngine extends ReconstructionEngine {
             bankS.setShort("clusterId", h, (short) strips.get(h).getClusterId());
             bankS.setFloat("energy",    h, (float) strips.get(h).getEnergy());
             bankS.setFloat("time",      h, (float) strips.get(h).getTime());                
+        }
         }
        
         DataBank  bankP =  de.createBank("ECAL::peaks", peaks.size());
@@ -321,6 +323,11 @@ public class ECEngine extends ReconstructionEngine {
     public void setUseCalibPass2(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useCalibPass2 = "+val);
     	ECCommon.useCalibPass2 = val;
+    }
+    
+    public void outputECHITS(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: outputECHITS = "+val);
+    	ECCommon.outputECHITS= val;    	
     }
     
     public void setUseFADCTime(boolean val) {

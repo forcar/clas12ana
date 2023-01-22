@@ -25,10 +25,10 @@ public class ECStrip implements Comparable {
     private float             iTADC = 0;
     private double            iGain = 1.0;
     private double     iADC_to_MEV  = 1.0/10000.0;
-    private double          iAttenA = 1.0;
-    private double          iAttenB = 50000.0;
+    private double          iAttenA = 0.2;
+    private double          iAttenB = 70.0;
     private double          iAttenC = 0.0;
-    private double          iAttenD = 40.0;
+    private double          iAttenD = 4.0;
     private double          iAttenE = 400.0;
     private double    iTimA0=0,iTimA1=0,iTimA2=0,iTimA3=0,iTimA4=0; //pass1
     private double    fTim00,iTim00 = 0; // Global TDC offset
