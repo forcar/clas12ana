@@ -42,7 +42,7 @@ public class EngineControl implements ActionListener {
 	public double wlogPar=3.0;
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections;
-	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2;
+	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2, outputECHITS;
 	
 	public ECEngine engine = null;
     public List<ECStrip>     strips = new ArrayList<ECStrip>();
@@ -249,6 +249,11 @@ public class EngineControl implements ActionListener {
     	engine.setUseCalibPass2(val);
     	useCalibPass2 = val;
     }
+    
+    public void outputECHITS(Boolean val) {
+    	engine.outputECHITS(val);
+    	outputECHITS = val;
+    } 
     
     public void setUseTWcorr(Boolean val) {
     	engine.setTWCorrections(val);
