@@ -62,7 +62,7 @@ public class ECcalib extends DetectorMonitor {
     IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
     List<Float>                       pmap = new ArrayList<Float>();	
     List<Particle>                    part = new ArrayList<Particle>();    
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten=null;;       
+    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten2=null, atten=null;;       
 	IndexGenerator                      ig = new IndexGenerator();  
 	
     List<ECALdet>                    e = new ArrayList<ECALdet>(); 
@@ -119,6 +119,12 @@ public class ECcalib extends DetectorMonitor {
         init();
         localinit();
     }
+    
+    public ECcalib(String name, int runno) {
+    	super(name);
+    	initCCDB(runno);
+    	
+    } 
     
     public void localinit() {
     	System.out.println(getDetectorName()+".localinit()");    	
@@ -567,6 +573,7 @@ public class ECcalib extends DetectorMonitor {
         goffset = cm.getConstants(runno, "/calibration/ec/fadc_global_offset");    	
         shift   = cm.getConstants(runno, "/calibration/ec/torus_gain_shift");   
         atten   = cm.getConstants(runno, "/calibration/ec/attenuation");
+        atten2  = cm.getConstants(runno, "/calibration/ec/attenpass2");
     }
     
 	public void myinit(){
@@ -1377,9 +1384,10 @@ public class ECcalib extends DetectorMonitor {
 							case "attgain":  line = getATTGAIN(is,il,iv,ip,runlist.get(0)); break;
 							case "atten":    line = getATTEN(is,il,iv,ip,runlist.get(0)); break;
 							case "rdif":     line = getRDIF(is,il,iv,ip); break;
-							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); 
+							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); break;
+							case "newatten": line = getNEWATTEN(is,il,iv,ip,15024);
 							}
-//						    if(table=="piongain") System.out.println(line);
+						    if(table=="newatten") System.out.println(line);
 						    outputBw.write(line);
 						    outputBw.newLine();
 						}
@@ -1448,18 +1456,31 @@ public class ECcalib extends DetectorMonitor {
 		if(tl.fitData.hasItem(is,100+3*il+iv+1,ip+1,run)) {
 			double   fac = il==0 ? tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1 : 0;
 			double    g = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0*(1+fac);
-			double   p0 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
-			double  p0e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
-			double   p1 = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
-			double  p1e = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
+			double    A = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0;
+			double Aerr = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p0e;
+			double    B = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1;
+			double Berr = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
+			double    C = 0.0, Cerr=0.0, D=70, Derr=0, E=400, Err=0;
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
-				  +p0/g+" "+p0e/g+" "+p1+" "+p1e;
+			 +A+" "+Aerr+" "+(il<1?D:B)+" "+(il<1?Derr:Berr)+" "+C+" "+Cerr+" "+(il<1?B:0)+" "+(il<1?Berr:0)+" "+E+" "+Err;		
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
-			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 200. 0.0");  
+			      +(il==0 ? "0.343 0.0 70 0.0 0.0 0.0 1.91 0.0 400 0.0  " :  "1.0 0.0 200. 0.0 0.0 0.0 0.0 0.0 0.0 400 0.0");  
 		}
 		
 	}
+	
+	public String getNEWATTEN(int is, int il, int iv, int ip, int run) {  
+				
+		double A    = atten2.getDoubleValue("A",    is, 3*il+iv+1, ip+1);
+		double Aerr = atten2.getDoubleValue("Aerr", is, 3*il+iv+1, ip+1);
+		double B    = atten2.getDoubleValue("B",    is, 3*il+iv+1, ip+1);
+		double Berr = atten2.getDoubleValue("Berr", is, 3*il+iv+1, ip+1);
+		double C    = 0.0, Cerr=0.0, D=40, Derr=0, E=400, Err=0;
+		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
+		 +A+" "+Aerr+" "+(il<1?D:B)+" "+(il<1?Derr:Berr)+" "+C+" "+Cerr+" "+(il<1?B:0)+" "+(il<1?Berr:0)+" "+E+" "+Err;		
+	}	
+	
 	public String defATTEN(int is, int il, int iv, int ip, int run) {  //default (MC) table  
 		int pc = 1; 		
 	    return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
@@ -2135,10 +2156,9 @@ public class ECcalib extends DetectorMonitor {
     
     public static void main(String[] args) {
     	
-//    	ECt ect = new ECt("ECt",6684);
-//    	ect.writeFile("NewFTW",1,7,0,3,0,3);    
-//    	ECt ect = new ECt("ECt",2385);
-//    	ect.writeFile("NewDTW",1,7,0,3,0,3);   	
+//    	ECcalib eca = new ECcalib("ECcalib",15024);
+//    	eca.writeFile("newatten",1,7,0,3,0,3);
+   	
     }
   
 }
