@@ -122,6 +122,7 @@ public class ECcalib extends DetectorMonitor {
     
     public ECcalib(String name, int runno) {
     	super(name);
+    	setRunNumber(runno);
     	initCCDB(runno);
     	
     } 
@@ -566,14 +567,14 @@ public class ECcalib extends DetectorMonitor {
     public void initCCDB(int runno) {
     	if(dropSummary) return;
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
-        gain    = cm.getConstants(runno,     "/calibration/ec/gain");       
+        gain    = cm.getConstants(runno, "/calibration/ec/gain");       
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");
         goffset = cm.getConstants(runno, "/calibration/ec/fadc_global_offset");    	
         shift   = cm.getConstants(runno, "/calibration/ec/torus_gain_shift");   
         atten   = cm.getConstants(runno, "/calibration/ec/attenuation");
-        atten2  = cm.getConstants(runno, "/calibration/ec/attenpass2");
+        atten2  = cm.getConstants(runno, "/calibration/ec/atten");
     }
     
 	public void myinit(){
@@ -713,11 +714,12 @@ public class ECcalib extends DetectorMonitor {
        	public float[] uvw=new float[3], wuv=new float[3], ep=new float[3], rep=new float[3], lef=new float[3];
        	public boolean[] fid = new boolean[3];
        	public boolean wpix=false, w;
-       	public int ip,il;
+       	public int ip,il,pid;
        	public float x,y,z,wu,wv,ww,wsum,e_cz,d,ecl;
        	
     	public ECALdet (int is, Particle part) {
     		this.p = part;
+    		pid    = (int) p.getProperty("pid");
     		rl     = new Vector3(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
     		ip     = (int)   p.getProperty("pindex");
     		il     = (int)   p.getProperty("layer"); int ild = getDet(il);
@@ -839,8 +841,10 @@ public class ECcalib extends DetectorMonitor {
             if(ecpart.getItem(is).size()==1 || ecpart.getItem(is).size()==2) { //to recapture PCAL hits where overlap with EC is vanishing           
             	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p)); 
             	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).il==1 && (e.get(0).wsum==3||e.get(0).wsum==4);
+            	if (ev.isPhys) {int ip = e.get(0).ip; pmip = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();}            	
             	if(pixpc) fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).rep,e.get(0).ep,pmip,e.get(0).x,e.get(0).y);
             }
+            
     	}
     }
     
@@ -906,10 +910,12 @@ public class ECcalib extends DetectorMonitor {
 //    			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(wuv[i],ep[i]/mipp[il3]);	 //obsolete
      			((H2F) this.getDataGroup().getItem(is,i+il,12,run).getData((int)uvw[i]-1).get(0)).fill(lef[i],rep[i]/mipp[il3]); //att correction off	
      			((H2F) this.getDataGroup().getItem(is,i+il,13,run).getData((int)uvw[i]-1).get(0)).fill(lef[i], ep[i]/mipp[il3]); //att correction on
+     			
 //    	    	float z1 = ep[i]<mxp[il3]?mipp[il3]:0, z2 = ep[i]<mxp[il3]?ep[i]:0;
     			float z1 = ep[i]<mxp[il3]?1:0, z2 = ep[i]<mxp[il3]?ep[i]/mipp[il3]:0;
     			((H2F) this.getDataGroup().getItem(is,p<0?2:1,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z1);		  
-    			((H2F) this.getDataGroup().getItem(is,p<0?4:3,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z2);		  
+    			((H2F) this.getDataGroup().getItem(is,p<0?4:3,7,run).getData(i+il-1).get(0)).fill(Math.abs(p),uvw[i],z2);	
+    			
     			((H2F) this.getDataGroup().getItem(0,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,z1);
     			((H2F) this.getDataGroup().getItem(1,  1,5,run).getData(i+il-1).get(0)).fill(-x,y,z2);
     		}
@@ -1371,7 +1377,7 @@ public class ECcalib extends DetectorMonitor {
 			FileWriter outputFw = new FileWriter(outputFile.getAbsoluteFile());
 			BufferedWriter outputBw = new BufferedWriter(outputFw);
 			
-			System.out.println(getDetectorName()+".writefile("+table+")");
+			System.out.println(getDetectorName()+".writefile("+table+")"+" RUN:"+getRunNumber());
 
 			for (int is=is1; is<is2; is++) {
 				for (int il=il1; il<il2; il++ ) { //pcal,ecin,ecou
@@ -1385,9 +1391,10 @@ public class ECcalib extends DetectorMonitor {
 							case "atten":    line = getATTEN(is,il,iv,ip,runlist.get(0)); break;
 							case "rdif":     line = getRDIF(is,il,iv,ip); break;
 							case "rdifgain": line = getRDIFGAIN(is,il,iv,ip); break;
-							case "newatten": line = getNEWATTEN(is,il,iv,ip,15024);
+							case "newatten": line = getREPAIRATTEN(is,il,iv,ip,15024); break;
+							case "pass1att": line = getPASS1ATTEN(is,il,iv,ip,getRunNumber()); 
 							}
-						    if(table=="newatten") System.out.println(line);
+						    if(table=="pass1att") System.out.println(line);
 						    outputBw.write(line);
 						    outputBw.newLine();
 						}
@@ -1462,7 +1469,7 @@ public class ECcalib extends DetectorMonitor {
 			double Berr = tl.fitData.getItem(is,100+3*il+iv+1,ip+1,run).p1e;
 			double    C = 0.0, Cerr=0.0, D=70, Derr=0, E=400, Err=0;
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
-			 +A+" "+Aerr+" "+(il<1?D:B)+" "+(il<1?Derr:Berr)+" "+C+" "+Cerr+" "+(il<1?B:0)+" "+(il<1?Berr:0)+" "+E+" "+Err;		
+			 +A/g+" "+Aerr/g+" "+(il<1?D:B)+" "+(il<1?Derr:Berr)+" "+C+" "+Cerr+" "+(il<1?B:0)+" "+(il<1?Berr:0)+" "+E+" "+Err;		
 		} else {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
 			      +(il==0 ? "0.343 0.0 70 0.0 0.0 0.0 1.91 0.0 400 0.0  " :  "1.0 0.0 200. 0.0 0.0 0.0 0.0 0.0 0.0 400 0.0");  
@@ -1470,15 +1477,39 @@ public class ECcalib extends DetectorMonitor {
 		
 	}
 	
-	public String getNEWATTEN(int is, int il, int iv, int ip, int run) {  
+	public String getREPAIRATTEN(int is, int il, int iv, int ip, int run) { //repaired initial pass2 table   
 				
 		double A    = atten2.getDoubleValue("A",    is, 3*il+iv+1, ip+1);
 		double Aerr = atten2.getDoubleValue("Aerr", is, 3*il+iv+1, ip+1);
 		double B    = atten2.getDoubleValue("B",    is, 3*il+iv+1, ip+1);
 		double Berr = atten2.getDoubleValue("Berr", is, 3*il+iv+1, ip+1);
-		double C    = 0.0, Cerr=0.0, D=40, Derr=0, E=400, Err=0;
+		double C    = atten2.getDoubleValue("C",    is, 3*il+iv+1, ip+1);
+		double Cerr = atten2.getDoubleValue("Cerr", is, 3*il+iv+1, ip+1);
+		double D    = atten2.getDoubleValue("D",    is, 3*il+iv+1, ip+1);
+		double Derr = atten2.getDoubleValue("Derr", is, 3*il+iv+1, ip+1);
+		double E    = atten2.getDoubleValue("E",    is, 3*il+iv+1, ip+1);
+		double Eerr = atten2.getDoubleValue("Eerr", is, 3*il+iv+1, ip+1);
+
+		if (il<1) B=70; //was 40 in initial table
+		
 		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
-		 +A+" "+Aerr+" "+(il<1?D:B)+" "+(il<1?Derr:Berr)+" "+C+" "+Cerr+" "+(il<1?B:0)+" "+(il<1?Berr:0)+" "+E+" "+Err;		
+		 +A+" "+Aerr+" "+B+" "+Berr+" "+C+" "+Cerr+" "+D+" "+Derr+" "+E+" "+Eerr;		
+	}	
+	
+	public String getPASS1ATTEN(int is, int il, int iv, int ip, int run) { //for pass1 atten in pass2 format 
+				
+		double A    = atten.getDoubleValue("A",    is, 3*il+iv+1, ip+1);
+		double Aerr = atten.getDoubleValue("Aerr", is, 3*il+iv+1, ip+1);
+		double B    = atten.getDoubleValue("B",    is, 3*il+iv+1, ip+1);
+		double Berr = atten.getDoubleValue("Berr", is, 3*il+iv+1, ip+1);
+		double C    = atten.getDoubleValue("C",    is, 3*il+iv+1, ip+1);
+		double Cerr = atten.getDoubleValue("Cerr", is, 3*il+iv+1, ip+1);
+		double D    = 0.0;
+		double Derr = 0.0;
+		double E    = 400;
+		double Eerr = 0.0;
+		return is+" "+(3*il+iv+1)+" "+(ip+1)+" "				 
+		 +A+" "+Aerr+" "+B+" "+Berr+" "+C+" "+Cerr+" "+D+" "+Derr+" "+E+" "+Eerr;		
 	}	
 	
 	public String defATTEN(int is, int il, int iv, int ip, int run) {  //default (MC) table  
@@ -1486,7 +1517,8 @@ public class ECcalib extends DetectorMonitor {
 	    return is+" "+(3*il+iv+1)+" "+(ip+1)+"  "
 			      +(il==0 ? "0.343 0.0 1.91 0.0" :  "1.0 0.0 376. 0.0");  //376 for MC 200 for data
 		
-	}	
+	}
+	
 	public String getRDIF(int is, int il, int iv, int ip) {	
 		int pc = 1;
 		if(RDIFmap.get(pc).hasItem(is,il,iv,ip) && il>0) {
@@ -1779,6 +1811,8 @@ public class ECcalib extends DetectorMonitor {
     				this.getDataGroup().getItem(is,i+4,index,run).getData(il).clear();
     				this.getDataGroup().getItem(is,i+4,index,run).getData(il).add(h2.divide(h2, h1));
     				((H2F)this.getDataGroup().getItem(is,i+4,index,run).getData(il).get(0)).setTitle(h1.getName());           
+    				((H2F)this.getDataGroup().getItem(is,i+4,index,run).getData(il).get(0)).setTitleX(h1.getTitleX());           
+    				((H2F)this.getDataGroup().getItem(is,i+4,index,run).getData(il).get(0)).setTitleY(h1.getTitleY());           
     			}
     		}
     	}
@@ -2156,8 +2190,8 @@ public class ECcalib extends DetectorMonitor {
     
     public static void main(String[] args) {
     	
-//    	ECcalib eca = new ECcalib("ECcalib",15024);
-//    	eca.writeFile("newatten",1,7,0,3,0,3);
+//    	ECcalib eca = new ECcalib("ECcalib",6150);
+//    	eca.writeFile("pass1att",1,7,0,3,0,3);
    	
     }
   

@@ -459,8 +459,9 @@ public class Event {
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
 				p.setProperty("chi2pid", chi2);
-				int ip = pid<0?Math.abs(pid)+1:pid;				
-				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);}
+				double pm = Math.sqrt(px*px+py*py+pz*pz);
+				int ip = pid<0?Math.abs(pid)+1:pid;	//index ip must be +			
+				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
 				    partmap.getItem(ip).add(p);
 			}		
 		}
@@ -641,6 +642,7 @@ public class Event {
 				int  is = (int) p.getProperty("sector");
 				int lay = (int) p.getProperty("layer"); 
 				int   pid = part.get((int)p.getProperty("pindex")).pid();
+				p.setProperty("pid", pid);
 				float bet = (float) part.get((int)p.getProperty("pindex")).getProperty("beta");
 				float tim1 = (float) p.getProperty("time"), tim2=0;
 				float pat = (float) p.getProperty("path");
@@ -677,10 +679,11 @@ public class Event {
 				
 				if(peakBank!=null && clusBank!=null) {
 					int idu = clusBank.getInt("idU",ical)-1, idv = clusBank.getInt("idV",ical)-1, idw = clusBank.getInt("idW",ical)-1;
-					Point3D pc = new Point3D(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
 					p.setProperty("ustat", peakBank.getInt("status", idu));					
 					p.setProperty("vstat", peakBank.getInt("status", idv));					
 					p.setProperty("wstat", peakBank.getInt("status", idw));
+					
+					Point3D pc = new Point3D(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
 					p.setProperty("leffu", getLeff(pc,getPeakline(idu,pc,peakBank))); //readout distance U
 					p.setProperty("leffv", getLeff(pc,getPeakline(idv,pc,peakBank))); //readout distance V
 					p.setProperty("leffw", getLeff(pc,getPeakline(idw,pc,peakBank))); //readout distance W

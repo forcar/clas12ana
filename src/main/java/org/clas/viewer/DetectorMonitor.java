@@ -250,7 +250,7 @@ public class DetectorMonitor implements ActionListener {
     
     String[]  ccdbTables = new String[]{
             "/calibration/ec/attenuation", 
-            "/calibration/ec/attenpass2", 
+            "/calibration/ec/atten", 
             "/calibration/ec/gain", 
             "/calibration/ec/timing",
             "/calibration/ec/ftiming",
