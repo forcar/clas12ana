@@ -459,7 +459,6 @@ public class Event {
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
 				p.setProperty("chi2pid", chi2);
-				double pm = Math.sqrt(px*px+py*py+pz*pz);
 				int ip = pid<0?Math.abs(pid)+1:pid;	//index ip must be +			
 				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
 				    partmap.getItem(ip).add(p);
