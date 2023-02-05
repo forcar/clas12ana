@@ -212,8 +212,9 @@ public class ECPart extends EBEngine {
        
         rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
-       
-        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,null));
+    	
+        List<DetectorResponse> responseECAL = CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL);
+        eb.addDetectorResponses(responseECAL);
        
         eb.getPindexMap().put(0, 0); 
         eb.getPindexMap().put(1, 0); 
@@ -227,11 +228,11 @@ public class ECPart extends EBEngine {
 	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent 
     // Note for MC w/o charged trigger particles EBAnalyzer.foundTriggerTime will be false and SF not applied to PID=22
     public List<DetectorParticle> getNeutralPart() {
-    	eb.processNeutralTracks();    	
+   	    eb.processNeutralTracks();    	
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
-        if(eb.getEvent().getParticles().size()>0) {
-            Collections.sort(eb.getEvent().getParticles());
+        if(!eb.getEvent().getParticles().isEmpty()){
+            eb.getEvent().sort();
             eb.setParticleStatuses();  
             return eb.getEvent().getParticles();
         } 
