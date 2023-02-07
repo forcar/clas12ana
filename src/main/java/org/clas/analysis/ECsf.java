@@ -486,7 +486,8 @@ public class ECsf extends DetectorMonitor {
                     y_ecal[ind]     = (float) xyz.y();
                     hx_ecal[ind]    = (float) hxyz.x();
                     hy_ecal[ind]    = (float) hxyz.y();
-                    t_ecal[ind]     = t-Tvertex-pa/29.98f;
+//                  t_ecal[ind]     = t-Tvertex-pa/29.98f;
+                    t_ecal[ind]     = ecalclust.getFloat("time", ic)-Tvertex-pa/29.98f;
                     e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
                     e_ecal_EL[ind] +=  ecalclust.getFloat("energy", ic);
                     e_ecal_EL[3]   +=  ecalclust.getFloat("energy", ic);
@@ -551,9 +552,9 @@ public class ECsf extends DetectorMonitor {
         int is = e_sect;
         
         for (int id=0; id<3; id++) {
-            ((H2F) getDG(0,0,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?1f:0);
-            ((H2F) getDG(0,1,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sff[id]<0.5?sff[id]:0.);
-            ((H2F) getDG(0,2,"XY",run).getData(id).get(0)).fill(-x_ecal[id], y_ecal[id],sf<0.5?sf:0.);
+            ((H2F) getDG(0,0,"XY",run).getData(id).get(0)).fill( -x_ecal[id],  y_ecal[id],sff[id]<0.5?1f:0);
+            ((H2F) getDG(0,1,"XY",run).getData(id).get(0)).fill( -x_ecal[id],  y_ecal[id],sff[id]<0.5?sff[id]:0.);
+            ((H2F) getDG(0,2,"XY",run).getData(id).get(0)).fill( -x_ecal[id],  y_ecal[id],sf<0.5?sf:0.);
             ((H2F) getDG(1,0,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?1f:0);
             ((H2F) getDG(1,1,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sff[id]<0.5?sff[id]:0.);
             ((H2F) getDG(1,2,"XY",run).getData(id).get(0)).fill(-hx_ecal[id], hy_ecal[id],sf<0.5?sf:0.);
