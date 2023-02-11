@@ -27,15 +27,16 @@ public class ECelas extends DetectorMonitor {
     public ECelas(String name) {
         super(name);
         dgmActive=true; 
-        this.setDetectorTabNames("WAGON",
-        		                 "EVENT",
-        		                 "KCOR",
-        		                 "RCOR");
-        this.use123Buttons(true);
-        this.useSliderPane(true);
-        this.init();
-        this.localinit();
-        this.localclear();       
+        setDetectorTabNames("WAGON",
+        		            "EVENT",
+        		            "KCOR",
+        		            "RCOR");
+        use123Buttons(true);
+        useSliderPane(true);
+        useECEnginePane(true);
+        init();
+        localinit();
+        localclear();       
     }
     
     public void localinit() {
