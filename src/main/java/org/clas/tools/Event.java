@@ -635,6 +635,9 @@ public class Event {
 				p.setProperty("du",     caloBank.getFloat("du",imap));
 				p.setProperty("dv",     caloBank.getFloat("dv",imap));
 				p.setProperty("dw",     caloBank.getFloat("dw",imap));
+				p.setProperty("m2u",    caloBank.getFloat("m2u",imap));
+				p.setProperty("m2v",    caloBank.getFloat("m2v",imap));
+				p.setProperty("m2w",    caloBank.getFloat("m2w",imap));
 				
 				int ical = (int) p.getProperty("index");
 				
