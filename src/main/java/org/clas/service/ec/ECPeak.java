@@ -177,7 +177,6 @@ public class ECPeak implements Comparable {
             logSumm += le;            
         }
         
-        
         peakDistanceEdge = peakDistanceEdge/logSumm;
         
         peakLine.set(
@@ -190,14 +189,18 @@ public class ECPeak implements Comparable {
         );
         
         // Shower peak moments
+        
+        logSumm = 0;       
+       
         for(int i = 0; i < peakStrips.size(); i++){            
             double stripDistance = peakStrips.get(i).getDistanceEdge();
             double dist = peakDistanceEdge - stripDistance;
             double energyMev = peakStrips.get(i).getEnergy()*1000.0;
-            double energyLog = Math.log(energyMev);
-            peakMoment  += dist*dist*dist*dist*energyLog;           
-            peakMoment2 += dist*dist*energyLog;
-            peakMoment3 += dist*dist*dist*energyLog;
+            double le = Math.log(energyMev);
+            peakMoment  += dist*dist*dist*dist*le;           
+            peakMoment2 += dist*dist*le;
+            peakMoment3 += dist*dist*dist*le;
+            logSumm += le;            
         }
         
         peakMoment = peakMoment/logSumm;
