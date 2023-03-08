@@ -339,7 +339,7 @@ public class DataGroupManager {
                                       c.getPad().getAxisZ().setAutoScale(true);}            			
         		}        		
         	}
-        	for (IDataSet ds : dsList) if(maxtest?ds.getMax()>0.5:true) {c.draw(ds,opt); opt="same";}
+        	for (IDataSet ds : dsList) if(maxtest?ds.getMax()>0.01:true) {c.draw(ds,opt); opt="same";}
         }   	
     }
 	
