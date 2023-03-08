@@ -3,9 +3,8 @@ package org.clas.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.clas.service.ec.ECCluster;
-import org.clas.service.ec.ECPeak;
-import org.clas.service.ec.ECStrip;
+import org.clas.service.ec.*;
+
 import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.tools.ParallelSliceFitter;
@@ -414,7 +413,7 @@ public class ECmc1 extends DetectorMonitor {
         	                                               +dp.getEnergy(DetectorType.ECAL)+" "
         	                                               +dp.getPid()                    +" " 
         	                                               +dp.getBeta()                   +" "
-        	                                               +ebmce.hasStartTime);nnn++;
+        	                                               +ebmce.hasTriggerPID);nnn++;
         	        for (DetectorResponse dr : dp.getDetectorResponses()) {
         	        	System.out.println(dr.getAssociation()           +" "
         		                          +dr.getDescriptor().getType()  +" "
@@ -434,7 +433,7 @@ public class ECmc1 extends DetectorMonitor {
         	for (DetectorParticle dp : par) { // make list of neutral Particle objects 
         		dpind++;
     		    if(dp.getSector(DetectorType.ECAL)==mcSEC && dp.getPid()==mcPID) { npart++; cind=dpind;
-			    if(ebmce.hasStartTime && dp.getPid()==2112) {// / for photon MC you may want to recover these clusters
+			    if(ebmce.hasTriggerPID && dp.getPid()==2112) {// / for photon MC you may want to recover these clusters
 	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
 			    	Vector3D vec = new Vector3D() ; vec.copy(dp.getHit(DetectorType.ECAL).getPosition()); vec.unit(); 			    		
  			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
