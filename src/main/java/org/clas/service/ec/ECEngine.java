@@ -34,11 +34,21 @@ public class ECEngine extends ReconstructionEngine {
                 
         List<ECStrip>     ecStrips = ECCommon.initEC(de, this.getConstantsManager()); // thresholds, ADC/TDC match        
         List<ECPeak>       ecPeaks = ECCommon.processPeaks(ECCommon.createPeaks(ecStrips)); // thresholds, split peaks -> update peak-lines          
-        List<ECCluster> ecClusters = new ArrayList<ECCluster>();     
+        List<ECCluster> ecClusters = new ArrayList<ECCluster>();  
         
-        ecClusters.addAll(ECCommon.createClusters(ecPeaks,1)); //PCAL
-        ecClusters.addAll(ECCommon.createClusters(ecPeaks,4)); //ECinner 
-        ecClusters.addAll(ECCommon.createClusters(ecPeaks,7)); //ECouter
+        List<ECCluster> tmpPCAL  = ECCommon.createClusters(ecPeaks,1);
+        List<ECCluster> tmpECIN  = ECCommon.createClusters(ecPeaks,4);
+        List<ECCluster> tmpECOUT = ECCommon.createClusters(ecPeaks,7);
+        
+//        ECPeakAnalysis.doPeakCleanup(ecPeaks);     //iss1049    
+        
+        //iss1049  filter clusters having 2 shared peaks to select smallest dalitz size        
+        if(ECCommon.useCCPC)  ECPeakAnalysis.doClusterCleanup(tmpPCAL);
+        if(ECCommon.useCCEC) {ECPeakAnalysis.doClusterCleanup(tmpECIN); ECPeakAnalysis.doClusterCleanup(tmpECOUT);}        
+        
+        ecClusters.addAll(tmpPCAL);  //PCAL
+        ecClusters.addAll(tmpECIN);  //ECinner 
+        ecClusters.addAll(tmpECOUT); //ECouter        
         
         ECCommon.shareClustersEnergy(ecClusters); // Repair 2 clusters which share the same peaks
 
@@ -157,8 +167,7 @@ public class ECEngine extends ReconstructionEngine {
             bankC.setInt("coordV",   c,         clusters.get(c).getPeak(1).getCoord());
             bankC.setInt("coordW",   c,         clusters.get(c).getPeak(2).getCoord());  
         }
-        
-/*     
+/*             
         DataBank bankM = de.createBank("ECAL::moments", clusters.size());
         for(int c = 0; c < clusters.size(); c++){
             bankM.setFloat("distU", c, (float) clusters.get(c).clusterPeaks.get(0).getDistanceEdge());
@@ -216,8 +225,8 @@ public class ECEngine extends ReconstructionEngine {
        }
          
 //         de.appendBanks(bankS,bankP,bankC,bankD,bankM);
-        de.appendBanks(bankS,bankP,bankC,bankD);
-//         de.appendBanks(bankS,bankP,bankC,bankD);
+//        de.appendBanks(bankS,bankP,bankC,bankD,bankM);
+         de.appendBanks(bankS,bankP,bankC,bankD);
 
     }
     
@@ -327,8 +336,38 @@ public class ECEngine extends ReconstructionEngine {
     
     public void outputECHITS(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: outputECHITS = "+val);
-    	ECCommon.outputECHITS= val;    	
+    	ECCommon.outputECHITS = val;    	
     }
+    
+    public void setUseCCPC(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useCCPC = "+val);
+    	ECCommon.useCCPC = val;    	
+    } 
+    
+    public void setUseCCEC(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useCCEC = "+val);
+    	ECCommon.useCCEC = val;    	
+    }    
+    
+    public void setUseDEF(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useDEF = "+val);
+    	ECCommon.useDEF = val;    	
+    } 
+    
+    public void setUseASA1(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useASA1 = "+val);
+    	ECCommon.useASA1 = val;    	
+    } 
+    
+    public void setUseASA2(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useASA2 = "+val);
+    	ECCommon.useASA2 = val;    	
+    } 
+    
+    public void setUseASA3(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useASA3 = "+val);
+    	ECCommon.useASA3 = val;    	
+    } 
     
     public void setUseFADCTime(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
@@ -374,12 +413,20 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.stripThreshold[2] = thr2;
     }
     
+    public int[] getStripThresholds() {
+    	return ECCommon.stripThreshold;
+    }
+    
     public void setPeakThresholds(int thr0, int thr1, int thr2) {
     	LOGGER.log(Level.INFO,"ECEngine: Peak ADC thresholds = "+thr0+" "+thr1+" "+thr2+" MeV*10");  
         ECCommon.peakThreshold[0] = thr0;
         ECCommon.peakThreshold[1] = thr1;
         ECCommon.peakThreshold[2] = thr2;
     }   
+    
+    public int[] getPeakThresholds() {
+    	return ECCommon.peakThreshold;
+    } 
     
     public void setClusterCuts(float err0, float err1, float err2) {
     	LOGGER.log(Level.INFO,"ECEngine: Cluster Size Cuts = "+err0+" "+err1+" "+err2+" CM"); 
