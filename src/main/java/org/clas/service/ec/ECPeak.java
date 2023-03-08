@@ -59,7 +59,25 @@ public class ECPeak implements Comparable {
     public int    getSplitStrip() {return splitStrip;}
     public Line3D getLine()       {return peakLine;}
     
-  
+    public String getString(){  //iss1049   
+        StringBuilder str = new StringBuilder();
+        for(int i = 0; i < this.peakStrips.size(); i++){
+            if(i!=0); str.append(",");
+            str.append(String.format("%.5f",peakStrips.get(i).getEnergy()));
+        }
+        return str.toString();
+    }
+    
+    public double getStripEnergy(int strip){ //iss1049 
+    	return this.peakStrips.get(strip).getEnergy();	
+    }
+
+    public double[] getEnergies(){ //iss1049 
+        double[] data = new double[peakStrips.size()];
+        for(int k = 0; k < data.length; k++) data[k] = peakStrips.get(k).getEnergy();
+        return data;
+    }
+    
     public void setPeakId(int id){
         for(ECStrip strip : peakStrips) strip.setPeakId(id);
     }
@@ -344,6 +362,22 @@ public class ECPeak implements Comparable {
 //	    return out[1]-out[0]==1 ? ((i1-i0)>1?out:sortpair(list,i0+1,i1+1)):out;
 	    return out;
     }
+    
+    public int isGood(){ //iss1049    
+        int maxStrip = this.getMaxStrip();
+        int  nStrips = this.peakStrips.size();
+        if(maxStrip==0&&nStrips>2){
+            if(this.getStripEnergy(maxStrip+1)>this.getStripEnergy(maxStrip+2)) return 1;
+        } 
+
+        if(maxStrip==nStrips-1&&nStrips>2){
+            if(this.getStripEnergy(maxStrip-1)>this.getStripEnergy(maxStrip-2)) return 1;
+        }
+
+        if(nStrips>2) return 2;
+
+        return 0;
+    } 
     
     int getDipIndex(int[] in) {
     	int i0=in[0], i1=in[1];
