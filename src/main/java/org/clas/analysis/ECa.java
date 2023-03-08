@@ -97,12 +97,13 @@ public class ECa extends DetectorMonitor {
                                  "Fits Sig 2",
                                  "Fits Sig 3",
                                  "Timeline");
-        this.usePCCheckBox(true);
-        this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
-        this.init();
-        this.localinit();
-        this.localclear();
+        usePCCheckBox(true);
+        useCALUVWSECButtons(true);
+        useSliderPane(true);
+        useECEnginePane(true);
+        init();
+        localinit();
+        localclear();
     }
     
     public void localinit() {
@@ -110,8 +111,7 @@ public class ECa extends DetectorMonitor {
         EB=12; Ebeam = 10.6f;
       	VB = new LorentzVector(0,0,Ebeam,Ebeam);
 	    VT = new LorentzVector(0,0,0,0.93827);
-	    tl.setFitData(Fits);
-	    eng.updateConfig("muon");  
+//	    tl.setFitData(Fits);
     }
     
     public void localclear() {
@@ -123,11 +123,13 @@ public class ECa extends DetectorMonitor {
     	FitSummary.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
+        eng.engine.setCCDBGain(!defaultGain);
     }
     
     @Override
     public void createHistos(int run) {        
 	    System.out.println("ECa:createHistos("+run+")");
+	    histosExist = true;
         setRunNumber(run);
         runlist.add(run);
         this.setNumberOfEvents(0);        
@@ -147,6 +149,7 @@ public class ECa extends DetectorMonitor {
 
     @Override       
     public void plotHistos(int run) {
+   	    if(!histosExist) return;
     	plotSummary(run);
     	plotAnalysis(run);
     }
