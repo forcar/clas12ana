@@ -3,9 +3,8 @@ package org.clas.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.clas.service.ec.ECCluster;
-import org.clas.service.ec.ECPeak;
-import org.clas.service.ec.ECStrip;
+import org.clas.service.ec.*;
+
 import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.viewer.DetectorMonitor;
@@ -156,7 +155,7 @@ public class ECmc2 extends DetectorMonitor {
     public void histOptions(String var) {
     	System.out.println("ECmc2.histOptions("+var+")");
     	switch (var) {
-    	case "phot": oplo=0;   ophi=6;  x1=-180; x2=-20; y1=90; y2=250; break;
+    	case "phot": oplo=0;   ophi=6;  x1=-180; x2=-20; y1= 90; y2=250; break;
     	case "pi0":  oplo=1.8; ophi=12; x1=-250; x2=-50; y1=150; y2=350; 
     	}
     }
@@ -396,6 +395,7 @@ public class ECmc2 extends DetectorMonitor {
     	switch (st) {        
         case 0:          
         	dgm.add("EFFICIENCY",6,5,0,st,getRunNumber());
+            dgm.makeH1("eff0", 50,oplo,ophi,-1,"n#gamma=2",          "Opening Angle (deg)","Efficiency",1,3);            
             dgm.makeH1("eff1", 50,oplo,ophi,-1,"n#gamma>1",          "Opening Angle (deg)","Efficiency",1,3);
             dgm.makeH1("eff1a",50,oplo,ophi,-2,"pc>0 ec>1",          "Opening Angle (deg)","Efficiency",1,4);
             dgm.makeH1("eff3", 50,oplo,ophi,-2,"pc>1 ec=1 pc>1 ec>1","Opening Angle (deg)","Efficiency",1,5);
@@ -440,6 +440,7 @@ public class ECmc2 extends DetectorMonitor {
            break;
         case 1:
         	dgm.add("EFFICIENCY",6,6,0,st,getRunNumber());          
+            dgm.makeH1("h00", 50,oplo,ophi,-1,"","Opening Angle (deg)","Efficiency",1,4);
             dgm.makeH1("h10", 50,oplo,ophi,-1,"","Opening Angle (deg)","Efficiency",1,4);
             dgm.makeH1("h1a", 50,oplo,ophi,-1,"","Opening Angle (deg)","Efficiency",1,4);
         	dgm.makeH1("h11", 50,oplo,ophi,-1,"","Opening Angle (deg)","Efficiency",1,5);
@@ -556,11 +557,13 @@ public class ECmc2 extends DetectorMonitor {
     	List<ECPeak>    pl = eng.engine.getPeaks();
     	List<ECCluster> cl = eng.engine.getClusters();
     	
-    	for (ECCluster c : cl) {
+    	for (ECCluster c : cl) {    		
     		int    s = c.clusterPeaks.get(0).getDescriptor().getSector();
     		int    l = c.clusterPeaks.get(0).getDescriptor().getLayer();
+    		
     		double x = c.getHitPosition().x();
     		double y = c.getHitPosition().y();
+    		
     		if(s==mcSEC) {
 //    			if(l==4 && -x>-114 && -x<-111 && y>200 && y<228) System.out.println(getEventNumber());
     			if(l==1) dgm.fill("c3pc",  -x,y);
@@ -593,8 +596,10 @@ public class ECmc2 extends DetectorMonitor {
         float opa = GENPZ.get(3); float   x = GENPZ.get(4);
         float dth = GENPZ.get(7); float dph = GENPZ.get(8);
         
-//      processECEngine(de);                
-	    if (dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine 	    
+//        processECEngine(de);    
+        
+	    if (dropBanks) dropBanks(de);  //drop ECAL banks and re-run ECEngine 	 
+        
 	    processNewECEngine(de);
 	    
         if(!ebmce.processDataEvent(de)) return;
@@ -603,7 +608,7 @@ public class ECmc2 extends DetectorMonitor {
         	
         List<DetectorParticle> par = ebmce.eb.getEvent().getParticles();  
         List<DetectorResponse> cal = ebmce.eb.getEvent().getCalorimeterResponseList(); 
-
+        
         if(dumpFiles) {ebmce.getRECBanks(de,ebmce.eb); writer.writeEvent(de);}
        
         int trsec = -1; 
@@ -633,9 +638,11 @@ public class ECmc2 extends DetectorMonitor {
         	for (DetectorParticle dp : par) {
         		System.out.println("Particle "+nnn+"  "+dp.getSector(DetectorType.ECAL)+" "
                                                        +dp.getEnergy(DetectorType.ECAL)+" "
-                                                       +dp.getPid()+" " 
+                                                       +dp.getPid()+" "
+                                                       +dp.getPathLength()+" "
+                                                       +dp.getTime(DetectorType.ECAL)+" "
                                                        +dp.getBeta()+" "
-                                                       +ebmce.hasStartTime);nnn++;
+                                                       +ebmce.hasTriggerPID);nnn++;
         		for (DetectorResponse dr : dp.getDetectorResponses()) {
               	  System.out.println(dr.getAssociation()+" "
         		                    +dr.getDescriptor().getType()+" "
@@ -646,9 +653,9 @@ public class ECmc2 extends DetectorMonitor {
         	
         List<Particle> plist = new ArrayList<Particle>(); 
 
-        for (DetectorParticle dp : par) { // make list of neutral Particle objects       	
+        for (DetectorParticle dp : par) { // make list of neutral Particle objects 
 		    if(dp.getSector(DetectorType.ECAL)==mcSEC && dp.getPid()==mcPID) { npart++;
-		    	if(!ebmce.hasStartTime && dp.getPid()==2112) {// for photon MC you may want to recover these clusters
+		    	if(!ebmce.hasTriggerPID && dp.getPid()==2112) {// for photon MC you may want to recover these clusters
 	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
 			    	Vector3D vec = new Vector3D() ; vec.copy(dp.getHit(DetectorType.ECAL).getPosition()); vec.unit(); 			    		
  			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
@@ -741,13 +748,15 @@ public class ECmc2 extends DetectorMonitor {
      			dgm.fill("c314",-r4[j].x(),r4[j].y());
      			dgm.fill("c315",-r4[k].x(),r4[k].y()); 
      		}
- 					    	
+					    	
  			if(npc[0]>=2)                            {r1[2].sub(r1[1]); dist=r1[2].mag();} 
  			if(npc[1]==1 && npc[2]==0 && neci[2]>=1) {r4[2].sub(r1[1]); dist=r4[2].mag();} 
  			if(npc[2]==1 && npc[1]==0 && neci[1]>=1) {r4[1].sub(r1[2]); dist=r4[1].mag();} 
  			    	
  			float dpcb = (float) (bpc[1]-bpc[2]); float dcib = (float) (bci[1]-bci[2]); float dcob = (float) (bco[1]-bco[2]); 
- 			    	 			    	
+ 			
+ 			// merged cluster correction
+ 			
  			if (correct && p1.countResponses(DetectorType.ECAL,1)==1 && p2.countResponses(DetectorType.ECAL,1)==1) {
  			    //Merged cluster associated with photon 2 	
  	 			if (p1.countResponses(DetectorType.ECAL,4)==0 && p2.countResponses(DetectorType.ECAL,4)==1) {
@@ -782,7 +791,7 @@ public class ECmc2 extends DetectorMonitor {
  	 		dgm.fill("pz21",GENPZ.get(3),RECPZ.get(0)-GENPZ.get(0));
  	 		dgm.fill("pz22",GENPZ.get(3),RECPZ.get(1)-GENPZ.get(1));
 	 			    
-     	    dgm.fill("h11",opa);
+     	    dgm.fill("h11",opa); if(npart==2) dgm.fill("h00", opa);
      	       	    
 /*     	    if (npc[0]>=2 && opa>=2.0) {
      			Vector3 v1 = new Vector3(c1[1]); Vector3 v2 = new Vector3(c1[2]); v1.sub(v2);
@@ -798,8 +807,8 @@ public class ECmc2 extends DetectorMonitor {
  			float e2 = (float) (p2.getEnergy(DetectorType.ECAL)/ebmce.getSF(p2)), b2 = (float) p2.getBeta();			    	 
 
     		nopa = Math.toDegrees(Math.acos(plist.get(0).cosTheta(plist.get(1))));
-            dopa = opa-nopa;  //GEN-REC   			
- 			
+            dopa = opa-nopa;  //GEN-REC  
+            
      		if(dbgAnalyzer && npc[0]>1 && neci[0]>1 && opa>2.5) {
      				System.out.println(" "); int scaf = 2;
      				System.out.println(getEventNumber());
@@ -1046,6 +1055,7 @@ public class ECmc2 extends DetectorMonitor {
     } 
    
     public void geteff() {
+		dgm.geteff("eff0",  "h00", "h10");
 		dgm.geteff("eff1",  "h11", "h10");
 		dgm.geteff("eff1a", "h1a", "h10");
 		dgm.geteff("eff2",  "h12", "h10");
