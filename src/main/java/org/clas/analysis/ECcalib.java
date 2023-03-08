@@ -123,8 +123,7 @@ public class ECcalib extends DetectorMonitor {
     public ECcalib(String name, int runno) {
     	super(name);
     	setRunNumber(runno);
-    	initCCDB(runno);
-    	
+    	initCCDB(runno);    	
     } 
     
     public void localinit() {
@@ -2190,7 +2189,7 @@ public class ECcalib extends DetectorMonitor {
     
     public static void main(String[] args) {
     	
-//    	ECcalib eca = new ECcalib("ECcalib",6150);
+//    	ECcalib eca = new ECcalib("ECcalib",50);
 //    	eca.writeFile("pass1att",1,7,0,3,0,3);
    	
     }
