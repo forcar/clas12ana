@@ -79,7 +79,7 @@ public class EBMCEngine extends EBEngine {
     public String config = null;
     public double SF1 = 0.27, SF1db=0.27;
     public double SF2 = 0.27, SF2db=0.27;
-    public boolean isMC = true, hasStartTime = false;
+    public boolean isMC = true, hasTriggerPID = false;
     public H1F h5,h6,h7,h8;
   
     public int n2mc=0, MCpid=11, MCsec=2;
@@ -96,6 +96,7 @@ public class EBMCEngine extends EBEngine {
     String eventBank        = "REC::Event";    
     String particleBank     = "REC::Particle";
     String calorimeterBank  = "REC::Calorimeter";  
+    String caloextrasBank   = "REC::CaloExtras";
     
     private ArrayList<String>       detectorTabNames = new ArrayList();
     
@@ -147,7 +148,7 @@ public class EBMCEngine extends EBEngine {
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
     }
     
-    public boolean hasStartTime(int pid) {
+    public boolean hasTriggerPID(int pid) {
     	return (pid==11 || pid==-11 || pid==-211 || pid==211);
     }
     
@@ -161,7 +162,7 @@ public class EBMCEngine extends EBEngine {
     }
     
     public boolean readMC(DataEvent event) {    	
-        pmc.clear(); pmv.clear(); hasStartTime=false;
+        pmc.clear(); pmv.clear(); hasTriggerPID=false;
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
             for (int i=0; i<bank.rows(); i++) {
@@ -171,10 +172,9 @@ public class EBMCEngine extends EBEngine {
             	double vx = bank.getFloat("vx",i);
             	double vy = bank.getFloat("vy",i);
             	double vz = bank.getFloat("vz",i);
-            	int   pid = bank.getInt("pid",i);
-            	
+            	int   pid = bank.getInt("pid",i);            	
                 if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
-                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid); starttime = getStartTime(event);} 
+                if(i==0) {vtx.setXYZ(vx, vy, vz); hasTriggerPID = hasTriggerPID(pid); starttime = getStartTime(event);} 
             }
             n2mc++;
             return true;
@@ -199,13 +199,16 @@ public class EBMCEngine extends EBEngine {
     @Override
     public boolean  processDataEvent(DataEvent de){    	
     	
-        eb = new EventBuilder(ccdb);   	
+        eb = new EventBuilder(ccdb);  
+        eb.setUsePOCA(false);
         eb.initEvent(); //don't bother with event header  
+        
+        EBMatching ebm = new EBMatching(eb);
         
         rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
        
-        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL,"ECAL::moments"));        
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL));        
         eb.addDetectorResponses(ScintillatorResponse.readHipoEvent(de, ftofHitsType, DetectorType.FTOF));
         eb.addDetectorResponses(CherenkovResponse.readHipoEvent(de,"HTCC::rec",DetectorType.HTCC));   
         
@@ -216,16 +219,16 @@ public class EBMCEngine extends EBEngine {
         eb.getPindexMap().put(1, 0);
         
         eb.processHitMatching();
-        eb.assignTrigger();
-        
+        eb.assignTrigger();        
     	eb.processNeutralTracks(); 
-    	
+        eb.setParticleStatuses();
+        
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
         
-        if(eb.getEvent().getParticles().size()>0) {
-            Collections.sort(eb.getEvent().getParticles()); 
-            eb.setParticleStatuses();
+        if(!eb.getEvent().getParticles().isEmpty()) {
+            eb.getEvent().sort();
+            eb.setParticleStatuses();            
             getRECBanks(de,eb);
             return true;
         } 
@@ -240,9 +243,11 @@ public class EBMCEngine extends EBEngine {
         de.appendBanks(bankEve);
 
         List<DetectorResponse> calorimeters = eb.getEvent().getCalorimeterResponseList();
-        if(calorimeterBank!=null && calorimeters.size()>0) {
+        if(calorimeterBank!=null && !calorimeters.isEmpty()) {
             DataBank bankCal = DetectorData.getCalorimeterResponseBank(calorimeters, de, calorimeterBank);
             de.appendBanks(bankCal);
+//            DataBank bankCaloExtras = DetectorData.getCaloExtrasResponseBank(calorimeters, de, caloextrasBank);
+//            de.appendBanks(bankCaloExtras);               
         }
     	
     }
