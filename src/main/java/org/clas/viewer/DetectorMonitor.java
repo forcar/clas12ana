@@ -37,6 +37,7 @@ import javax.swing.filechooser.FileSystemView;
 
 import org.clas.tools.FitData;
 import org.clas.tools.ParallelSliceFitter;
+import org.clas.tools.FTHashCollection;
 import org.clas.tools.DataGroupManager;
 import org.clas.tools.TimeLine;
 import org.jlab.detector.base.DetectorOccupancy;
@@ -60,6 +61,7 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.rec.eb.EBCCDBConstants;
 
 import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedTable;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 import org.clas.tools.EmbeddedCanvasTabbed;
@@ -248,6 +250,8 @@ public class DetectorMonitor implements ActionListener {
     
     public EngineControl eng = new EngineControl();
     
+    public FTHashCollection rtt = null;
+    
     String[]  ccdbTables = new String[]{
             "/calibration/ec/attenuation", 
             "/calibration/ec/atten", 
@@ -268,7 +272,8 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
-            "/daq/fadc/ec"
+            "/daq/fadc/ec",
+            "/daq/tt/ec"
     };    
     
     public DetectorMonitor(String name){
@@ -332,6 +337,26 @@ public class DetectorMonitor implements ActionListener {
         layMap.put("CND",cnd);   nlayMap.put("CND",  ncnd);
         layMap.put("ECAL",ecal); nlayMap.put("ECAL", necal);    	
     }
+    
+    public void getReverseTT(ConstantsManager ccdb, int run, String table) {
+        System.out.println("monitor.getReverseTT()"); 
+        IndexedTable tt = ccdb.getConstants(run, table);
+        rtt = new FTHashCollection<int[]>(4);
+        for(int ic=1; ic<74; ic++) {
+            for (int sl=3; sl<21; sl++) {
+                int chmax=16;
+                if (sl==6||sl==16) chmax=128;
+                for (int ch=0; ch<chmax; ch++){
+                    if (tt.hasEntry(ic,sl,ch)) {
+                        int[] dum = {ic,sl,ch}; rtt.add(dum,tt.getIntValue("sector",    ic,sl,ch),
+                                                            tt.getIntValue("layer",     ic,sl,ch),
+                                                            tt.getIntValue("component", ic,sl,ch),
+                                                            tt.getIntValue("order",     ic,sl,ch));
+                    };
+                }
+            }
+        }
+    } 
 
     public void createTimeLineHistos() {    	
     }
