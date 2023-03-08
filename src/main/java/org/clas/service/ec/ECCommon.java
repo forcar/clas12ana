@@ -50,6 +50,12 @@ public class ECCommon {
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
     public static Boolean  useDTCorrections = true; 
+    public static Boolean            useDEF = true;
+    public static Boolean           useASA1 = false;
+    public static Boolean           useASA2 = false;
+    public static Boolean           useASA3 = false;
+    public static Boolean           useCCPC = false;
+    public static Boolean           useCCEC = false;
     
     public static Boolean     useCalibPass2 = false; //local only
     public static Boolean     outputECHITS  = false; //local only
@@ -239,7 +245,7 @@ public class ECCommon {
             
             double ccdbGain =   gain.getDoubleValue("gain", sector,layer,component)*ggs.getDoubleValue("gain_shift",sector,layer,0);
             double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);  
-            
+                        
             strip.setGain(useCCDBGain ? ccdbGain : run2Gain);             
             strip.setDtimeGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
             
@@ -421,11 +427,13 @@ public class ECCommon {
     } 
        
     public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
-    	
-        ECPeakAnalysis epa = new ECPeakAnalysis() ;
         List<ECPeak> peakList = new ArrayList<ECPeak>();
-        for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);
-        epa.splitPeaks(peakList);       //Split peak if strip members have an adc valley       
+        for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);        
+        Boolean useDEF = !useASA1 && !useASA2 && !useASA3;
+        if(useDEF)  ECPeakAnalysis.splitPeaks(peakList);  //Split peak if strip members have an adc valley       
+        if(useASA1) ECPeakAnalysis.splitPeaksAlternative(peakList);   // new Way of splitting the peaks as of 2/20/2023 
+        if(useASA2) ECPeakAnalysis.splitPeaksAlternative2(peakList);  // new Way of splitting the peaks as of 3/1/2023 
+        if(useASA3) ECPeakAnalysis.splitPeaksAlternative3(peakList);  // new Way of splitting the peaks as of 3/6/2023 
         for(ECPeak p : peakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
                 
         return peakList;
