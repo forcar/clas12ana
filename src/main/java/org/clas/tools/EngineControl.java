@@ -34,7 +34,7 @@ public class EngineControl implements ActionListener {
     JCheckBox             repeatCB = null;
     ButtonGroup                bG1 = null;
 	
-	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0";
+	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0",asacc=" ",asa=" ";
 	public String variation="default",geomVariation="rga_fall2018",pass="pass1";
 	public int pcS,eciS,ecoS,pcP,eciP,ecoP;
 	public int PCTrackingPlane,ECTrackingPlane;
@@ -43,6 +43,7 @@ public class EngineControl implements ActionListener {
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections;
 	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2, outputECHITS;
+	public boolean useASA1, useASA2, useASA3, useCCPC, useCCEC, useCC;
 	
 	public ECEngine engine = null;
     public List<ECStrip>     strips = new ArrayList<ECStrip>();
@@ -123,6 +124,15 @@ public class EngineControl implements ActionListener {
         case "SpThr333": spthr="spthr333"; engine.setSplitThresh(3,3,3); break;
         case "touchID1": touch="touchid1"; engine.setTouchID(1); break;
         case "touchID2": touch="touchid2"; engine.setTouchID(2); break;
+        case      "DEF": asacc=" ";        resetASACC(); setUseDEF(true);  break;   
+        case     "CCEC": asacc="+ccec";    resetASACC(); setUseCCEC(true); break;
+        case   "CCPCEC": asacc="+ccpcec";  resetASACC(); setUseCCPC(true); setUseCCEC(true); break;
+        case     "ASA1": asacc="+asa1";    resetASACC(); setUseASA1(true); break;
+        case     "ASA2": asacc="+asa2";    resetASACC(); setUseASA2(true); break;
+        case     "ASA3": asacc="+asa3";    resetASACC(); setUseASA3(true); break;
+        case  "ASACC 1": asacc="+asa1cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA1(true); break;   
+        case  "ASACC 2": asacc="+asa2cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA2(true); break;   
+        case  "ASACC 3": asacc="+asa3cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA3(true); break;   
         case   "rga_bg": variation="rga_fall2018_bg"; engine.setVariation(variation); break;
         case  "default": variation="default";         engine.setVariation(variation);
         }		
@@ -199,7 +209,7 @@ public class EngineControl implements ActionListener {
      }		
 	 
 	public String getConfigField() {
-		return mcpart+"    "+config+"+"+split+"+"+spthr+"+"+touch+"    "+variation+"+"+geomVariation+"+"+pass;
+		return mcpart+"    "+config+"+"+split+"+"+spthr+"+"+touch+asacc+"    "+variation+"+"+geomVariation+"+"+pass;
 	}
 	
     public String getConfig(int val) {
@@ -253,7 +263,47 @@ public class EngineControl implements ActionListener {
     public void outputECHITS(Boolean val) {
     	engine.outputECHITS(val);
     	outputECHITS = val;
+    }
+    
+    public void resetASACC() {
+    	setUseASA1(false); setUseASA2(false); setUseASA3(false); 
+    	setUseCCEC(false); setUseCCPC(false); setUseDEF(false);
+    }
+    
+    public void setUseDEF(Boolean val) {
+    	engine.setUseDEF(val);
+    }
+    
+    public void setUseASA1(Boolean val) {
+    	engine.setUseASA1(val);
+    	useASA1 = val;
     } 
+    
+    public void setUseASA2(Boolean val) {
+    	engine.setUseASA2(val);
+    	useASA2 = val;
+    } 
+    
+    public void setUseASA3(Boolean val) {
+    	engine.setUseASA3(val);
+    	useASA3 = val;
+    } 
+    
+    public void setUseCCPC(Boolean val) {
+    	engine.setUseCCPC(val);
+    	useCCPC = val;
+    }
+    
+    public void setUseCCEC(Boolean val) {
+    	engine.setUseCCEC(val);
+    	useCCEC = val;
+    }
+    
+    public void setUseCC(Boolean val) {
+    	engine.setUseCCPC(val);
+    	engine.setUseCCEC(val);
+    	useCC = val;
+    }  
     
     public void setUseTWcorr(Boolean val) {
     	engine.setTWCorrections(val);
@@ -290,6 +340,14 @@ public class EngineControl implements ActionListener {
     	engine.setPeakThresholds(Integer.parseInt(x[0]),Integer.parseInt(x[1]),Integer.parseInt(x[2]));
     } 
     
+    public int[] getStripThresholds() {
+    	return engine.getStripThresholds();
+    }
+    
+    public int[] getPeakThresholds() {
+    	return engine.getPeakThresholds();
+    }
+    
     public void setLogParam(float val) {
     	engine.setLogParam(val);
     	wlogPar= val;
@@ -323,6 +381,16 @@ public class EngineControl implements ActionListener {
 		model.addElement("SpThr333");
 		model.addElement("touchID1");
 		model.addElement("touchID2");
+		model.addElement("DEF");
+		model.addElement("ASA1");
+		model.addElement("ASA2");
+		model.addElement("ASA3");
+		model.addElement("CCEC");
+		model.addElement("CCPCEC");
+		model.addElement("ASACC 0");
+		model.addElement("ASACC 1");
+		model.addElement("ASACC 2");
+		model.addElement("ASACC 3");
 		model.addElement("rga_bg");
 		model.addElement("default");
 		configCMB.setModel(model);
