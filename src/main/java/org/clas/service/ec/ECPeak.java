@@ -508,7 +508,7 @@ public class ECPeak implements Comparable {
         
         double norm = ((double) intg) - ((double) splitEnergy)*count; 
         
-        if(ECCommon.debugSplit) System.out.println(right+" "+count+" "+intg+" "+splitEnergy+" "+norm);
+//        if(ECCommon.debugSplit) System.out.println(right+" "+count+" "+intg+" "+splitEnergy+" "+norm);
 
         return norm;
     }
