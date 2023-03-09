@@ -34,8 +34,8 @@ public class EngineControl implements ActionListener {
     JCheckBox             repeatCB = null;
     ButtonGroup                bG1 = null;
 	
-	public String config="test",split="",spthr="",touch="",configField="",mcpart="pi0",asacc=" ",asa=" ";
-	public String variation="default",geomVariation="rga_fall2018",pass="pass1";
+	public String config="phot",split="",spthr="",touch="",configField="",mcpart="pi0",asacc=" ",asa=" ";
+	public String variation="rga_fall2018_bg",geomVariation="rga_fall2018",pass="pass1";
 	public int pcS,eciS,ecoS,pcP,eciP,ecoP;
 	public int PCTrackingPlane,ECTrackingPlane;
 	public float pcT,eciT,ecoT;
@@ -46,6 +46,7 @@ public class EngineControl implements ActionListener {
 	public boolean useASA1, useASA2, useASA3, useCCPC, useCCEC, useCC;
 	
 	public ECEngine engine = null;
+	
     public List<ECStrip>     strips = new ArrayList<ECStrip>();
     public List<ECPeak>       peaks = new ArrayList<ECPeak>(); 
     public List<ECCluster> clusters = new ArrayList<ECCluster>();
@@ -223,6 +224,11 @@ public class EngineControl implements ActionListener {
     	engine.setIsMC(val);
     	isMC = val;
     }
+     
+    public void setVariation(String val) {
+    	engine.setVariation(val);
+    	variation = val;
+    }
     
     public void setGeomVariation(String val) {
     	engine.setGeomVariation(val);
@@ -358,6 +364,12 @@ public class EngineControl implements ActionListener {
     	dbgECEngine = val;
     }  
     
+    public void update(String s) {       
+        updateConfig(s);
+        configEngine();
+        configDisplay();     	
+    }
+    
 	public JPanel getECEnginePane() {
     
 		JPanel buttonPane = new JPanel();
@@ -396,10 +408,7 @@ public class EngineControl implements ActionListener {
 		configCMB.setModel(model);
 		configCMB.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            String s = (String) configCMB.getSelectedItem();
-            updateConfig(s);
-            configEngine();
-            configDisplay();            
+            update((String)configCMB.getSelectedItem());           
         }
 		});
 
