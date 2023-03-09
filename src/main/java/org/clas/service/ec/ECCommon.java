@@ -57,7 +57,7 @@ public class ECCommon {
     public static Boolean           useCCPC = false;
     public static Boolean           useCCEC = false;
     
-    public static Boolean     useCalibPass2 = false; //local only
+    public static Boolean     useCalibPass2 = true; //local only
     public static Boolean     outputECHITS  = false; //local only
     
     public static Boolean     usePass2Recon = false;
