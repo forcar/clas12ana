@@ -255,6 +255,15 @@ public class ECCluster implements Comparable {
         clusterSize = uvDistTo_w.length()-clusterSizeOffset;
     }
     
+    public static double getDistance(ECPeak u, ECPeak v, ECPeak w){
+        Line3D uLine  = u.getLine();
+        Line3D vLine  = v.getLine();
+        Line3D wLine  = w.getLine();
+        Line3D uvLine = uLine.distance(vLine);
+        Line3D uvDistTo_w = wLine.distance(uvLine.midpoint());
+        return uvDistTo_w.length() ;
+    }
+    
     public int compareTo(Object o) {
         ECCluster ob = (ECCluster) o;
         if(ob.getDescriptor().getSector()     < desc.getSector())    return  1;
