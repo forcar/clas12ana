@@ -281,6 +281,8 @@ public class ECPeakAnalysis {
     } 
     
     public static void splitPeaksAlternative4(List<ECPeak> peaks){
+    	
+    	if(ECCommon.debugSplit) System.out.println("ASA4");
 
         ECPeakSplitterMargin   mm = new ECPeakSplitterMargin();
         ECPeakSplitterOriginal mo = new ECPeakSplitterOriginal();
@@ -291,7 +293,7 @@ public class ECPeakAnalysis {
         current.addAll(peaks);
         whole.addAll(peaks);        
         peaks.clear();
-        //System.out.printf("--- split peaks start current = %d, peaks = %d\n",current.size(), peaks.size());
+        if(ECCommon.debugSplit) System.out.printf("--- split peaks start current = %d, peaks = %d\n",current.size(), peaks.size());
 
         while(!current.isEmpty()){
             ECPeak peak = current.get(0); current.remove(0);
@@ -304,6 +306,8 @@ public class ECPeakAnalysis {
                 int sector   = peak.getDescriptor().getSector();
                 int  layer   = peak.getDescriptor().getLayer();
                 int[] layers = ECPeakAnalysis.otherLayers[layer];
+                
+                if(ECCommon.debugSplit) System.out.println("S:"+sector+" L:"+layer);
 
                 List<ECPeak> one = ECPeakAnalysis.getListForSectorLayer(whole, sector, layers[0]);
                 List<ECPeak> two = ECPeakAnalysis.getListForSectorLayer(whole, sector, layers[1]);
@@ -316,14 +320,17 @@ public class ECPeakAnalysis {
 
                     List<ECPeak>   oneView  = mo.split(others.get(0));
                     List<ECPeak>   twoView  = mo.split(others.get(1));
-                    //Renderer  r = new Renderer(8,peak.getEnergies());
-                    //System.out.println(r);
-                    //System.out.printf(" >>> found splittable peak : others = %d %d (%d %d) \n",
-                    //        oneView.size(),twoView.size(), one.size(), two.size());
+                    if(ECCommon.debugSplit) {
+                      Renderer  r = new Renderer(8,peak.getEnergies());
+                      System.out.println(r);
+                      System.out.printf(" >>> found splittable peak : others = %d %d (%d %d) \n",
+                              oneView.size(),twoView.size(), one.size(), two.size());
+                    }
                     int type = 0;
                     List<ECPeak>  newMethod = mm.split(peak);
 
-                    /*System.out.printf(" M (%d) energy (%8.5f %8.5f) distance = %8.5f (%8.5f %8.5f) - others = %d %d  are splittable (%3d %3d)\n", 
+                    if(ECCommon.debugSplit) {
+                      System.out.printf(" M (%d) energy (%8.5f %8.5f) distance = %8.5f (%8.5f %8.5f) - others = %d %d  are splittable (%3d %3d)\n", 
                             newMethod.size(), splitPeaks.get(0).getEnergy()/peak.getEnergy(),
                             splitPeaks.get(1).getEnergy()/peak.getEnergy(),
                             ECCluster.getDistance(peak, others.get(0),others.get(1)),
@@ -331,7 +338,8 @@ public class ECPeakAnalysis {
                                     others.get(0),others.get(1)),
                             ECCluster.getDistance(splitPeaks.get(1), others.get(0),others.get(1))
                             , one.size(),two.size(), oneView.size(), twoView.size());
-                    */
+
+                    }
                     int is_s_1 = oneView.size();
                     int is_s_2 = twoView.size();
 
@@ -342,7 +350,7 @@ public class ECPeakAnalysis {
 
                     double dist_12 = ECCluster.getDistance(splitPeaks.get(0), others.get(0),others.get(1));
                     double dist_13 = ECCluster.getDistance(splitPeaks.get(1) ,others.get(0),others.get(1));
-                    //System.out.printf(">>>> %f %f %f\n",dist123,dist_12, dist_13);
+                    if(ECCommon.debugSplit) System.out.printf(">>>> %f %f %f\n",dist123,dist_12, dist_13);
                     double best_dist_23 = Math.min(Math.abs(dist_13), Math.abs(dist_12));
 
                     double best_dist = Math.min(Math.abs(dist123), best_dist_23);
