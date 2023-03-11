@@ -55,6 +55,7 @@ public class ECCommon {
     public static Boolean           useASA2 = false;
     public static Boolean           useASA3 = false;
     public static Boolean           useASA4 = false;
+    public static Boolean           useASA5 = false;
     public static Boolean           useCCPC = false;
     public static Boolean           useCCEC = false;
     
@@ -430,17 +431,18 @@ public class ECCommon {
     public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
         List<ECPeak> peakList = new ArrayList<ECPeak>();
         for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);        
-        Boolean useDEF = !useASA1 && !useASA2 && !useASA3 && !useASA4;
-        if(useDEF)  ECPeakAnalysis.splitPeaks(peakList);  //Split peak if strip members have an adc valley       
+        Boolean useDEF = !useASA1 && !useASA2 && !useASA3 && !useASA4 && !useASA5;
+        if(useDEF)  ECPeakAnalysis.splitPeaks(peakList);              // split peak if strip members have an adc valley       
         if(useASA1) ECPeakAnalysis.splitPeaksAlternative(peakList);   // new Way of splitting the peaks as of 2/20/2023 
         if(useASA2) ECPeakAnalysis.splitPeaksAlternative2(peakList);  // new Way of splitting the peaks as of 3/1/2023 
         if(useASA3) ECPeakAnalysis.splitPeaksAlternative3(peakList);  // new Way of splitting the peaks as of 3/6/2023 
         if(useASA4) ECPeakAnalysis.splitPeaksAlternative4(peakList);  // new Way of splitting the peaks as of 3/10/2023 
+        if(useASA5) ECPeakAnalysis.splitPeaksAlternative5(peakList);  // new Way of splitting the peaks as of 3/11/2023 
         List<ECPeak> newPeakList = new ArrayList<ECPeak>();
         for(ECPeak p : peakList) if(isGoodPeak(p)) newPeakList.add(p);  
         for(ECPeak p : newPeakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
                 
-        return peakList;
+        return newPeakList;
     }
     
     public static List<ECPeak>  getPeaks(int sector, int layer, List<ECPeak> peaks){

@@ -415,7 +415,28 @@ public class ECPeakAnalysis {
 
         }
 
-    }   
+    }
+
+    public static void splitPeaksAlternative5(List<ECPeak> peaks){
+    	
+    	if(ECCommon.debugSplit) System.out.println("ASA5");
+
+        ECPeakSplitterOriginal mo = new ECPeakSplitterOriginal();
+
+        List<ECPeak> current = new ArrayList<>();
+        List<ECPeak>   whole = new ArrayList<>();
+
+        current.addAll(peaks);
+        whole.addAll(peaks);        
+        peaks.clear();
+        if(ECCommon.debugSplit) System.out.printf("--- split peaks start current = %d, peaks = %d\n",current.size(), peaks.size());
+
+        while(!current.isEmpty()){
+            ECPeak peak = current.get(0); current.remove(0);            
+            List<ECPeak> splitPeaks = mo.split(peak);
+            peaks.addAll(splitPeaks);
+        }
+    }    
     
     public static int  findMatchForCluster(ECCluster c, List<ECCluster> list){
         for(int i = 0; i < list.size(); i++){

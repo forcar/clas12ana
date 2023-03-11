@@ -374,6 +374,11 @@ public class ECEngine extends ReconstructionEngine {
     	ECCommon.useASA4 = val;    	
     } 
     
+    public void setUseASA5(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useASA5 = "+val);
+    	ECCommon.useASA5 = val;    	
+    } 
+    
     public void setUseFADCTime(boolean val) {
     	LOGGER.log(Level.INFO,"ECengine: useFADCTime = "+val);   	
     	ECCommon.useFADCTime = val;

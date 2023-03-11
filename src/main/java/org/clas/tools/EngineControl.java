@@ -43,7 +43,7 @@ public class EngineControl implements ActionListener {
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections;
 	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2, outputECHITS;
-	public boolean useASA1, useASA2, useASA3, useASA4, useCCPC, useCCEC, useCC;
+	public boolean useASA1, useASA2, useASA3, useASA4, useASA5, useCCPC, useCCEC, useCC;
 	
 	public ECEngine engine = null;
 	
@@ -132,10 +132,12 @@ public class EngineControl implements ActionListener {
         case     "ASA2": asacc="+asa2";    resetASACC(); setUseASA2(true); break;
         case     "ASA3": asacc="+asa3";    resetASACC(); setUseASA3(true); break;
         case     "ASA4": asacc="+asa4";    resetASACC(); setUseASA4(true); break;
+        case     "ASA5": asacc="+asa5";    resetASACC(); setUseASA5(true); break;
         case  "ASACC 1": asacc="+asa1cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA1(true); break;   
         case  "ASACC 2": asacc="+asa2cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA2(true); break;   
         case  "ASACC 3": asacc="+asa3cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA3(true); break;   
         case  "ASACC 4": asacc="+asa4cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA4(true); break;   
+        case  "ASACC 5": asacc="+asa4cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA5(true); break;   
         case   "rga_bg": variation="rga_fall2018_bg"; engine.setVariation(variation); break;
         case  "default": variation="default";         engine.setVariation(variation);
         }		
@@ -274,7 +276,7 @@ public class EngineControl implements ActionListener {
     }
     
     public void resetASACC() {
-    	setUseASA1(false); setUseASA2(false); setUseASA3(false); setUseASA4(false); 
+    	setUseASA1(false); setUseASA2(false); setUseASA3(false); setUseASA4(false); setUseASA5(false); 
     	setUseCCEC(false); setUseCCPC(false); setUseDEF(false);
     }
     
@@ -300,6 +302,11 @@ public class EngineControl implements ActionListener {
     public void setUseASA4(Boolean val) {
     	engine.setUseASA4(val);
     	useASA4 = val;
+    } 
+    
+    public void setUseASA5(Boolean val) {
+    	engine.setUseASA5(val);
+    	useASA5 = val;
     } 
     
     public void setUseCCPC(Boolean val) {
@@ -405,6 +412,7 @@ public class EngineControl implements ActionListener {
 		model.addElement("ASA2");
 		model.addElement("ASA3");
 		model.addElement("ASA4");
+		model.addElement("ASA5");
 		model.addElement("CCEC");
 		model.addElement("CCPCEC");
 		model.addElement("ASACC 0");
