@@ -137,7 +137,7 @@ public class EngineControl implements ActionListener {
         case  "ASACC 2": asacc="+asa2cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA2(true); break;   
         case  "ASACC 3": asacc="+asa3cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA3(true); break;   
         case  "ASACC 4": asacc="+asa4cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA4(true); break;   
-        case  "ASACC 5": asacc="+asa4cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA5(true); break;   
+        case  "ASACC 5": asacc="+asa5cc";  resetASACC(); setUseCCPC(true); setUseCCEC(true); setUseASA5(true); break;   
         case   "rga_bg": variation="rga_fall2018_bg"; engine.setVariation(variation); break;
         case  "default": variation="default";         engine.setVariation(variation);
         }		
@@ -415,10 +415,11 @@ public class EngineControl implements ActionListener {
 		model.addElement("ASA5");
 		model.addElement("CCEC");
 		model.addElement("CCPCEC");
-		model.addElement("ASACC 0");
 		model.addElement("ASACC 1");
 		model.addElement("ASACC 2");
 		model.addElement("ASACC 3");
+		model.addElement("ASACC 4");
+		model.addElement("ASACC 5");
 		model.addElement("rga_bg");
 		model.addElement("default");
 		configCMB.setModel(model);
