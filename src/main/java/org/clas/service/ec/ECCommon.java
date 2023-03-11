@@ -436,7 +436,9 @@ public class ECCommon {
         if(useASA2) ECPeakAnalysis.splitPeaksAlternative2(peakList);  // new Way of splitting the peaks as of 3/1/2023 
         if(useASA3) ECPeakAnalysis.splitPeaksAlternative3(peakList);  // new Way of splitting the peaks as of 3/6/2023 
         if(useASA4) ECPeakAnalysis.splitPeaksAlternative4(peakList);  // new Way of splitting the peaks as of 3/10/2023 
-        for(ECPeak p : peakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
+        List<ECPeak> newPeakList = new ArrayList<ECPeak>();
+        for(ECPeak p : peakList) if(isGoodPeak(p)) newPeakList.add(p);  
+        for(ECPeak p : newPeakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
                 
         return peakList;
     }
