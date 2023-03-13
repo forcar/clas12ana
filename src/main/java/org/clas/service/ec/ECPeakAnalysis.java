@@ -21,8 +21,8 @@ import org.clas.service.ec.ECPeakSplitter.ECPeakSplitterOriginal;
 public class ECPeakAnalysis {
     
     static final int[][] otherLayers = new int[][]{
-    	{0,0},{2,3},{1,3},{1,2},{5,6},{4,6},{4,5},{8,9},{7,9},{7,8}
-//        {0,0},{0,0},{0,0},{0,0},{5,6},{4,6},{4,5},{8,9},{7,9},{7,8}
+//    	{0,0},{2,3},{1,3},{1,2},{5,6},{4,6},{4,5},{8,9},{7,9},{7,8}
+        {0,0},{0,0},{0,0},{0,0},{5,6},{4,6},{4,5},{8,9},{7,9},{7,8}
     };
     
     public static int[] getPeakSplitIndex(List<ECPeak> peaks){ 
