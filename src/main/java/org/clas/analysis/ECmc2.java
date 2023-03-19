@@ -16,6 +16,7 @@ import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
+import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSync;
@@ -474,20 +475,35 @@ public class ECmc2 extends DetectorMonitor {
     	
     	switch (st) {
     	case 0: 
-    		dgm.add("PIZERO",1,1,0,st,getRunNumber());
-       		dgm.makeH2("pzivm", 50, 0,ophi, 50,  0, 5, -1,"REC", "Opening Angle (deg)", "SQRT(E1E2)");
+    		dgm.add("PIZERO",2,2,0,st,getRunNumber());
+       		dgm.makeH2("pzivm",  50, 0,ophi, 50,  0, 5, -1,"n#gamma>1", "Opening Angle (deg)", "SQRT(E1E2)");
+            dgm.makeF1D("pline1","0.13495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.85,12.,-1);  
+            dgm.makeF1D("pline2","0.12495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.70,12.,-1);  
+            dgm.makeF1D("pline3","0.14495/1.4142/(1-cos(x*3.14159/180.))^0.5",2.00,12.,-1);  
+       		dgm.makeH2("pzivm2", 50, 0,ophi, 50,  0, 5, -1,"n#gamma=2", "Opening Angle (deg)", "SQRT(E1E2)");
+            dgm.makeF1D("pline4","0.13495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.85,12.,-1);  
+            dgm.makeF1D("pline5","0.12495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.70,12.,-1);  
+            dgm.makeF1D("pline6","0.14495/1.4142/(1-cos(x*3.14159/180.))^0.5",2.00,12.,-1);  
+       		dgm.makeH2("pzivm3", 50, 0,ophi, 50,  0, 5, -1,"n#gamma=3", "Opening Angle (deg)", "SQRT(E1E2)");
+            dgm.makeF1D("pline7","0.13495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.85,12.,-1);  
+            dgm.makeF1D("pline8","0.12495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.70,12.,-1);  
+            dgm.makeF1D("pline9","0.14495/1.4142/(1-cos(x*3.14159/180.))^0.5",2.00,12.,-1);  
+       		dgm.makeH2("pzivm4", 50, 0,ophi, 50,  0, 5, -1,"n#gamma=4", "Opening Angle (deg)", "SQRT(E1E2)");
+            dgm.makeF1D("pline10","0.13495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.85,12.,-1);  
+            dgm.makeF1D("pline11","0.12495/1.4142/(1-cos(x*3.14159/180.))^0.5",1.70,12.,-1);  
+            dgm.makeF1D("pline12","0.14495/1.4142/(1-cos(x*3.14159/180.))^0.5",2.00,12.,-1);  
             break;
     	case 1:
     		dgm.add("PIZERO",3,3,0,st,getRunNumber());
-    		dgm.makeH2("pz00", 50,1, 8,50,-0.3,0.3, 0,"","Pizero Energy (GeV)", "Inv. Mass Error");      		 
-    		dgm.makeH2("pz01", 50,1, 8,50,-1,  1,   0,"","Pizero Energy (GeV)", "Pizero #DeltaE (GeV)"); 
-    		dgm.makeH2("pz02", 50,1, 8,50,-1,  1,   0,"","Pizero Energy (GeV)", "Pizero #Delta#theta (deg)");     		
-    		dgm.makeH1("pz10",         50,-0.3,0.3,-1,"",                       "Inv. Mass Error",1,4);    
-    		dgm.makeH1("pz11",         50,-1,  1,  -1,"",                       "Pizero #DeltaE (GeV)",1,4); 
-    		dgm.makeH1("pz12",         50,-1,  1,  -1,"",                       "Pizero #Delta#theta (deg)",1,4);     		
-    		dgm.makeH2("pz20", 50,oplo,ophi,50,-0.3,0.3, 0,"","Opening Angle (deg)", "Inv. Mass Error"); 
-    		dgm.makeH2("pz21", 50,oplo,ophi,50,-1,  1,   0,"","Opening Angle (deg)", "Pizero #DeltaE (GeV)"); 
-    		dgm.makeH2("pz22", 50,oplo,ophi,50,-1,  1,   0,"","Opening Angle (deg)", "Pizero #Delta#theta (deg)"); 
+    		dgm.makeH2("pz00", 50,1, 8,50,-1,  1,   0,"","Pizero Energy (GeV)", "Inv. Mass Error");      		 
+    		dgm.makeH2("pz01", 50,1, 8,50,-1,  1,   0,"","Pizero Energy (GeV)", "Pizero #DeltaE/E"); 
+    		dgm.makeH2("pz02", 50,1, 8,50,-1,  1,   0,"","Pizero Energy (GeV)", "Pizero #Delta#theta/#theta");     		
+    		dgm.makeH1("pz10",         50,-1,  1,-1,"",                       "Inv. Mass Error",1,4);    
+    		dgm.makeH1("pz11",         50,-1,  1,-1,"",                       "Pizero #DeltaE/E",1,4); 
+    		dgm.makeH1("pz12",         50,-1,  1,-1,"",                       "Pizero #Delta#theta/#theta",1,4);     		
+    		dgm.makeH2("pz20", 50,oplo,ophi,50,-1,  1,   0,"","Opening Angle (deg)", "Inv. Mass Error"); 
+    		dgm.makeH2("pz21", 50,oplo,ophi,50,-1,  1,   0,"","Opening Angle (deg)", "Pizero #DeltaE/E"); 
+    		dgm.makeH2("pz22", 50,oplo,ophi,50,-1,  1,   0,"","Opening Angle (deg)", "Pizero #Delta#theta/#theta"); 
     		break;
     	case 2:
     		dgm.add("PIZERO",4,3,0,st,getRunNumber());
@@ -553,11 +569,8 @@ public class ECmc2 extends DetectorMonitor {
     }
     
     public void processNewECEngine(DataEvent de) {
-    	List<ECStrip>   st = eng.engine.getStrips();
-    	List<ECPeak>    pl = eng.engine.getPeaks();
-    	List<ECCluster> cl = eng.engine.getClusters();
     	
-    	for (ECCluster c : cl) {    		
+    	for (ECCluster c : eng.clusters) {    		
     		int    s = c.clusterPeaks.get(0).getDescriptor().getSector();
     		int    l = c.clusterPeaks.get(0).getDescriptor().getLayer();
     		
@@ -655,12 +668,12 @@ public class ECmc2 extends DetectorMonitor {
 
         for (DetectorParticle dp : par) { // make list of neutral Particle objects 
 		    if(dp.getSector(DetectorType.ECAL)==mcSEC && dp.getPid()==mcPID) { npart++;
-		    	if(!ebmce.hasTriggerPID && dp.getPid()==2112) {// for photon MC you may want to recover these clusters
-	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
-			    	Vector3D vec = new Vector3D() ; vec.copy(dp.getHit(DetectorType.ECAL).getPosition()); vec.unit(); 			    		
- 			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
- 			    	dp.setPid(mcPID);
- 			    }
+//		    	if(!ebmce.hasTriggerPID && dp.getPid()==2112) {// for photon MC you may want to recover these clusters
+//	 				double e = dp.getEnergy(DetectorType.ECAL)/ebmce.getSF(dp); 		
+//			    	Vector3D vec = new Vector3D() ; vec.copy(dp.getHit(DetectorType.ECAL).getPosition()); vec.unit(); 			    		
+// 			    	dp.vector().add(new Vector3(e*vec.x(),e*vec.y(),e*vec.z())); //track energy for neutrals in DetectorParticle
+// 			    	dp.setPid(mcPID);
+// 			    }
 		    	//SF corrected Particle energy from DetectorParticle
 			    Particle p = dp.getPhysicsParticle(mcPID); p.setProperty("beta",dp.getBeta()); plist.add(p);
 		    }
@@ -682,7 +695,7 @@ public class ECmc2 extends DetectorMonitor {
 		Vector3D[] r1 = new Vector3D[50]; Vector3[] c1 = new Vector3[50]; r1[1]=new Vector3D(0,0,0); r1[2]=new Vector3D(0,0,0);
 		Vector3D[] r4 = new Vector3D[50]; Vector3[] c4 = new Vector3[50]; r4[1]=new Vector3D(0,0,0); r4[2]=new Vector3D(0,0,0);
 		Vector3D[] r7 = new Vector3D[50]; Vector3[] c7 = new Vector3[50]; r7[1]=new Vector3D(0,0,0); r7[2]=new Vector3D(0,0,0);
-				
+						
       	if (npart>1) { // number of EB ID=22 > 0   	
             
  			int npp = 0, ipp = 0;
@@ -774,6 +787,29 @@ public class ECmc2 extends DetectorMonitor {
  
  	        dgm.fill("pr10",GENPZ.get(0),x); dgm.fill("pr11",x,opa);  //PHOTONS.1.2	
  	        
+ 			for (int i1=0; i1<plist.size()-1; i1++) {
+ 			 for (int i2=i1+1; i2<plist.size(); i2++) {
+ 	     		RECPZ = ebmce.getPizeroKinematics(plist.get(i1),plist.get(i2));
+ 	 	 		dgm.fill("pzivm",RECPZ.get(3),RECPZ.get(5));
+ 	 	 		if(npart==2) dgm.fill("pzivm2",RECPZ.get(3),RECPZ.get(5));
+ 	 	 		if(npart==3) dgm.fill("pzivm3",RECPZ.get(3),RECPZ.get(5));
+ 	 	 		if(npart==4) dgm.fill("pzivm4",RECPZ.get(3),RECPZ.get(5));
+ 	 	 	 
+ 	 	        //PIZERO.0.x 	 			    
+ 	 	 		dgm.fill("pz00",GENPZ.get(0),RECPZ.get(2));
+ 	 	 		dgm.fill("pz01",GENPZ.get(0),(RECPZ.get(0)-GENPZ.get(0))/GENPZ.get(0));
+ 	 	 		dgm.fill("pz02",GENPZ.get(0),(RECPZ.get(1)-GENPZ.get(1))/GENPZ.get(1));
+ 	 	 		
+ 	 	 		dgm.fill("pz10",RECPZ.get(2));
+ 	 	 		dgm.fill("pz11",(RECPZ.get(0)-GENPZ.get(0))/GENPZ.get(0));
+ 	 	 		dgm.fill("pz12",(RECPZ.get(1)-GENPZ.get(1))/GENPZ.get(1));
+ 	 	 		
+ 	 	 		dgm.fill("pz20",GENPZ.get(3),RECPZ.get(2));
+ 	 	 		dgm.fill("pz21",GENPZ.get(3),(RECPZ.get(0)-GENPZ.get(0))/GENPZ.get(0));
+ 	 	 		dgm.fill("pz22",GENPZ.get(3),(RECPZ.get(1)-GENPZ.get(1))/GENPZ.get(1));   
+ 			 }
+ 			}
+/* 	        
      		RECPZ = ebmce.getPizeroKinematics(plist);
     		
  	 		dgm.fill("pzivm",RECPZ.get(3),RECPZ.get(5)); 	 		
@@ -790,7 +826,7 @@ public class ECmc2 extends DetectorMonitor {
  	 		dgm.fill("pz20",GENPZ.get(3),RECPZ.get(2));
  	 		dgm.fill("pz21",GENPZ.get(3),RECPZ.get(0)-GENPZ.get(0));
  	 		dgm.fill("pz22",GENPZ.get(3),RECPZ.get(1)-GENPZ.get(1));
-	 			    
+*/	 			    
      	    dgm.fill("h11",opa); if(npart==2) dgm.fill("h00", opa);
      	       	    
 /*     	    if (npc[0]>=2 && opa>=2.0) {
