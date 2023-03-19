@@ -1,5 +1,6 @@
 package org.clas.analysis;
 
+import org.clas.tools.EBMCEngine;
 import org.clas.tools.KinLib;
 import org.clas.viewer.DetectorMonitor;
 
@@ -16,6 +17,7 @@ import java.util.Map;
 
 public class ECelas extends DetectorMonitor {
 	
+	EBMCEngine  ebmce = new EBMCEngine();
 	KinLib kin = new KinLib();
 	double kinqw[] = null;
 	boolean doWA = true, doEV = true;
@@ -176,6 +178,7 @@ public class ECelas extends DetectorMonitor {
     @Override    
     public void processEvent(DataEvent event) {  
 	    if (dropBanks) dropBanks(event);  //drop ECAL banks and re-run ECEngine 
+	    if (dropBanks && !ebmce.processDataEvent(event)) return;
     	if(!processFilter(event)) return;
     	if(doWA) processWA(event);
     	if(doEV) processEV(event);
