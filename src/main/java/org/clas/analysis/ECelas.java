@@ -174,7 +174,8 @@ public class ECelas extends DetectorMonitor {
     }
     
     @Override    
-    public void processEvent(DataEvent event) {   	
+    public void processEvent(DataEvent event) {  
+	    if (dropBanks) dropBanks(event);  //drop ECAL banks and re-run ECEngine 
     	if(!processFilter(event)) return;
     	if(doWA) processWA(event);
     	if(doEV) processEV(event);
