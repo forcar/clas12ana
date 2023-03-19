@@ -412,6 +412,7 @@ public class ECPeak implements Comparable {
     int MinMax1() { //finds peak with _- or -_ or  _-_ pattern
         List<ECStrip> mxs = new ArrayList<ECStrip>();
         List<Integer> mns = new ArrayList<Integer>();
+        
         List<ECStrip>  sl = new ArrayList<ECStrip>(); sl.addAll(peakStrips);  
         
         if(!peakSplit && peakStrips.size()>ECCommon.splitThresh[ind[getDescriptor().getLayer()-1]]){

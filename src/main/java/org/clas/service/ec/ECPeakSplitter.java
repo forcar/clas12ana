@@ -19,11 +19,14 @@ public interface ECPeakSplitter {
 
         @Override
         public List<ECPeak> split(ECPeak peak) {
-            int index = peak.gg1_getSplitIndex();
-            if(index>0){
+//            int index = peak.gg1_getSplitIndex(); 
+        	int index = peak.getSplitIndex(ECCommon.splitMethod); //lcs 3/17/2023
+            if(index>0){                
                 List<ECPeak> list = peak.splitPeak(index);
-                for(ECPeak p : list) p.redoPeakLine();
-                return list;
+                List<ECPeak> newList = new ArrayList<>();
+                for(ECPeak p : list) if(ECCommon.isGoodPeak(p)) newList.add(p);
+                for(ECPeak p : newList) p.redoPeakLine();                
+                return newList;
             }
             return Arrays.asList(peak);
         }

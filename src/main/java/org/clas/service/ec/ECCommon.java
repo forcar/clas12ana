@@ -428,7 +428,7 @@ public class ECCommon {
         return peakList;
     } 
        
-    public static List<ECPeak>  processPeaks(List<ECPeak> peaks){
+    public static List<ECPeak>  processPeaks(List<ECPeak> peaks) {
         List<ECPeak> peakList = new ArrayList<ECPeak>();
         for(ECPeak p : peaks) if(isGoodPeak(p)) peakList.add(p);        
         Boolean useDEF = !useASA1 && !useASA2 && !useASA3 && !useASA4 && !useASA5;
@@ -437,13 +437,17 @@ public class ECCommon {
         if(useASA2) ECPeakAnalysis.splitPeaksAlternative2(peakList);  // new Way of splitting the peaks as of 3/1/2023 
         if(useASA3) ECPeakAnalysis.splitPeaksAlternative3(peakList);  // new Way of splitting the peaks as of 3/6/2023 
         if(useASA4) ECPeakAnalysis.splitPeaksAlternative4(peakList);  // new Way of splitting the peaks as of 3/10/2023 
-        if(useASA5) ECPeakAnalysis.splitPeaksAlternative5(peakList);  // new Way of splitting the peaks as of 3/11/2023 
-        List<ECPeak> newPeakList = new ArrayList<ECPeak>();
-        for(ECPeak p : peakList) if(isGoodPeak(p)) newPeakList.add(p);  
-        for(ECPeak p : newPeakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
-                
-        return newPeakList;
-    }
+        if(useASA5) ECPeakAnalysis.splitPeaksAlternative5(peakList);  // new Way of splitting the peaks as of 3/11/2023
+        for(ECPeak p : peakList) p.redoPeakLine();
+//        if(useDEF || useASA1 || useASA3){ //these don't use the interface
+//        	         List<ECPeak> newPeakList = new ArrayList<ECPeak>(); 
+//                     for(ECPeak p : peakList) if(isGoodPeak(p)) newPeakList.add(p);  
+//                     for(ECPeak p : newPeakList) p.redoPeakLine(); //Find new peak lines after splitPeaks
+//                     return newPeakList;                     
+//        }
+        
+        return peakList;
+    }   
     
     public static List<ECPeak>  getPeaks(int sector, int layer, List<ECPeak> peaks){
     	
@@ -451,7 +455,7 @@ public class ECCommon {
         
         for(ECPeak peak : peaks) if(peak.getDescriptor().getSector()==sector && peak.getDescriptor().getLayer()==layer) peakList.add(peak);
 
-        return peakList;
+        return peakList;   
     }
     
     public static List<ECCluster>  createClusters(List<ECPeak>  peaks, int layer){ 
