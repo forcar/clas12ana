@@ -258,7 +258,7 @@ public class DataGroupManager {
     }
     
     public void makeF1D(String name, String f, double x1, double x2, double val) {
-    	F1D f1 = new F1D(name,f,x1,x2); f1.setParameter(0,val);
+    	F1D f1 = new F1D(name,f,x1,x2); if(val!=-1) f1.setParameter(0,val);
     	dg.addDataSet(f1, n-1);
     }
     
