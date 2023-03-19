@@ -194,8 +194,7 @@ public class EBMCEngine extends EBEngine {
 		return out;
     }    
     
-	//Copies relevant parts of EBEngine.processDataEvent  
-    
+	//Copies relevant parts of EBEngine.processDataEvent      
     @Override
     public boolean  processDataEvent(DataEvent de){    	
     	
@@ -226,6 +225,15 @@ public class EBMCEngine extends EBEngine {
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
         
+//8.5.0
+//        if(eb.getEvent().getParticles().size()>0) {
+//            Collections.sort(eb.getEvent().getParticles()); 
+//            eb.setParticleStatuses();
+//            getRECBanks(de,eb);
+//            return true;
+//        } 
+
+//8.6.0
         if(!eb.getEvent().getParticles().isEmpty()) {
             eb.getEvent().sort();
             eb.setParticleStatuses();            
@@ -434,14 +442,9 @@ public class EBMCEngine extends EBEngine {
         return nsm.getPizeroKinematics();        
     }  
     
-    public List<Float> getPizeroKinematics(List<Particle> list) {
+    public List<Float> getPizeroKinematics(Particle p1, Particle p2) {
 
     	List<Float> out = new ArrayList<Float>();
-    	
-    	if(list.size()<2) return out;
-
-    	Particle p1 = list.get(0);  //Photon 1
-        Particle p2 = list.get(1);  //Photon 2
     	
         Vector3 n1 = new Vector3(); Vector3 n2 = new Vector3();
         n1.copy(p1.vector().vect()); n2.copy( p2.vector().vect());
@@ -467,7 +470,7 @@ public class EBMCEngine extends EBEngine {
         out.add(n++,(float) Math.toDegrees(Math.acos(cpi0)));
         out.add(n++,(float) ((invm-mpi0)/mpi0));
         out.add(n++,(float) Math.toDegrees(Math.acos(cth)));
-        out.add(n++,(float) Math.abs(X));
+        out.add(n++,(float) X);
         out.add(n++,(float) Math.sqrt(e1*e2));
         
         return out;
