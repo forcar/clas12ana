@@ -7,6 +7,7 @@ import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.geom.prim.Point3D;
+import org.jlab.utils.groups.IndexedList;
 
 public class NeutralMeson {
 
@@ -25,10 +26,14 @@ public class NeutralMeson {
 	public  LorentzVector VG1;
 	public  LorentzVector VG2;
 	
-	private boolean tag;
-	private int mcsec;
-	
+	private boolean tag = false;
+	private int mcsec = 2;
+	private double thresh=0.2;
+	private double mpi0 = 0.1349764;
+		
 	public List<Particle>  plist = new ArrayList<Particle>(); 
+	public IndexedList<List<Particle>> ilist = new IndexedList<List<Particle>>(1);
+	public List<Float> out = new ArrayList<Float>();	
 	
 	public NeutralMeson(boolean val) {
 		this.tag = val;
@@ -38,6 +43,10 @@ public class NeutralMeson {
 		this.plist = val;
 	}
 	
+	public NeutralMeson(IndexedList<List<Particle>> val) {
+		this.ilist = val;
+	}
+	
 	public void addEvent(Event val) {
 		ev = new Event();
 		ev = val;
@@ -45,6 +54,10 @@ public class NeutralMeson {
 	
 	public void addPhoton(Particle p) {
 		plist.add(p);
+	}
+	
+	public void setThresh(double val) {
+		thresh=val;
 	}
 	
 	public void setPhotonSector(int val) {
@@ -83,13 +96,13 @@ public class NeutralMeson {
 		return (float) getPhoton(n).p();    		
 	}  
 	
-	public Boolean filter(boolean val) {
-		if (val) return  sameSector();
-		return !sameSector();
+	public Boolean filter(boolean val, int i1, int i2) {
+		if (val) return  sameSector(i1,i2);
+		return !sameSector(i1,i2);
 	}
 	
-	public boolean sameSector() {
-		return getPhotonSector(0)==getPhotonSector(1);		
+	public boolean sameSector(int i1, int i2) {
+		return getPhotonSector(i1)==getPhotonSector(i2);		
 	}
 	
     public double Vangle(Vector3 v1, Vector3 v2){
@@ -101,9 +114,9 @@ public class NeutralMeson {
         return res; 
     }
     
-    public double getGGphi() {
-        Vector3 n1 = new Vector3(); Vector3 n2 = new Vector3();
-        n1.copy(plist.get(0).vector().vect()); n2.copy(plist.get(1).vector().vect());
+    public double getGGphi(int i1, int i2) {
+        Vector3 n1 = new Vector3(), n2 = new Vector3();
+        n1.copy(plist.get(i1).vector().vect()); n2.copy(plist.get(i2).vector().vect());
         n1.unit(); n2.unit();
         Point3D point1 = new Point3D(n1.x(),n1.y(),n1.z());
         Point3D point2 = new Point3D(n2.x(),n2.y(),n2.z());
@@ -119,9 +132,9 @@ public class NeutralMeson {
         return ggp;
     }
 	
-	public void getMeson() {
-		Particle p1 = plist.get(0);
-		Particle p2 = plist.get(1);
+	public void getMeson(int i1, int i2) {
+		Particle p1 = plist.get(i1);
+		Particle p2 = plist.get(i2);
 		VG1 = new LorentzVector(p1.px(),p1.py(),p1.pz(),p1.p());
 		VG2 = new LorentzVector(p2.px(),p2.py(),p2.pz(),p2.p());		
 		VPI0 = new LorentzVector(0,0,0,0);
@@ -129,23 +142,21 @@ public class NeutralMeson {
 		VPI0.add(VG2);
 	}
 	
-	public boolean test() {
+	public boolean test(int i1, int i2) {
 		if (ev==null) return true;
-		return this.mass > 0.08 && filter(tag);
+		return this.mass > 0.08 && filter(tag,i1,i2);
 	}
 	
-	public List<Float> getPizeroKinematics() {		
-    	List<Float> out = new ArrayList<Float>();
-		double mpi0 = 0.1349764;		
-    	Particle p1 = plist.get(0);  //Photon 1
-        Particle p2 = plist.get(1);  //Photon 2
-    	
+	public boolean getPizeroKinematics(Particle p1, Particle p2) {
+		
+		if (p1.e()<thresh && p2.e()<thresh) return false; 
+				
+		double e1 = p1.e();
+		double e2 = p2.e(); 
+		
         Vector3 n1 = new Vector3(); Vector3 n2 = new Vector3();
         n1.copy(p1.vector().vect()); n2.copy( p2.vector().vect());
         n1.unit(); n2.unit();
-                
-        double e1 = p1.e();
-        double e2 = p2.e();           
        
         Particle g1 = new Particle(22,n1.x()*e1,n1.y()*e1,n1.z()*e1);                        
         Particle g2 = new Particle(22,n2.x()*e2,n2.y()*e2,n2.z()*e2);
@@ -170,10 +181,10 @@ public class NeutralMeson {
         out.add(n++,(float) (float)(Math.toDegrees(p1.theta())-Math.toDegrees(p2.theta())));
         out.add(n++,(float) (float)(Math.toDegrees(p1.phi())-Math.toDegrees(p2.phi())));
         
-        return out;
+        return true;
 	}
 	
-	public boolean getMesonKin() {
+	public boolean getMesonKin(int i1, int i2) {
 		this.mass = (float)VPI0.mass();
 		this.e    = (float)VPI0.e();
 		this.mom  = (float)VPI0.p();
@@ -181,8 +192,8 @@ public class NeutralMeson {
 		this.phi  = (float)Math.toDegrees(VPI0.phi());
 		this.opa  = (float)Vangle(VG1.vect(),VG2.vect());
 		this.X    = (float)((VG1.e()-VG2.e())/(VG1.e()+VG2.e()));
-		this.ggp  = (float) getGGphi();
-		return test();			
+		this.ggp  = (float) getGGphi(i1,i2);
+		return test(i1,i2);			
 	}
 	
 	public String toString(int n) {
