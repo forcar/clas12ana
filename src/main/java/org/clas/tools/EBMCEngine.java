@@ -434,11 +434,11 @@ public class EBMCEngine extends EBEngine {
         return ggp;
     }
     
-    public boolean getPizeroKinematics(int i1, int i2) {
+    public boolean getPizeroKinematics() {
     	NeutralMeson nsm = new NeutralMeson(pmc);
         nsm.setPhotonSector(MCsec);
-        nsm.getMeson(i1,i2);
-        nsm.getMesonKin(i1,i2);
+        nsm.getMeson();
+        nsm.getMesonKin();
         return nsm.getPizeroKinematics(pmc.get(0),pmc.get(1));        
     }  
     

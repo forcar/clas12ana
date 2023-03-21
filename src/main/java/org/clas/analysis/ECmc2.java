@@ -604,7 +604,7 @@ public class ECmc2 extends DetectorMonitor {
 		if (!goodev) return;
         	
         GEN   = getkin(ebmce.pmc);	       	        	
-        GENPZ = ebmce.getPizeroKinematics(); 
+        GENPZ = ebmce.getPizeroKinematics(ebmce.pmc.get(0), ebmce.pmc.get(1)); 
         
         float opa = GENPZ.get(3); float   x = GENPZ.get(4);
         float dth = GENPZ.get(7); float dph = GENPZ.get(8);

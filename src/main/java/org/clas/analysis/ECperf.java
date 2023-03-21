@@ -2179,7 +2179,7 @@ public class ECperf extends DetectorMonitor {
         
         for (NeutralMeson nm: nm_ecal) {
         	
-        	if (nm.getMesonKin(0,1)) {
+        	if (nm.getMesonKin()) {
         	
         	float       cx = (float) (Math.sin(nm.the*3.14159f/180f)*Math.cos(nm.phi*3.141259f/180f));
         	float       cy = (float) (Math.sin(nm.the*3.14159f/180f)*Math.sin(nm.phi*3.141259f/180f));   
