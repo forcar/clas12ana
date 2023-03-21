@@ -440,9 +440,9 @@ public class DetectorMonitor implements ActionListener {
         		                                                       "ECAL::calib",
         		                                                       "ECAL::moments");
         
-        if(!isHipo3Event&&de.hasBank("REC::Event"))       de.removeBanks("REC::Event");
-        if(!isHipo3Event&&de.hasBank("REC::Particle"))    de.removeBanks("REC::Particle");
-        if(!isHipo3Event&&de.hasBank("REC::Calorimeter")) de.removeBanks("REC::Calorimeter");
+//        if(!isHipo3Event&&de.hasBank("REC::Event"))       de.removeBanks("REC::Event");
+//        if(!isHipo3Event&&de.hasBank("REC::Particle"))    de.removeBanks("REC::Particle");
+//        if(!isHipo3Event&&de.hasBank("REC::Calorimeter")) de.removeBanks("REC::Calorimeter");
 
         if( isHipo3Event&&de.hasBank("ECAL::clusters")) de.removeBank("ECAL::clusters");
         if( isHipo3Event&&de.hasBank("ECAL::hits"))     de.removeBank("ECAL::hits");
