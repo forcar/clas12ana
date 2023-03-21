@@ -2129,7 +2129,7 @@ public class ECperf extends DetectorMonitor {
     	
  		DataGroup ECnm2  = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf(name),run);    	
 
-        NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(1.0);
+        NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(3.0);
    	
     	for (int is=1; is<7; is++) {
     		if (!nm.ilist.hasItem(is)) continue;
