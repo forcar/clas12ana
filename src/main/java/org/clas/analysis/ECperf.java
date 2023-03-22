@@ -249,6 +249,7 @@ public class ECperf extends DetectorMonitor {
     	createECpi0(0);
     	createECpi0(1);
     	createECpi0(2);
+    	createECpi0(3);
     	createECeta(1);
     	createECtrig(0);
     	histosExist = true;
@@ -391,7 +392,7 @@ public class ECperf extends DetectorMonitor {
 		fillSCelec();
     	fillTrajXY();
 	    
-	    if(goodPHOT) fillECnm2("ECpi0");
+	    if(goodPHOT) {fillECnm2("ECpi0"); fillECnm3("ECpi0");}
 		
 	    if(goodPIP) { // FC pi+
 	    	if(select_epip()) { //(e' pi+) tagged neutron
@@ -1050,6 +1051,7 @@ public class ECperf extends DetectorMonitor {
     	
     	String tab = "ECpi0", tag = null;   	
     	int run = getRunNumber(), n=0, k=getDetectorTabNames().indexOf(tab); 
+		String[] fdet = new String[]{"n#gamma>1","n#gamma=2","n#gamma=3","n#gamma=4"};
     	
     	switch (st) {
     	
@@ -1083,13 +1085,21 @@ public class ECperf extends DetectorMonitor {
     	break;
         case 2:
         dg = new DataGroup(6,4);
-			String[] fdet = new String[]{"n#gamma>1","n#gamma=2","n#gamma=3","n#gamma=4"};
 			for(int i=0; i<4; i++) {
 				for(int is=1;is<7;is++){  //sector 
 					tag = is+"-"+i+"-"+st+"-"+k+"-"+run;
 					dg.addDataSet(makeH1(tab+"-"+n+"-",tag,100,-1,2,fdet[i],"S"+is+" Mass Error (#DeltaM/M)"),n); n++;
 				}
-			}        		
+			} 
+		break;
+        case 3:
+        dg = new DataGroup(6,4);
+    		for(int i=0; i<4; i++) {
+    			for(int is=1;is<7;is++){  //sector 
+    				tag = is+"-"+i+"-"+st+"-"+k+"-"+run;
+    				dg.addDataSet(makeH2(tab+"-"+n+"-",tag,100,-1,2,8,1,9,fdet[i],"S"+is+" Mass Error (#DeltaM/M)","E1+E2 (GeV)"),n); n++;
+    			}
+    		}         	
     	}
     	this.getDataGroup().add(dg,0,st,k,run);      
     	
@@ -2127,7 +2137,7 @@ public class ECperf extends DetectorMonitor {
 		
     	int run = getRunNumber();
     	
- 		DataGroup ECnm2  = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf(name),run);    	
+ 		DataGroup ECnm2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf(name),run);    	
 
         NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(3.0);
    	
@@ -2145,6 +2155,31 @@ public class ECperf extends DetectorMonitor {
     				}
     			}
     		}
+    	}	    	
+    }
+    
+    public void fillECnm3(String name) {
+		
+    	int run = getRunNumber();
+    	
+ 		DataGroup ECnm3 = this.getDataGroup().getItem(0,3,getDetectorTabNames().indexOf(name),run);    	
+
+        NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(1.0);
+   	
+    	for (int is=1; is<7; is++) {
+    		if (!nm.ilist.hasItem(is)) continue;
+ 		    int nphot = nm.ilist.getItem(is).size();
+    		if(nphot<2) continue;
+    		for (int i1=0; i1<nphot-1; i1++) {
+    			for (int i2=i1+1; i2<nphot; i2++) {				
+    				if(nm.getPizeroKinematics(nm.ilist.getItem(is).get(i1),nm.ilist.getItem(is).get(i2))) {
+    				if(nphot>1)  ((H2F)ECnm3.getData(is-    1).get(0)).fill(nm.out.get(2),nm.out.get(9));
+    				if(nphot==2) ((H2F)ECnm3.getData(is-1+  6).get(0)).fill(nm.out.get(2),nm.out.get(9));
+    				if(nphot==3) ((H2F)ECnm3.getData(is-1+ 12).get(0)).fill(nm.out.get(2),nm.out.get(9));
+    				if(nphot==4) ((H2F)ECnm3.getData(is-1+ 18).get(0)).fill(nm.out.get(2),nm.out.get(9));
+    				}
+    			}
+    		}    	
     	}	    	
     }
     
@@ -2523,7 +2558,7 @@ public class ECperf extends DetectorMonitor {
 	
 	public void ECpi0Plot(String tabname) {
 		int index = getDetectorTabNames().indexOf(tabname);
-		if(getActive123()<3) plot123(index);		
+		if(getActive123()<4) plot123(index);		
 	}
 	
 	public void ECpipPlot(String tabname) {

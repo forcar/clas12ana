@@ -192,6 +192,7 @@ public class NeutralMeson {
         out.add(n++,(float) phi);
         out.add(n++,(float) (float)(Math.toDegrees(p1.theta())-Math.toDegrees(p2.theta())));
         out.add(n++,(float) (float)(Math.toDegrees(p1.phi())-Math.toDegrees(p2.phi())));
+        out.add(n++,(float) (float)(e1+e2));
         
         return true;
 	}
