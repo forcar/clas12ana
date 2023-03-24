@@ -68,7 +68,7 @@ public class ECpi0 extends DetectorMonitor{
     float                          fmax = 240f;
     
     Boolean                 isPARTReady = false;
-    Boolean                        isMC = false;
+    Boolean                        isMC = true;
     
 	static int trSEC=5, trPID=-211, mcSEC=2, mcPID= 22;
     
@@ -563,6 +563,10 @@ public class ECpi0 extends DetectorMonitor{
     
     
     }
+    
+    public DataBank getBank(DataEvent event, String name) {
+    	return event.hasBank(name)?event.getBank(name):null;
+    }
 
     @Override
     public void processEvent(DataEvent event) {  
@@ -575,8 +579,8 @@ public class ECpi0 extends DetectorMonitor{
                        
         part.processDataEvent(event); // input file must contain ECAL::clusters OR dropBanks=true
         
-        DataBank ecBank = event.getBank("ECAL::clusters");
-        DataBank pcBank = event.getBank("ECAL::peaks");
+        DataBank ecBank = getBank(event,"ECAL::clusters");
+        DataBank pcBank = getBank(event,"ECAL::peaks");
                
         if(event.hasBank("MC::Particle")) {processMC(event, ecBank);}
         
@@ -604,11 +608,8 @@ public class ECpi0 extends DetectorMonitor{
         
         // FTOF VETO
         
-        DataBank recpar = null;
-        DataBank reccal = null;
-        
-        if (event.hasBank("REC::Particle"))    recpar = event.getBank("REC::Particle");
-        if (event.hasBank("REC::Calorimeter")) reccal = event.getBank("REC::Calorimeter");
+        DataBank recpar = getBank(event,"REC::Particle");
+        DataBank reccal = getBank(event,"REC::Calorimeter");
         
         boolean goodrec = recpar!=null && reccal!=null;
         
