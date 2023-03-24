@@ -1267,6 +1267,15 @@ public class DetectorMonitor implements ActionListener {
     	}    	
     	return graph;
     }
+    
+    public H1F subset(H1F hin, float x1, float x2, int col) {
+    	H1F hout = hin.histClone("dup"); hout.reset();
+    	for (int i=0; i<hin.getDataSize(0); i++) {
+    	  if(hin.getDataX(i)>x1 && hin.getDataX(i)<x2) hout.setBinContent(i, hin.getDataY(i));
+    	}
+    	hout.setFillColor(col); hout.setOptStat("1000000");
+    	return hout;
+    }
 
     public H1F projectionX(H2F h2, float ymin, float ymax ) {
         String name = "X Projection";
@@ -1533,9 +1542,12 @@ public class DetectorMonitor implements ActionListener {
     public FitData fitEngine(H1F h, int ff, double pmin, double pmax, double fmin, double fmax) {
        FitData fd = new FitData(h.getGraph()); 
        fd.setInt((int)h.getIntegral());
+       String tit = h.getTitle();
        fd.setHist(h);
        fd.graph.getAttributes().setTitleX(h.getTitleX()); 
-       fd.hist.getAttributes().setTitleX(h.getTitleX()); 
+       fd.hist.getAttributes().setTitleX(h.getTitleX());
+       fd.hist.setTitle(tit);
+       fd.graph.setTitle(tit);
        fd.initFit(ff,pmin,pmax,fmin,fmax); 
        fd.fitGraph("",cfitEnable,fitVerbose); 
        return fd;
