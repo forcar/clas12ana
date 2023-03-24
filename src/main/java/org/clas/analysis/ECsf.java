@@ -55,7 +55,8 @@ public class ECsf extends DetectorMonitor {
                             "Summary",
                             "PID Fits",
                             "Timeline",
-                            "MC");
+                            "MC",
+                            "M2");
 
         usePCCheckBox(true);
         useCALUVWSECButtons(true);
@@ -130,6 +131,7 @@ public class ECsf extends DetectorMonitor {
         createUVWHistos("UVW",1,25,25,0,EB,0.00,0.15/3,"P (GEV)","SF ");
         createUVWHistos("UVW",2,25,25,0,EB,0.00,0.06/3,"P (GEV)","SF ");
         createMCHistos("MC");
+        createM2Histos("M2");
     }
 
     @Override       
@@ -147,7 +149,8 @@ public class ECsf extends DetectorMonitor {
     	plotXYZHistos("XY");
     	plotSLCHistos("Timing");
     	plotUVWHistos("UVW");
-    	plotMCHistos("MC");    	
+    	plotMCHistos("MC"); 
+    	plotM2Histos("M2");
     }
     
     public void plotAnalysis(int run) {
@@ -353,6 +356,24 @@ public class ECsf extends DetectorMonitor {
         this.getDataGroup().add(dg,0,0,k,run);
     }
     
+    public void createM2Histos(String tab) {
+    	int run = getRunNumber(), k=getDetectorTabNames().indexOf(tab);
+        H2F h;  
+                
+        for (int is=1; is<7; is++) {int n=0;
+        DataGroup dg = new DataGroup(3,3);
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<3; iv++) {        	        
+            h = new H2F("m2_"+det[il]+"_"+il+"_"+is+"_"+k+"_"+run, 100,0,il==0?100:300,6,1,7); 
+            h.setTitleX("Sector "+is+" "+det[il]+" M2"+v[iv]); h.setTitleY("No. Strips");
+            dg.addDataSet(h,n); n++;        	        	
+        }
+        }
+        this.getDataGroup().add(dg,is,0,k,run);   	    	     
+        }
+        
+    }
+    
     public void initCCDB(int runno) {
     	if(dropSummary) return;
         electron_sf = ebcm.getConstants(runno, "/calibration/eb/electron_sf");    
@@ -391,6 +412,9 @@ public class ECsf extends DetectorMonitor {
     	int run = getRunNumber();
     	
     	float Ebeam=EB, e_mom=0, e_theta=0, e_vz=0, e_ecal_E=0, lU=0, lV=0, lW=0; 
+    	float[]   m2u_ecal = {-1000,-1000,-1000};
+    	float[]   m2v_ecal = {-1000,-1000,-1000};
+    	float[]   m2w_ecal = {-1000,-1000,-1000};
     	float[]     x_ecal = {-1000,-1000,-1000};
         float[]     y_ecal = {-1000,-1000,-1000};
     	float[]    hx_ecal = {-1000,-1000,-1000};
@@ -403,9 +427,9 @@ public class ECsf extends DetectorMonitor {
     	float[]     t_ecal = new float[4];
     	float[]    pa_ecal = new float[4];
     	int e_sect=0;
-    	int[] iU = new int[3], idU = new int[3]; float[] tU = new float[3];
-    	int[] iV = new int[3], idV = new int[3]; float[] tV = new float[3];
-    	int[] iW = new int[3], idW = new int[3]; float[] tW = new float[3];
+    	int[] iU = new int[3], idU = new int[3], du = new int[3]; float[] tU = new float[3]; 
+    	int[] iV = new int[3], idV = new int[3], dv = new int[3]; float[] tV = new float[3];
+    	int[] iW = new int[3], idW = new int[3], dw = new int[3]; float[] tW = new float[3];
 
 //      	printEC("Before: ", event.getBank("ECAL::clusters"));      	
 
@@ -418,9 +442,12 @@ public class ECsf extends DetectorMonitor {
         if (!goodEvent) return;
         
         float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
-                                                                      event.getBank("REC::Event").getFloat("startTime", 0)):0;        
+                                                                      event.getBank("REC::Event").getFloat("startTime", 0)):0;  
+        
       	DataBank ecalclust = event.getBank("ECAL::clusters");
       	DataBank ecalcalib = event.getBank("ECAL::calib");
+      	
+      	DataBank ecalmomnt = event.hasBank("ECAL::moments") ? event.getBank("ECAL::moments"):null;
         
       	DataBank    reccal = event.getBank("REC::Calorimeter");
         DataBank    recpar = event.getBank("REC::Particle");
@@ -482,6 +509,14 @@ public class ECsf extends DetectorMonitor {
                     	lV = reccal.getFloat("lv",icalo);
                     	lW = reccal.getFloat("lw",icalo);
                     }
+
+                    du[ind]         = (int) reccal.getFloat("du",icalo);
+                    dv[ind]         = (int) reccal.getFloat("dv",icalo);
+                    dw[ind]         = (int) reccal.getFloat("dw",icalo);
+                    m2u_ecal[ind]   = ecalmomnt != null ? ecalmomnt.getFloat("m2u",ic) : reccal.getFloat("m2u",icalo);
+                    m2v_ecal[ind]   = ecalmomnt != null ? ecalmomnt.getFloat("m2v",ic) : reccal.getFloat("m2v",icalo);
+                    m2w_ecal[ind]   = ecalmomnt != null ? ecalmomnt.getFloat("m2w",ic) : reccal.getFloat("m2w",icalo);
+
                     x_ecal[ind]     = (float) xyz.x();
                     y_ecal[ind]     = (float) xyz.y();
                     hx_ecal[ind]    = (float) hxyz.x();
@@ -584,6 +619,9 @@ public class ECsf extends DetectorMonitor {
             if(id==0) ((H1F) getDG(0,0,"MC",run).getData(is-1   ).get(0)).fill(-t_ecal[id]);
             if(id==1) ((H1F) getDG(0,0,"MC",run).getData(is-1+ 6).get(0)).fill(-t_ecal[id]);
             if(id==2) ((H1F) getDG(0,0,"MC",run).getData(is-1+12).get(0)).fill(-t_ecal[id]);
+            ((H2F) getDG(is,0,"M2",run).getData(3*id+0).get(0)).fill(m2u_ecal[id],du[id]);
+            ((H2F) getDG(is,0,"M2",run).getData(3*id+1).get(0)).fill(m2v_ecal[id],dv[id]);
+            ((H2F) getDG(is,0,"M2",run).getData(3*id+2).get(0)).fill(m2w_ecal[id],dw[id]);
             }
          }       
 
@@ -946,6 +984,11 @@ public class ECsf extends DetectorMonitor {
     	int index=getDetectorTabNames().indexOf(tab);
   	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));	       	    	
     }
+    
+    public void plotM2Histos(String tab) {
+    	int index=getDetectorTabNames().indexOf(tab);
+  	    drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,getRunNumber()));	       	    	
+    }    
     
 	public void writeFile(String table) {
 		
