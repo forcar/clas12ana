@@ -68,7 +68,7 @@ public class ECpi0 extends DetectorMonitor{
     float                          fmax = 240f;
     
     Boolean                 isPARTReady = false;
-    Boolean                        isMC = true;
+    Boolean                        isMC = false;
     
 	static int trSEC=5, trPID=-211, mcSEC=2, mcPID= 22;
     
