@@ -102,7 +102,7 @@ public class ECPart extends EBEngine {
     public String config = null;
     public double SF1 = 0.27, SF1db=0.27;
     public double SF2 = 0.27, SF2db=0.27;
-    public boolean isMC = true, hasStartTime = false;;
+    public boolean isMC = true, hasTriggerPID = false;;
     public H1F h5,h6,h7,h8;
   
     public int n2mc=0, MCpid=11, MCsec=2;
@@ -164,7 +164,7 @@ public class ECPart extends EBEngine {
     	this.ccdb = new EBCCDBConstants(runno,ebe.getConstantsManager());    	
     }   
     
-    public boolean hasStartTime(int pid) {
+    public boolean hasTriggerPID(int pid) {
     	return (pid==11 || pid==-11 || pid==-211 || pid==211);
     }
     
@@ -178,7 +178,7 @@ public class ECPart extends EBEngine {
     }
     
     public boolean readMC(DataEvent event) {    	
-        pmc.clear(); pmv.clear(); hasStartTime=false;
+        pmc.clear(); pmv.clear(); hasTriggerPID=false;
         if(event.hasBank("MC::Particle")) {
             DataBank bank = event.getBank("MC::Particle");
             for (int i=0; i<bank.rows(); i++) {
@@ -196,7 +196,7 @@ public class ECPart extends EBEngine {
                 	refTH = Math.toDegrees(pmc.get(0).theta());
                 	refPH = Math.toDegrees(pmc.get(0).phi());	
                 }
-                if(i==0) {vtx.setXYZ(vx, vy, vz); hasStartTime = hasStartTime(pid); starttime = getStartTime(event);}
+                if(i==0) {vtx.setXYZ(vx, vy, vz); hasTriggerPID = hasTriggerPID(pid); starttime = getStartTime(event);}
             }
             n2mc++;
             return true;
@@ -204,31 +204,33 @@ public class ECPart extends EBEngine {
         return false;
     }
     
-	// Copies relevant parts of EBEngine.processDataEvent    
+	// Copies relevant parts of EBEngine.processDataEvent  
+    // ECPart is intended for sectors with neutrals only (no tracks) so all clusters are assumed unmatched to tracks 
+    
+    @Override
     public boolean  processDataEvent(DataEvent de){ 
     	
-        eb = new EventBuilder(ccdb);    	   	
+        eb = new EventBuilder(ccdb);    
+        eb.setUsePOCA(false);
         eb.initEvent(); //don't bother with event header  
        
         rf = new EBRadioFrequency(ccdb);    	
         eb.getEvent().getEventHeader().setRfTime(rf.getTime(de)+ccdb.getDouble(EBCCDBEnum.RF_OFFSET));
     	
-        List<DetectorResponse> responseECAL = CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL);
-        eb.addDetectorResponses(responseECAL);
+        eb.addDetectorResponses(CalorimeterResponse.readHipoEvent(de, "ECAL::clusters", DetectorType.ECAL));
        
-        eb.getPindexMap().put(0, 0); 
-        eb.getPindexMap().put(1, 0); 
-        
-//        eb.processHitMatching();
-//        eb.assignTrigger(); 
+        eb.getPindexMap().put(0, 0); //force no tracks
+        eb.getPindexMap().put(1, 0); //force no tracks
         
         return true;
     } 
     
-	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent 
+	// getNeutralPart: Copies relevant parts of EBEngine.processDataEvent (not used in ECpart)
     // Note for MC w/o charged trigger particles EBAnalyzer.foundTriggerTime will be false and SF not applied to PID=22
-    public List<DetectorParticle> getNeutralPart() {
-   	    eb.processNeutralTracks();    	
+    public List<DetectorParticle> getNeutralPart() {        
+        eb.processHitMatching(); 
+        eb.assignTrigger();    	    
+        eb.processNeutralTracks();    	
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
         if(!eb.getEvent().getParticles().isEmpty()){
@@ -330,21 +332,20 @@ public class ECPart extends EBEngine {
     // Note here I am requiring 2 PCAL responses, NOT 2 complete ECAL particles
     public List<DetectorParticle> getNeutralParticles(int sector) {
               
-        List<DetectorResponse>      rEC  = new ArrayList<>();        
+        List<DetectorResponse>      rPC  = new ArrayList<>();        
         List<DetectorParticle> particles = new ArrayList<>();          
-
+       
+        rPC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector); //get PCAL responses
         
-        rEC = DetectorResponse.getListBySector(unmatchedResponses.get(0), DetectorType.ECAL, sector); //get PCAL responses
-        
-        switch (rEC.size()) {
-        case 1:  List<DetectorResponse> rEC2 = findSecondPhoton(sector); 
-                if (rEC2.size()>0) {
-                   particles.add(DetectorParticle.createNeutral(rEC.get(0),vtx));                    // make neutral particle 1 from PCAL sector                   
-                   particles.add(DetectorParticle.createNeutral(rEC2.get(0),vtx)); return particles; // make neutral particle 2 from other PCAL sector
+        switch (rPC.size()) {
+        case 1: List<DetectorResponse> rPC2 = findSecondPhoton(sector); 
+                if (rPC2.size()>0) {
+                   particles.add(DetectorParticle.createNeutral(rPC.get(0),vtx));                    // make neutral particle 1 from PCAL sector                   
+                   particles.add(DetectorParticle.createNeutral(rPC2.get(0),vtx)); return particles; // make neutral particle 2 from other PCAL sector
                 }
                 break;
-        case 2: particles.add(DetectorParticle.createNeutral(rEC.get(0),vtx));                   // make neutral particle 1 from PCAL sector
-                particles.add(DetectorParticle.createNeutral(rEC.get(1),vtx)); return particles; // make neutral particle 2 from PCAL sector
+        case 2: particles.add(DetectorParticle.createNeutral(rPC.get(0),vtx));                   // make neutral particle 1 from PCAL sector
+                particles.add(DetectorParticle.createNeutral(rPC.get(1),vtx)); return particles; // make neutral particle 2 from PCAL sector
 //        case 3: particles.add(DetectorParticle.createNeutral(rEC.get(0)));                   // make neutral particle 1 from PCAL sector
 //        		particles.add(DetectorParticle.createNeutral(rEC.get(1))); return particles; // make neutral particle 2 from PCAL sector
         }
@@ -1336,6 +1337,10 @@ public class ECPart extends EBEngine {
         List<DetectorParticle> np = new ArrayList<DetectorParticle>();
         int run = this.runNumber;
         
+        engine.setUseASA1(true);
+        engine.setUseCCEC(true);
+        engine.setUseCCPC(true);
+        
         String evioPath = "/Users/colesmith/clas12/sim/photon/";
         String evioFile = "fc-phot-20k-25deg-r2-0.2-3.8-newgeom-gemc2.6.hipo"; int sec=2;
         
@@ -1376,14 +1381,14 @@ public class ECPart extends EBEngine {
         setGeom("2.5");
         setGoodPhotons(12);
       
-        int n=0, ng=0, npp=0;
+        int n=0, ng=0, npp=0; MCpid=22;
         float pthresh=0.01f;
         
         while(reader.hasEvent()){
             DataEvent event = reader.getNextEvent();
-            engine.processDataEvent(event);
+            engine.processDataEvent(event);  //ECEngine
             if (readMC(event)) {
-            	processDataEvent(event);
+            	processDataEvent(event); //EBAnalyzer
             	float refP = (float) pmc.get(0).p();
             	np.clear(); np = getNeutralPart();
             	h5.fill(refP);
@@ -1436,9 +1441,7 @@ public class ECPart extends EBEngine {
         JFrame frame = new JFrame("Photon Reconstruction");
         frame.setSize(800,800);
         EmbeddedCanvas canvas = new EmbeddedCanvas(); canvas.divide(4,3);
-        
-        
-        
+
         H1F hr11 = H1F.divide(h11,  h5); hr11.setFillColor(3); hr11.setTitleY("Photon Efficiency n>0"); hr11.setTitleX("Photon Momentum (GeV)");
         H1F hr12 = H1F.divide(h12,  h5); hr12.setFillColor(1); hr12.setTitleY("Photon Efficiency n=1"); hr12.setTitleX("Photon Momentum (GeV)");
         H1F hr13 = H1F.divide(h13,  h5); hr13.setFillColor(2); hr13.setTitleY("Photon Eff 1");          hr13.setTitleX("Photon Momentum (GeV)");
@@ -1534,8 +1537,8 @@ public class ECPart extends EBEngine {
         hview[3] = new H1F("Shared View UVW",50,100,200);         
         hview[3].setTitleX("Invariant Mass (MeV)");
                 
-        String evioPath = "/Users/colesmith/clas12/sim/2gamma/aug.1.2021/";
-//        String evioPath = "/Users/colesmith/clas12/sim/";
+//        String evioPath = "/Users/colesmith/clas12/sim/2gamma/aug.1.2021/";
+        String evioPath = "/Users/colesmith/clas12/sim/pizero/";
         
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35.hipo"; int sec=2;
 //      String evioFile = "fc-pizero-50k-s2-newgeom-15-0.35-8.35.hipo4"; int sec=2;
@@ -1543,9 +1546,9 @@ public class ECPart extends EBEngine {
 //        String evioFile = "fc-pizero-50k-s2-newgeom-0.35-8.35-r5716.hipo"; int sec=2;
         
 //        String evioFile = "fc-pizero-100k-s2-newgeom-15-1.0-12.0.hipo"; int sec=2;
-        String evioFile = "out-pim-pi0.hipo"; int sec=2;
+//        String evioFile = "out-pim-pi0.hipo"; int sec=2;
 //        String evioFile = "rga_fall2018_s2-pizero.hipo"; int sec=2;
-//        String evioFile = "fc-pizero-s2-new-4.4.0.hipo"; int sec=2;
+        String evioFile = "fc-pizero-s2-new-4.4.0.hipo"; int sec=2;
 //        evioFile = "pi0_hi.hipo";
         
 //         evioPath = "/Users/colesmith/ECMON/HIPO4/fbossu/3deg/";
@@ -1770,9 +1773,9 @@ public class ECPart extends EBEngine {
         part.initGraphics();
         String env = System.getenv("CLAS12DIR");
  //    	part.pizeroDemo(args);
- //    	part.photonDist(args);
+     	part.photonDist(args);
 //     	part.photonDemo(args);
-    	part.neutronDemo(args);
+//    	part.neutronDemo(args);
 //        part.electronDemo(args);
 //        part.scalerdemo(args);
     }

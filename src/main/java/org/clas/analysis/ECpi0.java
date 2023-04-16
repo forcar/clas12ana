@@ -102,8 +102,7 @@ public class ECpi0 extends DetectorMonitor{
     
     public void localinit() {
     	System.out.println("ECpi0.localinit()");        
-    	eng.engine.setGeomVariation("rga_spring2018");
-        isPARTReady = false;
+    	eng.engine.setGeomVariation("rga_spring2018");       
     	tl.setFitData(Fits);
     }
     
@@ -117,6 +116,7 @@ public class ECpi0 extends DetectorMonitor{
     	tl.fitData.clear();
     	tl.Timeline.clear();
         eng.engine.setCCDBGain(!defaultGain);
+        isPARTReady = false;
     } 
     
     public void initPART(int run) {
@@ -762,10 +762,12 @@ public class ECpi0 extends DetectorMonitor{
         
         for (int is=1; is<7; is++) {
         	g=tl.fitData.getItem(is,0,0,getRunNumber()).getGraph();
-            c.cd(is-1); c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
+            c.cd(is-1); 
+            c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
+            c.getPad(is-1).setStatBoxFontSize(18);
             tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1100");
-            c.draw(tl.fitData.getItem(is,0,0,getRunNumber()).getHist());
-            c.draw(g,"same");
+            H1F h = tl.fitData.getItem(is,0,0,getRunNumber()).getHist(); h.setOptStat("0");
+            c.draw(h); c.draw(g,"same");
             DataLine line = new DataLine(mpi0,0.,mpi0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 
         }      
         
@@ -1152,11 +1154,14 @@ public class ECpi0 extends DetectorMonitor{
     		c.cd(i3); c.getPad(i3).setAxisRange(0,runIndex,1,7); c.getPad(i3).setTitleFontSize(18); c.getPad(i3).getAxisZ().setRange(min,max);
     		c.draw((H2F)tl.Timeline.getItem(10*(i+1),0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4);
              
-    		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
+    		c.cd(i3+1); 
+    		c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(i+1),1f,"Sector "+is+((i==0)?" Pi0 Mean/Mass":" Pi0 #sigma(E)/E"));
     		
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
-            fd.getHist().getAttributes().setOptStat("1000100");
+    		c.cd(i3+2); 
+    		c.getPad(i3+2).setAxisRange(0.,fd.getHist().getXaxis().max(),0.,fd.getGraph().getMax()*1.1); 
+    		c.getPad(i3+2).setStatBoxFontSize(18);
+            fd.getHist().getAttributes().setOptStat("0");
             DataLine line6 = new DataLine(mpi0,-50,mpi0,fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
             c.draw(fd.getHist()); c.draw(fd.getGraph(),"same"); c.draw(line6); 
         }
