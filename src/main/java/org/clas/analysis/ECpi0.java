@@ -161,7 +161,6 @@ public class ECpi0 extends DetectorMonitor{
     	createLEFFHistos(16,1,60,-150,150,40,0,400);
     	createLEFFHistos(16,2,60,-150,150,40,0,400);
     	create1DHistos(17,0,50,-10,10,"","PCAL photon time residual (ns)");
-
     }
     
     @Override       
@@ -833,7 +832,7 @@ public class ECpi0 extends DetectorMonitor{
         int run = getRunNumber();
         for (int is=is1; is<is2; is++) {
            tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0, 1,run).getData(is-1).get(0),3,100,170,30,240),is,0, 0,run); 
-           tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0,17,run).getData(is-1).get(0),0, -6,  6,-6,  6),is,0,70,run); 
+           tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0,17,run).getData(is-1).get(0),0, -3,  3,-3,  3),is,0,70,run); 
            for (int id=id1; id<id2; id++) {
                for (int il=il1; il<il2; il++) {
                	  for (int pc=0; pc<2; pc++) {
