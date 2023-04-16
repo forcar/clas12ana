@@ -62,10 +62,6 @@ public class ECpi0 extends DetectorMonitor{
     int                         mcevent = 0;
     
     float                          mpi0 = 134.976f;
-    float                          pmin = 100f;
-    float                          pmax = 170f;
-    float                          fmin = 30f;
-    float                          fmax = 240f;
     
     Boolean                 isPARTReady = false;
     Boolean                        isMC = false;
@@ -90,7 +86,8 @@ public class ECpi0 extends DetectorMonitor{
                                  "Fits",
                                  "Summary",
                                  "Timeline",
-                                 "IMLEFF");
+                                 "IMLEFF",
+                                 "Timing");
         
         this.usePCCheckBox(true);
         this.useCALUVWSECButtons(true);
@@ -163,6 +160,8 @@ public class ECpi0 extends DetectorMonitor{
     	createMCHistos(12);
     	createLEFFHistos(16,1,60,-150,150,40,0,400);
     	createLEFFHistos(16,2,60,-150,150,40,0,400);
+    	create1DHistos(17,0,50,-10,10,"","PCAL photon time residual (ns)");
+
     }
     
     @Override       
@@ -176,7 +175,7 @@ public class ECpi0 extends DetectorMonitor{
    	    if(dropSummary) return;
         setRunNumber(run);
         plotUVW(0);
-        if(isAnalyzeDone) {updateUVW(1); }else{ plotPI0Summary(1);}
+        if(isAnalyzeDone) {updateUVW(1); updateUVW(17);} else {plotPI0Summary(1);plotPI0Summary(17);}
         plotPI0Summary(2);    	
         plotPI0Summary(3);    	
         plotOAXSummary(4);   
@@ -195,7 +194,7 @@ public class ECpi0 extends DetectorMonitor{
    	   setRunNumber(run);
    	   if(!isAnalyzeDone) return;
    	   if(!dropSummary) {updateFits(13);plotMeanHWSummary(14);} 
-       updateUVW(1); plotTimeLines(15);
+       updateUVW(1); updateUVW(17); plotTimeLines(15);
     }  
     
     public void createPHOTHistos(int k) {
@@ -581,6 +580,9 @@ public class ECpi0 extends DetectorMonitor{
         
         DataBank ecBank = getBank(event,"ECAL::clusters");
         DataBank pcBank = getBank(event,"ECAL::peaks");
+        
+        float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
+            event.getBank("REC::Event").getFloat("startTime", 0)):0;  
                
         if(event.hasBank("MC::Particle")) {processMC(event, ecBank);}
         
@@ -674,7 +676,7 @@ public class ECpi0 extends DetectorMonitor{
               
               if (FTOFveto ? (part.mip[0][is-1]==0 && part.mip[1][is-1]==0) : true) {  // Use FTOF as MIP veto
                 
-                boolean     ivmcut = inv3>pmin && inv3<pmax;
+                boolean     ivmcut = inv3>100 && inv3<170;
                 boolean  badPizero = part.X>1 || opa<0;
                 boolean goodSector = dropEsect ? is!=trigger_sect : onlyEsect ? is==trigger_sect : true;
                  
@@ -690,7 +692,9 @@ public class ECpi0 extends DetectorMonitor{
                     	((H2F) this.getDataGroup().getItem(0,0,5,run).getData(part.iis[0]-1).get(0)).fill(invd,opa);                    
                     	((H2F) this.getDataGroup().getItem(0,0,6,run).getData(part.iis[0]-1).get(0)).fill(invd,part.e1c*part.e2c);                    
                     	((H2F) this.getDataGroup().getItem(0,0,7,run).getData(part.iis[0]-1).get(0)).fill(invd,Math.sqrt(part.tpi2));                    
-                    	((H2F) this.getDataGroup().getItem(0,0,8,run).getData(part.iis[0]-1).get(0)).fill(invd,part.t[0][0]-part.t[1][0]);  
+                    	((H2F) this.getDataGroup().getItem(0,0,8,run).getData(part.iis[0]-1).get(0)).fill(invd,part.t[0][0]-part.t[1][0]); 
+                    	float tavg = (float) (0.5*(part.t[0][0]+part.t[1][0])-Tvertex);
+                    	((H1F) this.getDataGroup().getItem(0,0,17,run).getData(part.iis[0]-1).get(0)).fill(tavg);  
                     	
                         if(nesum[0][is-1]>1 && nesum[1][is-1]>0) {
                     	   ((H2F) this.getDataGroup().getItem(0,0,3,run).getData(part.iis[0]-1).get(0)).fill(opa,part.e1c*part.e2c);
@@ -760,16 +764,31 @@ public class ECpi0 extends DetectorMonitor{
         c.clear();
         c.divide(3, 2);
         
-        for (int is=1; is<7; is++) {
-        	g=tl.fitData.getItem(is,0,0,getRunNumber()).getGraph();
-            c.cd(is-1); 
-            c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
-            c.getPad(is-1).setStatBoxFontSize(18);
-            tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1100");
-            H1F h = tl.fitData.getItem(is,0,0,getRunNumber()).getHist(); h.setOptStat("0");
-            c.draw(h); c.draw(g,"same");
-            DataLine line = new DataLine(mpi0,0.,mpi0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 
-        }      
+        switch (index) {
+        case 1:
+	        for (int is=1; is<7; is++) {
+	        	g=tl.fitData.getItem(is,0,0,getRunNumber()).getGraph();
+	            c.cd(is-1); 
+	            c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
+	            c.getPad(is-1).setStatBoxFontSize(18);
+	            tl.fitData.getItem(is,0,0,getRunNumber()).getGraph().getFunction().setOptStat("1100");
+	            H1F h = tl.fitData.getItem(is,0,0,getRunNumber()).getHist(); h.setOptStat("0");
+	            c.draw(h); c.draw(g,"same");
+	            DataLine line = new DataLine(mpi0,0.,mpi0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 
+	        } 
+        break;
+        case 17:
+            for (int is=1; is<7; is++) {
+            	g=tl.fitData.getItem(is,0,70,getRunNumber()).getGraph();
+                c.cd(is-1); 
+                c.getPad(is-1).getAxisY().setRange(0.,g.getMax()*1.1);
+                c.getPad(is-1).setStatBoxFontSize(18);
+                tl.fitData.getItem(is,0,70,getRunNumber()).getGraph().getFunction().setOptStat("1100");
+                H1F h = tl.fitData.getItem(is,0,70,getRunNumber()).getHist(); h.setOptStat("0");
+                c.draw(h); c.draw(g,"same");
+                DataLine line = new DataLine(0,0,0,g.getMax()*1.1); line.setLineColor(3); c.draw(line); 
+            }         	
+        }
         
     } 
     
@@ -813,12 +832,13 @@ public class ECpi0 extends DetectorMonitor{
     public void fitGraphs(int is1, int is2, int id1, int id2, int il1, int il2) {
         int run = getRunNumber();
         for (int is=is1; is<is2; is++) {
-           tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0,1,run).getData(is-1).get(0),3,pmin,pmax,fmin,fmax),is,0,0,run); 
+           tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0, 1,run).getData(is-1).get(0),3,100,170,30,240),is,0, 0,run); 
+           tl.fitData.add(fitEngine((H1F)this.getDataGroup().getItem(0,0,17,run).getData(is-1).get(0),0, -6,  6,-6,  6),is,0,70,run); 
            for (int id=id1; id<id2; id++) {
                for (int il=il1; il<il2; il++) {
                	  for (int pc=0; pc<2; pc++) {
                      H2F h = (H2F) this.getDataGroup().getItem(is,pc+1,0,run).getData(id*3+il).get(0);
-           	         for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h.sliceY(i),3,pmin,pmax,55,fmax),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); //PMT slices
+           	         for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h.sliceY(i),3,100,170,55,240),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); //PMT slices
        		         fitStore(is, id, il, pc, run, mpi0);
                	  }
                } 
@@ -1110,6 +1130,8 @@ public class ECpi0 extends DetectorMonitor{
     	runIndex = 0;   	
     	tl.createTimeLineHisto(10,"Pi0 Mean/Mass","Sector",TLmax,6,1,7);
     	tl.createTimeLineHisto(20,"Pi0 #sigma(E)/E","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(30,"Pi0 Photon Time Resid","Sector",TLmax,6,1,7);
+    	tl.createTimeLineHisto(40,"Pi0 Photon Time Sigma","Sector",TLmax,6,1,7);
     }  
     
     public void fillTimeLineHisto() {    	
@@ -1122,14 +1144,24 @@ public class ECpi0 extends DetectorMonitor{
            ((H2F)tl.Timeline.getItem(10,1)).fill(runIndex,is,ye/mpi0);	
            ((H2F)tl.Timeline.getItem(20,0)).fill(runIndex,is,ys/y);	
            ((H2F)tl.Timeline.getItem(20,1)).fill(runIndex,is,(ys/y)*Math.sqrt(Math.pow(yse/ys,2)+Math.pow(ye/y,2)));   		
+		   float   y1 = (float) tl.fitData.getItem(is,0,70,getRunNumber()).mean;
+		   float  ye1 = (float) tl.fitData.getItem(is,0,70,getRunNumber()).meane;			 
+   		   float  ys1 = (float) Math.abs(tl.fitData.getItem(is,0,70,getRunNumber()).sigma);
+   		   float yse1 = (float) Math.abs(tl.fitData.getItem(is,0,70,getRunNumber()).sigmae);			 
+           ((H2F)tl.Timeline.getItem(30,0)).fill(runIndex,is,y1);	
+           ((H2F)tl.Timeline.getItem(30,1)).fill(runIndex,is,ye1);	
+           ((H2F)tl.Timeline.getItem(40,0)).fill(runIndex,is,ys1);	
+           ((H2F)tl.Timeline.getItem(40,1)).fill(runIndex,is,yse1);   		
 		}			
 		runIndex++;
     }
     
     public void saveTimelines() {
     	System.out.println("ECpi0: Saving timelines");
-    	saveTimeLine(10,0,0,"PI0mean","PI0");
-    	saveTimeLine(20,0,0,"PI0sigm","PI0");
+    	saveTimeLine(10,0, 0,"PI0mean","PI0");
+    	saveTimeLine(20,0, 0,"PI0sigm","PI0");
+    	saveTimeLine(30,0,70,"PI0tres","PI0");
+    	saveTimeLine(40,0,70,"PI0tsig","PI0");
     }
     
     public void plotTimeLines(int index) {
