@@ -241,12 +241,6 @@ public class ECPart extends EBEngine {
      	return new ArrayList<DetectorParticle>() ;     	
     }
     
-    public void setVertex() {
-        if (eb.getEvent().getParticles().size()>0) {
-            vtx.copy(eb.getEvent().getParticle(0).vertex());
-        }    	
-    }
-    
     public void getRECBanks(DataEvent de, EventBuilder eb) {
         DataBank bankP = DetectorData.getDetectorParticleBank(eb.getEvent().getParticles(), de, particleBank);
         de.appendBanks(bankP);
@@ -307,7 +301,6 @@ public class ECPart extends EBEngine {
     }
     
     public void getNeutralResponses() {    
-    	setVertex();
         getUnmatchedResponses();
        	getSingleNeutralResponses(); // For two-photon decays in different sectors     	
     }
