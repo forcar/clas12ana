@@ -230,7 +230,7 @@ public class ECPart extends EBEngine {
     public List<DetectorParticle> getNeutralPart() {        
         eb.processHitMatching(); 
         eb.assignTrigger();    	    
-        eb.processNeutralTracks();    	
+        eb.processNeutralTracks();  
     	EBAnalyzer analyzer = new EBAnalyzer(ccdb, rf);
         analyzer.processEvent(eb.getEvent());
         if(!eb.getEvent().getParticles().isEmpty()){
@@ -239,6 +239,12 @@ public class ECPart extends EBEngine {
             return eb.getEvent().getParticles();
         } 
      	return new ArrayList<DetectorParticle>() ;     	
+    }
+    
+    public void setVertex() {
+        if (eb.getEvent().getParticles().size()>0) {
+            vtx.copy(eb.getEvent().getParticle(0).vertex());
+        }    	
     }
     
     public void getRECBanks(DataEvent de, EventBuilder eb) {
@@ -300,7 +306,8 @@ public class ECPart extends EBEngine {
         return particles;
     }
     
-    public void getNeutralResponses() {        
+    public void getNeutralResponses() {    
+    	setVertex();
         getUnmatchedResponses();
        	getSingleNeutralResponses(); // For two-photon decays in different sectors     	
     }
