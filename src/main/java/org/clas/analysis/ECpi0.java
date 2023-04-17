@@ -571,6 +571,27 @@ public class ECpi0 extends DetectorMonitor{
     	
         int run = getRunNumber();
         
+        DataBank recpar = getBank(event,"REC::Particle");
+        DataBank reccal = getBank(event,"REC::Calorimeter");  
+        
+        boolean isElec = false;
+        
+        boolean goodrec = recpar!=null && reccal!=null;
+        
+        if(goodrec) {
+            for (int ipart=0; ipart<recpar.rows(); ipart++) {
+            	 int pid = recpar.getInt("pid", ipart);
+            	 if(pid==11) { isElec=true;
+            		 part.vtx.setXYZ(recpar.getFloat("vx",ipart),
+            				         recpar.getFloat("vy",ipart),
+            				         recpar.getFloat("vz",ipart));
+            	 }
+            	 continue;
+            }
+        } 
+        
+        if (!isElec) return;
+        
         if (!isPARTReady) initPART(run);
         
         if (dropBanks) dropBanks(event); //rerun ECEngine, recreate REC::Particle,Calorimeter - input file must contain ECAL::adc,tdc
@@ -581,7 +602,7 @@ public class ECpi0 extends DetectorMonitor{
         DataBank pcBank = getBank(event,"ECAL::peaks");
         
         float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
-            event.getBank("REC::Event").getFloat("startTime", 0)):0;  
+                        event.getBank("REC::Event").getFloat("startTime", 0)):0;  
                
         if(event.hasBank("MC::Particle")) {processMC(event, ecBank);}
         
@@ -608,11 +629,6 @@ public class ECpi0 extends DetectorMonitor{
         }
         
         // FTOF VETO
-        
-        DataBank recpar = getBank(event,"REC::Particle");
-        DataBank reccal = getBank(event,"REC::Calorimeter");
-        
-        boolean goodrec = recpar!=null && reccal!=null;
         
         for (int i=0; i<6; i++) {part.mip[0][i]=0; part.mip[1][i]=0;} 
         
@@ -682,8 +698,11 @@ public class ECpi0 extends DetectorMonitor{
 //                if(part.mip[0][is-1]>0)((H1F) this.getDataGroup().getItem(0,0,11,run).getData(is-1).get(0)).fill(part.mip[0][is-1]); 
 //                if(part.mip[1][is-1]>0)((H1F) this.getDataGroup().getItem(0,1,11,run).getData(is-1).get(0)).fill(part.mip[1][is-1]); 
                 
-                if(invmass>0 && part.iis[0]>0 && part.iis[1]>0 && !badPizero && goodSector) {                                                    
-                    if(part.iis[0]< part.iis[1]) ((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);   
+                if(invmass>0 && part.iis[0]>0 && part.iis[1]>0 && !badPizero && goodSector) {   
+                	
+                    if(part.iis[0]< part.iis[1]) { //Each photon in different sector
+                    	((H1F) this.getDataGroup().getItem(0,0,2,run).getData(smap.get(part.iis[0]+"_"+part.iis[1])-1).get(0)).fill(invmass*1e3);             
+                    }
                     
                     if(part.iis[0]==part.iis[1]) { //Both photons in same sector
                     	
