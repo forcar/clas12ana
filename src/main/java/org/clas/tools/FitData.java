@@ -24,11 +24,11 @@ public class FitData {
 	public double pmax;
 	public double fmin;
 	public double fmax;
-	public double amp;
-	public double mean;
-	public double meane;
-	public double sigma;
-	public double sigmae;
+	public double amp,ampe;
+	public double mean,meane;
+	public double sigma,sigmae;
+	public double yld,ylde;
+	public double hyld,hylde;
 	public double[] p = new double[7], pe = new double[7], ip = new double[7];
 	public double p0,p1,p2,p3,p4,p5,p6,p0e,p1e,p2e,p3e,p4e,p5e,p6e;
 	public double sig1=2.5;
@@ -204,11 +204,14 @@ public class FitData {
 	    	}
 	    }	                  
 	    if (func<5) {
-	       amp   = graph.getFunction().getParameter(0);
-	       mean  = graph.getFunction().parameter(1).value();
-	       meane = graph.getFunction().parameter(1).error();
-	       sigma = graph.getFunction().parameter(2).value();   
-	      sigmae = graph.getFunction().parameter(2).error();  
+		   amp    = graph.getFunction().parameter(0).value();
+		   ampe   = graph.getFunction().parameter(0).error();
+	       mean   = graph.getFunction().parameter(1).value();
+	       meane  = graph.getFunction().parameter(1).error();
+	       sigma  = graph.getFunction().parameter(2).value();   
+	       sigmae = graph.getFunction().parameter(2).error();  
+	       yld    = amp*sigma;
+	       ylde   = yld*Math.sqrt(ampe*ampe/amp/amp+sigmae*sigmae/sigma/sigma);
 	    }
 	    graph.getFunction().setLineColor(fitcol);
 	    graph.getAttributes().setOptStat(g_optstat);
