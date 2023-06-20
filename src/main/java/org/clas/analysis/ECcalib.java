@@ -177,9 +177,9 @@ public class ECcalib extends DetectorMonitor {
      }
      
      public void plotSummary(int run) {
-    	 if(dropSummary) return;
     	 setRunNumber(run);
-    	 plotMIP(0);      	
+    	 plotMIP(0);  
+    	 if(dropSummary) return;    	     	
     	 plotXY(5); 
     	 plotPIDSummary(6);
     	 plotMIPZ(7);
@@ -1227,7 +1227,7 @@ public class ECcalib extends DetectorMonitor {
         double[] fitLimp = { 5, 3, 6,17,17,27};
         double[]    smxc = {0.15,0.20,0.17}; //cluster rms/mean pcal,ecin,ecou 
         double[]    smxp = {0.25,0.3,0.3};   //peak    rms/mean pcal,ecin,ecou
-        float         mf = 4.0f;
+        float         mf = 4.0f; //4 sigma cut on MIP tail
         
     	H2F h2=null, h2a=null, h2b=null; FitData fd=null;       
         int ipc=0, run=getRunNumber();
@@ -1252,7 +1252,7 @@ public class ECcalib extends DetectorMonitor {
                      	if(TLname=="UVW") fd.hist.getAttributes().setTitleX(((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0)).getTitleX()); 
                 	    tl.fitData.add(fd,is,id+10*pc*(il+1),0,run); 
                     }
-                    for (int il=il1; il<il2; il++) { //PMT slices               	
+                    for (int il=il1; il<il2; il++) { //PMT slices USED FOR MIP CALIBRATION GAIN CONSTANTS!              	
                         h2b = (H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0);
                     	for (int i=0; i<npmt[id*3+il]; i++) tl.fitData.add(fitEngine(h2b.sliceY(i),0,hmax),is,id+10*(pc+1)*(pc+1)*(il+1),i+1,run); //PMT slices
             		    fitStore(is, id, il, pc, run, mip);
@@ -1429,6 +1429,7 @@ public class ECcalib extends DetectorMonitor {
 		if(tl.fitData.hasItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run)) {
 			double     g = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).getMean()/mipp[il];
 			double    ge = tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,run).meane/mipp[il];
+			System.out.println(is+" "+(3*il+iv+1)+" "+(ip+1)+" "+gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)+" "+g*mipp[il]);
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				  +(gain.getDoubleValue("gain", is, 3*il+iv+1, ip+1)/(g<0.2?1.0:g))+" "
 				  +ge;
