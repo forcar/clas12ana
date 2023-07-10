@@ -597,14 +597,31 @@ public class Event {
 			p.setProperty("dw",     clusBank.getFloat("widthW",i));
 			p.setProperty("iu",    (clusBank.getInt("coordU", i)-4)/8+1);
 			p.setProperty("iv",    (clusBank.getInt("coordV", i)-4)/8+1);
-			p.setProperty("iw",    (clusBank.getInt("coordW", i)-4)/8+1);	
+			p.setProperty("iw",    (clusBank.getInt("coordW", i)-4)/8+1);
 			
-			if(caliBank!=null) {					
-				int ical = (int) p.getProperty("index");
-				p.setProperty("receu",    caliBank.getFloat("recEU", ical)*1e3);
-				p.setProperty("recev",    caliBank.getFloat("recEV", ical)*1e3);
-				p.setProperty("recew",    caliBank.getFloat("recEW", ical)*1e3);
+			int ical = (int) p.getProperty("index");
+			
+			if(caliBank!=null) {
+				p.setProperty("raweu", caliBank.getFloat("rawEU", ical)*1e3);
+				p.setProperty("rawev", caliBank.getFloat("rawEV", ical)*1e3);
+				p.setProperty("rawew", caliBank.getFloat("rawEW", ical)*1e3);
+				p.setProperty("receu", caliBank.getFloat("recEU", ical)*1e3);
+				p.setProperty("recev", caliBank.getFloat("recEV", ical)*1e3);
+				p.setProperty("recew", caliBank.getFloat("recEW", ical)*1e3);
 			}
+			
+			if(peakBank!=null && clusBank!=null) {
+				int idu = clusBank.getInt("idU",ical)-1, idv = clusBank.getInt("idV",ical)-1, idw = clusBank.getInt("idW",ical)-1;
+				p.setProperty("ustat", peakBank.getInt("status", idu));					
+				p.setProperty("vstat", peakBank.getInt("status", idv));					
+				p.setProperty("wstat", peakBank.getInt("status", idw));
+				
+				Point3D pc = new Point3D(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+				p.setProperty("leffu", getLeff(pc,getPeakline(idu,pc,peakBank))); //readout distance U
+				p.setProperty("leffv", getLeff(pc,getPeakline(idv,pc,peakBank))); //readout distance V
+				p.setProperty("leffw", getLeff(pc,getPeakline(idw,pc,peakBank))); //readout distance W
+			}
+			
 			ecalpart.add(p);
 		}
 		return ecalpart;
