@@ -636,6 +636,21 @@ public class ECstatus extends DetectorMonitor {
     	if (pbadA)         return 6;
     	if (pbadT)         return 7;
         return 0;
+    }    
+    
+    public int getTableStatus(int stat) {
+        switch (stat) 
+        {
+        case 0: return 0;  
+        case 1: return 1; 
+        case 2: return 2;  
+        case 3: return 3;  
+        case 4: return 4;
+        case 5: return 5; 
+        case 6: return 6;
+        case 7: return 2; //treat noisy and dead TDC as the same
+        }
+    return 0;    	
     }
       
     public double getPlotStatus(int stat) {            
@@ -652,21 +667,6 @@ public class ECstatus extends DetectorMonitor {
         }
     return 0.48;
         
-    }
-    
-    public int getTableStatus(int stat) {
-        switch (stat) 
-        {
-        case 0: return 0;  
-        case 1: return 1; 
-        case 2: return 2;  
-        case 3: return 3;  
-        case 4: return 4;
-        case 5: return 5; 
-        case 6: return 6;
-        case 7: return 2; //treat noisy and dead TDC as the same
-        }
-    return 0;    	
     }
     
     public Boolean goodA() {return aYS>10000;}
@@ -817,7 +817,7 @@ public class ECstatus extends DetectorMonitor {
     	isNorm = true;
     	if(!useATDATA) {getATNData("ECAL",1,7); fillNormHist("ECAL",1,7);}
     	analyzeSTATUS("ECAL",1,7,1);analyzeSTATUS("ECAL",1,7,2);
-    	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,9);
+    	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,10);
     }
     
     public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
