@@ -177,6 +177,15 @@ public class EngineControl implements ActionListener {
         cfigLB.setText(getConfigField());		
 	}
 	
+	public int getStripThr(int idet) {
+		switch (idet) {
+		case 0: return pcS;  
+		case 1: return eciS;  
+		case 2: return ecoS; 
+		}
+		return 0;
+	}
+	
     public int getStripThr(String config, int idet, int layer) {
         switch (config) {
         case     "pi0": return sthrPhot[idet][layer-1] ;  
