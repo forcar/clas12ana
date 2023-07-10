@@ -1032,7 +1032,6 @@ public class ECt extends DetectorMonitor {
                    fitter1.setRange(0,50); fitter1.fitSlicesY();
                    g = fitter1.getMeanSlices(); 
                    g.getAttributes().setTitleX("Sector "+is+" "+det[il]+" "+v[iv]+(ip+1)); g.getAttributes().setTitleY("");
-                   
                	   tl.fitData.add(fitEngine(g,6,0),is,3*il+iv+1,ip,run); //LEFF fits to obtain t0 and veff
               	   
                    fitter2 = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,3*il+iv+1,17,run).getData(ip).get(0));
