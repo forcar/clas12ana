@@ -43,7 +43,7 @@ public class EngineControl implements ActionListener {
 	public boolean debug=false,doEng=false,repeatEv=false,isMC=false,dbgECEngine=false ;
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections;
 	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2, outputECHITS;
-	public boolean useASA1, useASA2, useASA3, useASA4, useASA5, useCCPC, useCCEC, useCC;
+	public boolean useASA1, useASA2, useASA3, useASA4, useASA5, useCCPC, useCCEC, useCC, useDEF;
 	
 	public ECEngine engine = null;
 	
@@ -291,6 +291,7 @@ public class EngineControl implements ActionListener {
     
     public void setUseDEF(Boolean val) {
     	engine.setUseDEF(val);
+    	useDEF = val;
     }
     
     public void setUseASA1(Boolean val) {
@@ -316,6 +317,11 @@ public class EngineControl implements ActionListener {
     public void setUseASA5(Boolean val) {
     	engine.setUseASA5(val);
     	useASA5 = val;
+    } 
+    
+    public void setDefaultGain(Boolean val) {
+    	engine.setCCDBGain(!val);
+    	useDEF = val;
     } 
     
     public void setUseCCPC(Boolean val) {
