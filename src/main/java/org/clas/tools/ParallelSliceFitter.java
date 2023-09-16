@@ -46,6 +46,7 @@ public class ParallelSliceFitter {
 	boolean autorangeminbin = true;
 	boolean autorangemaxbin = true;
 	boolean showProgress = true;
+	boolean noFit = false;
 
 	String fitMode = "RN";
 	public String getFitMode() {
@@ -87,6 +88,11 @@ public class ParallelSliceFitter {
 	public void setBackgroundOrder(int mode) {
 		this.mode = mode + 1;
 	}
+	
+	public boolean setNoFit(boolean val) {
+		this.noFit = val;
+		return val;
+	}
 
 	public ParallelSliceFitter() {
 	}
@@ -116,7 +122,8 @@ public class ParallelSliceFitter {
 		if (autorangemaxbin) {
 			maxBin = slices.size();
 		}
-		fit();
+		if ( noFit) mean();
+		if (!noFit)  fit();
 	}
 	
 	public void fitSlicesX(){
@@ -139,7 +146,21 @@ public class ParallelSliceFitter {
 		if (autorangemaxbin ) {
 			maxBin = slices.size();
 		}
-		fit();
+		if ( noFit) mean();
+		if (!noFit)  fit();
+	}
+	
+	public GraphErrors getMeans() {
+		GraphErrors graph = new GraphErrors();
+		for (FitResults result : fitResults) {
+			if (result.getData().getIntegral() > this.minEvents) {
+				graph.addPoint(result.getPoint(), result.getMean(), 0,result.getMeanError());
+				graph.setTitleX(this.slices.get(0).getTitleX());
+				graph.setTitleY("Mean of Distribution");
+			}
+		}
+		return graph;
+		
 	}
 
 	public GraphErrors getChi2Slices() {
@@ -371,6 +392,20 @@ public class ParallelSliceFitter {
 		pane.add("Individual Fits", group);
 		return pane;
 	}
+	
+	private void mean() {
+		for (int i = 0; i < slices.size(); i++) {
+			if (i >= minBin && i < maxBin) {
+				H1F slice = slices.get(i);
+				if (slice.getIntegral() > minEvents) {
+					FitResults result = new FitResults();
+					result.setData(slice);
+					result.setPoint(axis.getBinCenter(i));							
+					fitResults.add(result);
+				}
+			}
+		}
+	}
 
 	private void fit() {
 		List<Callable<Object>> taskList = new ArrayList<Callable<Object>>(slices.size());
@@ -521,6 +556,13 @@ public class ParallelSliceFitter {
 		public double getPoint() {
 			return point;
 		}
+		public double getMean() {
+			return data.getMean();
+		}
+		public double getMeanError() {
+			return data.getIntegral()>0 ? data.getRMS()/Math.sqrt(data.getIntegral()):0;
+		}
+		
 		public void setPoint(double point) {
 			this.point = point;
 		}
