@@ -38,7 +38,7 @@ public class ECsf extends DetectorMonitor {
     String[]    v = new String[]{"u","v","w"};
     float     EB = 0;
     boolean isMC = false;
-    int nelec=0, trigger_sect=0;
+    int nelec=0;
     
     IndexedList<Integer> pathlist = new IndexedList<Integer>(3);
     
@@ -81,7 +81,6 @@ public class ECsf extends DetectorMonitor {
     	tl.fitData.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        eng.engine.setCCDBGain(!defaultGain);
     }
     
     @Override
@@ -405,7 +404,8 @@ public class ECsf extends DetectorMonitor {
     public void processEvent(DataEvent event) {
     	
         isMC = (getRunNumber()<100) ? true:false;
-        trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
+        
+        int trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
     	
@@ -433,9 +433,9 @@ public class ECsf extends DetectorMonitor {
 
 //      	printEC("Before: ", event.getBank("ECAL::clusters"));      	
 
-    	int nec0 = event.getBank("ECAL::clusters").rows();
+    	int nec0 = isMC ? event.getBank("REC::CaloExtras").rows():event.getBank("ECAL::clusters").rows();
         if(dropBanks) dropBanks(event);
-    	int nec1 = event.getBank("ECAL::clusters").rows();
+    	int nec1 = isMC ? event.getBank("REC::CaloExtras").rows():event.getBank("ECAL::clusters").rows();
         
         boolean goodEvent = nec0==nec1 && event.hasBank("REC::Particle") && event.hasBank("REC::Calorimeter");
         
@@ -444,8 +444,8 @@ public class ECsf extends DetectorMonitor {
         float Tvertex = event.hasBank("REC::Event") ? (isHipo3Event ? event.getBank("REC::Event").getFloat("STTime", 0):
                                                                       event.getBank("REC::Event").getFloat("startTime", 0)):0;  
         
-      	DataBank ecalclust = event.getBank("ECAL::clusters");
-      	DataBank ecalcalib = event.getBank("ECAL::calib");
+      	DataBank ecalclust = isMC ? event.getBank("REC::CaloExtras"):event.getBank("ECAL::clusters");
+      	DataBank ecalcalib = isMC ? event.getBank("REC::CaloExtras"):event.getBank("ECAL::calib");
       	
       	DataBank ecalmomnt = event.hasBank("ECAL::moments") ? event.getBank("ECAL::moments"):null;
         
@@ -521,14 +521,13 @@ public class ECsf extends DetectorMonitor {
                     y_ecal[ind]     = (float) xyz.y();
                     hx_ecal[ind]    = (float) hxyz.x();
                     hy_ecal[ind]    = (float) hxyz.y();
-//                  t_ecal[ind]     = t-Tvertex-pa/29.98f;
-                    t_ecal[ind]     = ecalclust.getFloat("time", ic)-Tvertex-pa/29.98f;
+                    t_ecal[ind]     = isMC ? t-Tvertex-pa/29.98f : ecalclust.getFloat("time", ic)-Tvertex-pa/29.98f;
                     e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
                     e_ecal_EL[ind] +=  ecalclust.getFloat("energy", ic);
                     e_ecal_EL[3]   +=  ecalclust.getFloat("energy", ic);
-                    iU[ind]         = (ecalclust.getInt("coordU", ic)-4)/8+1;
-                    iV[ind]         = (ecalclust.getInt("coordV", ic)-4)/8+1;
-                    iW[ind]         = (ecalclust.getInt("coordW", ic)-4)/8+1; 
+                    iU[ind]         = isMC ? ecalclust.getInt("dbstU",ic/10) : (ecalclust.getInt("coordU", ic)-4)/8+1;
+                    iV[ind]         = isMC ? ecalclust.getInt("dbstV",ic/10) : (ecalclust.getInt("coordV", ic)-4)/8+1;
+                    iW[ind]         = isMC ? ecalclust.getInt("dbstW",ic/10) : (ecalclust.getInt("coordW", ic)-4)/8+1; 
                     e_ecal_u[ind]   =  ecalcalib.getFloat("recEU",ic); //peak energy U
                     e_ecal_v[ind]   =  ecalcalib.getFloat("recEV",ic); //peak energy V
                     e_ecal_w[ind]   =  ecalcalib.getFloat("recEW",ic); //peak energy W
