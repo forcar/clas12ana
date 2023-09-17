@@ -228,11 +228,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECstatus("ECstatus","ECAL");
 //    		monitors[n] = new ECmc("ECmc");
 //    		monitors[n] = new ECmc1("ECmc1");
-    		monitors[n] = new ECmc2("ECmc2");
+//    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//  	    monitors[n] = new ECt("ECt"); 
+//     	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECperf("ECperf");
-//  		monitors[n] = new ECsf("ECsf"); 
+  		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
@@ -448,7 +448,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==co3) {dropSummary    = sc(e); monitors[0].dropSummary = dropSummary;}
 		if (s==co4) {dumpGraphs     = sc(e); monitors[0].dumpGraphs  = dumpGraphs;}
 		if (s==co4b){dumpFiles      = sc(e); monitors[0].dumpFiles   = dumpFiles;}
-		if (s==co5) {defaultGain    = sc(e); monitors[0].defaultGain = defaultGain;}
 		if (s==co6) {fiduCuts       = sc(e); monitors[0].fiduCuts    = fiduCuts;}
 		if (s==co7) {dropEsect      = sc(e); monitors[0].dropEsect   = dropEsect;}
 		if (s==co7) {onlyEsect      = sc(e); monitors[0].onlyEsect   = onlyEsect;}
@@ -459,6 +458,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf3) {gdfitEnable    = sc(e); monitors[0].gdfitEnable = gdfitEnable;}
 		if (s==cf4) {yLogEnable     = sc(e); monitors[0].setLogY(yLogEnable);} 
 		if (s==cf5) {zLogEnable     = sc(e); monitors[0].setLogZ(zLogEnable);}
+		if (s==co5) {defaultGain    = sc(e); monitors[0].eng.setDefaultGain(defaultGain);}		
 		if (s==cf6a){unsharedTime   = sc(e); monitors[0].eng.setUseUnsharedTime(unsharedTime);} 
 		if (s==cf6b){unsharedEnergy = sc(e); monitors[0].eng.setUseUnsharedEnergy(unsharedEnergy);}
 		if (s==cf6c){useFADCTime    = sc(e); monitors[0].eng.setUseFADCTime(useFADCTime);}
