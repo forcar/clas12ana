@@ -7,10 +7,16 @@ import java.util.Map;
 
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
+import org.jlab.detector.base.DetectorLayer;
+import org.jlab.detector.base.DetectorType;
+import org.jlab.detector.base.GeometryFactory;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedList.IndexGenerator;
+import org.jlab.geom.base.Detector;
+import org.jlab.geom.base.Layer;
+import org.jlab.geom.component.ScintillatorPaddle;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 
@@ -38,9 +44,8 @@ public class Event {
 	public boolean   isPhys = false;
 	
 	public List<Particle>              part    = new ArrayList<Particle>();	
-	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();
 	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);  
-	
+	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();	
 	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         htccMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
@@ -51,6 +56,7 @@ public class Event {
 	private boolean hasRECevent  = false;
 	private boolean hasRECscintillator = false;
 	private boolean hasRECcalorimeter = false;
+	private boolean hasRECcaloextras = false;	
 	private boolean hasRECcherenkov = false;
 	private boolean hasECALclusters = false;
 	private boolean hasECALcalib = false;
@@ -81,6 +87,9 @@ public class Event {
 	
     public List<Particle> pmc = new ArrayList<>();
     public List<Vector3>  pmv = new ArrayList<>();
+	
+    Detector  ecDetector =  GeometryFactory.getDetector(DetectorType.ECAL,11,"rga_fall2018");
+
     
 	public Event() {
 		
@@ -103,12 +112,12 @@ public class Event {
 		ftofBank = null;
 		clusBank = null;
 		caliBank = null;
-		peakBank = null;
-		
+		peakBank = null;		
 		mcBank   = null;
-		initpartmap(13); //initialize with cosmic muon (pid=13)
+
 		hasRUNconfig       = ev.hasBank("RUN::config");
 		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
+		hasRECcaloextras   = ev.hasBank("REC::CaloExtras");
 		hasECALclusters    = ev.hasBank("ECAL::clusters");	
 		hasRECevent        = ev.hasBank("REC::Event");
 		hasRECscintillator = ev.hasBank("REC::Scintillator");
@@ -121,7 +130,6 @@ public class Event {
 		hasHTCC            = ev.hasBank("HTCC::adc");
 		hasHTCCrec         = ev.hasBank("HTCC::rec");
 		hasMCParticle      = ev.hasBank("MC::Particle");
-		if(hasRUNconfig) processRUNconfig();		
 	}
 	
 	public boolean isGoodEvent() {
@@ -144,7 +152,8 @@ public class Event {
 	}
 	
 	public boolean procEvent(DataEvent event) {
-				
+		
+		if(hasRUNconfig)           processRUNconfig();						
         if(hasMCParticle)          processMCparticle();
         
         if(!isGoodEvent()) return false;
@@ -158,7 +167,8 @@ public class Event {
 	    	if(hasECALclusters)    processECALclusters();
 	    	if(hasECALclusters && hasRECcalorimeter && !isGoodRows()) return false;
 	    	if(hasECALpeaks)       processECALpeaks();
-	    	if(hasECALcalib)       processECALcalib();
+	    	if(hasECALcalib)       processECALcalib(); //pass1
+	    	if(hasRECcaloextras)   processRECcaloextras(); //pass2
 	    	if(hasRECtrack)        processRECtrack();
 	    	if(hasRECtraj)         processRECtraj();
 	    	if(hasRECparticle)     processRECparticle();
@@ -174,6 +184,7 @@ public class Event {
 			return true;
 		}
 	    if(isMuon) {
+			initpartmap(13); //initialize with cosmic muon (pid=13)
 	    	processECALclusters();
 	    	processECALpeaks();
 	    	processECALcalib();
@@ -181,17 +192,7 @@ public class Event {
 	    }
 	    return false;
 	}
-	
-	public List<Particle> getParticle(int ipid) {		
-		List<Particle> pout = new ArrayList<Particle>();
-	    IndexGenerator ig = new IndexGenerator();                
-	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
-	           int pid = ig.getIndex(entry.getKey(), 0);  
-	           if(ipid==pid) for (Particle p : entry.getValue()) pout.add(p);
-	    }	
-	    return pout;
-	}
-	
+
 	public void initpartmap(int pid) {
 		partmap.add(new ArrayList<Particle>(),pid);
 		Particle p = new Particle(pid, 0,0,0,0,0,0);                         			
@@ -256,6 +257,10 @@ public class Event {
 		storeRECcalorimeter(ev.getBank("REC::Calorimeter"));  		
 	}
 	
+	public void processRECcaloextras() {		
+		storeRECcaloextras(ev.getBank("REC::CaloExtras"));  		
+	}
+	
 	public void processRECcherenkov() {		
 		storeRECcherenkov(ev.getBank("REC::Cherenkov"));  		
 	}
@@ -302,8 +307,8 @@ public class Event {
 	
 	public void storeRECparticle(DataBank bank) {
 		partBank = bank;
-		getPART(); //fill list part - replica of PART bank
-		partMap  = loadMapByIndex(partBank,"pid");	 //fill IndexedList partMap
+		getPART(); //REC::Particle converted to List<Particle> part
+		partMap  = loadMapByIndex(partBank,"pid");	 //"pid" mapped to REC::Particle index
 	}
 
 	
@@ -311,7 +316,7 @@ public class Event {
 		caloBank = bank;
 		caloMap  = loadMapByIndex(caloBank,"pindex");
 	}
-	
+		
 	public void storeRECcherenkov(DataBank bank) {
 		htccBank = bank;
 		htccMap  = loadMapByIndex(htccBank,"pindex");
@@ -334,6 +339,10 @@ public class Event {
 	
 	public void storeECALclusters(DataBank bank) {	
 		clusBank = bank;
+	}
+	
+	public void storeRECcaloextras(DataBank bank) {
+		caliBank = bank;
 	}
 	
 	public void storeECALcalib(DataBank bank) {	
@@ -374,12 +383,13 @@ public class Event {
     public boolean isGoodFD()                {return  getFDTrigger()>0;}    
     public boolean isTrigBitSet(int bit)     {int mask=0; mask |= 1<<bit; return isTrigMaskSet(mask);}
     public boolean isTrigMaskSet(int mask)   {return (getFDTrigger()&mask)!=0;}	
-    
-    public int getElecTriggerSector() {
+        
+    public int getElecTriggerSector(Boolean shift) { //shift: true=outbending e- false=inbending e-
+    	int[] tb = new int[32];
     	int tbsum=0, ts=0;
     	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
-    	for (int i=1; i<7; i++) {
-    		tbsum+=tb[i]; if(tb[i]>0) ts=i;
+    	for (int i=shift?8:1; i<(shift?14:7); i++) {
+    		tbsum+=tb[i]; if(tb[i]>0) ts=shift?i-7:i;
     	}
     	return (tbsum==0||tbsum>1) ? 0:ts;
     }
@@ -428,9 +438,9 @@ public class Event {
             }
             part.add(i,p);     //Lists do not support sparse indices !!!!!            
         }                		
-	}
+	}	
 	
-    public List<Particle> getPART(double thr, int pid) {   	
+    public List<Particle> getPART(double thr, int pid) { //returns all FD entries with energy>thr and requested pid
     	List<Particle> olist = new ArrayList<Particle>();    
     	for (Particle p : getParticle(pid)) {
     		short status = (short) p.getProperty("status");
@@ -438,11 +448,21 @@ public class Event {
     	}          	
        return olist;    	
     }
-	
-	//Recreate particle class for tpid from partMap and partBank and store in IndexedList<List<Particle>> partmap with ip index	
+    
+	public List<Particle> getParticle(int ipid) {		
+		List<Particle> olist = new ArrayList<Particle>();
+	    IndexGenerator ig = new IndexGenerator();                
+	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
+	           int pid = ig.getIndex(entry.getKey(), 0);  
+	           if(ipid==pid) for (Particle p : entry.getValue()) olist.add(p);
+	    }	
+	    return olist;
+	}
+		
+	//Use partMap to convert REC::Particle to partmap with tpid index
 	private void getRECparticle(int tpid) {		
 		if(partMap.containsKey(tpid)) {
-			for(int ipart : partMap.get(tpid)){  
+			for(int ipart : partMap.get(tpid)){  //retrieve tpid indexed pointer to REC::Particle
 				int      pid = partBank.getInt("pid",  ipart);              
 				float     px = partBank.getFloat("px", ipart);
 				float     py = partBank.getFloat("py", ipart);
@@ -575,7 +595,7 @@ public class Event {
 		List<Particle> ecalpart = new ArrayList<Particle>();		
 		for (int i = 0; i<clusBank.rows(); i++) {
 			Particle p = new Particle(); 
-			p.copy(part.get(0));
+			p.copy(part.get(0)); //initialized with pid=13 for isMuon=true
 			p.setProperty("sector", clusBank.getByte("sector",i)); 
 			p.setProperty("layer",  clusBank.getByte("layer",i));
 			p.setProperty("pindex", 0);
@@ -630,11 +650,11 @@ public class Event {
 	public List<Particle> getECALPHYS(int ipart) { //for physics runs
 		List<Particle> ecalpart = new ArrayList<Particle>();
 		if(caloMap.containsKey(ipart)) {
-			for(int imap : caloMap.get(ipart)) {				
+			for(int imap : caloMap.get(ipart)) { //loop over all entries with pid=ipart			
 				Particle p = new Particle(); 
 				p.copy(part.get(caloBank.getShort("pindex",imap)));
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
-				p.setProperty("layer",  caloBank.getByte("layer",imap));
+				p.setProperty("layer",  caloBank.getByte("layer",imap)); //layer=1,4,7
 				p.setProperty("pindex", caloBank.getShort("pindex",imap));
 				p.setProperty("index",  caloBank.getShort("index",imap));
 				p.setProperty("energy", caloBank.getFloat("energy",imap)*1e3);
@@ -670,24 +690,39 @@ public class Event {
 //				boolean goodMatch = clusBank!=null && is==clusBank.getByte("sector", ical) && lay==clusBank.getByte("layer",ical);
 				boolean goodMatch = clusBank!=null ;
 				
-//				if(!goodMatch) continue;								
+//				if(!goodMatch) continue;
+				
+				if(clusBank==null && caliBank!=null) { //use REC::CaloExtras which is column mapped to REC::Calorimeter
+					p.setProperty("iu",    (caliBank.getInt("dbstU", imap)/10));
+					p.setProperty("iv",    (caliBank.getInt("dbstV", imap)/10));
+					p.setProperty("iw",    (caliBank.getInt("dbstW", imap)/10));					
+					p.setProperty("raweu", caliBank.getFloat("rawEU", imap)*1e3);
+					p.setProperty("rawev", caliBank.getFloat("rawEV", imap)*1e3);
+					p.setProperty("rawew", caliBank.getFloat("rawEW", imap)*1e3);
+					p.setProperty("receu", caliBank.getFloat("recEU", imap)*1e3);
+					p.setProperty("recev", caliBank.getFloat("recEV", imap)*1e3);
+					p.setProperty("recew", caliBank.getFloat("recEW", imap)*1e3);	
+					p.setProperty("leffu", getLeff(is,lay+0,(int)p.getProperty("iu"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance U
+					p.setProperty("leffv", getLeff(is,lay+1,(int)p.getProperty("iv"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance V
+					p.setProperty("leffw", getLeff(is,lay+2,(int)p.getProperty("iw"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance W
+				}
 				
 				if(clusBank!=null) {
-				p.setProperty("cstat",  clusBank.getInt("status", ical));					
-				p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
-				p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
-				p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);					
-				p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
-				p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
-				p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
-				p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
-				p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
-				tim2 = (float) p.getProperty("time");
+					p.setProperty("cstat",  clusBank.getInt("status", ical));					
+					p.setProperty("iu",    (clusBank.getInt("coordU", ical)-4)/8+1);
+					p.setProperty("iv",    (clusBank.getInt("coordV", ical)-4)/8+1);
+					p.setProperty("iw",    (clusBank.getInt("coordW", ical)-4)/8+1);					
+					p.setProperty("x",      clusBank.getFloat("x",ical)); //override caloBank with clusBank
+					p.setProperty("y",      clusBank.getFloat("y",ical)); //override caloBank with clusBank
+					p.setProperty("z",      clusBank.getFloat("z",ical)); //override caloBank with clusBank
+					p.setProperty("energy", clusBank.getFloat("energy",ical)*1e3); //override caloBank with clusBank
+					p.setProperty("time",   clusBank.getFloat("time",ical)); //override caloBank with clusBank
+					tim2 = (float) p.getProperty("time");
 				}
 				
 				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
 				
-				if(caliBank!=null) {					
+				if(clusBank!=null && caliBank!=null) {	//use ECAL::calib which is column mapped to ECAL::clusters				
 					p.setProperty("raweu", caliBank.getFloat("rawEU", ical)*1e3);
 					p.setProperty("rawev", caliBank.getFloat("rawEV", ical)*1e3);
 					p.setProperty("rawew", caliBank.getFloat("rawEW", ical)*1e3);
@@ -720,7 +755,13 @@ public class Event {
 							p.setProperty("tx",     trajBank.getFloat("x",tmap));
 							p.setProperty("ty",     trajBank.getFloat("y",tmap));
 							p.setProperty("tz",     trajBank.getFloat("z",tmap));
-							p.setProperty("cz",     trajBank.getFloat("cz",tmap));
+							float cx = trajBank.getFloat("cx", tmap);
+							float cy = trajBank.getFloat("cy", tmap);
+							float cz = trajBank.getFloat("cz", tmap);
+							Point3D xyz = new Point3D(cx,cy,cz);
+							xyz.rotateZ(Math.toRadians(-60*(is-1)));
+							xyz.rotateY(Math.toRadians(-25.));						 
+							p.setProperty("cz", xyz.z());
 					   }
 					}
 				}
@@ -729,8 +770,30 @@ public class Event {
 		}
 		return ecalpart;
 	}
+    
+    public float getLeff(Point3D point, Line3D peakline) {
+    	return (float) point.distance(peakline.end());
+    }
+	
+    public float getLeff(int is, int il, int ic, double x, double y, double z) { // is: 1-6 il: 1,2,3=PCAL 4,5,6=ECIN 7,8,9=ECOU
+        Line3D peakline = getPeakline(is,il,ic);
+        Point3D po = new Point3D(peakline.origin().x(),peakline.origin().y(),peakline.origin().z());
+        Point3D pe = new Point3D(peakline.end().x(),   peakline.end().y(),   peakline.end().z());
+        return getLeff(new Point3D(x,y,z),new Line3D(po,pe));
+    }
+    
+    public Line3D getPeakline(int is, int il, int ic) { //calculate peakline from geometry package
+        int superlayer = (int) ((il-1)/3); //0=PCAL 1=ECIN 2=ECOU
+        int localLayer = (il-1)%3;         //0=U 1=V 2=W
+        int pcalz = DetectorLayer.PCAL_Z;
+        int ecinz = DetectorLayer.EC_INNER_Z;
+        int ecouz = DetectorLayer.EC_OUTER_Z;
+        int off = superlayer==0 ? pcalz : (superlayer==1 ? ecinz : ecouz);
+        Layer detLayer = ecDetector.getSector(is-1).getSuperlayer(superlayer).getLayer(localLayer+off); //localLayer+off=9,10,11 for U,V,W planes
+        return ((ScintillatorPaddle) detLayer.getComponent(ic-1)).getLine();
+    }
 	    
-    public Line3D getPeakline(int iid, Point3D point, DataBank bank) {    	
+    public Line3D getPeakline(int iid, Point3D point, DataBank bank) { //get peakline from ECAL::peaks
         Point3D  po = new Point3D(bank.getFloat("xo",iid),
                                   bank.getFloat("yo",iid),
                                   bank.getFloat("zo",iid));
@@ -739,11 +802,7 @@ public class Event {
                                   bank.getFloat("ze",iid));
         return  new Line3D(po,pe);
     }
-    
-    public float getLeff(Point3D point, Line3D peakline) {
-    	return (float) point.distance(peakline.end());
-    }
-    	
+	
 	public float getVar(List<Particle> list, String property, int layer) {
 		for (Particle p: list ) {
 			if (p.getProperty("layer") == layer) {
