@@ -78,7 +78,7 @@ public class ECt extends DetectorMonitor {
     static float    RFPERIOD = 4.008f;
     static float BEAM_BUCKET = 2.004f;
     static float           c = 29.98f;
-    static float    A0offset = 0f;  //RGM pass0 only
+    static float    A0offset = 0f;  //RGM pass0 only for EC Z-plane compensation
     static float    A0sector = 0;  
     static float         tps =  (float) 0.02345;
     float[] shiftTV = {0,40,0,0,0,0}; //Run 3050 t0 calibration  
@@ -499,7 +499,7 @@ public class ECt extends DetectorMonitor {
        
        BGOFFSET = isMC ? 0:0; 
        
-       int elec_trigger_sect = isMC ? 1 : getElecTriggerSector();       
+       int elec_trigger_sect = isMC ? 1 : getElecTriggerSector(shiftTrigBits(getRunNumber()));       
        int htcc_trigger_sect = getHTCCTriggerSector()-1;
        
        boolean goodECALSector = elec_trigger_sect>0 && elec_trigger_sect<7; 
@@ -838,7 +838,7 @@ public class ECt extends DetectorMonitor {
                        
                        if (!dropSummary && goodHisto) {  //Menu selection
                            ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET-FTOFFSET, ip); //peak times
-                           ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t+TOFFSET-FTOFFSET,  ip); //cluster times
+                           ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t +TOFFSET-FTOFFSET, ip); //cluster times
                            ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
                            ((H2F) this.getDataGroup().getItem(is,il+i,11,run).getData(ip-1).get(0)).fill(path, resid);
                            ((H2F) this.getDataGroup().getItem(is,il+i,12,run).getData(ip-1).get(0)).fill(ener, resid);
@@ -1333,12 +1333,12 @@ public class ECt extends DetectorMonitor {
 					for (int iv=iv1; iv<iv2; iv++) {
 						for (int ip=0; ip<npmt[3*il+iv]; ip++) {
 							switch (table) {
-							case "timing_update":      line =  getA0( is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
-							case "dtime_update":       line =  getDA0(is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
-							case "ftime_update":       line =  getFA0(is,il,iv,ip,il==il1 ? 0 : A0offset); break; //RGM pass0 EC Z-plane compensation
-							case "timing":             line =  getTW(is,il,iv,ip);  break;
+							case "timing_update":      line =  getA0( is,il,iv,ip); break; 
+							case "dtime_update":       line =  getDA0(is,il,iv,ip); break; 
+							case "ftime_update":       line =  getFA0(is,il,iv,ip); break; 
+							case "timing":             line =  getTW(is,il,iv,ip);  break; //pass1
 							case "dtime":              line =  getDTW(is,il,iv,ip,false); break; //true: update TWC but not offset
-							case "ftime":              line =  getFTW(is,il,iv,ip); break;
+							case "ftime":              line =  getFTW(is,il,iv,ip,false); break;
 							case "effective_velocity": line =  getEV(is,il,iv,ip);  break;
 							case "fveff":              line =  getEV(is,il,iv,ip);  break;
 							case "tmf_offset":         line =  getTMF(is,il,iv,ip); break;  
@@ -1400,10 +1400,10 @@ public class ECt extends DetectorMonitor {
 		
 	}
 		
-	public String getFTW(int is, int il, int iv, int ip) { //Absolute FADC residual calibration + pass 2 time walk
+	public String getFTW(int is, int il, int iv, int ip, boolean update) { //Absolute FADC residual calibration + pass 2 time walk
 		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
-		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
-				+tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0 //fits to corrected t vs leff
+		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "+
+			    (update ? ftime.getDoubleValue("a0",is,3*il+iv+1,ip+1):tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0)				
 				+" 0.02345 "
 				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p0+" "
 				+tl.fitData.getItem(is,3*il+iv+1,ip+200,getRunNumber()).p1+" "
@@ -1416,11 +1416,11 @@ public class ECt extends DetectorMonitor {
 		
 	}
 
-	public String getA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
+	public String getA0(int is, int il, int iv, int ip) { //Adjust residual offset only
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(time.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip))+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+time.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" " //replace with table
 				+time.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" " //replace with table
@@ -1431,11 +1431,11 @@ public class ECt extends DetectorMonitor {
 		
 	}
 	
-	public String getDA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
+	public String getDA0(int is, int il, int iv, int ip) { //Adjust residual offset only
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 			return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(dtime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip))+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+dtime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+dtime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
@@ -1450,11 +1450,11 @@ public class ECt extends DetectorMonitor {
 		
 	}
 	
-	public String getFA0(int is, int il, int iv, int ip, float off) { //Relative residual calibration
+	public String getFA0(int is, int il, int iv, int ip) { //Adjust residual offset only
 		if(FitSummary.hasItem(is,il,iv,getRunNumber())) {
 		    return is+" "+(3*il+iv+1)+" "+(ip+1)+" "
 				+(ftime.getDoubleValue("a0", is, 3*il+iv+1, ip+1) 
-				+rejectLoVW(is,il,iv,ip)+off)+" "  //residual correction to previous a0
+				+rejectLoVW(is,il,iv,ip))+" "  //residual correction to previous a0
 				+" 0.02345 "
 				+ftime.getDoubleValue("a2", is, 3*il+iv+1, ip+1)+" "
 				+ftime.getDoubleValue("a3", is, 3*il+iv+1, ip+1)+" "
@@ -1467,9 +1467,9 @@ public class ECt extends DetectorMonitor {
 		
 	}
 	
-	public float rejectLoVW(int is, int il, int iv, int ip) { // poorly populated V,W strips
+	public float rejectLoVW(int is, int il, int iv, int ip) { // low occupancy V,W strips
 		if ((iv==1 || iv==2) && ip<5) return 0f;
-		return (float) FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip);
+		return (float) FitSummary.getItem(is,il,iv,getRunNumber()).getDataY(ip)+A0offset;
 	}
 
 	
