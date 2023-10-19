@@ -106,7 +106,6 @@ public class ECmip extends DetectorMonitor {
     	Fits.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        eng.engine.setCCDBGain(!defaultGain);
     }
     
      @Override    
@@ -794,8 +793,11 @@ public class ECmip extends DetectorMonitor {
                 int iis = is+1;
 //                if (isGoodTrigger(iis)) {
 //                if(n1[is]>=1&&n1[is]<=4&&n4[is]>=1&&n4[is]<=4) { //Cut out vertical cosmic rays
+               boolean pcMuon = n1[is]==1 || n4[is]==1 || n7[is]==1;
+               boolean   Muon = n1[is]==1 && n4[is]==1 && n7[is]==1;
                 
-               Boolean mtest = (trig==-1 || isMC) ? (n1[is]==1 || n4[is]==1 || n7[is]==1) : (n1[is]==1 && n4[is]==1 && n7[is]==1);
+               Boolean mtest = (trig==-1 || isMC) ? pcMuon : Muon; //7.29.2023
+               
                if(trigger==(trig==-1?0:trig) && mtest  && iis==(isMC ? iis:iis)) { //Only one cluster in each layer to reject vertical cosmics
             	   
             	   
