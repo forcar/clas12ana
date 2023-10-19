@@ -36,7 +36,7 @@ public class EChv extends DetectorMonitor {
     int detid;
 	
     public EChv(String name) {
-    	super(name);		
+    	super(name);
     }
     
     public List<String> getList(String path) { 
@@ -156,23 +156,23 @@ public class EChv extends DetectorMonitor {
     
 //  *** runCompareFiles() ***    
 		
-    public static void runCompareFiles() {
+    public static void runCompareFiles(int id) {
     	EChv reader = new EChv("EChv");
-    	//0,6,0:PCAL_HV-2017_11_23-09_16_01.snp PCAL_HV-2020_10_09-10_43_25.snp
-		//1,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		//2,6,0:ECAL_HV-2020_10_09-10_43_57.snp ECAL_HV-2017_11_23-09_15_28.snp
-		int det=0, snp1=7, snp2=0;
-		reader.compareFiles(det,snp1,snp2);    	
+		if(id==0) reader.compareFiles(0,"PCAL_HV-2017_11_23-09_15_28.snp","PCAL_HV-2022_06_21-21_55_52.snp"); 
+        if(id==1) reader.compareFiles(1,"ECAL_HV-2017_11_23-09_15_28.snp","ECAL_HV-2022_06_27-20_38_08.snp"); 
+        if(id==2) reader.compareFiles(2,"ECAL_HV-2017_11_23-09_15_28.snp","ECAL_HV-2022_06_27-20_38_08.snp"); 
+		
     }
         
-    public void compareFiles(int detid, int... item) {
+    public void compareFiles(int detid, String... item) {
 		String dir = "/Users/colesmith/clas12/HV/";
 		this.detid = detid; String det = detid==0?"PCAL":"ECAL";
 		int n=0;
-		for (int it: item) {
+		for (String snp: item) {
 			setGStyle(n);
 			createHVHistos(detid,"(VOLTS)");  this.getDataGroup().add(dg,detid,0,0,0);
-			fillHistos(parseList(getList(dir+det+"_HV/"+getList(dir+"dump_"+det).get(it))),n);
+//			fillHistos(parseList(getList(dir+det+"_HV/"+getList(dir+"dump_"+det).get(it))),n);
+			fillHistos(parseList(getList(dir+det+"_HV/"+snp)),n);
 			getMean(n); n++;
 		}
 		if(item.length==2) setTitles();
@@ -210,6 +210,7 @@ public class EChv extends DetectorMonitor {
     
     public void setGStyle(int icol) {
     	GStyle.getH1FAttributes().setOptStat("100");
+    	GStyle.getAxisAttributesX().setTitleFontSize(18);    	
     	switch (icol) {
     	case 0: GStyle.getH1FAttributes().setFillColor(0);
     	        GStyle.getH1FAttributes().setLineWidth(5); break;
@@ -223,13 +224,13 @@ public class EChv extends DetectorMonitor {
        for (int is=1; is<7; is++) {
     	   switch (id) {
     	   case 0:         
-           h = new H1F("hv_pcal_u_"+is, 10, 750,1000);   
+           h = new H1F("hv_pcal_u_"+is, 10, 750,1050);   
            h.setTitleX("Sector "+is+" PCAL U "+txt); 
            dg.addDataSet(h,is-1);  
-           h = new H1F("hv_pcal_v_"+is, 10, 750, 1000); 
+           h = new H1F("hv_pcal_v_"+is, 10, 750, 1050); 
            h.setTitleX("Sector "+is+" PCAL V "+txt);        
            dg.addDataSet(h,is-1+6);            
-           h = new H1F("hv_pcal_w_"+is, 10, 750, 1000);  
+           h = new H1F("hv_pcal_w_"+is, 10, 750, 1050);  
            h.setTitleX("Sector "+is+" PCAL W "+txt); 
            dg.addDataSet(h,is-1+12); 
            break;
@@ -279,6 +280,16 @@ public class EChv extends DetectorMonitor {
     	return 0;
     }
     
+    public boolean reject(int idet, int is, int il, int ip) {
+    	if(idet==0) return false;
+    	if(is==5 && il==1 && ip==15) return true;
+    	if(is==5 && il==1 && ip==16) return true;
+    	if(is==6 && il==2 && ip==13) return true;
+    	if(is==6 && il==0 && ip==4)  return true;
+    	if(is==6 && il==0 && ip==6)  return true;
+    	return false;
+    }
+    
     public void fillHistos(IndexedList<List<Integer>> hvlist, int n) {
     	IndexGenerator ig = new IndexGenerator();
 	    for (Map.Entry<Long,List<Integer>>  entry : hvlist.getMap().entrySet()){
@@ -287,7 +298,7 @@ public class EChv extends DetectorMonitor {
 	           int il = ig.getIndex(entry.getKey(), 2);   
 	           int ip = ig.getIndex(entry.getKey(), 3);  
 	           int hv = entry.getValue().get(0);
-	           if(hv>100) ((H1F) this.getDataGroup().getItem(id,0,0,0).getData(is+il*6).get(n)).fill(hv);	           
+	           if(!reject(id,is,il,ip)) ((H1F) this.getDataGroup().getItem(id,0,0,0).getData(is+il*6).get(n)).fill(hv);	           
 	    }    	
     }
     
@@ -323,9 +334,14 @@ public class EChv extends DetectorMonitor {
     }
 
 	public static void main(String[] args) {
-//		runCompareFiles();	
+		runCompareFiles(2);	
+// RGD		
+//		runGenerateSNP(18312,0,"PCAL_HV-2023_09_23-09_56_53.snp");  
+//		runGenerateSNP(18312,1,"ECAL_HV-2023_09_25-07_29_35.snp");  
+// RGC		
 //		runGenerateSNP(16066,0,"PCAL_HV-2022_06_17-18_24_13.snp");
-		runGenerateSNP(16066,1,"ECAL_HV-2022_06_17-18_23_29.snp");
+//		runGenerateSNP(16066,1,"ECAL_HV-2022_06_17-18_23_29.snp");
+//		runGenerateSNP(16149,1,"ECAL_HV_hvgain_16066.snp");		
 	}
 
 }
