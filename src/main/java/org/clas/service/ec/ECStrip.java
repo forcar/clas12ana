@@ -70,7 +70,7 @@ public class ECStrip implements Comparable {
         ecc = new corrEnergy(); 
         ftc = ECCommon.usePass2Timing ? new ExtendedTWCFTime() : new ExtendedTWCTime(); //FADC timing calibration
         dtc = ECCommon.usePass2Timing ? new ExtendedTWCDTime() : new ExtendedTWCTime(); //choose pass2 or pass1 for TDC timing
-        tc  = ECCommon.useFADCTime ? ftc : dtc; //user selected calibration of FADC or TDC timing
+        tc  = useFT() ? ftc : dtc; //user selected calibration of FADC or TDC timing
     }
     
     abstract class EnergyCorrection {
