@@ -185,7 +185,7 @@ public class ECelas extends DetectorMonitor {
     }
     
     public boolean processFilter(DataEvent event) {
-    	int sec = getElecTriggerSector();
+    	int sec = getElecTriggerSector(true);
         RecCal   = event.hasBank("REC::Calorimeter") ? event.getBank("REC::Calorimeter"):null;
         RecPart  = event.hasBank("REC::Particle")    ? event.getBank("REC::Particle"):null;       
     	boolean test1 = RecPart!=null && RecPart.rows()!=0;
@@ -305,7 +305,7 @@ public class ECelas extends DetectorMonitor {
     }
 
     public void processEV(DataEvent event) { 
-    	int ist = getElecTriggerSector();
+    	int ist = getElecTriggerSector(shiftTrigBits(getRunNumber()));
         for(int loop = 0; loop < RecPart.rows(); loop++){
         	if(RecPart.getInt("pid",loop)!=0) {
         		Particle p = new Particle(RecPart.getInt("pid", loop),

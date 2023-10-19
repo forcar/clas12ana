@@ -123,7 +123,6 @@ public class ECa extends DetectorMonitor {
     	FitSummary.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        eng.engine.setCCDBGain(!defaultGain);
     }
     
     @Override
@@ -585,7 +584,7 @@ public class ECa extends DetectorMonitor {
         
         if (!isMC) {
 		// TRIGGER BIT SECTOR
-      	trigger_sect = getElecTriggerSector(); 
+      	trigger_sect = getElecTriggerSector(shiftTrigBits(getRunNumber())); 
       	
       	// HTCC*PCAL Q<0
 //      	if(event.hasBank("REC::Particle"))  trig_part_ind = makeTrigElectron(event.getBank("REC::Particle"),event); 
