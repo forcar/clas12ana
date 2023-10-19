@@ -214,6 +214,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean          useATDATA = false;
     public Boolean            normPix = false;
     public Boolean            normAtt = false;
+    public Boolean             normCz = false;
     public Boolean             SFcorr = false;
     public Boolean             TWcorr = false;
     public Boolean              HiRes = false;
@@ -517,7 +518,7 @@ public class DetectorMonitor implements ActionListener {
     public boolean isTrigMaskSet(int mask)   {return (getFDTrigger()&mask)!=0;}
     public boolean isGoodECALTrigger(int is) {return (testTrigger)? is==getECALTriggerSector():true;}    
     public int           getElecTrigger()    {return getFDTrigger()&0x1;}
-    public int     getElecTriggerSector()    {return (int) (isGoodFD() ? Math.log10((getFDTrigger()&0x7e)>>1)/0.301+1:0);} 
+//    public int     getElecTriggerSector()    {return (int) (isGoodFD() ? Math.log10((getFDTrigger()&0x7e)>>1)/0.301+1:0);} 
     public int     getECALTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>19)/0.301+1:0);}       
     public int     getPCALTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>13)/0.301+1:0);}       
     public int     getHTCCTriggerSector()    {return (int) (isGoodFD() ? Math.log10(getFDTrigger()>>7)/0.301+1:0);} 
@@ -528,6 +529,16 @@ public class DetectorMonitor implements ActionListener {
     public boolean testTriggerMask()      {return TriggerMask!=0 ? isTrigMaskSet(TriggerMask):true;}
     public boolean isGoodTrigger(int bit) {return TriggerBeam[bit] ? isTrigBitSet(bit):true;}
    
+    public int getElecTriggerSector(Boolean shift) { //shift: true=outbending e- false=inbending e-
+    	int[] tb = new int[32];
+    	int tbsum=0, ts=0;
+    	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
+    	for (int i=shift?8:1; i<(shift?14:7); i++) {
+    		tbsum+=tb[i]; if(tb[i]>0) ts=shift?i-7:i;
+    	}
+    	return (tbsum==0||tbsum>1) ? 0:ts;
+    }
+    
     public EmbeddedCanvasTabbed getDetectorCanvas() {
          return detectorCanvas;
     }
@@ -1118,28 +1129,34 @@ public class DetectorMonitor implements ActionListener {
     
     public float getTorusCurrent(int run) {
     	if (run<100) return 1.00f;
-    	if (run>=2379&&run<=2394) return +1.00f;
-     	if (run>=2394&&run<=2500) return +0.60f;
-    	if (run>=2526&&run<=2635) return -0.60f;
-    	if (run>=2636&&run<=3065) return -1.00f;
-    	if (run>=3066&&run<=3095) return -0.75f;
-    	if (run>=3096&&run<=3107) return +0.75f;
-    	if (run>=3129&&run<=3293) return +1.00f;
-    	if (run>=3304&&run<=3817) return -1.00f;
-    	if (run>=3819&&run<=3834) return +0.75f;
-    	if (run>=3839&&run<=3987) return +1.00f;
-    	if (run>=3995&&run<=4326) return -1.00f;  
-    	if (run>=4624&&run<=5419) return -1.00f;  
-    	if (run>=5420&&run<=5995) return +1.00f;  
-    	if (run>=5996&&run<=6000) return +0.50f;  
-    	if (run>=6001&&run<=6141) return  0f;
-    	if (run>=6142&&run<=6783) return -1.00f;  
+    	if (run>=2379&&run<=2394)   return +1.00f;
+     	if (run>=2394&&run<=2500)   return +0.60f;
+    	if (run>=2526&&run<=2635)   return -0.60f;
+    	if (run>=2636&&run<=3065)   return -1.00f;
+    	if (run>=3066&&run<=3095)   return -0.75f;
+    	if (run>=3096&&run<=3107)   return +0.75f;
+    	if (run>=3129&&run<=3293)   return +1.00f;
+    	if (run>=3304&&run<=3817)   return -1.00f;
+    	if (run>=3819&&run<=3834)   return +0.75f;
+    	if (run>=3839&&run<=3987)   return +1.00f;
+    	if (run>=3995&&run<=4326)   return -1.00f;  
+    	if (run>=4624&&run<=5419)   return -1.00f;  
+    	if (run>=5420&&run<=5995)   return +1.00f;  
+    	if (run>=5996&&run<=6000)   return +0.50f;  
+    	if (run>=6001&&run<=6141)   return  0f;
+    	if (run>=6142&&run<=6783)   return -1.00f;  
     	if (run>=11285&&run<=11285) return +1.00f; 
     	if (run>=15000&&run<=15490) return -1.00f;
     	if (run>=15491&&run<=15732) return +0.50f;  
-    	if (run>=15733) return -1.0f;
+    	if (run>=15733&&run<=18417) return -1.0f;
+    	if (run>=18418)             return +1.0f;
     	return 0.00f;
-    } 
+    }
+    
+    public boolean shiftTrigBits(int run) {
+    	if (run>=16050 && getTorusCurrent(run)>0) return true;
+    	return false;
+    }
     
     public String getRunGroup(int run) {
     	if (run>=5674&&run<=6000) return "rgk";
@@ -1147,6 +1164,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=6604)            return "rga-s19";
     	if (run>=11000)           return "rgb";
     	if (run>=15000)           return "rgm";
+    	if (run>=16050)           return "rgc";
+    	if (run>=18127)           return "rgd";
     	return "rga";
     }
     
@@ -1534,7 +1553,7 @@ public class DetectorMonitor implements ActionListener {
        fd.setHist(h);
        fd.graph.getAttributes().setTitleX(h.getTitleX()); 
        fd.hist.getAttributes().setTitleX(h.getTitleX()); 
-       fd.doMeanHist(hmax);
+       fd.doMeanHist(hmax); //use Mean of blue MIP histo
        fd.initFit(ff,hmax); 
        fd.fitGraph("",cfitEnable,fitVerbose); 
        return fd;
