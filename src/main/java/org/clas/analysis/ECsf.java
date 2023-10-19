@@ -102,7 +102,7 @@ public class ECsf extends DetectorMonitor {
         createSecHistos("E/P",0,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_emf", " Measured Energy (GeV)", " E/P",dg);
         if(dropSummary) return;
         createSecHistos("E/P",0,1,50,0.2,EB,  50,0.1,0.35,"ep_pf",  " Momentum (GeV)",   " E/P",dg);
-        createSecHistos("E/P",0,2,60, 6.2,11.,50,0.1,0.35,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
+        createSecHistos("E/P",0,2,60, 5.0,11.,50,0.1,0.35,"ep_thvf"," VertexTheta (deg)"," E/P",dg);
         createSecHistos("E/P",0,3,80, 2.5,11.,50,0.1,0.35,"ep_thdf"," Detector Theta (deg)"," E/P",dg);
         dg = new DataGroup(6,4);
         createSecHistos("E/P",1,0,50,0.0,EB*0.25,50,0.12,0.35,"ep_em", " Measured Energy (GeV)", " E/P",dg);
@@ -405,7 +405,9 @@ public class ECsf extends DetectorMonitor {
     	
         isMC = (getRunNumber()<100) ? true:false;
         
-        int trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(); 
+        boolean outb = shiftTrigBits(getRunNumber()); // true=outbending e- false=inbending e-
+        
+        int trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(outb); 
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
     	
@@ -522,15 +524,16 @@ public class ECsf extends DetectorMonitor {
                     hx_ecal[ind]    = (float) hxyz.x();
                     hy_ecal[ind]    = (float) hxyz.y();
                     t_ecal[ind]     = isMC ? t-Tvertex-pa/29.98f : ecalclust.getFloat("time", ic)-Tvertex-pa/29.98f;
-                    e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));	               
-                    e_ecal_EL[ind] +=  ecalclust.getFloat("energy", ic);
-                    e_ecal_EL[3]   +=  ecalclust.getFloat("energy", ic);
-                    iU[ind]         = isMC ? ecalclust.getInt("dbstU",ic/10) : (ecalclust.getInt("coordU", ic)-4)/8+1;
-                    iV[ind]         = isMC ? ecalclust.getInt("dbstV",ic/10) : (ecalclust.getInt("coordV", ic)-4)/8+1;
-                    iW[ind]         = isMC ? ecalclust.getInt("dbstW",ic/10) : (ecalclust.getInt("coordW", ic)-4)/8+1; 
-                    e_ecal_u[ind]   =  ecalcalib.getFloat("recEU",ic); //peak energy U
-                    e_ecal_v[ind]   =  ecalcalib.getFloat("recEV",ic); //peak energy V
-                    e_ecal_w[ind]   =  ecalcalib.getFloat("recEW",ic); //peak energy W
+                    e_ecal_TH[ind]  = (float) Math.toDegrees(Math.acos(z/r));
+                    double nrg      = ecalcalib.getFloat("recEU",icalo)+ecalcalib.getFloat("recEV",icalo)+ecalcalib.getFloat("recEW",icalo);
+                    e_ecal_EL[ind] += isMC ? nrg : ecalclust.getFloat("energy", ic);
+                    e_ecal_EL[3]   += isMC ? nrg : ecalclust.getFloat("energy", ic);
+                    iU[ind]         = isMC ? ecalclust.getInt("dbstU",icalo)/10 : (ecalclust.getInt("coordU", ic)-4)/8+1;
+                    iV[ind]         = isMC ? ecalclust.getInt("dbstV",icalo)/10 : (ecalclust.getInt("coordV", ic)-4)/8+1;
+                    iW[ind]         = isMC ? ecalclust.getInt("dbstW",icalo)/10 : (ecalclust.getInt("coordW", ic)-4)/8+1; 
+                    e_ecal_u[ind]   =  ecalcalib.getFloat("recEU",isMC?icalo:ic); //peak energy U
+                    e_ecal_v[ind]   =  ecalcalib.getFloat("recEV",isMC?icalo:ic); //peak energy V
+                    e_ecal_w[ind]   =  ecalcalib.getFloat("recEW",isMC?icalo:ic); //peak energy W
                     /*
                     int ic1         = ecalclust.getInt("idU",ic)-1; //peak index U
                     int ic2         = ecalclust.getInt("idV",ic)-1; //peak index V
