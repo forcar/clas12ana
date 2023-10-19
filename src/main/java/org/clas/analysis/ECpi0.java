@@ -112,7 +112,6 @@ public class ECpi0 extends DetectorMonitor{
     	Fits.clear();
     	tl.fitData.clear();
     	tl.Timeline.clear();
-        eng.engine.setCCDBGain(!defaultGain);
         isPARTReady = false;
     } 
     
@@ -677,7 +676,9 @@ public class ECpi0 extends DetectorMonitor{
         part.FTOFveto = FTOFveto;
         part.getNeutralResponses();
         
-        int trigger_sect = isMC ? trSEC : getElecTriggerSector();
+        boolean outb = shiftTrigBits(getRunNumber()); //true=outbending e- false=inbending e-
+        
+        int trigger_sect = isMC ? trSEC : getElecTriggerSector(outb);
         
         for (int is=isMC?mcSEC:1; is<(isMC?mcSEC+1:7); is++) {
            
