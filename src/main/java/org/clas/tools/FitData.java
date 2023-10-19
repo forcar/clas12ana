@@ -159,7 +159,7 @@ public class FitData {
 	    }
 	    if (func==6)  {initFunc(0,20.0);   initFunc(1,0.057) ;                  graph.getFunction().setRange(fmin,fmax);g_optstat="1110";}
 	    if (func==7)  {initFunc(0,0.23);   initFunc(1,0.56) ; initFunc(2,-0.3); graph.getFunction().setRange(fmin,fmax);}
-	    if (func==9)  {initFunc(0,1,0,1.5);initFunc(1,200,100,400) ;            graph.getFunction().setRange(fmin,fmax);f_optstat="110";}
+	    if (func==9)  {initFunc(0,1,0,1.5);initFunc(1,200,100,500);             graph.getFunction().setRange(fmin,fmax);f_optstat="110";}
 	    if (func==10) {initFunc(0,0.343,0.1,0.5);initFunc(1,1.91,1,4) ;         graph.getFunction().setRange(fmin,fmax);f_optstat="110";}
 //	    if (func==10) {initFunc(0,0.3,0.1,0.5);initFunc(1,70,65,75) ; initFunc(3,400,380,420) ;initFunc(2,1.9,1,4) ; graph.getFunction().setRange(fmin,fmax);f_optstat="11110";}
 	    if (func==14) {initFunc(0,0.25);   initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
