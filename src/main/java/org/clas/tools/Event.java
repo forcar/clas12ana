@@ -88,11 +88,10 @@ public class Event {
     public List<Particle> pmc = new ArrayList<>();
     public List<Vector3>  pmv = new ArrayList<>();
 	
-    Detector  ecDetector =  GeometryFactory.getDetector(DetectorType.ECAL,11,"rga_fall2018");
-
+    Detector ecDetector =  null;
     
 	public Event() {
-		
+		System.out.println("Event() instantiated");
 	}
 	
 	public void init(DataEvent event) {	 
@@ -203,6 +202,10 @@ public class Event {
 		p.setProperty("ppid", pid);
 		partmap.getItem(pid).add(p);
 		part.add(p);
+	}
+	
+	public void setGeometry(Detector ecDetector) {
+		this.ecDetector = ecDetector; 
 	}
 	
 	public void setMCpid(int val) {
@@ -515,7 +518,8 @@ public class Event {
 					   }
 					}
 				}				
-				
+				Point3D res = getResidual(p);
+				p.setProperty("resx",res.x());p.setProperty("resy",res.y());p.setProperty("resz",res.z());
 				ftofpart.add(p);
 			}
 		}
@@ -678,7 +682,6 @@ public class Event {
 				
 				int ical = (int) p.getProperty("index");
 				
-				int  is = (int) p.getProperty("sector");
 				int lay = (int) p.getProperty("layer"); 
 				int   pid = part.get((int)p.getProperty("pindex")).pid();
 				p.setProperty("pid", pid);
@@ -693,6 +696,7 @@ public class Event {
 //				if(!goodMatch) continue;
 				
 				if(clusBank==null && caliBank!=null) { //use REC::CaloExtras which is column mapped to REC::Calorimeter
+					int  is = (int) p.getProperty("sector");
 					p.setProperty("iu",    (caliBank.getInt("dbstU", imap)/10));
 					p.setProperty("iv",    (caliBank.getInt("dbstV", imap)/10));
 					p.setProperty("iw",    (caliBank.getInt("dbstW", imap)/10));					
@@ -748,6 +752,7 @@ public class Event {
 //				if(good)System.out.println(eventNumber+" "+pid+" "+lay+" "+tim1+" "+tim2+" "+pat+" "+bet+" "+(tim2-starttime)+" "+pat/bet/29.98f);
 
 				if(trajMap.containsKey(ipart)) {
+					int  is = (int) p.getProperty("sector");
 					for(int tmap : trajMap.get(ipart)) {
 					   if(trajBank.getInt("detector",tmap)==7 &&
 					     (trajBank.getInt("layer",tmap)==p.getProperty("layer") ||
@@ -765,6 +770,9 @@ public class Event {
 					   }
 					}
 				}
+				
+				Point3D res = getResidual(p);
+				p.setProperty("resx",res.x());p.setProperty("resy",res.y());p.setProperty("resz",res.z());
 				ecalpart.add(p);
 			}
 		}
@@ -811,6 +819,25 @@ public class Event {
 		}
 		return 0f;
 	}
+	
+	public Point3D getHxyz(Particle p) {
+    	float hx = p.hasProperty("tx")?(float)p.getProperty("tx"):(float)p.getProperty("hx");
+    	float hy = p.hasProperty("ty")?(float)p.getProperty("ty"):(float)p.getProperty("hy");
+    	float hz = p.hasProperty("tz")?(float)p.getProperty("tz"):(float)p.getProperty("hz");
+    	return new Point3D(hx,hy,hz);
+	}
+	
+    public Point3D getResidual(Particle p) { 
+    	Point3D hxyz = getHxyz(p);
+        Point3D  xyz = new Point3D(hxyz.x()-(float)p.getProperty("x"),hxyz.y()-(float)p.getProperty("y"),hxyz.z()-(float)p.getProperty("z"));	
+        return getRotTiltPoint(xyz,(int) p.getProperty("sector"));
+    }
+    
+    public Point3D getRotTiltPoint(Point3D xyz, int is) {
+        xyz.rotateZ(Math.toRadians(-60*(is-1)));
+        xyz.rotateY(Math.toRadians(-25)); 	
+        return xyz;    	
+    }
 /*	
 	public void getRECparticleOLD(int tpid) {
 //		if(tpid==11) System.out.println(" ");
