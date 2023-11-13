@@ -244,6 +244,7 @@ public class EngineControl implements ActionListener {
     }
     
     public void setGeomVariation(String val) {
+    	System.out.println("EngineControl:setGeomVariation("+val+")");
     	engine.setGeomVariation(val);
     	geomVariation = val;
     }
