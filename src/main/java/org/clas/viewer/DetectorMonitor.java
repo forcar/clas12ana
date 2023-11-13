@@ -362,7 +362,7 @@ public class DetectorMonitor implements ActionListener {
     public void createTimeLineHistos() {    	
     }
     
-    public void localinit() {    	
+    public void localinit(String variation) {    	
     }
     
     public void localclear() {    	
