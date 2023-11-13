@@ -12,11 +12,10 @@ import java.util.Map;
 import org.clas.tools.DataProvider;
 import org.clas.tools.FitData;
 import org.clas.tools.TOFPaddle;
-import org.clas.tools.TimeLine;
 import org.clas.viewer.DetectorMonitor;
-import org.jlab.clas.detector.CalorimeterResponse;
 import org.jlab.clas.detector.DetectorResponse;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.detector.base.GeometryFactory;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.base.GStyle;
@@ -30,11 +29,7 @@ import org.jlab.groot.math.F1D;
 import org.jlab.groot.tree.TreeFile;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.clas.service.ec.ECStrip;
-import org.jlab.utils.groups.IndexedList;
 import org.jlab.utils.groups.IndexedTable;
-
-import Jampack.Inv;
 
 public class ECpi0 extends DetectorMonitor{
 	 
@@ -70,39 +65,43 @@ public class ECpi0 extends DetectorMonitor{
     
     public ECpi0(String name) {
         super(name);
-        this.setDetectorTabNames("PI0",
-        		                 "UVW",
-                                 "SIJ",
-        		                 "OPAE",
-                                 "OPAX",                                 
-                                 "IMvOPA",
-                                 "IMvE1E2",
-                                 "IMvEPI0",
-                                 "TIJ", 
-                                 "EPI0vTh",
-                                 "XY",
-                                 "FTOF",
-                                 "MCPHOT",
-                                 "Fits",
-                                 "Summary",
-                                 "Timeline",
-                                 "IMLEFF",
-                                 "Timing");
+
+        setDetectorTabNames("PI0",
+        		            "UVW",
+                            "SIJ",
+        		            "OPAE",
+                            "OPAX",                                 
+                            "IMvOPA",
+                            "IMvE1E2",
+                            "IMvEPI0",
+                            "TIJ", 
+                            "EPI0vTh",
+                            "XY",
+                            "FTOF",
+                            "MCPHOT",
+                            "Fits",
+                            "Summary",
+                            "Timeline",
+                            "IMLEFF",
+                            "Timing");
         
-        this.usePCCheckBox(true);
-        this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
+        usePCCheckBox(true);
+        useCALUVWSECButtons(true);
+        useSliderPane(true);
         useECEnginePane(true);
-        this.init();
-        this.localinit();
+        init();
+        localinit("rga_fall2018");
     }
     
-    public void localinit() {
-    	System.out.println("ECpi0.localinit()");        
-    	eng.engine.setGeomVariation("rga_spring2018");       
+    @Override
+    public void localinit(String variation) {
+    	System.out.println("ECpi0.localinit("+variation+")"); 
+    	part.ev.setGeometry(GeometryFactory.getDetector(DetectorType.ECAL,11,variation));
+    	eng.engine.setGeomVariation(variation);       
     	tl.setFitData(Fits);
     }
     
+    @Override
     public void localclear() {
     	System.out.println("ECpi0.localclear()");
     	isAnalyzeDone = false;
@@ -116,6 +115,7 @@ public class ECpi0 extends DetectorMonitor{
     } 
     
     public void initPART(int run) {
+    	System.out.println("ECpi0.initPART("+run+")");
         part.setGeom("2.5");  
         part.setConfig("pi0");  
         part.setGoodPhotons(1212); 

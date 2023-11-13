@@ -63,14 +63,17 @@ public class ECsf extends DetectorMonitor {
         useSliderPane(true);
         useECEnginePane(true);
         init();
-        localinit();
+        localinit("rga_fall2018");
     }
     
-    public void localinit() {
-    	System.out.println(getDetectorName()+".localinit()");    	
+    @Override
+    public void localinit(String variation) {
+    	System.out.println(getDetectorName()+".localinit("+variation+")"); 
+    	eng.engine.setGeomVariation(variation);
         tl.setFitData(Fits);        
     }
     
+    @Override
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;

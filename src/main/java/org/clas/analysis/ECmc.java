@@ -39,19 +39,21 @@ public class ECmc extends DetectorMonitor {
         dgmActive=true; 
         setDetectorTabNames("GENREC","KINEMATICS","EFFICIENCY");
         
-        this.use123Buttons(true);
-        this.useSliderPane(true);
+        use123Buttons(true);
+        useSliderPane(true);
+        useECEnginePane(true);
 
-        this.init();
-        this.localinit();
-        this.localclear();
+        init();
+        localinit("rga_fall2018");
+        localclear();
     }
     
-    public void localinit() {
-        System.out.println("ECmc.localinit()");
-        
+    @Override
+    public void localinit(String variation) {
+        System.out.println("ECmc.localinit("+variation+")");
         eng.engine.init();
         eng.engine.setIsMC(true);
+        eng.engine.setGeomVariation(variation);
         eng.engine.setVariation("default");  
         eng.setEngineConfig("phot");
         
@@ -62,6 +64,7 @@ public class ECmc extends DetectorMonitor {
         tl.setFitData(Fits);
     }
     
+    @Override
     public void localclear() {
     	System.out.println("ECmc.localclear()");
     	isAnalyzeDone = false;

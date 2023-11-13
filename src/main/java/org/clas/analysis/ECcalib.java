@@ -124,7 +124,7 @@ public class ECcalib extends DetectorMonitor {
         useSliderPane(true);
         useECEnginePane(true);
         init();
-        localinit();
+        localinit("rga_fall2018");
     }
     
     public ECcalib(String name, int runno) {
@@ -133,12 +133,16 @@ public class ECcalib extends DetectorMonitor {
     	initCCDB(runno);    	
     } 
     
-    public void localinit() {
-    	System.out.println(getDetectorName()+".localinit()");    	
-        getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");
-//        tl.setFitData(Fits);         
+    @Override
+    public void localinit(String variation) {
+    	System.out.println(getDetectorName()+".localinit("+variation+")");
+    	ev.setGeometry(GeometryFactory.getDetector(DetectorType.ECAL,11,variation));
+    	eng.engine.setGeomVariation(variation);
+//    	tl.setFitData(Fits);     		
+        getPixLengthMap(outPath+"files/ECpixdepthtotal.dat");         
     }  
     
+    @Override
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;

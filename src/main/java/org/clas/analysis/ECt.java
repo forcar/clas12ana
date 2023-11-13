@@ -127,21 +127,22 @@ public class ECt extends DetectorMonitor {
         this.useECEnginePane(true);
         tlnum = getDetectorTabNames().indexOf("TL");
         this.init();
-        this.localinit();
+        this.localinit("rga_fall2018");
     }
     
     public ECt(String name, int runno) {
     	super(name);
-    	initCCDB(runno);
-    	
+    	initCCDB(runno);    	
     }
     
-    public void localinit() {
-    	System.out.println(getDetectorName()+".localinit()");
+    @Override
+    public void localinit(String variation) {
+    	System.out.println(getDetectorName()+".localinit("+variation+")");
+    	eng.engine.setGeomVariation(variation);
     	tl.setFitData(Fits);
-//    	eng.engine.setGeomVariation("rga_spring2018");
     }  
     
+    @Override
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
     	isAnalyzeDone = false;

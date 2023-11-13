@@ -1772,8 +1772,8 @@ public class ECPart extends EBEngine {
         ECPart part = new ECPart();  
         part.initGraphics();
         String env = System.getenv("CLAS12DIR");
- //    	part.pizeroDemo(args);
-     	part.photonDist(args);
+     	part.pizeroDemo(args);
+//     	part.photonDist(args);
 //     	part.photonDemo(args);
 //    	part.neutronDemo(args);
 //        part.electronDemo(args);
