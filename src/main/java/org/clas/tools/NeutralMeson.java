@@ -11,7 +11,7 @@ import org.jlab.utils.groups.IndexedList;
 
 public class NeutralMeson {
 
-	Event    ev = null;
+	Event    ev;
 	
 	public float mass;
 	public float e;
@@ -47,8 +47,7 @@ public class NeutralMeson {
 		this.ilist = val;
 	}
 	
-	public void addEvent(Event val) {
-		ev = new Event();
+	public void addEvent(Event val) {		
 		ev = val;
 	}
 	
