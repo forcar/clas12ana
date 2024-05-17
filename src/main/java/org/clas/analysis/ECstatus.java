@@ -25,7 +25,7 @@ public class ECstatus extends DetectorMonitor {
     static int              occCounts = 0;
     static int                 occMax = 10002, counter=0;
     static int                 occLo  = 0;
-    static int                 occHi  = 100;
+    static int                 occHi  = 100; 
     static int                 occHL  = occHi-occLo+1;
     static int       nevents,nev,nevs = 0;
     static int               evn_last = 0;
@@ -69,15 +69,15 @@ public class ECstatus extends DetectorMonitor {
         dgmActive=true; 
         setDetectorTabNames("ATDATA","TIMELINE","STATUS","TRIGGER","SUMMARY");
 
-        this.useSCALERButtons(true);
-        this.useCALUVWSECButtons(true);
-        this.useSliderPane(true);
+        useSCALERButtons(true);
+        useCALUVWSECButtons(true);
+        useSliderPane(true);
 
-        this.init();
-        this.initEPICS();
-        this.localinit();
-        this.localclear();
-        this.initFIFO(1,7);
+        init();
+        initEPICS();
+        localinit();
+        localclear();
+        initFIFO(1,7);
     }
     
     public void localinit() {
@@ -86,11 +86,13 @@ public class ECstatus extends DetectorMonitor {
         occupancyECAL.TDCWindow[0]=200; occupancyECAL.TDCWindow[1]=300;
     }
     
+    @Override
     public void localclear() {
     	System.out.println(getDetectorName()+".localclear()");
-    	isAnalyzeDone = false;    	
+    	isAnalyzeDone = false;   
     	nevents = getTotalEvents();
     	occHi = nevents-1;
+    	maxevents = nevents;
     	getDataGroup().clear();
     	Fits.clear();
     	FitSummary.clear();
@@ -130,6 +132,7 @@ public class ECstatus extends DetectorMonitor {
     @Override
     public void createHistos(int run) {
     	System.out.println(getDetectorName()+".createHistos("+run+")");
+    	occMax = MaxEvents;
     	if(dumpFiles) initDumpFiles(run);
     	setRunNumber(run);    	   	
     	histosExist = true;  
@@ -142,7 +145,6 @@ public class ECstatus extends DetectorMonitor {
     	createTIMELINE(4,TLmax);
     	createTIMELINE(5,TLmax);
     	createTRIGGER(0);
-    	createSTATUS(run);
     }
     
     public void createATDATA() {
@@ -242,12 +244,13 @@ public class ECstatus extends DetectorMonitor {
     	dgm.makeH1("trigmon",32,-0.5,31.5,-1,"TRIGGER","TRIGGER BITS","",1,1);
     }
     
-    public void createSTATUS(int run) {    	
-    	dgm.add("STATUS",3,6,0,0,run);
+    public void createSTATUS(int ... run) {
+    	dgm.add("STATUS",3,6,0,0,run[0]);
+    	String runlist = run.length==1 ? Integer.toString(run[0]):run[0]+"-"+run[1];
     	for(int is=1; is<7; is++) {
     		for(int im=1; im<4; im++) {
     			int nx = im==1 ? 68:36;
-    			dgm.makeH2("STATUS"+is+im,nx,1,nx+1,3,1,4, -1,is==1 ? det[im-1]:" ", "SECTOR "+is, " "); 
+    			dgm.makeH2("STATUS"+is+im,nx,1,nx+1,3,1,4, -1,is==1 ? runlist:" ",det[im-1]+" SECTOR "+is, " "); 
     			dgm.cc("STATUS"+is+im, false, false, 0, 0, 0, 1);
             }
         }    	    	
@@ -263,21 +266,22 @@ public class ECstatus extends DetectorMonitor {
    	    if(dropSummary) return;
         setRunNumber(run);
         plot("TRIGGER");
-        if(useATDATA) {plot("ATDATA"); plotStatus();}
+        if(useATDATA) {plot("ATDATA"); plot("STATUS");}
     }
     
     @Override
     public void plotScalers(int run) {
     	if(!isAnalyzeDone) return;
-    	setRunNumber(run);
     	plotTimeLine();
-    	plotStatus();
+    	setRunNumber(run);
+    	plot("STATUS");
     	if(getActiveSCAL()<4) plotTLSummary("SUMMARY");
     }
     
+    
 	public void plot(String tabname) { 		
-//		if(tabname=="STATUS")  {dgm.drawGroup(tabname,0, 0, getRunNumber()); return;}
-		if(tabname=="TRIGGER") dgm.drawGroup(tabname, 0,0,0); 
+		if(tabname=="STATUS")  {dgm.drawGroup(tabname,0, 0, getRunNumber()); return;}
+		if(tabname=="TRIGGER")  dgm.drawGroup(tabname,0, 0, 0); 
 		int is = getActiveSector(); int im = getActiveLayer()+1;
     	dgm.drawGroup(tabname, is, im, 0);
     }
@@ -287,18 +291,133 @@ public class ECstatus extends DetectorMonitor {
     	System.out.println(getDetectorName()+".plotEvent");  
         analyze();         
     }
-    
+
     public void analyze() {
     	System.out.println(getDetectorName()+".analyze() ");
     	if(dumpFiles) {writer.close(); return;}
+    	if(!useATDATA) analyzeNORM("ECAL",1,7);
+    	writeStatusTable(occLo,occHi);
+    	isAnalyzeDone = true;
+    }
+        
+    public void writeStatusTable(int lo, int hi) {
+	    analyzeStatus(runlist.get(lo),runlist.get(hi));
+	    if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(lo)+"-"+runlist.get(hi)+".tbl",1,7,1,10);    	
+    }
+               
+    public void analyzeStatus(int lo, int hi) {
+    	System.out.println("ECstatus.analyzeStatus("+lo+","+hi+")");
+    	createSTATUS(lo,hi);
     	analyzeSTATUS("ECAL",1,7,1); // pass1: flag hot channels
     	analyzeSTATUS("ECAL",1,7,2); // pass2: avoid hot channels for sector sum
-    	if(!useATDATA) analyzeNORM("ECAL",1,7);
-    	System.out.println(occLo+" "+occHi);
-    	writeFile(tabPath+getDetectorName()+"-"+runlist.get(occLo)+"-"+runlist.get(occHi)+".tbl",1,7,1,10);
-    	isAnalyzeDone = true;
-    }	
+    }
+ 
+    /* NORM */
     
+    @Override
+    public void NormRunFunction() {
+    	isNorm = true;
+    	if(!useATDATA) {getATNData("ECAL",1,7); fillNormHist("ECAL",1,7);}
+    	writeStatusTable(occLo,occHi-1);
+    }
+           	
+    public void analyzeNORM(String detName, int is1, int is2) {
+        System.out.println(getDetectorName()+".analyzeNORM("+detName+","+is1+","+is2+")");
+    	analyzeATData(detName,is1,is2);
+    }
+    
+    public void analyzeATData(String detName, int is1, int is2) {
+        System.out.println(getDetectorName()+".analyzeATData("+detName+","+is1+","+is2+")");
+        ATData.clear();
+        for (int is=is1; is<is2; is++) {
+        	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) { int hl=10*is+sl;
+    		ATData.add(new ArrayList<H1F>(),is,sl, 0); ATData.getItem(is,sl, 0).addAll(dgm.getH2F("ADC"+hl).getSlicesX());
+    		ATData.add(new ArrayList<H1F>(),is,sl, 1); ATData.getItem(is,sl, 1).addAll(dgm.getH2F("TDC"+hl).getSlicesX());
+    		ATData.add(new ArrayList<H1F>(),is,sl,20); ATData.getItem(is,sl,20).addAll(dgm.getH2F("VADC"+hl).getSlicesX());
+    		ATData.add(new ArrayList<H1F>(),is,sl,21); ATData.getItem(is,sl,21).addAll(dgm.getH2F("VTDC"+hl).getSlicesX());
+        	}	
+        }
+		ATData.add(new ArrayList<H1F>(),0,0,40);  ATData.getItem(0,0,40).addAll(dgm.getH2F("TRIG").getSlicesX());
+        
+    }
+
+    public void getATNData(String detName, int is1, int is2) { //NATDATA are the green template TimeLine overlays
+        System.out.println(getDetectorName()+".getATNData("+detName+","+is1+","+is2+")");
+    	occLo = normrun; occHi = normrun+normrng;
+    	NATData.clear();
+    	for (int is=is1; is<is2; is++) {
+    		for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
+    			NATData.add(new H1F(),is,sl, 0); NATData.add(sumSlices(ATData.getItem(is,sl, 0),occLo,occHi),is,sl, 0); 
+    			NATData.add(new H1F(),is,sl, 1); NATData.add(sumSlices(ATData.getItem(is,sl, 1),occLo,occHi),is,sl, 1);     	
+    			NATData.add(new H1F(),is,sl,20); NATData.add(sumSlices(ATData.getItem(is,sl,20),occLo,occHi),is,sl,20); 
+    			NATData.add(new H1F(),is,sl,21); NATData.add(sumSlices(ATData.getItem(is,sl,21),occLo,occHi),is,sl,21);     	
+    		}	
+    	}
+		NATData.add(new H1F(),0,0,40);  NATData.add(sumSlices(ATData.getItem(0,0,40),occLo,occHi),0,0,40);
+    }
+
+    public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
+    	H1F h = list.get(i1).histClone("dum");
+    	for (int i=i1+1; i<i2; i++) h.add(list.get(i));
+    	h.normalize(normrng);
+    	return h;
+    }
+      
+    public void fillNormHist(String detName, int is1, int is2) {   	
+        System.out.println(getDetectorName()+".fillNormHist("+detName+","+is1+","+is2+")");
+    	for (int is=is1; is<is2 ; is++) {
+    		for (int il=1; il<layMap.get(detName).length+1; il++) {
+    			int hl = 10*is+il;
+				dgm.getH2F( "SADC"+hl).reset(); dgm.getH2F( "STDC"+hl).reset();
+				dgm.getH2F( "NADC"+hl).reset(); dgm.getH2F( "NTDC"+hl).reset(); 
+				dgm.getH2F("NVADC"+hl).reset(); dgm.getH2F("NVTDC"+hl).reset(); 
+    			for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {  
+    				for (int it=0; it<nevents; it++) { 
+    					float fa = (float) ATData.getItem(is,il,0).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(fa-getNorm(0,is,il,ic))/Math.sqrt(fa));
+    					dgm.fill("NADC"+hl,it,ic,y);
+    					if(inNormWindow(it)) dgm.fill("SADC"+hl,it,ic,fa);     					
+    				}   				
+    				for (int it=0; it<nevents; it++) {
+    					float ft = (float) ATData.getItem(is,il,1).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(ft-getNorm(1,is,il,ic))/Math.sqrt(ft));
+    					dgm.fill("NTDC"+hl,it,ic,y);
+    					if(inNormWindow(it)) dgm.fill("STDC"+hl,it,ic,ft);     					
+    				}
+    				for (int it=0; it<nevents; it++) {
+    					float fav = (float) ATData.getItem(is,il,20).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(fav/getNorm(20,is,il,ic)));    					
+    					dgm.fill("NVADC"+hl,it,ic,y);
+    				}
+    				for (int it=0; it<nevents; it++) {
+    					float ftv = (float) ATData.getItem(is,il,21).get(it).getBinContent(ic-1);
+    					float y = (float)((float)(ftv-getNorm(21,is,il,ic)));    					
+    					dgm.fill("NVTDC"+hl,it,ic,y);
+    				} 	
+    			}
+    		}
+    	}
+    	
+    	for (int ib=0; ib<32; ib++) {
+    		for (int it=0; it<nevents; it++) {
+    			float ftr = (float) ATData.getItem(0,0,40).get(it).getBinContent(ib);
+    			float y = (float)((float)(ftr-getNorm(40,0,0,ib+1))/Math.sqrt(ftr));
+    			dgm.fill("NTRIG",it, ib, y);
+    		}
+    	}
+    }   
+    
+    public boolean inNormWindow(int counter) {
+    	return counter>=occLo && counter<occHi;
+    }
+        
+    public float getNorm(int at, int is, int sl, int ic) {
+    	if(at==0 && !isNorm) return anorm.get(is, sl, ic)/occHL;
+    	if(at==1 && !isNorm) return tnorm.get(is, sl, ic)/occHL;
+    	if(isNorm)  return (float) NATData.getItem(is,sl,at).getBinContent(ic-1);
+    	return 0f;
+    }    
+
     @Override
     public void processEvent(DataEvent de) {	 
     	
@@ -336,7 +455,8 @@ public class ECstatus extends DetectorMonitor {
     }
     
     public void doScalerEvent(DataEvent de) {
-    	processRUNCONFIG(de); fillHistFromBank(de); //fillFifoFromBank(de);     	
+    	processRUNCONFIG(de); fillHistFromBank(de); //fillFifoFromBank(de); 
+    	
     }
     
     public void doWriteEvent() {
@@ -393,10 +513,6 @@ public class ECstatus extends DetectorMonitor {
     	int det[] = {1,1,1,2,2,2,3,3,3};
     	return det[il-1];
     }
-    
-    public boolean inNormWindow(int counter) {
-    	return counter>=occLo && counter<occHi;
-    }
 
     public void fillFifoFromData() {
     	
@@ -451,51 +567,7 @@ public class ECstatus extends DetectorMonitor {
     	   nevs++;
        }
     } 
-   
-    public void fillNormHist(String detName, int is1, int is2) {   	
-        System.out.println(getDetectorName()+".fillNormHist("+detName+","+is1+","+is2+")");
-    	for (int is=is1; is<is2 ; is++) {
-    		for (int il=1; il<layMap.get(detName).length+1; il++) {
-    			int hl = 10*is+il;
-				dgm.getH2F( "SADC"+hl).reset(); dgm.getH2F( "STDC"+hl).reset();
-				dgm.getH2F( "NADC"+hl).reset(); dgm.getH2F( "NTDC"+hl).reset(); 
-				dgm.getH2F("NVADC"+hl).reset(); dgm.getH2F("NVTDC"+hl).reset(); 
-    			for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {  
-    				for (int it=0; it<nevents; it++) { 
-    					float fa = (float) ATData.getItem(is,il,0).get(it).getBinContent(ic-1);
-    					float y = (float)((float)(fa-getNorm(0,is,il,ic))/Math.sqrt(fa));
-    					dgm.fill("NADC"+hl,it,ic,y);
-    					if(inNormWindow(it)) dgm.fill("SADC"+hl,it,ic,fa);     					
-    				}   				
-    				for (int it=0; it<nevents; it++) {
-    					float ft = (float) ATData.getItem(is,il,1).get(it).getBinContent(ic-1);
-    					float y = (float)((float)(ft-getNorm(1,is,il,ic))/Math.sqrt(ft));
-    					dgm.fill("NTDC"+hl,it,ic,y);
-    					if(inNormWindow(it)) dgm.fill("STDC"+hl,it,ic,ft);     					
-    				}
-    				for (int it=0; it<nevents; it++) {
-    					float fav = (float) ATData.getItem(is,il,20).get(it).getBinContent(ic-1);
-    					float y = (float)((float)(fav/getNorm(20,is,il,ic)));    					
-    					dgm.fill("NVADC"+hl,it,ic,y);
-    				}
-    				for (int it=0; it<nevents; it++) {
-    					float ftv = (float) ATData.getItem(is,il,21).get(it).getBinContent(ic-1);
-    					float y = (float)((float)(ftv-getNorm(21,is,il,ic)));    					
-    					dgm.fill("NVTDC"+hl,it,ic,y);
-    				} 	
-    			}
-    		}
-    	}
-    	
-    	for (int ib=0; ib<32; ib++) {
-    		for (int it=0; it<nevents; it++) {
-    			float ftr = (float) ATData.getItem(0,0,40).get(it).getBinContent(ib);
-    			float y = (float)((float)(ftr-getNorm(40,0,0,ib+1))/Math.sqrt(ftr));
-    			dgm.fill("NTRIG",it, ib, y);
-    		}
-    	}
-    }
-    
+ 
     private void fillBankFromFifo(DataEvent de) {
 	
     }
@@ -551,20 +623,11 @@ public class ECstatus extends DetectorMonitor {
         int sca[] = {192,192,192,216,216,216,216,216,216};
         return is>0 ? (is-1)*sca[il-1]+off[il-1]+ip:0;
     }
-
     
-    public void plotStatus() {           
-    	EmbeddedCanvas c = getCanvas("STATUS"); c.clear(); c.divide(3, 6);
-        int n=0;
-        for (int is=1; is<7; is++) {
-            for (int im=1; im<4; im++) {      
-                c.cd(n); c.getPad(n).getAxisZ().setRange(0.0, 1.0); c.draw(dgm.getH2F("STATUS"+is+im)); n++;                   
-            }
-        }            
-    }
+    /* STATUS */
     
     public void analyzeSTATUS(String detName, int is1, int is2, int pass) {  
-        System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+")");
+        System.out.println(getDetectorName()+".analyzeSTATUS("+detName+","+is1+","+is2+","+pass+")");
         DetectorCollection<Float>  asum = new DetectorCollection<Float>();
         DetectorCollection<Float>  tsum = new DetectorCollection<Float>(); 
         DetectorCollection<Float> sasum = new DetectorCollection<Float>();
@@ -620,10 +683,10 @@ public class ECstatus extends DetectorMonitor {
     	Boolean   badA = A==0 && T>0;   //dead ADC good TDC
         Boolean   badT = T==0 && A>0;   //dead TDC good ADC
         Boolean  badAT = A==0 && T==0;  //dead PMT or HV
-    	Boolean nnbadA = aAsym < -0.85; //dead but noisy
-    	Boolean nnbadT = tAsym < -0.85; //dead but noisy
-    	Boolean  nbadA = aAsym < -0.30; //low gain, bad cable, high threshold
-    	Boolean  nbadT = tAsym < -0.30; //low gain, bad cable, high threshold
+    	Boolean nnbadA = aAsym < -0.85; //dead but noisy def=0.85
+    	Boolean nnbadT = tAsym < -0.85; //dead but noisy def=0.85
+    	Boolean  nbadA = aAsym < -0.30; //low gain, bad cable, high threshold def=0.30
+    	Boolean  nbadT = tAsym < -0.30; //low gain, bad cable, high threshold def=0.30
     	Boolean  pbadA = aAsym >  0.30; //noisy, light leak
     	Boolean  pbadT = tAsym >  0.50; //noisy, light leak
     	if (badA && !badT) return 1;
@@ -632,7 +695,7 @@ public class ECstatus extends DetectorMonitor {
     	if (nnbadA)        return 1;
     	if (nnbadT)        return 2;
     	if (nbadA)         return 4;
-    	if (nbadT)         return 5;
+    	if (nbadT)         return 5; //was 5
     	if (pbadA)         return 6;
     	if (pbadT)         return 7;
         return 0;
@@ -642,7 +705,7 @@ public class ECstatus extends DetectorMonitor {
         switch (stat) 
         {
         case 0: return 0;  
-        case 1: return 1; 
+        case 1: return 3; //was 1 
         case 2: return 2;  
         case 3: return 3;  
         case 4: return 4;
@@ -656,14 +719,14 @@ public class ECstatus extends DetectorMonitor {
     public double getPlotStatus(int stat) {            
         switch (stat) 
         {
-        case 0: return 0.0;  
-        case 1: return 0.60; 
-        case 2: return 0.48;  
-        case 3: return 0.02;  
-        case 4: return 0.75;
-        case 5: return 0.85; 
-        case 6: return 0.99;
-        case 7: return 1.10; 
+        case 0: return 0.0;  //gray (no color)
+        case 1: return 0.60; //red
+        case 2: return 0.48; //green 
+        case 3: return 0.02; //black 
+        case 4: return 0.75; //orange
+        case 5: return 0.85; //yellow
+        case 6: return 0.99; //beige
+        case 7: return 1.10; //white
         }
     return 0.48;
         
@@ -678,8 +741,9 @@ public class ECstatus extends DetectorMonitor {
     
 	public void writeFile(String file, int is1, int is2, int il1, int il2) {
 		
+		System.out.println("ECstatus.writefile("+file+")");
+		
 		String line = new String();
-		int[] npmt = {68,62,62,36,36,36,36,36,36};    
 		
 		try { 
 			File outputFile = new File(file);
@@ -706,7 +770,7 @@ public class ECstatus extends DetectorMonitor {
 
 	}
     
-/*   TIMELINES */
+    /* TIMELINES */
     
     public void plotTimeLine() {
     	
@@ -721,9 +785,10 @@ public class ECstatus extends DetectorMonitor {
     	int hl = 10*is + sl;
     	int st = as + (dNorm ? 1:0);
         String opstat = as==4 ? "":"1000000";
+        int runlo = runlist.get(0);
 
-    	DataLine line3 = new DataLine(runIndexSlider,  as==4?-0.5:1,  runIndexSlider,  (as==4?31.5:npmt[sl-1])+1);  line3.setLineColor(5);
-    	DataLine line4 = new DataLine(runIndexSlider+1,as==4?-0.5:1,  runIndexSlider+1,(as==4?31.5:npmt[sl-1])+1);  line4.setLineColor(5);  
+    	DataLine line3 = new DataLine(runIndexSlider,         as==4?-0.5:1,runIndexSlider,         (as==4?31.5:npmt[sl-1])+1);line3.setLineColor(0);
+    	DataLine line4 = new DataLine(runIndexSlider+izMaxLab,as==4?-0.5:1,runIndexSlider+izMaxLab,(as==4?31.5:npmt[sl-1])+1);line4.setLineColor(0);  
     	
     	String tit3 = isNorm ? "   NORM RUNS: "+runlist.get(normrun)+"-"+(runlist.get(normrun+normrng-1)):"";
     	String tit1 = "RUN "+runlist.get(runIndexSlider)+"   EVENT "+evnlist.get(runIndexSlider)+tit3;
@@ -741,91 +806,33 @@ public class ECstatus extends DetectorMonitor {
     	
     	if(as==2) {amin=30; amax=80; tmin=220; tmax=280;}
     	
-    	c.cd(0); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 0); c.draw(line3); c.draw(line4);
+    	c.cd(0); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 0, runlo); c.draw(line3); c.draw(line4);
     	c.cd(1); c.getPad().setTitleFontSize(24); c.getPad().getAxisY().setRange(amin, amax); 
     	if(h1a.getIntegral()>0) c.draw(h1a); if (isNorm) c.draw(h1ar,"same");
     	if(as==4) return;
     	
-    	c.cd(2); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 1); c.draw(line3); c.draw(line4);
+    	c.cd(2); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, 1, runlo); c.draw(line3); c.draw(line4);
     	c.cd(3); c.getPad().setTitleFontSize(24); c.getPad().getAxisY().setRange(tmin, tmax); 
     	if(h1t.getIntegral()>0) c.draw(h1t); if (isNorm) c.draw(h1tr,"same");
     	    	
     }
-    
+  
     public void plotTLSummary(String tab) {
         EmbeddedCanvas c = getCanvas(tab); c.clear(); c.divide(3, 6);
         
         int as = getActiveSCAL();
         int is = getActiveSector();  
     	int st = as +(dNorm ? 1:0); 
-    	int n = 0;
+    	int n = 0, runlo=runlist.get(0);
     	for (int il = 0; il<3 ; il++) {
     		for (int in = 0; in<2; in++) {
     			for (int iv = 0; iv<3; iv++) {
     				int sl = iv+3*il+1;
     				int hl = 10*is + sl;
-    				c.cd(n); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, in); n++;
+    				c.cd(n); c.getPad().setTitleFontSize(24); dgm.draw("TIMELINE", c, hl, st, in, runlo); n++;
     			}
     		}
     	}
-    }  
-    	
-    public void analyzeNORM(String detName, int is1, int is2) {
-        System.out.println(getDetectorName()+".analyzeNORM("+detName+","+is1+","+is2+")");
-    	analyzeATData(detName,is1,is2);
-    }
-    
-    public void analyzeATData(String detName, int is1, int is2) {
-        System.out.println(getDetectorName()+".analyzeATData("+detName+","+is1+","+is2+")");
-        ATData.clear();
-        for (int is=is1; is<is2; is++) {
-        	for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) { int hl=10*is+sl;
-    		ATData.add(new ArrayList<H1F>(),is,sl, 0); ATData.getItem(is,sl, 0).addAll(dgm.getH2F("ADC"+hl).getSlicesX());
-    		ATData.add(new ArrayList<H1F>(),is,sl, 1); ATData.getItem(is,sl, 1).addAll(dgm.getH2F("TDC"+hl).getSlicesX());
-    		ATData.add(new ArrayList<H1F>(),is,sl,20); ATData.getItem(is,sl,20).addAll(dgm.getH2F("VADC"+hl).getSlicesX());
-    		ATData.add(new ArrayList<H1F>(),is,sl,21); ATData.getItem(is,sl,21).addAll(dgm.getH2F("VTDC"+hl).getSlicesX());
-        	}	
-        }
-		ATData.add(new ArrayList<H1F>(),0,0,40);  ATData.getItem(0,0,40).addAll(dgm.getH2F("TRIG").getSlicesX());
-        
-    }
-    
-    public void getATNData(String detName, int is1, int is2) { //NATDATA are the green template TimeLine overlays
-        System.out.println(getDetectorName()+".getATNData("+detName+","+is1+","+is2+")");
-    	int i1=normrun, i2=i1+normrng; occLo = normrun; occHi = normrun+normrng;
-    	NATData.clear();
-    	for (int is=is1; is<is2; is++) {
-    		for (int sl=1; sl<layMap.get(detName).length+1 ; sl++) {
-    			NATData.add(new H1F(),is,sl, 0); NATData.add(sumSlices(ATData.getItem(is,sl, 0),i1,i2),is,sl, 0); 
-    			NATData.add(new H1F(),is,sl, 1); NATData.add(sumSlices(ATData.getItem(is,sl, 1),i1,i2),is,sl, 1);     	
-    			NATData.add(new H1F(),is,sl,20); NATData.add(sumSlices(ATData.getItem(is,sl,20),i1,i2),is,sl,20); 
-    			NATData.add(new H1F(),is,sl,21); NATData.add(sumSlices(ATData.getItem(is,sl,21),i1,i2),is,sl,21);     	
-    		}	
-    	}
-		NATData.add(new H1F(),0,0,40);  NATData.add(sumSlices(ATData.getItem(0,0,40),i1,i2),0,0,40);
     } 
-    
-    public float getNorm(int at, int is, int sl, int ic) {
-    	if(at==0 && !isNorm) return anorm.get(is, sl, ic)/occHL;
-    	if(at==1 && !isNorm) return tnorm.get(is, sl, ic)/occHL;
-    	if(isNorm)  return (float) NATData.getItem(is,sl,at).getBinContent(ic-1);
-    	return 0f;
-    }
-    
-    @Override
-    public void NormRunFunction() {
-    	isNorm = true;
-    	if(!useATDATA) {getATNData("ECAL",1,7); fillNormHist("ECAL",1,7);}
-    	analyzeSTATUS("ECAL",1,7,1);analyzeSTATUS("ECAL",1,7,2);
-    	if(!useATDATA) writeFile(tabPath+getDetectorName()+"-"+runlist.get(normrun)+"-"+runlist.get(normrun+normrng-1)+".tbl",1,7,1,10);
-    }
-    
-    public H1F sumSlices(ArrayList<H1F> list, int i1, int i2) {
-    	H1F h = list.get(i1).histClone("dum");
-    	for (int i=i1+1; i<i2; i++) h.add(list.get(i));
-    	h.normalize(normrng);
-    	return h;
-    }
-  
-	
+       
 }
