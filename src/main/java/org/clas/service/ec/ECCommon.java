@@ -49,7 +49,8 @@ public class ECCommon {
     public static Boolean     useNewTimeCal = true;
     public static Boolean useUnsharedEnergy = true;
     public static Boolean  useTWCorrections = true;
-    public static Boolean  useDTCorrections = true; 
+    public static Boolean  useDTCorrections = true;
+    public static Boolean            useGPP = false;
     public static Boolean            useDEF = true;
     public static Boolean           useASA1 = false;
     public static Boolean           useASA2 = false;
@@ -91,6 +92,8 @@ public class ECCommon {
     static int nclus, slast;
     static float maxerr;
     
+    static ECmc mc = new ECmc(); 
+
     public  static void initHistos() {
     	int[] bins = {480,240,120};       
         for (int is=1; is<7; is++){
@@ -155,17 +158,13 @@ public class ECCommon {
     public static int  getRunNumber(DataEvent de) {
     	return (de.hasBank("RUN::config") ? (int) de.getBank("RUN::config").getInt("run", 0) : 10);
     }
-    
-    public static List<ECStrip>  initEC(DataEvent event,  ConstantsManager manager){
-    	
+
+    public static List<ECStrip>  initEC(DataEvent event, ConstantsManager manager){
+       	    	
         int run = getRunNumber(event);
         
-        isMC = run<=100;
-        
-        if(isMC) {usePass2Timing = false; useDTCorrections = false; useFTpcal = false;}
-        
-        manager.setVariation(variation);
-        
+        manager.setVariation(variation);;
+      
         IndexedTable   atten1 = manager.getConstants(run, "/calibration/ec/attenuation");
         IndexedTable   atten2 = manager.getConstants(run, "/calibration/ec/atten");    //pass2
         IndexedTable     gain = manager.getConstants(run, "/calibration/ec/gain");
@@ -180,6 +179,8 @@ public class ECCommon {
         IndexedTable      gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable      tgo = manager.getConstants(run, "/calibration/ec/tdc_global_offset");		
         IndexedTable   r2gain = manager.getConstants(2,   "/calibration/ec/gain");
+        
+	    if (useGPP) mc.initCCDB(run,manager);        
    
         if (singleEvent) resetHistos();        
         
@@ -316,9 +317,9 @@ public class ECCommon {
         
         return ecStrips;
     }
-        
-    public static List<ECStrip>  readStripsHipo(DataEvent event, int run, ConstantsManager manager){ 
-    	
+    
+    public static List<ECStrip>  readStripsHipo(DataEvent event, int run, ConstantsManager manager) {
+     	
         IndexedList<List<Integer>>  tdcs = new IndexedList<List<Integer>>(3);          
 
       	List<ECStrip>  strips = new ArrayList<ECStrip>();
@@ -330,19 +331,19 @@ public class ECCommon {
         IndexedTable    tmfcut = manager.getConstants(run, "/calibration/ec/tmf_window");         // TDC-FADC cut
         IndexedTable       gtw = manager.getConstants(run, "/calibration/ec/global_time_walk");
         IndexedTable    status = manager.getConstants(run, "/calibration/ec/status");
-        
+
         double PERIOD  = jitter.getDoubleValue("period",0,0,0);
         int    PHASE   = jitter.getIntValue("phase",0,0,0); 
         int    CYCLES  = jitter.getIntValue("cycles",0,0,0);        
         float FTOFFSET = (float) fgo.getDoubleValue("global_offset",0,0,0); //global shift of trigger time
         float  TMFCUT  = (float) tmfcut.getDoubleValue("window", 0,0,0); //acceptance window for TDC-FADC cut
-        
+
         int triggerPhase = 0;
     	
         if(CYCLES>0&&event.hasBank("RUN::config")==true){
             DataBank bank = event.getBank("RUN::config");
             long timestamp = bank.getLong("timestamp", 0);
-            triggerPhase = (int) (PERIOD*((timestamp+PHASE)%CYCLES));
+            triggerPhase = timestamp>0 ? (int) (PERIOD*((timestamp+PHASE)%CYCLES)) : 0;
         }
         
         if(event.hasBank("ECAL::tdc")==true){
@@ -352,7 +353,7 @@ public class ECCommon {
                 int  il = bank.getByte("layer",i);
                 int  ip = bank.getShort("component",i);    
                 int tdc = bank.getInt("TDC",i);
-                
+                                
                 if(status.getIntValue("status",is,il,ip)==2) continue; //for MC use only
                 
                 if(tdc>0) {                       
@@ -365,12 +366,20 @@ public class ECCommon {
         if(event.hasBank("ECAL::adc")==true){
             DataBank bank = event.getBank("ECAL::adc");
             for(int i = 0; i < bank.rows(); i++){
-                int  is = bank.getByte("sector", i);
-                int  il = bank.getByte("layer", i); 
-                int  ip = bank.getShort("component", i);
-                int adc = bank.getInt("ADC", i);
-                float t = bank.getFloat("time", i) + (float) tmf.getDoubleValue("offset",is,il,ip) // TDC-FADC offset (sector, layer, PMT)
-                                                   + (float)  fo.getDoubleValue("offset",is,il,0); // TDC-FADC offset (sector, layer) 
+                int     is = bank.getByte("sector", i);
+                int     il = bank.getByte("layer", i); 
+                int     ip = bank.getShort("component", i);
+                int    adc = bank.getInt("ADC", i);
+                float tadc = bank.getFloat("time", i);
+                
+                if (useGPP) {
+                	mc.setSLP(is, il, ip); 
+                	mc.addADC(adc); mc.addFTDC(tadc);
+                	adc = (int) mc.dgtzFADC(); tadc = (float) mc.dgtzFTDC();
+                }
+
+                float t = tadc + (float) tmf.getDoubleValue("offset",is,il,ip) // TDC-FADC offset (sector, layer, PMT)
+                               + (float)  fo.getDoubleValue("offset",is,il,0); // TDC-FADC offset (sector, layer) 
                 
                 if (status.getIntValue("status",is,il,ip)==3) continue; //for MC use only
                 
@@ -385,19 +394,21 @@ public class ECCommon {
                 
                 strips.add(strip); 
                 
-                float ftdc_corr = t+FTOFFSET;
-                strip.setTADC(ftdc_corr);
+                float ftdc_corr = t+FTOFFSET;               
+                strip.setTADC(ftdc_corr); // units: ns
                 
                 float  tmax = 1000; int tdc = 0;
                                
                 if (tdcs.hasItem(is,il,ip)) {
                     float radc = (float)Math.sqrt(adc);
                     for (float tdcc : tdcs.getItem(is,il,ip)) {
+                    	 if (useGPP) {mc.addDTDC(tps*tdcc); tdcc = (float)mc.dgtzDTDC()/tps;}
                          float tdif = tps*tdcc - triggerPhase - (float)gtw.getDoubleValue("time_walk",is,il,0)/radc - ftdc_corr; 
                          if (Math.abs(tdif)<TMFCUT&&tdif<tmax) {tmax = tdif; tdc = (int)tdcc;}
+//                         System.out.println(is+" "+il+" "+ip+" "+adc+" "+ftdc_corr+" "+tdcc*tps+" "+tdif+" "+triggerPhase);                         
                     }
-                    strip.setTDC(tdc);
-                }              
+                    strip.setTDC(tdc); //units: TDC channel
+                 }              
             }
         }  
         
@@ -451,10 +462,8 @@ public class ECCommon {
     
     public static List<ECPeak>  getPeaks(int sector, int layer, List<ECPeak> peaks){
     	
-        List<ECPeak> peakList = new ArrayList<ECPeak>();
-        
+        List<ECPeak> peakList = new ArrayList<ECPeak>();        
         for(ECPeak peak : peaks) if(peak.getDescriptor().getSector()==sector && peak.getDescriptor().getLayer()==layer) peakList.add(peak);
-
         return peakList;   
     }
     
@@ -558,7 +567,7 @@ public class ECCommon {
     	int l = c.getDescriptor().getLayer();    	     	
     	for (int i=0; i<3; i++) {   		
     		if(clusterThreshold[ind[l-1]]==0) return true;
-    		double thr = 0.1*clusterThreshold[ind[l-1]]*peakThreshold[ind[l-1]]; //cluster thrsh. fraction of peak
+    		double thr = 0.1*clusterThreshold[ind[l-1]]*peakThreshold[ind[l-1]]; //fraction of peak threshold
     		if(c.getEnergy(i)*1e3<thr) return false;  
     	}       
     	return true;
