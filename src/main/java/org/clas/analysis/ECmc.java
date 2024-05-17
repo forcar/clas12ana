@@ -17,7 +17,7 @@ import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.io.base.DataEvent;
 
-public class ECgpp extends DetectorMonitor {
+public class ECmc extends DetectorMonitor {
 	
 	Event          ev = new Event();
 	EBMCEngine  ebmce = new EBMCEngine();
@@ -33,7 +33,7 @@ public class ECgpp extends DetectorMonitor {
     List<Particle> phot = null;
     List<Particle>  pim = null;
 		
-    public ECgpp(String name) {
+    public ECmc(String name) {
         super(name);
         
         dgmActive=true; 
