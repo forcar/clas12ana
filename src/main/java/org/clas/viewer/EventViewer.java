@@ -91,8 +91,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8;   
-    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf6g,cf6h,cf6i;
-    JCheckBoxMenuItem   cf7,cf8,cf9,cf10a,cf10b,cf10c,cf11,cf12,cf13,cf14,cf15,cf16;   
+    JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf6g,cf6h,cf6i,cf6j;
+    JCheckBoxMenuItem   cf7,cf8,cf9,cf10a,cf10b,cf10c,cf11,cf12,cf13,cf14,cf15,cf16,cf17,cf18;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -134,6 +134,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean     sfitEnable = false;
     public Boolean     dfitEnable = false;
     public Boolean    gdfitEnable = false;
+    public Boolean    trfitEnable = false;
     public Boolean     yLogEnable = false;
     public Boolean     zLogEnable = true;
     public Boolean    dbgECEngine = false;
@@ -154,10 +155,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean          clear = true; 
     public Integer          TRpid = 11;
     public Boolean      useATDATA = false;
+    public Boolean    StatEachRun = false;
     public Boolean    useFADCTime = false;
-    public Boolean usePass2Timing = false;
-    public Boolean usePass2Energy = false;
+    public Boolean usePass2Timing = true;
+    public Boolean usePass2Energy = true;
     public Boolean  useCalibPass2 = true;
+    public Boolean         useGPP = false;
     public Boolean   outputECHITS = false; 
     public Boolean         useASA = false;
     public Boolean          useCC = false;
@@ -233,11 +236,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmcn("ECmcn");
 //     	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECperf("ECperf");
-//  		monitors[n] = new ECsf("ECsf"); 
+//      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
-//    		monitors[n] = new ECmon("ECmon"); 
+    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
-    		monitors[n] = new ECpi0("ECpi0"); 
+//    		monitors[n] = new ECpi0("ECpi0"); 
 
         }
     }
@@ -245,7 +248,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public void createMenuBar() {
     	System.out.println("EventViewer.createMenuBar");
         		
-        menuBar = new JMenuBar();
+        menuBar = new JMenuBar(); 
         
         JMenu menu;
         JMenuItem menuItem;
@@ -280,12 +283,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf1 = new JCheckBoxMenuItem("Residual");      cf1.addItemListener(this);       menu.add(cf1);  
         cf2 = new JCheckBoxMenuItem("TMF");           cf2.addItemListener(this);       menu.add(cf2);  
         cf3 = new JCheckBoxMenuItem("GTMF");          cf3.addItemListener(this);       menu.add(cf3);
+        cf18= new JCheckBoxMenuItem("TRES");         cf18.addItemListener(this);       menu.add(cf18);
         menuBar.add(menu);
               
         menu     = new JMenu("Settings");       
         menuItem = new JMenuItem("Set GUI update interval");     menuItem.addActionListener(this); menu.add(menuItem);
         cf4      = new JCheckBoxMenuItem("log Y");                      cf4.addItemListener(this); menu.add(cf4);  
-        cf5      = new JCheckBoxMenuItem("log Z");                      cf5.addItemListener(this); menu.add(cf5);   cf5.doClick();
+        cf5      = new JCheckBoxMenuItem("log Z");                      cf5.addItemListener(this); menu.add(cf5); cf5.doClick();
         menuItem = new JMenuItem("Set run number");              menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
@@ -347,7 +351,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         menuBar.add(menu);
        
         menu   	= new JMenu("ECstatus");
-        cf9 = new JCheckBoxMenuItem("ATDATA");   cf9.addItemListener(this); menu.add(cf9);
+        cf9  = new JCheckBoxMenuItem("ATDATA");         cf9.addItemListener(this); menu.add(cf9);
+        cf17 = new JCheckBoxMenuItem("StatEachRun");   cf17.addItemListener(this); menu.add(cf17);
+        menuItem = new JMenuItem("Set MaxEvents"); menuItem.addActionListener(this); menu.add(menuItem);
         menuBar.add(menu);
         
         menu   	= new JMenu("ECcalib");
@@ -378,11 +384,12 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf14     = new JCheckBoxMenuItem("RepairMissingDT");     cf14.addItemListener(this); menu.add(cf14); cf14.doClick();
         cf15     = new JCheckBoxMenuItem("PCAL FTime");          cf15.addItemListener(this); menu.add(cf15); cf15.doClick();
         cf6d     = new JCheckBoxMenuItem("PASS 2 Timing");       cf6d.addItemListener(this); menu.add(cf6d); cf6d.doClick();
-        cf6f     = new JCheckBoxMenuItem("PASS 2 Energy");       cf6f.addItemListener(this); menu.add(cf6f); 
+        cf6f     = new JCheckBoxMenuItem("PASS 2 Energy");       cf6f.addItemListener(this); menu.add(cf6f); cf6f.doClick();
         cf6e     = new JCheckBoxMenuItem("calibpass2");          cf6e.addItemListener(this); menu.add(cf6e); cf6e.doClick();
         cf6g     = new JCheckBoxMenuItem("ECHITS");              cf6g.addItemListener(this); menu.add(cf6g);
         cf6h     = new JCheckBoxMenuItem("ASA");                 cf6h.addItemListener(this); menu.add(cf6h);
         cf6i     = new JCheckBoxMenuItem("CC");                  cf6i.addItemListener(this); menu.add(cf6i);
+        cf6j     = new JCheckBoxMenuItem("GPP");                 cf6j.addItemListener(this); menu.add(cf6j);
         menuItem = new JMenuItem("Set PC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set EC Z plane");              menuItem.addActionListener(this); menu.add(menuItem);   
         menuItem = new JMenuItem("Set Hit Thresh");              menuItem.addActionListener(this); menu.add(menuItem);   
@@ -458,6 +465,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf1) {sfitEnable     = sc(e); monitors[0].sfitEnable  = sfitEnable;}
 		if (s==cf2) {dfitEnable     = sc(e); monitors[0].dfitEnable  = dfitEnable;}
 		if (s==cf3) {gdfitEnable    = sc(e); monitors[0].gdfitEnable = gdfitEnable;}
+		if (s==cf18){trfitEnable    = sc(e); monitors[0].trfitEnable = trfitEnable;}
 		if (s==cf4) {yLogEnable     = sc(e); monitors[0].setLogY(yLogEnable);} 
 		if (s==cf5) {zLogEnable     = sc(e); monitors[0].setLogZ(zLogEnable);}
 		if (s==co5) {defaultGain    = sc(e); monitors[0].eng.setDefaultGain(defaultGain);}		
@@ -470,6 +478,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf6g){outputECHITS   = sc(e); monitors[0].eng.outputECHITS(outputECHITS);}
 		if (s==cf6h){useASA         = sc(e); monitors[0].eng.setUseASA1(useASA);}
 		if (s==cf6i){useCC          = sc(e); monitors[0].eng.setUseCC(useCC);}
+		if (s==cf6j){useGPP         = sc(e);{monitors[0].eng.setUseGPP(useGPP);monitors[0].useGPP = useGPP;}}
 		if (s==cf7) {dbgECEngine    = sc(e); monitors[0].eng.setDbgECEngine(dbgECEngine);}
 		if (s==cf8) {dbgAnalyzer    = sc(e); monitors[0].dbgAnalyzer = dbgAnalyzer;}
 		if (s==cf9) {useATDATA      = sc(e); monitors[0].useATDATA   = useATDATA;}
@@ -482,6 +491,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf14){DTcorr         = sc(e); monitors[0].eng.setUseDTcorr(DTcorr);}
 		if (s==cf15){FTpcal         = sc(e); monitors[0].eng.setUseFTpcal(FTpcal);}
 		if (s==cf16){FTOFveto       = sc(e); monitors[0].FTOFveto    = FTOFveto;}
+		if (s==cf17){StatEachRun    = sc(e); monitors[0].StatEachRun = StatEachRun;}
 		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
 		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}
@@ -504,8 +514,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Load Run"):                    this.loadHistoFromRunIndex(); break;
 //          case("Load Summary"):                this.readHistosFromSummary(); break;
           case("Analyze Runs"):                this.readFiles(); break;
-          case("Analyze Histos"):              this.readHistos(); break;
-          case("Set GUI update interval"):     this.setUpdateInterval(); break;
+          case("Analyze Histos"):              monitors[0].analyzeHistos = true; this.readHistos(); break;
+          case("Set GUI update interval"):     this.setUpdateInterval(); break; 
+          case("Set MaxEvents"):               this.setMaxEvents(); break;
           case("Set logParam"):                this.setLogParam(); break;
           case("Set PC Z plane"):              this.setPCZplane(); break;
           case("Set EC Z plane"):              this.setECZplane(); break;
@@ -591,7 +602,32 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
             }
         }
     }
-        
+    
+    public void setMaxEvents() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "Number of Events Analyzed",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "10002");
+        if(s!=null){
+            int val = 10002;
+            try { 
+                val= Integer.parseInt(s);
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            if(val>0) {
+            	this.setMaxEvents(val);
+            }
+            else {
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+        }
+    }
+    
     private void setRunNumber(String actionCommand) {
     
         System.out.println("EventViewer.setRunNumber("+actionCommand+")");
@@ -751,7 +787,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
  	    DataBank bank = event.getBank("RUN::config");	        
         long timestamp = bank.getLong("timestamp",0);    
         if (CYCLES==0) return 0;
-        return (int) (PERIOD*((timestamp+PHASE)%CYCLES)); // TI derived phase correction due to TDC and FADC clock differences 
+        return (int) (timestamp>0 ? (PERIOD*((timestamp+PHASE)%CYCLES)):0); // TI derived phase correction due to TDC and FADC clock differences 
     }
     
     private int getRunNumber(DataEvent event) {
@@ -811,7 +847,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 
     	int rNum = getRunNumber(event);
     	
-        if(rNum!=0 && isNewRun(rNum) && clear) {  //clear is initialized true and reset true by readFiles()
+        if(rNum!=0 && isNewRun(rNum) && clear) {//clear is initialized true (except ECscaler) and reset true by readFiles()
         	System.out.println("\nEventViewer: Processing Run "+rNum+" Event: "+getEventNumber(event));
         	this.runNumber = rNum;
             if(!clearHist) clear=false; //bypass initRun after first run is analyzed
@@ -951,6 +987,25 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }      
     } 
     
+//  Analyze Histos
+    
+    private void readHistos() {
+    	String fname = null;
+        for(int k=0; k<this.monitors.length; k++) this.monitors[k].localclear();
+
+        for (File fd : selectHistos()) {
+            if (fd.isFile()) {
+                fname=fd.getAbsolutePath();
+                loadHistosFromFile(fname);
+            }                
+        }  
+        this.monitors[0].writeScript(monitors[0].getDetectorName());
+        if(isCalibrationFile(fname)) {
+        	this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
+        }
+        monitors[0].analyzeHistos = false;
+    }
+    
     private List<File> selectHistos() {
         fc = new JFileChooser(new File(workDir+monitors[0].getDetectorName()));
         fc.setDialogTitle("Choose input histos directory...");
@@ -985,29 +1040,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         return files;
     }
-    
-    private void readHistos() {
-    	String fname = null;
-        for(int k=0; k<this.monitors.length; k++) this.monitors[k].localclear();
-
-        for (File fd : selectHistos()) {
-            if (fd.isFile()) {
-                fname=fd.getAbsolutePath();
-                loadHistosFromFile(fname);
-            }                
-        }  
-        this.monitors[0].writeScript(monitors[0].getDetectorName());
-        if(isCalibrationFile(fname)) {
-        	this.monitors[0].writeFile(getFileCalibrationTag(fname),1,7,0,3,0,3);
-        }
-    }
-             
-    public void loadHistoFromRunIndex() {
-    	File[] f = fc.getSelectedFiles();
-    	monitors[0].dropSummary=false;
-    	loadHistosFromFile(f[monitors[0].getRunIndex()].getAbsolutePath());
-    }
-    
+        
     public void loadHistosFromFile(String fileName) {
         System.out.println("EventViewer.loadHistosFromFile("+fileName+")");
         
@@ -1029,7 +1062,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         }
         return;
     }
-    
+             
+    public void loadHistoFromRunIndex() {
+    	File[] f = fc.getSelectedFiles();
+    	monitors[0].dropSummary=false;
+    	loadHistosFromFile(f[monitors[0].getRunIndex()].getAbsolutePath());
+    }
+
     public void saveHistosToFile(String fileName) {
         for(int k=0; k<this.monitors.length; k++) {
         	TDirectory dir = new TDirectory();
@@ -1088,6 +1127,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         System.out.println("EventViewer.setPeakThresholds("+val+")");
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].eng.setPeakThreshold(val);
+        }
+    }
+    
+    public void setMaxEvents(int val) {
+        System.out.println("EventViewer.setMaxEvents("+val+")");
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setMaxEvents(val);
         }
     } 
     
