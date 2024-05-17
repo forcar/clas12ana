@@ -676,9 +676,7 @@ public class ECpi0 extends DetectorMonitor{
         part.FTOFveto = FTOFveto;
         part.getNeutralResponses();
         
-        boolean outb = shiftTrigBits(getRunNumber()); //true=outbending e- false=inbending e-
-        
-        int trigger_sect = isMC ? trSEC : getElecTriggerSector(outb);
+        int trigger_sect = isMC ? trSEC : getElecTriggerSector(shiftTrigBits(getRunNumber()));
         
         for (int is=isMC?mcSEC:1; is<(isMC?mcSEC+1:7); is++) {
            
