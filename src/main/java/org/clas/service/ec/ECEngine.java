@@ -31,8 +31,8 @@ public class ECEngine extends ReconstructionEngine {
     
     @Override
     public boolean processDataEvent(DataEvent de) {
-                
-        List<ECStrip>     ecStrips = ECCommon.initEC(de, this.getConstantsManager()); // thresholds, ADC/TDC match        
+    	     
+        List<ECStrip>     ecStrips = ECCommon.initEC(de,this.getConstantsManager()); // thresholds, ADC/TDC match        
         List<ECPeak>       ecPeaks = ECCommon.processPeaks(ECCommon.createPeaks(ecStrips)); // thresholds, split peaks -> update peak-lines          
         List<ECCluster> ecClusters = new ArrayList<ECCluster>();  
         
@@ -460,6 +460,11 @@ public class ECEngine extends ReconstructionEngine {
         return ECCommon.H2_ecEng;
     }
     
+    public void setUseGPP(boolean val) {
+    	LOGGER.log(Level.INFO,"ECengine: useGPP = "+val);   	
+    	ECCommon.useGPP = val;
+    } 
+    
     @Override
     public boolean init() {
     	
@@ -483,7 +488,11 @@ public class ECEngine extends ReconstructionEngine {
             "/calibration/ec/dveff",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
-            "/calibration/ec/status"
+            "/calibration/ec/status",
+            "/calibration/ec/ftres",
+            "/calibration/ec/dtres",
+            "/calibration/ec/fthr",
+            "/calibration/ec/deff"
         };
                 
         requireConstants(Arrays.asList(ecTables));
