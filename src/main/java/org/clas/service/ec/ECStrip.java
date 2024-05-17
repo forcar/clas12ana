@@ -23,8 +23,8 @@ public class ECStrip implements Comparable {
     private int                iADC = 0;
     private int                iTDC = 0;
     private float             iTADC = 0;
-    private double            iGain = 1.0;
-    private double     iADC_to_MEV  = 1.0/10000.0;
+    private double            iGain = 1.0; // 0.1MeV*scale: scale = 0.6666(pcal) 1(ecal), 2(ecal5)
+    private double     iADC_to_MEV  = 1.0/10000.0; // 0.1MeV / GeV
     private double          iAttenA = 0.2;
     private double          iAttenB = 70.0;
     private double          iAttenC = 0.0;
@@ -87,8 +87,8 @@ public class ECStrip implements Comparable {
     }
     
     public class corrEnergy extends EnergyCorrection {    	
-        public double getRawEnergy() {
-    	    return iADC*iGain*iADC_to_MEV;
+        public double getRawEnergy() { //GeV
+    	    return iADC*iGain*iADC_to_MEV; 
         }
 
         public double getEcorr(double dist) {
