@@ -408,9 +408,7 @@ public class ECsf extends DetectorMonitor {
     	
         isMC = (getRunNumber()<100) ? true:false;
         
-        boolean outb = shiftTrigBits(getRunNumber()); // true=outbending e- false=inbending e-
-        
-        int trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(outb); 
+        int trigger_sect = isMC ? (event.hasBank("ECAL::adc") ? event.getBank("ECAL::adc").getByte("sector",0):5) : getElecTriggerSector(shiftTrigBits(getRunNumber())); 
         
         boolean goodSector = trigger_sect>0 && trigger_sect<7; 
     	
