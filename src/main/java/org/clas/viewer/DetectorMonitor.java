@@ -124,6 +124,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                          useRDIF = false;
     private Boolean                        useEBCCDB = false;
     private Boolean                        stopBlink = true;
+    private Boolean                          verbose = false;
     Timer                                      timer = null;
    
     public JRadioButton bEL,bPI,bPH,bP,bC,bT,b0,b1,bS0,bS1,bS2,bS3,bS4,bS5,bS6,bS7,bpcal,becin,becou,bu,bv,bw;
@@ -135,6 +136,7 @@ public class DetectorMonitor implements ActionListener {
     public int        trigFD = 0;
     public int        trigCD = 0;
     public int         TRpid = 11;
+    public int         MCpid = 11;
     
     public boolean   testTrigger = false;
     public boolean TriggerBeam[] = new boolean[32];
@@ -143,6 +145,9 @@ public class DetectorMonitor implements ActionListener {
     private int   runNumber = 0;
     public  int    runIndex = 0;
     public  int      yIndex = 0;
+    public  int   maxevents = 0;
+    public  int   MaxEvents = 10002;
+
     private int eventNumber = 0;
     private int     viewRun = 0;  
     
@@ -150,6 +155,7 @@ public class DetectorMonitor implements ActionListener {
     public int eventResetTime_default[]=new int[19];    
     
     public double lMin=0, lMax=500, zMin=0.1, zMax=1.0, zMinLab, zMaxLab;
+    public int izMaxLab;
     public double slideMin=1, slideMax=500;
     public Boolean doAutoRange = false;
     public Boolean dNorm = false;
@@ -206,12 +212,15 @@ public class DetectorMonitor implements ActionListener {
     public Boolean         dfitEnable = false; 
     public Boolean        gdfitEnable = false; 
     public Boolean         sfitEnable = false; 
+    public Boolean        trfitEnable = false; 
     public Boolean         fitVerbose = false; 
     public Boolean      isEngineReady = false;
     public Boolean isTimeLineFitsDone = false;
     public Boolean        histosExist = false;
     public Boolean          dgmActive = false;
     public Boolean          useATDATA = false;
+    public Boolean             useGPP = false;
+    public Boolean        StatEachRun = false;
     public Boolean            normPix = false;
     public Boolean            normAtt = false;
     public Boolean             normCz = false;
@@ -219,6 +228,7 @@ public class DetectorMonitor implements ActionListener {
     public Boolean             TWcorr = false;
     public Boolean              HiRes = false;
     public Boolean        dbgAnalyzer = false;
+    public Boolean      analyzeHistos = false;
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
@@ -273,6 +283,10 @@ public class DetectorMonitor implements ActionListener {
             "/calibration/ec/effective_velocity",
             "/calibration/ec/tmf_offset",
             "/calibration/ec/tmf_window",
+            "/calibration/ec/fthr",
+            "/calibration/ec/deff",
+            "/calibration/ec/ftres",
+            "/calibration/ec/dtres",
             "/daq/fadc/ec",
             "/daq/tt/ec"
     };    
@@ -481,15 +495,15 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void processEVENT_STOP(DataEvent de) {
+        System.out.println(root+"processEVENT_STOP");    	
     	doSTOPEvent(de);
     	analyze(); 
         plotHistos(getRunNumber()); 
         if(autoSave) saveHistosToFile();
-        System.out.println(root+"processEVENT_STOP");    	
+        System.out.println(root+"processEVENT_STOP finished");    	
     }
     
-    public void doSTOPEvent(DataEvent de) {
-    	
+    public void doSTOPEvent(DataEvent de) {  	
     }
 
     public void drawDetector() {    
@@ -538,7 +552,17 @@ public class DetectorMonitor implements ActionListener {
     	}
     	return (tbsum==0||tbsum>1) ? 0:ts;
     }
-    
+    public int getElecTriggerSector(int f) { //shift: 0,1,2
+    	int shift=1+f*7;
+    	int[] tb = new int[32];
+    	int tbsum=0, ts=0;
+    	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
+    	for (int i=shift; i<shift+6; i++) {
+    		tbsum+=tb[i]; if(tb[i]>0) ts=i-f*7;
+    	}
+    	return (tbsum==0||tbsum>1) ? 0:ts;
+    }
+       
     public EmbeddedCanvasTabbed getDetectorCanvas() {
          return detectorCanvas;
     }
@@ -900,6 +924,7 @@ public class DetectorMonitor implements ActionListener {
                 zMaxLab = Math.pow(10, zMax/10); zMinLab = Math.pow(2, zMin/10); 
                 rangeSliderValue1.setText(String.valueOf("" + String.format("%4.0f", zMinLab)));
                 rangeSliderValue2.setText(String.valueOf("" + String.format("%4.0f", zMaxLab)));
+                if(doAutoRange) izMaxLab = (int) zMaxLab;
                 plotScalers(getRunNumber());
                 plotHistos(getRunNumber());
             }
@@ -916,8 +941,8 @@ public class DetectorMonitor implements ActionListener {
         arBtn.setSelected(false);         
         sliderPane.add(arBtn);        
         return sliderPane;
-    }  
-    
+    } 
+
     public void actionPerformed(ActionEvent e) {
     	if(e.getActionCommand().compareTo("Blink Run")==0)  BlinkRunAction();
     	if(e.getActionCommand().compareTo("Norm Run")==0)   NormRunAction();
@@ -933,12 +958,23 @@ public class DetectorMonitor implements ActionListener {
         plotHistos(getRunNumber());
     } 
     
-    public void NormRunAction() {
-    	normrun = runIndexSlider;
-    	normrng = (int) zMaxLab; 
-    	NormRunFunction();    	
+    public void NormRunAction() { 
+    	normrun=runIndexSlider;
+    	if(StatEachRun) {
+    		int imax=Math.min(getNormrng(),maxevents);
+    		for(int i=0; i<imax; i++) {normrng=1; NormRunFunction(); normrun++;}
+    		normrun=1; normrng=1;
+    	} else {
+        	normrng = getNormrng();
+        	NormRunFunction();
+    	}
     }
     
+    public int getNormrng() {    
+    	int rng = (int) zMaxLab;
+    	return normrun+rng-1>=maxevents ? maxevents-normrun:rng;
+    }
+        
     public void NormRunFunction() {
     	
     }
@@ -1034,6 +1070,10 @@ public class DetectorMonitor implements ActionListener {
     
     public void setTotalEvents(int num) {
         totalEvents = num;
+    }    
+    
+    public void setMaxEvents(int num) {
+        MaxEvents = num;
     }
          
     public void setEventNumber(int num) {
@@ -1091,8 +1131,10 @@ public class DetectorMonitor implements ActionListener {
     	if (run<=15490) return  5.986f;
 //    	if (run<=15727) return  2.07052f;    	
     	if (run<=15727) return  2.06252f;    	
-    	if (run<=16079) return  2.21205f;
-    	if (run<=99999) return 10.5473f;
+      	if (run<=16079) return  2.21205f;
+       	if (run<=18437) return 10.5473f;
+       	if (run<=19131) return 10.5322f;
+        if (run<=99999) return 10.54726f;
     	return 0.0f;
     }
     
@@ -1149,13 +1191,15 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=15000&&run<=15490) return -1.00f;
     	if (run>=15491&&run<=15732) return +0.50f;  
     	if (run>=15733&&run<=18417) return -1.0f;
-    	if (run>=18418)             return +1.0f;
+    	if (run>=18419&&run<=19131) return +1.0f;
+    	if (run>19131)              return +1.0f;
     	return 0.00f;
     }
     
-    public boolean shiftTrigBits(int run) {
-    	if (run>=16050 && getTorusCurrent(run)>0) return true;
-    	return false;
+    public int shiftTrigBits(int run) { //primary e- trigger bits were not in 0-7
+    	if (run>=16043 && run<=16078) return 2; //RG-C 2 GeV
+    	if (run>=18419 && getTorusCurrent(run)>0) return 1; //RG-D outbending
+    	return 0;
     }
     
     public String getRunGroup(int run) {
@@ -1164,8 +1208,9 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=6604)            return "rga-s19";
     	if (run>=11000)           return "rgb";
     	if (run>=15000)           return "rgm";
-    	if (run>=16050)           return "rgc";
+    	if (run>=16043)           return "rgc";
     	if (run>=18127)           return "rgd";
+    	if (run>=19209)           return "rgk";
     	return "rga";
     }
     
@@ -1568,7 +1613,7 @@ public class DetectorMonitor implements ActionListener {
        fd.hist.getAttributes().setTitleX(h.getTitleX());
        fd.hist.setTitle(tit);
        fd.graph.setTitle(tit);
-       fd.initFit(ff,pmin,pmax,fmin,fmax); 
+       fd.initFit(ff,pmin,pmax,fmin,fmax);
        fd.fitGraph("",cfitEnable,fitVerbose); 
        return fd;
     }
@@ -1625,22 +1670,22 @@ public class DetectorMonitor implements ActionListener {
     public void readDataGroup(int run, TDirectory dir) {
         String folder = getDetectorName() + "/";
         System.out.println("Reading from: " + folder);
-        DataGroup sum = getDetectorSummary();
         IndexGenerator ig = new IndexGenerator();
-        if (sum!=null) {
-        int nrows = sum.getRows();
-        int ncols = sum.getColumns();
-        int nds   = nrows*ncols;
-        DataGroup newSum = new DataGroup(ncols,nrows);
-        for(int i = 0; i < nds; i++){
-            List<IDataSet> dsList = sum.getData(i);
-            for(IDataSet ds : dsList){
-                System.out.println("\t --> " + ds.getName());
-                newSum.addDataSet(dir.getObject(folder, ds.getName()),i);
-            }
-        }            
-        setDetectorSummary(newSum);
-        
+
+        if (getDetectorSummary()!=null) { //seems to be always true?        
+        	DataGroup sum = getDetectorSummary();
+        	int nrows = sum.getRows();
+        	int ncols = sum.getColumns();
+        	int nds   = nrows*ncols;
+        	DataGroup newSum = new DataGroup(ncols,nrows);
+        	for(int i = 0; i < nds; i++){
+        		List<IDataSet> dsList = sum.getData(i);
+        		for(IDataSet ds : dsList){
+        			if(verbose)System.out.println("\t --> " + ds.getName());
+        			newSum.addDataSet(dir.getObject(folder, ds.getName()),i);
+        		}
+        	}            
+        	setDetectorSummary(newSum);
         }
         
         Map<Long, DataGroup> map = this.getDataGroup().getMap(); //All defined histos are here
@@ -1656,7 +1701,7 @@ public class DetectorMonitor implements ActionListener {
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = group.getData(i);
                 for(IDataSet ds : dsList){
-                    System.out.println("\t --> " + ds.getName());                 
+                    if(verbose)System.out.println("\t --> " + ds.getName());                 
                     if(dir.getObject(folder, ds.getName())!=null) newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);    
                     if(dir.getObject(folder, ds.getName())==null) newGroup.addDataSet(ds,i);    
                 }
@@ -1680,7 +1725,7 @@ public class DetectorMonitor implements ActionListener {
         for(int i = 0; i < nds; i++){
             List<IDataSet> dsList = sum.getData(i);
             for(IDataSet ds : dsList){
-                System.out.println("\t --> " + ds.getName());
+                if(verbose)System.out.println("\t --> " + ds.getName());
                 dir.addDataSet(ds);
             }
         }      
@@ -1696,7 +1741,7 @@ public class DetectorMonitor implements ActionListener {
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = group.getData(i);
                 for(IDataSet ds : dsList){
-                    System.out.println("\t --> " + ds.getName());
+                    if(verbose)System.out.println("\t --> " + ds.getName());
                     dir.addDataSet(ds);
                 }
             }
