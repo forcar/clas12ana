@@ -52,14 +52,14 @@ public class EChv extends DetectorMonitor {
     	return out;
     }
     
-//  *** runGenerateSNP() *** 
+// Generates new HV snp file from ECcalib hvgain_<run> file using BURT file <snpName>
     
     public static void runGenerateSNP(int run, int detid, String snpName) {
     	EChv reader = new EChv("EChv");
     	String gainFile = gainPath+"hvgain_"+run;
     	String  snpFile = snpPath+(detid==0?"PCAL_HV/":"ECAL_HV/")+snpName;
     	IndexedList<List<Float>> gain = parseGain(reader.getList(gainFile)); 
-    	List<String>  snp = reader.getList(snpFile); 
+    	List<String> snp = reader.getList(snpFile); 
     	writeSNP(run, detid, gain, snp);
     }
     
@@ -334,7 +334,16 @@ public class EChv extends DetectorMonitor {
     }
 
 	public static void main(String[] args) {
-		runCompareFiles(2);	
+//		runCompareFiles(2);
+// RGE2  
+		runGenerateSNP(20015,0,"PCAL_HV-2024_03_20-08_09_33.snp");
+		runGenerateSNP(20015,1,"ECAL_HV-2024_03_20-08_10_07.snp"); 			
+// RGE1  
+//		runGenerateSNP(19860,0,"PCAL_HV-2024_03_14-16_30_41.snp");
+//		runGenerateSNP(19860,1,"ECAL_HV-2024_03_14-16_31_08.snp"); 		
+// RGK  
+//		runGenerateSNP(19021,0,"PCAL_HV-2023_10_15-13_08_22.snp");
+//		runGenerateSNP(19021,1,"ECAL_HV-2023_10_15-17_15_46.snp"); 		
 // RGD		
 //		runGenerateSNP(18312,0,"PCAL_HV-2023_09_23-09_56_53.snp");  
 //		runGenerateSNP(18312,1,"ECAL_HV-2023_09_25-07_29_35.snp");  
