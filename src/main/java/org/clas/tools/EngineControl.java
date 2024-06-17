@@ -44,6 +44,7 @@ public class EngineControl implements ActionListener {
 	public boolean useFADCTime, useFTpcal, useUnsharedEnergy, useTWCorrections;
 	public boolean useDTCorrections, usePass2Timing, usePass2Energy, useCalibPass2, outputECHITS;
 	public boolean useASA1, useASA2, useASA3, useASA4, useASA5, useCCPC, useCCEC, useCC, useDEF;
+	public boolean useGPP;
 	
 	public ECEngine engine = null;
 	
@@ -393,6 +394,11 @@ public class EngineControl implements ActionListener {
     	engine.setDebug(val);
     	dbgECEngine = val;
     }  
+    
+    public void setUseGPP(Boolean val) {
+    	engine.setUseGPP(val);
+    	useGPP = val;
+    } 
     
     public void update(String s) {       
         updateConfig(s);
