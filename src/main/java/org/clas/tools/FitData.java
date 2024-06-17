@@ -44,23 +44,26 @@ public class FitData {
 	
 	public static int fitnum=0;
 	
-	String predefFunctionsF1D[] = {"[amp]*gaus(x,[mean],[sigma])",
-			                       "[amp]*gaus(x,[mean],[sigma])+[p0]",
-			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]",
-			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
-			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]",
-			                       "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x","[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x",
-			                       "[p0]*exp(-x/[p1])",
+	String predefFunctionsF1D[] = {"[amp]*gaus(x,[mean],[sigma])", //0
+			                       "[amp]*gaus(x,[mean],[sigma])+[p0]", //1
+			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]", //2
+			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", //3
+			                       "[amp]*gaus(x,[mean],[sigma])+[p0]+x*[p1]+x*x*[p2]", //4
+			                       "[p0]", "[p0]+[p1]*x", "[p0]+[p1]*x+[p2]*x*x","[p0]+[p1]*x+[p2]*x*x+[p3]*x*x*x", //5,6,7,8
+			                       "[p0]*exp(-x/[p1])", //9
 //			                       "[p0]*(exp(-x/[p1])+[p2]*exp(-x/[p3]))",
-			                       "[p0]*(exp(-x/70)+[p1]*exp(-x/400))",
-			                       "[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])",
-			                       "1/((1-[p])+[p]/x)",
-                                   "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])",
-                                   "[sf1]*(1+[sf3]/x+[sf4]/x/x)",
-                                   "[sf1]*(1+[sf3]*0.1/x+[sf4]*0.001/x/x)",
-                                   "[p0]+[p1]/x +[p2]/x^0.5",
-                                   "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])-exp(-(x-[p1]*0.95)/[p5])*x^[p6]",
-                                   "[p0]-exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])+exp(-(x-[p1]*0.95)/[p5])*x^[p6]"};
+			                       "[p0]*(exp(-x/70)+[p1]*exp(-x/400))", //10
+			                       "[a]+[b]*cos(x*[d])+[c]*cos(2*x*[e])", //11
+			                       "1/((1-[p])+[p]/x)", //12
+                                   "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])", //13
+                                   "[sf1]*(1+[sf3]/x+[sf4]/x/x)", //14
+                                   "[sf1]*(1+[sf3]*0.1/x+[sf4]*0.001/x/x)", //15
+                                   "[p0]*exp(x^[p3]/120000)+[p1]/x +[p2]/x^0.5", //16
+                                   "[p0]+exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])-exp(-(x-[p1]*0.95)/[p5])*x^[p6]", //17
+                                   "[p0]-exp(-(x-[p1])/[p2])+1-exp(-([p3]-x)/[p4])+exp(-(x-[p1]*0.95)/[p5])*x^[p6]", //18
+                                   "1/(1+exp(-[p0]*(x-[p1])))^[p2]", //19
+                                   "[p0]*exp(-(x-[p1])^2/[p2])*(2-erf(x,[p1],[p3]))", //20
+                                   "[p0]*exp(-(x-[p1])^2/[p2])*(2-erf(x,[p1],[p3]))"}; //21
 	
 	public FitData(GraphErrors graph) {
 	    setGraph(graph);
@@ -164,10 +167,14 @@ public class FitData {
 //	    if (func==10) {initFunc(0,0.3,0.1,0.5);initFunc(1,70,65,75) ; initFunc(3,400,380,420) ;initFunc(2,1.9,1,4) ; graph.getFunction().setRange(fmin,fmax);f_optstat="11110";}
 	    if (func==14) {initFunc(0,0.25);   initFunc(1,-0.018,-0.040,-0.016); initFunc(2,0.0006,0.0005,0.0007); graph.getFunction().setRange(fmin, fmax);}
 	    if (func==15) {initFunc(0,0.27);   initFunc(1,-0.146);initFunc(2,0.117);graph.getFunction().setRange(fmin,fmax);g_optstat="";f_optstat="1110";}
-	    if (func==16) {initFunc(0,0.5);    initFunc(1,0.001); initFunc(2,100)  ;graph.getFunction().setRange(fmin,fmax);g_optstat="";f_optstat="1110";}
+	    if (func==16) {initFunc(0,0.02);   initFunc(1,0.001); initFunc(2,20); initFunc(3,0.75)  ;graph.getFunction().setRange(fmin,fmax);g_optstat="";f_optstat="11110";}
 	    if (func==13) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="111110";}
 	    if (func==17) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11111110";}
 	    if (func==18) {graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11111110";} 
+	    if (func==19) {initFunc(0,0.17,0.1,0.9);initFunc(1,60,10,90);initFunc(2,1,0.1,10);graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="1110";} 
+	    if (func==20) {initFunc(0,80,1,1000);   initFunc(1,30,28,40);initFunc(2,1000,500,1300); initFunc(3,6,4,10);   graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11110";} 
+	    if (func==21) {initFunc(0,200,1,1000);  initFunc(1,12,7,25); initFunc(2,1250,100,1300); initFunc(3,1.8,0.8,4);graph.getFunction().setRange(fmin, fmax);g_optstat="";f_optstat="11110";} 
+
 	}
 	
 	public void initFunc(int par, double val) {
