@@ -111,7 +111,7 @@ public class ECelas extends DetectorMonitor {
         	for(int is=1; is<7; is++) {dgm.makeH2("wc2"+is, 80, xlo1, 80, 40, 0.6, 1.4,1," ","#theta p+ (DEG)", "MOM / KIN p+");}
             break;
         case 3:
-    		double thmin=6.0, thmax=11, wmax=2.3;
+    		double thmin=5.0, thmax=11, wmax=2.3;
     		double pmax=kin.ep_from_w(beamEnergy, thmin, 0)*1.02, pmin=kin.ep_from_w(beamEnergy, thmax, wmax);
     		System.out.println(pmin);
         	dgm.add("WAGON",6,4,0,st,getRunNumber());        
@@ -127,15 +127,16 @@ public class ECelas extends DetectorMonitor {
     	int nb = 100, is;
     	switch (st) {        
         case 0: 
-        	dgm.add("EVENT",6,3,0,st,getRunNumber());
+        	dgm.add("EVENT",6,4,0,st,getRunNumber());
         	for(is=1; is<7; is++)  dgm.makeH2("ev0"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)"); 
         	for(is=1; is<7; is++)  dgm.makeH2("ev1"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"",          "W (GEV)","#theta (DEG)"); 
         	for(is=1; is<7; is++) {dgm.makeH1("ev2a"+is,nb,0.7,kinqw[1]*1.1,-1,"","W (GEV)","",1,0,"1000000"); 
         	                       dgm.makeH1("ev2b"+is,nb,0.7,kinqw[1]*1.1,-2,"","W (GEV)","",1,1,"1000000");}
+        	for(is=1; is<7; is++)  dgm.makeH2("ev3"+is, nb,0.3,1.1,60,-10,5,-1,"","W (GEV)","Vertex (cm)"); 
         	break;
         case 1:
         	dgm.add("EVENT",3,2,0,st,getRunNumber());         	
-        	for(is=1; is<7; is++) {dgm.makeH1("wth1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=6-8",  "W (GEV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("wth1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=5-8",  "W (GEV)","",is==6?9:is,0,"1000000");}
         	for(is=1; is<7; is++) {dgm.makeH1("wth2"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=8-10", "W (GEV)","",is==6?9:is,0,"1000000");}
         	for(is=1; is<7; is++) {dgm.makeH1("wth3"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=10-15","W (GEV)","",is==6?9:is,0,"1000000");} 
         	for(is=1; is<7; is++) {dgm.makeH1("wth4"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=15-20","W (GEV)","",is==6?9:is,0,"1000000");} 
@@ -185,7 +186,7 @@ public class ECelas extends DetectorMonitor {
     }
     
     public boolean processFilter(DataEvent event) {
-    	int sec = getElecTriggerSector(true);
+    	int sec = getElecTriggerSector(false);
         RecCal   = event.hasBank("REC::Calorimeter") ? event.getBank("REC::Calorimeter"):null;
         RecPart  = event.hasBank("REC::Particle")    ? event.getBank("REC::Particle"):null;       
     	boolean test1 = RecPart!=null && RecPart.rows()!=0;
@@ -327,10 +328,10 @@ public class ECelas extends DetectorMonitor {
                 		float lw = RecCal.getFloat("lw",  part2calo.get(loop).get(0));   
                     	double w = Math.sqrt(w2), the=p.theta()/kin.d2r, phi=p.phi()/kin.d2r;
                     	phi = (phi<-10?360+phi:phi)-(s-1)*60;
-                    	dgm.fill("ev0"+s,w,the); dgm.fill("ev2a"+s,w);
+                    	dgm.fill("ev0"+s,w,the); dgm.fill("ev2a"+s,w); dgm.fill("ev3"+s,w, p.vz());
                     	boolean trig = s==ist; 
                     	if(true && lv>19 && lw>19) {
-                    	if(the>= 6&&the <8) {dgm.fill("wth1"+s,w);dgm.fill("pth1"+s,p.e());}
+                    	if(the>= 5&&the <8) {dgm.fill("wth1"+s,w);dgm.fill("pth1"+s,p.e());}
                     	if(the>= 8&&the<10) {dgm.fill("wth2"+s,w);dgm.fill("pth2"+s,p.e());}
                     	if(the>=10&&the<15) {dgm.fill("wth3"+s,w);dgm.fill("pth3"+s,p.e());}
                     	if(the>=15&&the<20) {dgm.fill("wth4"+s,w);dgm.fill("pth4"+s,p.e());}
