@@ -37,7 +37,7 @@ public class Event {
 	public  DataBank trajBank = null;
 	public  DataBank   mcBank = null;
 	
-	public int TRpid = 0, MCpid=11;
+	public int TRpid=0, MCpid=0;
 	private boolean isHipo3Event = false; 
 	public boolean     isMC = false;	
 	public boolean   isMuon = false;
@@ -74,7 +74,7 @@ public class Event {
 	public int[] N1 = new int[6];
 	public int[] N2 = new int[6];
 	
-	private int trigger_sect=0;
+	public  int trigger_sect=0;
 	public  int eventNumber=0;
 	private int nelec=0;
 	public boolean debug = false;
@@ -129,16 +129,18 @@ public class Event {
 		hasHTCC            = ev.hasBank("HTCC::adc");
 		hasHTCCrec         = ev.hasBank("HTCC::rec");
 		hasMCParticle      = ev.hasBank("MC::Particle");
+		
+		isMC = hasMCParticle;
 	}
 	
 	public boolean isGoodEvent() {
-		isPhys   = hasRUNconfig && hasRECevent && hasRECparticle;		
-		isMuon   = isMuon() && hasECALpeaks && hasECALcalib;
+		isMuon   =  isMuon() && hasECALpeaks && hasECALcalib;
+		isPhys   = !isMuon && hasRUNconfig && hasRECevent && hasRECparticle;		
 		return isPhys || isMuon;		
 	}
 	
-	public boolean isMuon() {
-		return hasECALclusters && !hasRECcalorimeter;
+	public boolean isMuon() { //MCpid (MC data) or cosmic run configuration
+		return MCpid==-13 || (hasECALclusters && !hasRECcalorimeter);
 	}
 	
 	public boolean isGoodRows() {
@@ -172,18 +174,12 @@ public class Event {
 	    	if(hasRECtraj)         processRECtraj();
 	    	if(hasRECparticle)     processRECparticle();
 
-	    	getRECparticle(-11);
-			getRECparticle(11);
-			getRECparticle(22);
-			getRECparticle(2112);
-			getRECparticle(2212);
-			getRECparticle(-2212);
-			getRECparticle(211);
-			getRECparticle(-211);
+	    	getRECparticle(-11,11,22,2112,2212,-2212,211,-211); //load partmap
+	    	
 			return true;
 		}
 	    if(isMuon) {
-			initpartmap(13); //initialize with cosmic muon (pid=13)
+			initpartmap(13); //initialize with cosmic muon (pid=13) sign ignored!
 	    	processECALclusters();
 	    	processECALpeaks();
 	    	processECALcalib();
@@ -313,7 +309,6 @@ public class Event {
 		getPART(); //REC::Particle converted to List<Particle> part
 		partMap  = loadMapByIndex(partBank,"pid");	 //"pid" mapped to REC::Particle index
 	}
-
 	
 	public void storeRECcalorimeter(DataBank bank) {
 		caloBank = bank;
@@ -366,7 +361,7 @@ public class Event {
             double vx = bank.getFloat("vx",i);
             double vy = bank.getFloat("vy",i);
             double vz = bank.getFloat("vz",i);
-            int   pid = bank.getInt("pid",i);               
+            int   pid = bank.getInt("pid",i);     
             if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
          }            
 	}
@@ -393,6 +388,17 @@ public class Event {
     	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
     	for (int i=shift?8:1; i<(shift?14:7); i++) {
     		tbsum+=tb[i]; if(tb[i]>0) ts=shift?i-7:i;
+    	}
+    	return (tbsum==0||tbsum>1) ? 0:ts;
+    }
+    
+    public int getElecTriggerSector(int f) { //shift: 0,1,2
+    	int shift=1+f*7;
+    	int[] tb = new int[32];
+    	int tbsum=0, ts=0;
+    	for (int i = 31; i >= 0; i--) {tb[i] = ((trigger & (1 << i))!=0)?1:0;}
+    	for (int i=shift; i<shift+6; i++) {
+    		tbsum+=tb[i]; if(tb[i]>0) ts=i-f*7;
     	}
     	return (tbsum==0||tbsum>1) ? 0:ts;
     }
@@ -463,9 +469,10 @@ public class Event {
 	}
 		
 	//Use partMap to convert REC::Particle to partmap with tpid index
-	private void getRECparticle(int tpid) {		
+	private void getRECparticle(int...ttpid) {
+		for (int tpid : ttpid) {
 		if(partMap.containsKey(tpid)) {
-			for(int ipart : partMap.get(tpid)){  //retrieve tpid indexed pointer to REC::Particle
+			for(int ipart : partMap.get(tpid)){  //retrieve tpid indexed pindex to REC::Particle
 				int      pid = partBank.getInt("pid",  ipart);              
 				float     px = partBank.getFloat("px", ipart);
 				float     py = partBank.getFloat("py", ipart);
@@ -482,10 +489,11 @@ public class Event {
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
 				p.setProperty("chi2pid", chi2);
-				int ip = pid<0?Math.abs(pid)+1:pid;	//index ip must be +			
+				int ip = pid<0 ? Math.abs(pid)+1 : pid;	//index ip must be +			
 				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
 				    partmap.getItem(ip).add(p);
 			}		
+		}
 		}
 	}
 	
@@ -734,7 +742,23 @@ public class Event {
 					p.setProperty("recev", caliBank.getFloat("recEV", ical)*1e3);
 					p.setProperty("recew", caliBank.getFloat("recEW", ical)*1e3);
 				}
-				
+/*				
+				if(true) {
+					int  is = (int) p.getProperty("sector");					
+					float leffu = getLeff(is,lay+0,(int)p.getProperty("iu"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+					float leffv = getLeff(is,lay+1,(int)p.getProperty("iv"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+					float leffw = getLeff(is,lay+2,(int)p.getProperty("iw"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+					System.out.println("sector "+is+" lay "+lay+" leff1: "+leffu+" "+leffv+" "+leffw);
+					
+					Point3D pc = new Point3D(p.getProperty("x"),p.getProperty("y"),p.getProperty("z"));
+					int iidu = clusBank.getInt("idU",ical)-1, iidv = clusBank.getInt("idV",ical)-1, iidw = clusBank.getInt("idW",ical)-1;
+
+					float lleffu = getLeff(pc,getPeakline(iidu,pc,peakBank));  
+					float lleffv = getLeff(pc,getPeakline(iidv,pc,peakBank));  
+					float lleffw = getLeff(pc,getPeakline(iidw,pc,peakBank));  
+					System.out.println("sector "+is+" lay "+lay+" leff2: "+lleffu+" "+lleffv+" "+lleffw);					
+				}
+*/				
 				if(peakBank!=null && clusBank!=null) {
 					int idu = clusBank.getInt("idU",ical)-1, idv = clusBank.getInt("idV",ical)-1, idw = clusBank.getInt("idW",ical)-1;
 					p.setProperty("ustat", peakBank.getInt("status", idu));					
@@ -765,7 +789,7 @@ public class Event {
 							float cz = trajBank.getFloat("cz", tmap);
 							Point3D xyz = new Point3D(cx,cy,cz);
 							xyz.rotateZ(Math.toRadians(-60*(is-1)));
-							xyz.rotateY(Math.toRadians(-25.));						 
+							xyz.rotateY(Math.toRadians(-25.));
 							p.setProperty("cz", xyz.z());
 					   }
 					}
