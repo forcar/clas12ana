@@ -40,6 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
 
+import org.clas.analysis.DCmon;
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmc;
@@ -221,7 +222,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECmc1": monitors[n++]=new ECmc1(s);  break;
         	     case    "ECmc2": monitors[n++]=new ECmc2(s);  break;
         	     case "ECstatus": monitors[n++]=new ECstatus(s,"ECAL"); break;
-        	     case   "ECelas": monitors[n++]=new ECelas(s); 
+        	     case   "ECelas": monitors[n++]=new ECelas(s); break; 
+        	     case    "DCmon": monitors[n++]=new DCmon(s); 
         	   }
         	}
     	} else {
@@ -238,10 +240,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //          monitors[n] = new ECperf("ECperf");
 //      		monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
-    		monitors[n] = new ECmon("ECmon"); 
+//    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
-
+    		monitors[n] = new DCmon("DCmon");
+//
         }
     }
     
