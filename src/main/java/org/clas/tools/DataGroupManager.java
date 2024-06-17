@@ -155,6 +155,11 @@ public class DataGroupManager {
         drawGroupItem(getDataGroup().getItem(is,st,index,getRun()),c,i);        
     }
     
+    public void draw(String name, EmbeddedCanvas c, int is, int st, int i, int run) {      
+        int index = getDetectorTabNames().indexOf(name);
+        drawGroupItem(getDataGroup().getItem(is,st,index,run),c,i);        
+    }    
+    
     public boolean goodName(String name) {
     	if(!imap.containsKey(name))                 {System.out.println(name+" missing from imap"); return false;} 
     	if(!getDataGroup().hasItem(imap.get(name))) {System.out.println(imap.get(name)+" missing from detectorData"); return false;} 
@@ -188,6 +193,16 @@ public class DataGroupManager {
     	if(isH1(eff))  {getH1F(eff).reset(); getH1F(eff).add(H1F.divide(getH1F(val[0]), getH1F(val[1])));}
     	if(isH2(eff))  {getH2F(eff).reset(); getH2F(eff).add(H2F.divide(getH2F(val[0]), getH2F(val[1])));}
     	if(isGE(eff))  {getGE(eff).reset();  getGE(eff).copy(H1F.divide(getH1F(val[0]), getH1F(val[1])).getGraph());}
+    }
+    
+    public H1F getCDF(H1F h) {
+    	H1F hcdf = new H1F("cdf","cdf",100,0,150);
+    	int sum=0;
+    	for (int i=0; i<100; i++) {
+    		int x = (int) h.getBinContent(i); sum=sum+x;
+    		hcdf.setBinContent(i,sum);
+    	}
+    	return hcdf;
     }
     
     public class H2FF extends H2F {
