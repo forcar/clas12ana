@@ -28,7 +28,6 @@ import org.jlab.rec.eb.SamplingFractions;
 
 public class ECmc1 extends DetectorMonitor {
 	
-	Event            ev = new Event();
 	EBMCEngine    ebmce = new EBMCEngine();
 	ProcessECEngine pec = new ProcessECEngine();
 	
