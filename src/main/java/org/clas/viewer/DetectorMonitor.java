@@ -734,7 +734,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public JPanel packActionPanel() {
-        if (use123||useUVW) actionPanel.add(getButtonPane());      
+        if (use123||useUVW||useSEC) actionPanel.add(getButtonPane());      
         if    (YsliderPane) actionPanel.add(getYSliderPane());
         if    (ZsliderPane) actionPanel.add(getZSliderPane());
     	return actionPanel;
@@ -795,8 +795,8 @@ public class DetectorMonitor implements ActionListener {
         bS5 = new JRadioButton("5"); buttonPane.add(bS5); bS5.setActionCommand("5"); bS5.addActionListener(this); 
         bS6 = new JRadioButton("6"); buttonPane.add(bS6); bS6.setActionCommand("6"); bS6.addActionListener(this); 
         bS7 = new JRadioButton("7"); buttonPane.add(bS7); bS7.setActionCommand("7"); bS7.addActionListener(this); 
-   	     bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
-   	                             bG4.add(bS4);bG4.add(bS5);bG4.add(bS6);bG4.add(bS7);
+   	    bG4.add(bS0);bG4.add(bS1);bG4.add(bS2);bG4.add(bS3);
+   	    bG4.add(bS4);bG4.add(bS5);bG4.add(bS6);bG4.add(bS7);
         bS0.setSelected(true);   bS0.doClick();     	
         }
         
@@ -1134,6 +1134,8 @@ public class DetectorMonitor implements ActionListener {
       	if (run<=16079) return  2.21205f;
        	if (run<=18437) return 10.5473f;
        	if (run<=19131) return 10.5322f;
+       	if (run<=19659) return 6.39463f;
+       	if (run<=19892) return 8.47757f;
         if (run<=99999) return 10.54726f;
     	return 0.0f;
     }
@@ -1418,7 +1420,31 @@ public class DetectorMonitor implements ActionListener {
     	for (int i=0; i<np; i++) x[i]=i+1;
     	int n=0; for(double ddy : dy) {y[(int)(dx[n]-1)] = ddy; n++;}
         return new GraphErrors("TMF",x,y,xe,ye);    	
-    }  
+    } 
+    
+    public DataVector getGoodMean(DataVector v1, DataVector v2, double err) {
+        DataVector v3= new DataVector();
+        int np = v1.size();
+        for (int i=0; i<np; i++) {
+        	v3.add(Math.abs(v1.getValue(i)-v2.getValue(i))>err ? v2.getValue(i):v1.getValue(i));
+        }
+        return v3;
+    }
+    
+    public GraphErrors findGoodMean(GraphErrors g1, GraphErrors g2, double err) {
+
+    	double[] dx1 = g1.getVectorX().getArray();
+        double[] dy1 = g1.getVectorY().getArray();
+        double[] dy2 = g2.getVectorY().getArray();
+        int np=dx1.length;
+    	double[] x = new double[np]; double[] xe = new double[np]; 
+    	double[] y = new double[np]; double[] ye = new double[np]; 
+        for (int i=0; i<np; i++) {
+        	x[i]=i+1;
+        	y[i]=Math.abs(dy1[i]-dy2[i])>err ? dy2[i]:dy1[i];
+        }
+    	return new GraphErrors("GM",x,y,xe,ye);
+    }
         
     public void dumpGraph(String filename, GraphErrors graph) {
     	PrintWriter writer = null;
