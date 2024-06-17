@@ -824,8 +824,8 @@ public class ECstatus extends DetectorMonitor {
         int is = getActiveSector();  
     	int st = as +(dNorm ? 1:0); 
     	int n = 0, runlo=runlist.get(0);
-    	for (int il = 0; il<3 ; il++) {
-    		for (int in = 0; in<2; in++) {
+		for (int in = 0; in<2; in++) {
+   	       for (int il = 0; il<3 ; il++) {
     			for (int iv = 0; iv<3; iv++) {
     				int sl = iv+3*il+1;
     				int hl = 10*is + sl;
