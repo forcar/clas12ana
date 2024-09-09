@@ -435,6 +435,7 @@ public class Event {
             float   chi2 = Math.abs(partBank.getFloat("chi2pid", i));
             short status = (short) Math.abs(partBank.getShort("status", i));
             
+            
             Particle p = new Particle(); 
             if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("chi2pid", 0);}             
             if (pid!=0) {
@@ -443,17 +444,21 @@ public class Event {
                 p.setProperty("status", status);
                 p.setProperty("beta", beta);
                 p.setProperty("index",i);                        
-                p.setProperty("chi2pid",chi2);                        
+                p.setProperty("chi2pid",chi2);
+                p.setProperty("sector", status/1000==2 ? caloBank.getByte("sector",i):0);
+				p.setProperty("lu",caloBank.getFloat("lu",i));
+				p.setProperty("lv",caloBank.getFloat("lv",i));
+				p.setProperty("lw",caloBank.getFloat("lw",i));
             }
             part.add(i,p);     //Lists do not support sparse indices !!!!!            
         }                		
 	}	
 	
-    public List<Particle> getPART(double thr, int pid) { //returns all FD entries with energy>thr and requested pid
+    public List<Particle> getPART(double thr, int pid, int...ist) { //returns all entries with energy>thr and requested pid
     	List<Particle> olist = new ArrayList<Particle>();    
     	for (Particle p : getParticle(pid)) {
-    		short status = (short) p.getProperty("status");
-    		if(status>=2000 && status<3000 && p.p()>=thr) olist.add(p); 
+    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
+    		if(status==(ist==null ? 2 : ist[0]) && p.p()>=thr) olist.add(p); 
     	}          	
        return olist;    	
     }
@@ -489,6 +494,10 @@ public class Event {
 				p.setProperty("pindex", ipart);
 				p.setProperty("beta", beta);
 				p.setProperty("chi2pid", chi2);
+                p.setProperty("sector", status/1000==2 ? caloBank.getByte("sector",ipart):0);
+				p.setProperty("lu",     caloBank.getFloat("lu",ipart));
+				p.setProperty("lv",     caloBank.getFloat("lv",ipart));
+				p.setProperty("lw",     caloBank.getFloat("lw",ipart));
 				int ip = pid<0 ? Math.abs(pid)+1 : pid;	//index ip must be +			
 				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
 				    partmap.getItem(ip).add(p);
