@@ -1105,7 +1105,7 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public float getBeamEnergy(int run) { 
-    	if (run<=100)   return 10.6041f;
+    	if (run<=100)   return  7.54626f; //rgk-f18
     	if (run<=2360)  return 10.731f;
     	if (run<=2597)  return  2.2219f;
     	if (run<=3002)  return 10.731f;
