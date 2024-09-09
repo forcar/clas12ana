@@ -454,11 +454,20 @@ public class Event {
         }                		
 	}	
 	
-    public List<Particle> getPART(double thr, int pid, int...ist) { //returns all entries with energy>thr and requested pid
+    public List<Particle> getPART(double thr, int pid, int...ist) { //returns all entries with energy>thr and requested pid and status
     	List<Particle> olist = new ArrayList<Particle>();    
     	for (Particle p : getParticle(pid)) {
     		int status = (int) (Math.abs(p.getProperty("status"))/1000);
-    		if(status==(ist==null ? 2 : ist[0]) && p.p()>=thr) olist.add(p); 
+    		if(status==ist[0] && p.p()>=thr) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
+    
+    public List<Particle> getPART(double thr, int pid) { //returns all entries with energy>thr and requested pid
+    	List<Particle> olist = new ArrayList<Particle>();    
+    	for (Particle p : getParticle(pid)) {
+    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
+    		if(status==2 && p.p()>=thr) olist.add(p); 
     	}          	
        return olist;    	
     }
