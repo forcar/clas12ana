@@ -307,12 +307,12 @@ public class Event {
 	public void storeRECparticle(DataBank bank) {
 		partBank = bank;
 		getPART(); //REC::Particle converted to List<Particle> part
-		partMap  = loadMapByIndex(partBank,"pid");	 //"pid" mapped to REC::Particle index
+		partMap  = loadMapByIndex(partBank,"pid");	 //"pid" mapped to REC::Particle index (pindex in detector banks).
 	}
 	
 	public void storeRECcalorimeter(DataBank bank) {
 		caloBank = bank;
-		caloMap  = loadMapByIndex(caloBank,"pindex");
+		caloMap  = loadMapByIndex(caloBank,"pindex"); //"pindex" mapped to REC::Calorimeter index
 	}
 		
 	public void storeRECcherenkov(DataBank bank) {
@@ -437,7 +437,7 @@ public class Event {
             
             
             Particle p = new Particle(); 
-            if (pid==0) {p.setProperty("index", i); p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("chi2pid", 0);}             
+            if (pid==0) {p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("index", i); p.setProperty("chi2pid", 0);}             
             if (pid!=0) {
             	p.initParticle(pid, px, py, pz, vx, vy, vz);         	   
             	p.setProperty("ppid", pid);
@@ -454,16 +454,18 @@ public class Event {
         }                		
 	}	
 	
-    public List<Particle> getPART(double thr, int pid, int...ist) { //returns all entries with energy>thr and requested pid and status
+	//returns all entries with energy>thr and requested pid and status
+    public List<Particle> getPART(double thr, int pid, int ist) { 
     	List<Particle> olist = new ArrayList<Particle>();    
     	for (Particle p : getParticle(pid)) {
     		int status = (int) (Math.abs(p.getProperty("status"))/1000);
-    		if(status==ist[0] && p.p()>=thr) olist.add(p); 
+    		if(status==ist && p.p()>=thr) olist.add(p); 
     	}          	
        return olist;    	
     }
     
-    public List<Particle> getPART(double thr, int pid) { //returns all entries with energy>thr and requested pid
+    //returns REC::Particle entries with momentum>thr and requested pid
+    public List<Particle> getPART(double thr, int pid) { 
     	List<Particle> olist = new ArrayList<Particle>();    
     	for (Particle p : getParticle(pid)) {
     		int status = (int) (Math.abs(p.getProperty("status"))/1000);
@@ -472,7 +474,8 @@ public class Event {
        return olist;    	
     }
     
-	public List<Particle> getParticle(int ipid) {		
+    //returns REC::Particle entries with requested pid	
+	public List<Particle> getParticle(int ipid) { 
 		List<Particle> olist = new ArrayList<Particle>();
 	    IndexGenerator ig = new IndexGenerator();                
 	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
@@ -676,11 +679,12 @@ public class Event {
 		}
 		return ecalpart;
 	}
-		
+	
+	//returns List<Particle> for requested pindex "ipart" with ECAL relevant variables from REC::Calorimeter, REC::CaloExtras, REC::Traj, ECAL::clusters, ECAL::peaks
 	public List<Particle> getECALPHYS(int ipart) { //for physics runs
 		List<Particle> ecalpart = new ArrayList<Particle>();
 		if(caloMap.containsKey(ipart)) {
-			for(int imap : caloMap.get(ipart)) { //loop over all entries with pid=ipart			
+			for(int imap : caloMap.get(ipart)) { //retrieve REC::Calorimeter index corresponding to REC::Particle index ipart			
 				Particle p = new Particle(); 
 				p.copy(part.get(caloBank.getShort("pindex",imap)));
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
@@ -705,19 +709,18 @@ public class Event {
 				p.setProperty("m2u",    caloBank.getFloat("m2u",imap));
 				p.setProperty("m2v",    caloBank.getFloat("m2v",imap));
 				p.setProperty("m2w",    caloBank.getFloat("m2w",imap));
+				p.setProperty("pid",    part.get((int)p.getProperty("pindex")).pid());
 				
-				int ical = (int) p.getProperty("index");
+				int ical = (int) p.getProperty("index");				
+				int  lay = (int) p.getProperty("layer"); 
+				int  pid = (int) p.getProperty("pid");	
 				
-				int lay = (int) p.getProperty("layer"); 
-				int   pid = part.get((int)p.getProperty("pindex")).pid();
-				p.setProperty("pid", pid);
-				float bet = (float) part.get((int)p.getProperty("pindex")).getProperty("beta");
+				float  bet = (float) part.get((int)p.getProperty("pindex")).getProperty("beta");
 				float tim1 = (float) p.getProperty("time"), tim2=0;
-				float pat = (float) p.getProperty("path");
-				boolean good = debug && lay>1 && Math.abs(pid)==211;
+				float  pat = (float) p.getProperty("path");
 				
 //				boolean goodMatch = clusBank!=null && is==clusBank.getByte("sector", ical) && lay==clusBank.getByte("layer",ical);
-				boolean goodMatch = clusBank!=null ;
+//				boolean goodMatch = clusBank!=null ;
 				
 //				if(!goodMatch) continue;
 				
@@ -791,7 +794,9 @@ public class Event {
 				
 				p.setProperty("beta", getBeta(p)); //override caloBank with clusBank if it exists
 				
-//				if(good)System.out.println(eventNumber+" "+pid+" "+lay+" "+tim1+" "+tim2+" "+pat+" "+bet+" "+(tim2-starttime)+" "+pat/bet/29.98f);
+//				boolean good = debug && lay>0 && Math.abs(pid)==22;
+
+//				if(good) System.out.println(eventNumber+" "+starttime+" "+pid+" "+lay+" "+tim1+" "+tim2+" "+pat+" "+bet+" "+(tim1-starttime)+" "+pat/bet/29.979f);
 
 				if(trajMap.containsKey(ipart)) {
 					int  is = (int) p.getProperty("sector");
@@ -815,6 +820,7 @@ public class Event {
 				
 				Point3D res = getResidual(p);
 				p.setProperty("resx",res.x());p.setProperty("resy",res.y());p.setProperty("resz",res.z());
+				
 				ecalpart.add(p);
 			}
 		}
