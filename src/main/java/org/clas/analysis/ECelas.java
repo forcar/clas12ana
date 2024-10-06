@@ -251,9 +251,12 @@ public class ECelas extends DetectorMonitor {
         float lv = (int) elec.getProperty("lv");
         float lw = (int) elec.getProperty("lw");
         	            
-        double phi = (ephi<-10 ? 360+ephi : ephi)-(s-1)*60;
         dgm.fill("ev0"+s,w,ethe); dgm.fill("ev2a"+s,w); dgm.fill("ev3"+s,w, vze);
+        
         boolean trig = s==ist; 
+        
+        double phie = (ephi<-10 ? 360+ephi : ephi)-(s-1)*60;
+        
         if(true && lv>19 && lw>19) {
         	if(ethe>= 5&&ethe <8) {dgm.fill("wth1"+s,w);dgm.fill("pth1"+s,ep);}
             if(ethe>= 8&&ethe<10) {dgm.fill("wth2"+s,w);dgm.fill("pth2"+s,ep);}
@@ -262,10 +265,10 @@ public class ECelas extends DetectorMonitor {
             if(ethe>=20&&ethe<25) {dgm.fill("wth5"+s,w);dgm.fill("pth5"+s,ep);}
             if(ethe>=25&&ethe<30) {dgm.fill("wth6"+s,w);dgm.fill("pth6"+s,ep);} 
 		    dgm.fill("kepth0"+s, ethe, kin.p1vsth1(ethe, beamEnergy)-ep);
-		    dgm.fill("kepph0"+s, phi,  kin.p1vsth1(ethe, beamEnergy)-ep); 
+		    dgm.fill("kepph0"+s, phie,  kin.p1vsth1(ethe, beamEnergy)-ep); 
         }
         
-        double delphi2=0, delphi4=0, pphi2=-1000, pthe2=-1000, pphi4=-1000, pthe4=-1000;
+        double delphi=0, delphi2=0, delphi4=0, pphi2=-1000, pthe2=-1000, pphi4=-1000, pthe4=-1000;
         
         if(ppart2.size()==1) {
         	pphi2 = Math.toDegrees(ppart2.get(0).phi());
@@ -281,28 +284,32 @@ public class ECelas extends DetectorMonitor {
         	if(delphi4<0) delphi4 = 360+delphi4;
         }
   
+        boolean dphi = false;
         boolean dphi2 = delphi2>177 && delphi2<183;
         boolean dphi4 = delphi4>177 && delphi4<183;  
         
         if (w<1.065) {
-        if(dphi4 && ppart4.size()==1)                     {dgm.fill("wd1"+s+2,pthe4);dgm.fill("wd0"+s,pthe4,1);}
+        if(dphi4 &&                     ppart4.size()==1) {dgm.fill("wd1"+s+2,pthe4);dgm.fill("wd0"+s,pthe4,1);}
         if(dphi2 && ppart2.size()==1)                     {dgm.fill("wd1"+s+1,pthe2);dgm.fill("wd0"+s,pthe2,2);}
         if(dphi2 && ppart2.size()==1 && ppart4.size()==0) {dgm.fill("wd1"+s+3,pthe2);dgm.fill("wd0"+s,pthe2,3);}
         if(dphi2 && ppart2.size()==1 && ppart4.size()==1) {dgm.fill("wd1"+s+4,pthe2);dgm.fill("wd0"+s,pthe2,4);}
         }
-    	
-	    if(ppart2.size()==1 && w<1.065) { 
         
-        Particle prot = ppart2.get(0); 
- 	
+        Particle prot = null;
+        if (useFD && ppart2.size()==1) {dphi = dphi2; delphi = delphi2; prot = ppart2.get(0);}
+        if (useCD && ppart4.size()==1) {dphi = dphi4; delphi = delphi4; prot = ppart4.get(0);}
+    	
+	    if(w<1.065) { 
+	    	
         double   cthp = Math.cos(prot.theta()), sthp=Math.sqrt(1-cthp*cthp), pp=prot.p(), pthe=Math.toDegrees(prot.theta());
         double   pphi = Math.toDegrees(prot.phi());      
         double    vzp = prot.vz();
         double ebeam  = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe); 
         double delthe = Math.toDegrees(elec.theta() - Math.atan(pp*sthp/(beamEnergy-pp*cthp)));
 
-        dgm.fill("wa0"+s, delphi2);        	
-        if(dphi2) {
+        dgm.fill("wa0"+s, delphi); 
+        
+        if(dphi) {
         	double berr = ebeam-beamEnergy;
         	dgm.fill("wa1"+s, berr); dgm.fill("ev4"+s,berr, vzp);
         	dgm.fill("wa2"+s, delthe);	
@@ -319,8 +326,9 @@ public class ECelas extends DetectorMonitor {
         	
         	dgm.fill("ev1"+s,w,ethe); dgm.fill("ev2b"+s,w);
         }
-        dgm.fill("kc0"+s, pthe,delphi2-180);
-        dgm.fill("kc1"+s, ethe,delphi2-180);
+        
+        dgm.fill("kc0"+s, pthe,delphi-180);
+        dgm.fill("kc1"+s, ethe,delphi-180);
         
 	    }
 
