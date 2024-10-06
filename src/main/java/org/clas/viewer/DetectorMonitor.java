@@ -123,6 +123,8 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                           useSEC = false;
     private Boolean                          useRDIF = false;
     private Boolean                        useEBCCDB = false;
+    public  Boolean                            useFD = false;
+    public  Boolean                            useCD = false;
     private Boolean                        stopBlink = true;
     private Boolean                          verbose = false;
     Timer                                      timer = null;
