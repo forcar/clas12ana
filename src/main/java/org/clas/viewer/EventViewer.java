@@ -83,7 +83,7 @@ import org.jlab.utils.system.ClasUtilsFile;
         
 /*
  * @author lcsmith
- * Adapted from KPP-plots framework developed by R. DeVita, V. Ziegler, G. Gavalian
+ * Adapted from KPP-plots/MON12 frameworks developed by R. DeVita, V. Ziegler, G. Gavalian
  */
 
 public class EventViewer implements IDataEventListener, DetectorListener, ActionListener, ItemListener, ChangeListener {
@@ -93,7 +93,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JTabbedPane                  tabbedpane = null;    
     JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8;   
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf6g,cf6h,cf6i,cf6j;
-    JCheckBoxMenuItem   cf7,cf8,cf9,cf10a,cf10b,cf10c,cf11,cf12,cf13,cf14,cf15,cf16,cf17,cf18;   
+    JCheckBoxMenuItem   cf7,cf8,cf9,cf10a,cf10b,cf10c,cf11,cf12,cf13,cf14,cf15,cf16,cf17,cf18,cf19,cf20;   
     JCheckBoxMenuItem                                   ctr;    
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
@@ -165,7 +165,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean   outputECHITS = false; 
     public Boolean         useASA = false;
     public Boolean          useCC = false;
-    
+    public Boolean          useFD = false;
+    public Boolean          useCD = false;
+       
     public JFileChooser      fc = null; 
     
     List<Integer>     runList  = new ArrayList<Integer>();
@@ -228,7 +230,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	}
     	} else {
 // 		    monitors[n] = new ECperf("ECperf"); 
-//    		monitors[n] = new ECelas("ECelas");
+    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECa("ECa");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECstatus("ECstatus","ECAL");
@@ -236,14 +238,13 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-//     	    monitors[n] = new ECt("ECt"); 
-//          monitors[n] = new ECperf("ECperf");
-//      		monitors[n] = new ECsf("ECsf"); 
+ //   	    monitors[n] = new ECt("ECt"); 
+//          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
-    		monitors[n] = new DCmon("DCmon");
+//    		monitors[n] = new DCmon("DCmon");
 //
         }
     }
@@ -378,6 +379,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         cf16 = new JCheckBoxMenuItem("FTOFveto"); cf16.addItemListener(this); menu.add(cf16); cf16.doClick();
         menuBar.add(menu); 
         
+        menu   	= new JMenu("ECelas");
+        cf19 = new JCheckBoxMenuItem("FD"); cf19.addItemListener(this); menu.add(cf19);
+        cf20 = new JCheckBoxMenuItem("CD"); cf20.addItemListener(this); menu.add(cf20);
+        menuBar.add(menu); 
+        
         menu     = new JMenu("ECEngine");
         co2      = new JCheckBoxMenuItem("Enable");              co2.addItemListener(this);  menu.add(co2);;
         menuItem = new JMenuItem("Set logParam");                menuItem.addActionListener(this); menu.add(menuItem);   
@@ -468,7 +474,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf1) {sfitEnable     = sc(e); monitors[0].sfitEnable  = sfitEnable;}
 		if (s==cf2) {dfitEnable     = sc(e); monitors[0].dfitEnable  = dfitEnable;}
 		if (s==cf3) {gdfitEnable    = sc(e); monitors[0].gdfitEnable = gdfitEnable;}
-		if (s==cf18){trfitEnable    = sc(e); monitors[0].trfitEnable = trfitEnable;}
 		if (s==cf4) {yLogEnable     = sc(e); monitors[0].setLogY(yLogEnable);} 
 		if (s==cf5) {zLogEnable     = sc(e); monitors[0].setLogZ(zLogEnable);}
 		if (s==co5) {defaultGain    = sc(e); monitors[0].eng.setDefaultGain(defaultGain);}		
@@ -495,6 +500,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf15){FTpcal         = sc(e); monitors[0].eng.setUseFTpcal(FTpcal);}
 		if (s==cf16){FTOFveto       = sc(e); monitors[0].FTOFveto    = FTOFveto;}
 		if (s==cf17){StatEachRun    = sc(e); monitors[0].StatEachRun = StatEachRun;}
+		if (s==cf18){trfitEnable    = sc(e); monitors[0].trfitEnable = trfitEnable;}
+		if (s==cf19){useFD          = sc(e); monitors[0].useFD = useFD;}
+		if (s==cf20){useCD          = sc(e); monitors[0].useCD = useCD;}
 		if (s==ct3) {TLflag         = sc(e); monitors[0].setTLflag(TLflag);}
 		
 		if (s==ct0)  {TLname = ct0.getText(); monitors[0].initTimeLine(TLname);}
