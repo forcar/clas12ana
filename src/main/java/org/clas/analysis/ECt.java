@@ -774,7 +774,7 @@ public class ECt extends DetectorMonitor {
        for(int loop = 0; loop < bank1.rows(); loop++){ //loop over ECAL::clusters
            
              if (true) {
-               int      is = bank1.getByte("sector", loop);
+               int     is =  bank1.getByte("sector", loop);
                int     il =  bank1.getByte("layer", loop);
                float ener =  bank1.getFloat("energy",loop)*1000;
                float    t =  bank1.getFloat("time",loop);
@@ -995,7 +995,6 @@ public class ECt extends DetectorMonitor {
     }
     
     public void analyzeTimeLineFits() {
-    	cfitEnable = true;
     	fitTLGraphs(1,7,0,0,0,0); 
         if(!isTimeLineFitsDone) createTimeLineHistos();
     	fillTimeLineHisto();   	
@@ -1905,12 +1904,12 @@ public class ECt extends DetectorMonitor {
     	
     }
     
-      public static void main(String[] args) {
+//      public static void main(String[] args) {
     	
-    	ECt ect = new ECt("ECt",6684);
-      	ect.writeFile("DefFTW",1,7,0,3,0,3);    
+//    	ECt ect = new ECt("ECt",6684);
+//      	ect.writeFile("DefFTW",1,7,0,3,0,3);    
 //      	ECt ect = new ECt("ECt",2385);
-      	ect.writeFile("DefDTW",1,7,0,3,0,3);   	
-      }
+//     	ect.writeFile("DefDTW",1,7,0,3,0,3);   	
+//     }
      
 }
