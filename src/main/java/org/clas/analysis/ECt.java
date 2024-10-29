@@ -495,7 +495,6 @@ public class ECt extends DetectorMonitor {
     }
     
     public void initCCDB(int runno) {
-    	if(dropSummary) return;
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
@@ -1026,9 +1025,9 @@ public class ECt extends DetectorMonitor {
     
     public void analyzeResiduals() {
         getResidualSummary(1,7,0,3,0,3);
-        if(!dropSummary &&  eng.useFADCTime &&  eng.usePass2Timing) writeFile("ftime_update",1,7,0,3,0,3);
-        if(!dropSummary && !eng.useFADCTime &&  eng.usePass2Timing) writeFile("dtime_update",1,7,0,3,0,3);
-        if(!dropSummary && !eng.useFADCTime && !eng.usePass2Timing) writeFile("timing_update",1,7,0,3,0,3);
+        if( eng.useFADCTime &&  eng.usePass2Timing) writeFile("ftime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime &&  eng.usePass2Timing) writeFile("dtime_update",1,7,0,3,0,3);
+        if(!eng.useFADCTime && !eng.usePass2Timing) writeFile("timing_update",1,7,0,3,0,3);
         System.out.println("analyzeResiduals Finished");
         isResidualDone = true;
     }
