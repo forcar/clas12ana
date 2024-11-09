@@ -521,7 +521,7 @@ public class ECt extends DetectorMonitor {
     @Override
     public void processEvent(DataEvent event) {  
 
-       if( dropBanks)   dropBanks(event); // rerun ECEngine with updated CCDB constants
+       if( dropBanks) dropBanks(event); // rerun ECEngine with updated CCDB constants
        
        if(!eventFilter(event))     return;
        if(!triggerFilter())        return;   	
@@ -769,6 +769,7 @@ public class ECt extends DetectorMonitor {
              
        DataBank  bank1 = event.getBank("ECAL::clusters"); //entries ordered by sector,layer
        DataBank  bank3 = event.hasBank("ECAL::peaks") ? event.getBank("ECAL::peaks") : null;
+       DataBank  bank4 = event.hasBank("ECAL::calib") ? event.getBank("ECAL::calib") : null;
 
        for(int loop = 0; loop < bank1.rows(); loop++){ //loop over ECAL::clusters
            
@@ -785,18 +786,29 @@ public class ECt extends DetectorMonitor {
                iip[0] = (bank1.getInt("coordU", loop)-4)/8+1; //strip number of peak U
                iip[1] = (bank1.getInt("coordV", loop)-4)/8+1; //strip number of peak V
                iip[2] = (bank1.getInt("coordW", loop)-4)/8+1; //strip number of peak W
+               
                iid[0] =  bank1.getInt("idU",loop)-1; //peak index U
                iid[1] =  bank1.getInt("idV",loop)-1; //peak index V
-               iid[2] =  bank1.getInt("idW",loop)-1; //peak index W	               
+               iid[2] =  bank1.getInt("idW",loop)-1; //peak index W	  
+               
                lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
                lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
                lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
-               tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
-               tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
-               tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+               
+               if(bank4 != null) {
+            	   tid[0] = getTime(bank4,"u",loop);
+            	   tid[1] = getTime(bank4,"v",loop);
+            	   tid[2] = getTime(bank4,"w",loop); 
+               } else {
+            	   tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
+            	   tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
+            	   tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+               }
+               
                add[0] = bank3.getFloat("energy",iid[0]); //peak energy U
                add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
-               add[2] = bank3.getFloat("energy",iid[2]); //peak energy W               
+               add[2] = bank3.getFloat("energy",iid[2]); //peak energy W 
+               
                stp[0] = bank3.getShort("status", iid[0]);
                stp[1] = bank3.getShort("status", iid[1]);
                stp[2] = bank3.getShort("status", iid[2]);
@@ -909,6 +921,15 @@ public class ECt extends DetectorMonitor {
     	return 0;
     }
     
+    public float getTime(DataBank bank4, String uvw, int index) {
+    	switch (uvw) {
+    	case "u": return eng.useFADCTime ? bank4.getFloat("recFTU",index): bank4.getFloat("recDTU",index); 
+    	case "v": return eng.useFADCTime ? bank4.getFloat("recFTV",index): bank4.getFloat("recDTV",index);
+    	case "w": return eng.useFADCTime ? bank4.getFloat("recFTW",index): bank4.getFloat("recDTW",index);
+    	}
+    	return 0;    	
+    }
+    
     public Line3D getPeakline(int iid, Point3D point, DataBank bank) {    	
         Point3D  po = new Point3D(bank.getFloat("xo",iid),
                                   bank.getFloat("yo",iid),
@@ -988,16 +1009,17 @@ public class ECt extends DetectorMonitor {
     	   if(gdfitEnable) analyzeGTMF();
        }
        
-       analyzeTimeLineFits();
+       analyzeTimeLineFits(); 
        isAnalyzeDone = true;
        System.out.println(getDetectorName()+".Analyze() Finished");
     }
     
     public void analyzeTimeLineFits() {
+    	cfitEnable = true;
     	fitTLGraphs(1,7,0,0,0,0); 
         if(!isTimeLineFitsDone) createTimeLineHistos();
     	fillTimeLineHisto();   	
-        System.out.println(getDetectorName()+"analyzeTimeLineFits Finished");
+        System.out.println(getDetectorName()+".analyzeTimeLineFits Finished");
         isTimeLineFitsDone = true;      
     }
     
@@ -1343,6 +1365,7 @@ public class ECt extends DetectorMonitor {
     } 
     
     public void getTMFSummary(int is1, int is2, int il1, int il2, int iv1, int iv2) {
+    	
         ParallelSliceFitter fitter;
         GraphErrors g1;
         
@@ -1468,7 +1491,7 @@ public class ECt extends DetectorMonitor {
 							case "ftres":              line =  getTRES(is,il,iv,ip); 
 							}
 							if (line!=null) {
-						      System.out.println(line);
+//						      System.out.println(line);
 						      outputBw.write(line);
 						      outputBw.newLine();
 							}
