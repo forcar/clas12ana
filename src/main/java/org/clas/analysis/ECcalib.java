@@ -723,42 +723,21 @@ public class ECcalib extends DetectorMonitor {
     	}
     	return olist;    	
     }
-    
-    public void fillSFPCEC(int run, List<Particle> list, DataEvent event) { //use for e-
 
-    	int is;
-    	float pmip=0;
-    	
-		ecpart.clear(); ecpart = filterECALClusters(ev.isPhys ? 11:11,getECALClusters(list));
-
-    	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
-    		
-			is = ig.getIndex(entry.getKey(), 0);
-						
-            if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
-            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));    
-               	if (ev.isPhys) {
-                	int ip = e.get(0).ip;
-            		pmip   = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();;
-            	}
-               	((H2F) this.getDataGroup().getItem(0,0,18,run).getData(is-1).get(0)).fill(1e-3*e.get(1).ecl/Math.abs(pmip),1e-3*e.get(0).ecl/Math.abs(pmip));
-            }
-    	}
-    }
-    
     public void fillHists(int run, List<Particle> list, DataEvent event) {
     	
        	float[] puvw = new float[3];       	
 		int is,trigger=0,trig=TRpid;
 	    float v12mag,v13mag,v23mag,pmip=0,beta,mass2=0;
+	    
 		if (ev.isPhys) {
 	        trigger = (int) ev.part.get(0).getProperty("ppid");
 			if (Math.abs(trigger)!=trig) return;
 			fillPID(run,0,0);
 		}
 		
-		ecpart.clear(); ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list));
-    	
+		ecpart.clear(); ecpart = filterECALClusters(ev.isPhys ? 211:13,getECALClusters(list)); 
+		
     	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
     		
 			is = ig.getIndex(entry.getKey(), 0);
@@ -815,9 +794,7 @@ public class ECcalib extends DetectorMonitor {
             	Boolean  pixpc = ev.isMuon ? e.get(0).il==1 && e.get(0).wpix : e.get(0).il==1 && (e.get(0).wsum==3||e.get(0).wsum==4);
             	if(ev.isPhys) {int ip = e.get(0).ip; pmip = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();}            	
             	if(pixpc) fillMIP(is,1,run,e.get(0).uvw,e.get(0).lef,e.get(0).wuv,e.get(0).fid,e.get(0).ecl,e.get(0).rep,e.get(0).ep,pmip,e.get(0).e_cz,e.get(0).x,e.get(0).y);
-            }
-            
-            
+            }           
     	}
     }
         
@@ -998,7 +975,30 @@ public class ECcalib extends DetectorMonitor {
 //        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+ 5).get(0)).fill(v12mag,w);    	
 //        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+11).get(0)).fill(v13mag,w);    	
 //        ((H2F) this.getDataGroup().getItem(0,il3,10,run).getData(is+17).get(0)).fill(v23mag,w);    	
-    }    
+    }
+        
+    public void fillSFPCEC(int run, List<Particle> list, DataEvent event) { //use for e-
+
+    	int is;
+    	float pmip=0;
+    	
+		ecpart.clear(); ecpart = filterECALClusters(ev.isPhys ? 11:11,getECALClusters(list));
+
+    	for (Map.Entry<Long,List<Particle>>  entry : ecpart.getMap().entrySet()){ //loop over sectors
+    		
+			is = ig.getIndex(entry.getKey(), 0);
+						
+            if(ecpart.getItem(is).size()==3) { //Require PCAL,ECIN,ECOU
+            	e.clear(); for (Particle p : entry.getValue())  e.add(new ECALdet(is,p));    
+               	if (ev.isPhys) {
+                	int ip = e.get(0).ip;
+            		pmip   = (float) ev.part.get(ip).p() * ev.part.get(ip).charge();;
+            	}
+               	((H2F) this.getDataGroup().getItem(0,0,18,run).getData(is-1).get(0)).fill(1e-3*e.get(1).ecl/Math.abs(pmip),1e-3*e.get(0).ecl/Math.abs(pmip));
+            }
+    	}
+    }
+  
 /*    
     public void getECALTDC(int run, int eis, DataEvent event) {
     	
