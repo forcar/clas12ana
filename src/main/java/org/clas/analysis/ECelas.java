@@ -10,10 +10,13 @@ import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.utils.groups.IndexedList;
+import org.jlab.utils.groups.IndexedList.IndexGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ECelas extends DetectorMonitor {
 	
@@ -25,9 +28,12 @@ public class ECelas extends DetectorMonitor {
 	boolean isMC = false;
 
 	HashMap<Integer,ArrayList<Integer>> part2calo  = null;	
+	
+	IndexedList<List<Particle>> ecpart = new IndexedList<List<Particle>>(1);
 	List<Particle>  epart  = new ArrayList<Particle>();
 	List<Particle>  ppart2 = new ArrayList<Particle>();
 	List<Particle>  ppart4 = new ArrayList<Particle>();
+	IndexGenerator ig = new IndexGenerator();
 	
     public ECelas(String name) {
         super(name);
@@ -35,7 +41,8 @@ public class ECelas extends DetectorMonitor {
         setDetectorTabNames("WAGON",
         		            "EVENT",
         		            "KCOR",
-        		            "RCOR");
+        		            "RCOR",
+        		            "XSEC");
         use123Buttons(true);
         useSliderPane(true);
         useECEnginePane(true);
@@ -81,6 +88,7 @@ public class ECelas extends DetectorMonitor {
     	createEVENT(2);
     	createKCOR(0);
     	createKCOR(1);
+    	createXSEC(0);
     	histosExist = true;
     }
     
@@ -90,22 +98,22 @@ public class ECelas extends DetectorMonitor {
     	switch (st) {        
         case 0: 
         	dgm.add("WAGON",6,3,0,st,getRunNumber());         	
-        	for(int is=1; is<7; is++) dgm.makeH1("wa0"+is,180, 160,200,-1,"SECTOR "+is,"#Delta#phi (DEG)",  "",1,0,"11001100");
-         	for(int is=1; is<7; is++) dgm.makeH1("wa1"+is,100, -1,  1, -1," ",         "#Delta EBEAM (GEV)","",1,0,"11001100");
-        	for(int is=1; is<7; is++) dgm.makeH1("wa2"+is,100,-20, 20, -1," ",         "#Delta#theta (DEG)","",1,0,"11001100");
+        	for(int is=1; is<7; is++) dgm.makeH1("wa0"+is,180, 160,200,-1,"SECTOR "+is,"#Delta#phi (deg)",  "",1,0,"11001100");
+         	for(int is=1; is<7; is++) dgm.makeH1("wa1"+is,100, -1,  1, -1," ",         "#Delta EB (GeV)",   "",1,0,"11001100");
+        	for(int is=1; is<7; is++) dgm.makeH1("wa2"+is,100,-20, 20, -1," ",         "#Delta#theta (deg)","",1,0,"11001100");
         	break;
         case 1:
         	dgm.add("WAGON",6,3,0,st,getRunNumber());
         	
         	xlo=kin.th2vsth1(33, beamEnergy); xhi=kin.th2vsth1(5, beamEnergy); yhi=kin.th1vsth2(xlo+2, beamEnergy); 
         	F1D f1 = new F1D("k1","th1vsth2(x,"+beamEnergy+")",xlo+3.5,Math.min(80,xhi)); f1.setLineColor(lc); f1.setLineWidth(lw); f1.setLineStyle(ls);
-        	for(int is=1; is<7; is++) {dgm.makeH2("wb0"+is,80, xlo, 70, 80, 5, yhi, -1,"SECTOR "+is,"#theta p+ (DEG)", "#theta e- (DEG)"); 
+        	for(int is=1; is<7; is++) {dgm.makeH2("wb0"+is,80, xlo, 70, 80, 5, yhi, -1,"SECTOR "+is,"#theta p+ (deg)", "#theta e- (deg)"); 
         	dgm.addDataSet(f1,-2);}
         	
         	xlo=kin.th2vsth1(33, beamEnergy);             xhi=kin.p2vsp1(beamEnergy*0.1,beamEnergy); 
         	ylo=kin.p2vsp1(beamEnergy*0.985, beamEnergy); yhi=kin.p2vsp1(beamEnergy*0.5,beamEnergy);  
         	F1D f3 = new F1D("k3","p2vsth2(x,"+beamEnergy+")",xlo+4,67); f3.setLineColor(lc); f3.setLineWidth(lw); f3.setLineStyle(ls);
-        	for(int is=1; is<7; is++) {dgm.makeH2("wb2"+is, 80, xlo, 70, 50, ylo, yhi,-1," ","#theta p+ (DEG)", "MOM p+ (GeV)");  
+        	for(int is=1; is<7; is++) {dgm.makeH2("wb2"+is, 80, xlo, 70, 50, ylo, yhi,-1," ","#theta p+ (deg)", "MOM p+ (GeV)");  
         	dgm.addDataSet(f3,-2);}
         	
         	xlo=kin.p2vsp1(beamEnergy*0.985, beamEnergy); xhi=kin.p2vsp1(beamEnergy*0.6,beamEnergy);       	
@@ -118,11 +126,11 @@ public class ECelas extends DetectorMonitor {
         	double xlo1=kin.th2vsth1(33, beamEnergy);
         	for(int is=1; is<7; is++) {dgm.makeH2("wc0"+is, 80,xlo1, 60, 40, -2.0, 2.0,0,"SECTOR "+is,"#theta p+ (DEG)", "#Delta #theta e- (DEG)");}
         	for(int is=1; is<7; is++) {dgm.makeH2("wc2"+is, 80,xlo1, 60, 40,  0.6, 1.4,1," ","#theta p+ (DEG)", "MOM / KIN p+");}
-        	for(int is=1; is<7; is++) {dgm.makeH2("wc00"+is,16,  14, 30, 40, -0.5, 0.5,0," ","#theta e- (DEG)", "#Delta E (GeV)");}
-        	for(int is=1; is<7; is++) {dgm.makeH2("wc20"+is,18,  23, 42, 40, -0.5, 0.5,0," ","#theta p+ (DEG)", "#Delta E (GeV)");}
+        	for(int is=1; is<7; is++) {dgm.makeH2("wc00"+is,16,  14, 30, 40, -0.5, 0.5,0," ","#theta e- (DEG)", "#Delta EB (GeV)");}
+        	for(int is=1; is<7; is++) {dgm.makeH2("wc20"+is,18,  23, 42, 40, -0.5, 0.5,0," ","#theta p+ (DEG)", "#Delta EB (GeV)");}
         	xlo=kin.p2vsp1(beamEnergy*0.985, beamEnergy); xhi=kin.p2vsp1(beamEnergy*0.5,beamEnergy);  
         	for(int is=1; is<7; is++) {dgm.makeH2("wc1"+is, 50, xlo, xhi, 40, 0.8, 1.1,1," ","MOM p+ (GeV)", "MOM / KIN e-"); }   
-        	for(int is=1; is<7; is++) {dgm.makeH2("wc3"+is, 18,  23,  42, 40, 0.8, 1.1,1," ","#theta p+ (DEG)", "MOM / KIN #theta e-"); }   
+        	for(int is=1; is<7; is++) {dgm.makeH2("wc3"+is, 18,  23,  42, 40, 0.8, 1.1,1," ","#theta p+ (deg)", "MOM / KIN #theta e-"); }   
         	for(int is=1; is<7; is++) {dgm.makeH2("wc4"+is, 40, 0.8, 1.1, 40,-0.5, 0.5,0," ","MOM / KIN #theta e-", "#Delta E (GeV)"); }   
            break;
         case 3:
@@ -143,42 +151,54 @@ public class ECelas extends DetectorMonitor {
     	switch (st) {        
         case 0: 
         	dgm.add("EVENT",6,5,0,st,getRunNumber());
-        	for(is=1; is<7; is++)  dgm.makeH2("ev0"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"SECTOR "+is,"W (GEV)","#theta (DEG)"); 
-        	for(is=1; is<7; is++)  dgm.makeH2("ev1"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"",          "W (GEV)","#theta (DEG)"); 
-        	for(is=1; is<7; is++) {dgm.makeH1("ev2a"+is,nb,0.7,kinqw[1]*1.1,-1,"","W (GEV)","",1,0,"1000000"); 
-        	                       dgm.makeH1("ev2b"+is,nb,0.7,kinqw[1]*1.1,-2,"","W (GEV)","",1,1,"1000000");}
-        	for(is=1; is<7; is++)  dgm.makeH2("ev3"+is, nb,0.7,1.1,60,-8,0,-1,"","W (GEV)","Vertex (cm)"); 
-        	for(is=1; is<7; is++)  dgm.makeH2("ev4"+is, 30,-0.5,0.5,30,-8,0,-1,"","#Delta EBEAM (GEV)","Vertex (cm)"); 
+        	for(is=1; is<7; is++)  dgm.makeH2("ev0"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"SECTOR "+is,"W (GEV)","#theta (deg)"); 
+        	for(is=1; is<7; is++)  dgm.makeH2("ev1"+is, nb,0.7,kinqw[1]*1.1,60,4,40,-1,"",          "W (GEV)","#theta (deg)"); 
+        	for(is=1; is<7; is++) {dgm.makeH1("ev2a"+is,nb,0.7,kinqw[1]*1.1,-1,"","W (GeV)","",1,0,"1000000"); 
+        	                       dgm.makeH1("ev2b"+is,nb,0.7,kinqw[1]*1.1,-2,"","W (GeV)","",1,1,"1000000");}
+        	for(is=1; is<7; is++)  dgm.makeH2("ev3"+is, nb, 0.7,1.1,60,-8,0,-1,"","W (GeV)","Vertex (cm)"); 
+        	for(is=1; is<7; is++)  dgm.makeH2("ev4"+is, 30,-0.5,0.5,30,-8,0,-1,"","#Delta EB (GeV)","Vertex (cm)"); 
         	break;
         case 1:
         	dgm.add("EVENT",3,2,0,st,getRunNumber());         	
-        	for(is=1; is<7; is++) {dgm.makeH1("wth1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=5-8",  "W (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("wth2"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=8-10", "W (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("wth3"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=10-15","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("wth4"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=15-20","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("wth5"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=20-25","W (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("wth6"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=25-30","W (GEV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth1"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=5-8",  "W (GeV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("wth2"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=8-10", "W (GeV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("wth3"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=10-15","W (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth4"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=15-20","W (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth5"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=20-25","W (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("wth6"+is,nb,0.7,kinqw[1]*1.1,-(is==1?1:2),"#theta=25-30","W (GeV)","",is==6?9:is,0,"1000000");} 
         	break;
         case 2:
         	dgm.add("EVENT",3,2,0,st,getRunNumber()); 
         	double be=beamEnergy;
-        	for(is=1; is<7; is++) {dgm.makeH1("pth1"+is,nb,0.45,kin.p1vsth1(6, be)*1.1,-(is==1?1:2),"#theta=6-8",  "P (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("pth2"+is,nb,0.45,kin.p1vsth1(8, be)*1.1,-(is==1?1:2),"#theta=8-10", "P (GEV)","",is==6?9:is,0,"1000000");}
-        	for(is=1; is<7; is++) {dgm.makeH1("pth3"+is,nb,0.45,kin.p1vsth1(10,be)*1.1,-(is==1?1:2),"#theta=10-15","P (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("pth4"+is,nb,0.45,kin.p1vsth1(15,be)*1.1,-(is==1?1:2),"#theta=15-20","P (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("pth5"+is,nb,0.45,kin.p1vsth1(20,be)*1.1,-(is==1?1:2),"#theta=20-25","P (GEV)","",is==6?9:is,0,"1000000");} 
-        	for(is=1; is<7; is++) {dgm.makeH1("pth6"+is,nb,0.45,kin.p1vsth1(25,be)*1.1,-(is==1?1:2),"#theta=25-30","P (GEV)","",is==6?9:is,0,"1000000");}         }
+        	for(is=1; is<7; is++) {dgm.makeH1("pth1"+is,nb,0.45,kin.p1vsth1(6, be)*1.1,-(is==1?1:2),"#theta=6-8",  "P (GeV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("pth2"+is,nb,0.45,kin.p1vsth1(8, be)*1.1,-(is==1?1:2),"#theta=8-10", "P (GeV)","",is==6?9:is,0,"1000000");}
+        	for(is=1; is<7; is++) {dgm.makeH1("pth3"+is,nb,0.45,kin.p1vsth1(10,be)*1.1,-(is==1?1:2),"#theta=10-15","P (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth4"+is,nb,0.45,kin.p1vsth1(15,be)*1.1,-(is==1?1:2),"#theta=15-20","P (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth5"+is,nb,0.45,kin.p1vsth1(20,be)*1.1,-(is==1?1:2),"#theta=20-25","P (GeV)","",is==6?9:is,0,"1000000");} 
+        	for(is=1; is<7; is++) {dgm.makeH1("pth6"+is,nb,0.45,kin.p1vsth1(25,be)*1.1,-(is==1?1:2),"#theta=25-30","P (GeV)","",is==6?9:is,0,"1000000");}         }
     }
     
     public void createKCOR(int st) {
     	switch (st) {
     	case 0:
     		dgm.add("KCOR",6,4,0,st,getRunNumber());
-    		for(int is=1; is<7; is++) dgm.makeH2("kc0"+is,   50, 20,60,30,-2.0,4.0, -0,"SECTOR "+is,"#theta p+ (DEG)","#Delta#phi (DEG)"); 
-    		for(int is=1; is<7; is++) dgm.makeH2("kc1"+is,   50,  8,31,30,-2.0,4.0, -0," ","#theta e- (DEG)","#Delta#phi (DEG)"); 
-    		for(int is=1; is<7; is++) dgm.makeH2("kepth0"+is,25,  5,25,25,-0.2,0.2, -0," ","#theta e- (DEG)","#Delta P (GEV)");    		
-    		for(int is=1; is<7; is++) dgm.makeH2("kepph0"+is,25,-15,27,25,-0.2,0.2, -0," ","#phi e- (DEG)",  "#Delta P (GEV)");     		
+    		for(int is=1; is<7; is++) dgm.makeH2("kc0"+is,   50, 20,60,30,-2.0,4.0, -0,"SECTOR "+is,"#theta p+ (deg)","#Delta#phi (deg)"); 
+    		for(int is=1; is<7; is++) dgm.makeH2("kc1"+is,   50,  8,31,30,-2.0,4.0, -0," ","#theta e- (deg)","#Delta#phi (deg)"); 
+    		for(int is=1; is<7; is++) dgm.makeH2("kepth0"+is,25,  5,25,25,-0.2,0.2, -0," ","#theta e- (deg)","#Delta P (GeV)");    		
+    		for(int is=1; is<7; is++) dgm.makeH2("kepph0"+is,25,-15,27,25,-0.2,0.2, -0," ","#phi e- (deg)",  "#Delta P (GeV)");     		
     	}
+    }
+    
+    public void createXSEC(int st) {
+    	switch (st) {
+    	case 0:
+    		dgm.add("XSEC",6,4,0,st,getRunNumber());
+    		for(int is=1; is<7; is++) dgm.makeH2("xs1"+is,100,4,18,100,-32,32,   -0,"W < 1.065 ",    "S"+is+" #theta e- (deg)","#phi e- (deg)");     		
+    		for(int is=1; is<7; is++) dgm.makeH2("xs2"+is,100,4,18,100,-32,32,   -0,"#Delta#phi < 3","S"+is+" #theta e- (deg)","#phi e- (deg)");     		
+    		for(int is=1; is<7; is++) dgm.makeH2("xs3"+is,100,-220,-80,100,-100,100,-1," ",             "S"+is+" PCAL HX (cm)", "PCAL HY (cm)");     		
+   		    for(int is=1; is<7; is++) dgm.makeH2("xs4"+is,100,-220,-80,100,-100,100,-1," ",             "S"+is+" PCAL X (cm)",  "PCAL Y (cm)");     		
+//    		for(int is=1; is<7; is++) dgm.makeH2("xs4"+is,100,-220,-80,100,-100,100,-1," ",             "S"+is+" ECIN X (cm)",    "ECIN Y (cm)");     		
+    	}    	
     }
     
     @Override       
@@ -187,6 +207,7 @@ public class ECelas extends DetectorMonitor {
     	plot("WAGON");
     	plot("EVENT");    
     	plot("KCOR");
+    	plot("XSEC");
     }
     
     @Override    
@@ -226,16 +247,17 @@ public class ECelas extends DetectorMonitor {
     }
      
     public void fillHists() {
-    	    	            	
-    	if (epart.size()!=1) return;
     	
-    	int ist = getElecTriggerSector(shiftTrigBits(getRunNumber()));
-    	
-    	Particle elec = epart.get(0);
-    	
+      	if (epart.size()!=1) return;
+      	
+      	Particle pcal = new Particle(), ecin = new Particle(), elec = new Particle();
+     	
+        List<Particle> e = ev.getECAL((int)epart.get(0).getProperty("pindex"));
+        
+        if (e.size()>0 && e.get(0).getProperty("layer")==1) {pcal = e.get(0); elec = e.get(0);}
+        if (e.size()>1 && e.get(1).getProperty("layer")==4)  ecin = e.get(1);
+        
         int s = (int) elec.getProperty("sector");
-
-        if(s==0) return;
         
         double cthe = Math.cos(elec.theta()), sthe=Math.sqrt(1-cthe*cthe), ep=elec.p();
         double ethe = Math.toDegrees(elec.theta()), ephi = Math.toDegrees(elec.phi());
@@ -248,14 +270,28 @@ public class ECelas extends DetectorMonitor {
     	
     	double w = Math.sqrt(w2);
 
-        float lv = (int) elec.getProperty("lv");
-        float lw = (int) elec.getProperty("lw");
-        	            
-        dgm.fill("ev0"+s,w,ethe); dgm.fill("ev2a"+s,w); dgm.fill("ev3"+s,w, vze);
+        float lv = (float) elec.getProperty("lv");
+        float lw = (float) elec.getProperty("lw");
         
-        boolean trig = s==ist; 
+        float x1=-1000,y1=-1000,x2=-1000,y2=-1000, hx1=-1000, hy1=-1000;
         
-        double phie = (ephi<-10 ? 360+ephi : ephi)-(s-1)*60;
+        Point3D pxyz = ev.getRotTiltPoint(new Point3D((float)pcal.getProperty("x"),(float)pcal.getProperty("y"),(float)pcal.getProperty("z")),s);
+        x1 = (float) pxyz.x();
+        y1 = (float) pxyz.y();
+        
+        Point3D hpxyz = ev.getRotTiltPoint(new Point3D((float)pcal.getProperty("hx"),(float)pcal.getProperty("hy"),(float)pcal.getProperty("hz")),s);
+        hx1 = (float) hpxyz.x();
+        hy1 = (float) hpxyz.y();
+
+//        if (e.size()>1 && e.get(1).getProperty("layer")==4) {
+//        	pxyz = ev.getRotTiltPoint(new Point3D((float)ecin.getProperty("x"),(float)ecin.getProperty("y"),(float)ecin.getProperty("z")),s);
+//        	x2 = (float) pxyz.x();
+//        	y2 = (float) pxyz.y();
+//        }  
+        
+        boolean trig = s == getElecTriggerSector(shiftTrigBits(getRunNumber())); 
+        
+        double phie = (ephi<-20 ? 360+ephi : ephi)-(s-1)*60;
         
         if(true && lv>19 && lw>19) {
         	if(ethe>= 5&&ethe <8) {dgm.fill("wth1"+s,w);dgm.fill("pth1"+s,ep);}
@@ -265,7 +301,7 @@ public class ECelas extends DetectorMonitor {
             if(ethe>=20&&ethe<25) {dgm.fill("wth5"+s,w);dgm.fill("pth5"+s,ep);}
             if(ethe>=25&&ethe<30) {dgm.fill("wth6"+s,w);dgm.fill("pth6"+s,ep);} 
 		    dgm.fill("kepth0"+s, ethe, kin.p1vsth1(ethe, beamEnergy)-ep);
-		    dgm.fill("kepph0"+s, phie,  kin.p1vsth1(ethe, beamEnergy)-ep); 
+		    dgm.fill("kepph0"+s, phie, kin.p1vsth1(ethe, beamEnergy)-ep); 
         }
         
         double delphi=0, delphi2=0, delphi4=0, pphi2=-1000, pthe2=-1000, pphi4=-1000, pthe4=-1000;
@@ -296,41 +332,53 @@ public class ECelas extends DetectorMonitor {
         }
         
         Particle prot = null;
-        if (useFD && ppart2.size()==1) {dphi = dphi2; delphi = delphi2; prot = ppart2.get(0);}
-        if (useCD && ppart4.size()==1) {dphi = dphi4; delphi = delphi4; prot = ppart4.get(0);}
+        if (useFD && ppart2.size()==1) {dphi = dphi2; delphi = delphi2; prot = ppart2.get(0);} //use FD proton
+        if (useCD && ppart4.size()==1) {dphi = dphi4; delphi = delphi4; prot = ppart4.get(0);} //use CD proton        
+        
+        dgm.fill("ev0"+s,w,ethe); 
+        dgm.fill("ev2a"+s,w); 
+        dgm.fill("ev3"+s,w,vze);
     	
-	    if(w<1.065) { 
+	    if(w>1.065) return;
 	    	
         double   cthp = Math.cos(prot.theta()), sthp=Math.sqrt(1-cthp*cthp), pp=prot.p(), pthe=Math.toDegrees(prot.theta());
         double   pphi = Math.toDegrees(prot.phi());      
         double    vzp = prot.vz();
-        double ebeam  = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe); 
         double delthe = Math.toDegrees(elec.theta() - Math.atan(pp*sthp/(beamEnergy-pp*cthp)));
+        double  ebeam = (mp*(cthe + sthe*cthp/sthp)-mp)/(1-cthe); 
+       	double   berr = ebeam-beamEnergy;
 
         dgm.fill("wa0"+s, delphi); 
         
-        if(dphi) {
-        	double berr = ebeam-beamEnergy;
-        	dgm.fill("wa1"+s, berr); dgm.fill("ev4"+s,berr, vzp);
+        dgm.fill("xs1"+s, ethe, phie);
+        dgm.fill("xs3"+s, hx1,hy1);
+        dgm.fill("xs4"+s, x1,y1);
+//        dgm.fill("xs4"+s, x2,y2);
+        
+        if(dphi) {    
+            dgm.fill("xs2"+s, ethe, phie);
+          	dgm.fill("ev1"+s,w,ethe); 
+        	dgm.fill("ev2b"+s,w);
+        	dgm.fill("ev4"+s,berr,vzp);
+        	
+        	dgm.fill("wa1"+s, berr); 
         	dgm.fill("wa2"+s, delthe);	
+        	
         	dgm.fill("wb0"+s, pthe, ethe);
         	dgm.fill("wb1"+s, pp, ep);
         	dgm.fill("wb2"+s, pthe, pp);
+        	
         	dgm.fill("wc0"+s, pthe, ethe-kin.th1vsth2(pthe,beamEnergy));
-        	dgm.fill("wc1"+s, pp,ep/kin.p1vsp2(pp,beamEnergy));
         	dgm.fill("wc2"+s, pthe, pp/kin.p2vsth2(pthe,beamEnergy));
-        	dgm.fill("wc3"+s, pthe, pp/kin.p2vsth1(ethe,beamEnergy));
-        	dgm.fill("wc4"+s, pp/kin.p2vsth1(ethe,beamEnergy),berr);
         	dgm.fill("wc00"+s,ethe, berr);
         	dgm.fill("wc20"+s,pthe, berr);
-        	
-        	dgm.fill("ev1"+s,w,ethe); dgm.fill("ev2b"+s,w);
+         	dgm.fill("wc1"+s, pp,ep/kin.p1vsp2(pp,beamEnergy));
+        	dgm.fill("wc3"+s, pthe, pp/kin.p2vsth1(ethe,beamEnergy));
+        	dgm.fill("wc4"+s, pp/kin.p2vsth1(ethe,beamEnergy),berr);
         }
         
         dgm.fill("kc0"+s, pthe,delphi-180);
         dgm.fill("kc1"+s, ethe,delphi-180);
-        
-	    }
 
     }
     
