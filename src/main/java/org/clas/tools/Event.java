@@ -43,9 +43,9 @@ public class Event {
 	public boolean   isMuon = false;
 	public boolean   isPhys = false;
 	
-	public List<Particle>              part    = new ArrayList<Particle>();	
-	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);  
-	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>();	
+	public IndexedList<List<Particle>> partmap = new IndexedList<List<Particle>>(1);   //getRECParticle(pid...))
+	public List<Particle>              part    = new ArrayList<Particle>();	           //getPART()
+	Map<Integer,List<Integer>>         partMap = new HashMap<Integer,List<Integer>>(); //loadMapByIndex(bank,pid)
 	Map<Integer,List<Integer>>         caloMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         htccMap = new HashMap<Integer,List<Integer>>();
 	Map<Integer,List<Integer>>         ftofMap = new HashMap<Integer,List<Integer>>();
@@ -94,7 +94,7 @@ public class Event {
 		System.out.println("Event() instantiated");
 	}
 	
-	public void init(DataEvent event) {	 
+	public void init(DataEvent event) {	
 		this.ev = event;
 		trigger = 0;
 		starttime = -100; 
@@ -306,13 +306,13 @@ public class Event {
 	
 	public void storeRECparticle(DataBank bank) {
 		partBank = bank;
-		getPART(); //REC::Particle converted to List<Particle> part
-		partMap  = loadMapByIndex(partBank,"pid");	 //"pid" mapped to REC::Particle index (pindex in detector banks).
+		getPART();                                    // REC::Particle converted to List<Particle> part
+		partMap  = loadMapByIndex(partBank,"pid");	  // "pid" mapped to REC::Particle index (pindex in detector banks).
 	}
 	
 	public void storeRECcalorimeter(DataBank bank) {
 		caloBank = bank;
-		caloMap  = loadMapByIndex(caloBank,"pindex"); //"pindex" mapped to REC::Calorimeter index
+		caloMap  = loadMapByIndex(caloBank,"pindex"); // "pindex" mapped to REC::Calorimeter index
 	}
 		
 	public void storeRECcherenkov(DataBank bank) {
@@ -439,16 +439,12 @@ public class Event {
             Particle p = new Particle(); 
             if (pid==0) {p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("index", i); p.setProperty("chi2pid", 0);}             
             if (pid!=0) {
-            	p.initParticle(pid, px, py, pz, vx, vy, vz);         	   
+            	p.initParticle(pid, px, py, pz, vx, vy, vz); 
             	p.setProperty("ppid", pid);
                 p.setProperty("status", status);
                 p.setProperty("beta", beta);
                 p.setProperty("index",i);                        
                 p.setProperty("chi2pid",chi2);
-                p.setProperty("sector", status/1000==2 ? caloBank.getByte("sector",i):0);
-				p.setProperty("lu",caloBank.getFloat("lu",i));
-				p.setProperty("lv",caloBank.getFloat("lv",i));
-				p.setProperty("lw",caloBank.getFloat("lw",i));
             }
             part.add(i,p);     //Lists do not support sparse indices !!!!!            
         }                		
@@ -597,7 +593,7 @@ public class Event {
 	    int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
 	    return il[layer-1];
 	}
-	
+
 	public int[][][] getECALPID(int e_sect) {
 		int[][][] out = new int[6][3][6];
 		for(int i = 0; i < caloBank.rows(); i++){
@@ -619,7 +615,38 @@ public class Event {
 		}
 		return out;		
 	}
-	
+	  
+    public IndexedList<List<Particle>> getECALClusters(List<Particle> list) {
+    	
+        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(2);       
+    	for (Particle p : list) {
+    		int ip = (int)p.getProperty("pindex");
+    		for (Particle ec : getECAL(ip)) {
+    			int is = (int) ec.getProperty("sector");
+    			int il = (int) ec.getProperty("layer");
+    			if (!olist.hasItem(is,il)) olist.add(new ArrayList<Particle>(), is,il); 
+    			     olist.getItem(is,il).add(ec);
+    		}
+    	}
+    	return olist;
+    }
+    
+    public IndexedList<List<Particle>> filterECALClusters(int pid, IndexedList<List<Particle>> list) {
+    	
+        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);       
+		IndexGenerator ig = new IndexGenerator();
+		
+    	for (Map.Entry<Long,List<Particle>>  entry : list.getMap().entrySet()){
+			int is = ig.getIndex(entry.getKey(), 0); 
+			int ip = (int) entry.getValue().get(0).getProperty("pindex");
+			if(entry.getValue().size()==1 && Math.abs(part.get(ip).getProperty("ppid"))==pid) {
+				if(!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
+				    olist.getItem(is).add(entry.getValue().get(0));
+			}
+    	}
+    	return olist;    	
+    }
+		
 	public List<Particle> getECAL(int ipart) {
 		return isMuon ? getECALMUON():getECALPHYS(ipart);		
 	}
@@ -686,7 +713,7 @@ public class Event {
 		if(caloMap.containsKey(ipart)) {
 			for(int imap : caloMap.get(ipart)) { //retrieve REC::Calorimeter index corresponding to REC::Particle index ipart			
 				Particle p = new Particle(); 
-				p.copy(part.get(caloBank.getShort("pindex",imap)));
+				p.copy(part.get(        caloBank.getShort("pindex",imap)));
 				p.setProperty("sector", caloBank.getByte("sector",imap)); 
 				p.setProperty("layer",  caloBank.getByte("layer",imap)); //layer=1,4,7
 				p.setProperty("pindex", caloBank.getShort("pindex",imap));
@@ -753,7 +780,7 @@ public class Event {
 					tim2 = (float) p.getProperty("time");
 				}
 				
-				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());					
+//				p.setVector(p.pid(),p.getProperty("x"),p.getProperty("y"),p.getProperty("z"),p.vx(),p.vy(),p.vz());	//why did i do this? lcs 10-9-24				
 				
 				if(clusBank!=null && caliBank!=null) {	//use ECAL::calib which is column mapped to ECAL::clusters				
 					p.setProperty("raweu", caliBank.getFloat("rawEU", ical)*1e3);
