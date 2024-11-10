@@ -1233,7 +1233,7 @@ public class ECt extends DetectorMonitor {
            for (int il=il1; il<il2; il++) {
               for (int iv=iv1; iv<iv2; iv++) {
                   fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,10,run).getData(3*il+iv).get(0));
-                  fitter.setRange(-10,10); fitter.fitSlicesY(); 
+                  fitter.setRange(-50,50); fitter.fitSlicesY(); 
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
                   g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
                   g3 = sliceToGraph(fitter.getMeans(),il,iv);
