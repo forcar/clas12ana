@@ -1,6 +1,9 @@
 package org.clas.tools;
 
-public class ElasLibNew {
+import java.text.DecimalFormat;
+import java.util.Formatter;
+
+public class ElasLib {
 	
 	double gep;            // electric form factor of proton
 	double gmp;            // magnetic form factor of proton
@@ -10,8 +13,9 @@ public class ElasLibNew {
 	public boolean debug=false;
 	public double z0sum=0, z1sum=0, z2sum=0;
 	public SpenceFunction spencefunction = new SpenceFunction();
+	public double q2, e_prime;
  
-    public ElasLibNew() {
+    public ElasLib() {
 		
     }
         
@@ -57,7 +61,7 @@ public class ElasLibNew {
 //  theta: e- scattering angle (deg)
 //  param: 1=dipole ff 2=Bosted ff 3=Brash ff 7=A1-Mainz
 
-        double fsc,fsc2,theta2,s2,s22,c2,c22,s24,t2,t22,recoil,e_prime,q2,rmott,tau,eps,sig2;
+        double fsc,fsc2,theta2,s2,s22,c2,c22,s24,t2,t22,recoil,rmott,tau,eps,sig2;
 
     	fsc  = 1./137; fsc2=fsc*fsc; 
 
@@ -297,12 +301,13 @@ public class ElasLibNew {
     	e1	   = es;
     	e3	   = eel;
     	e4	   = epr;
+    	e_prime = eel;
     	eta	   = es/eel;
-    	qs	   = 2.*es*eel*cst1;
+    	q2	   = 2.*es*eel*cst1;
     
-    	deltac[0] = 28./9.-13./6.*Math.log(qs/me2);
+    	deltac[0] = 28./9.-13./6.*Math.log(q2/me2);
     	arg=2*Math.log(e1/delta)-3*Math.log(eta);
-    	deltac[1] = (Math.log(qs/me2) - 1.)*arg; 
+    	deltac[1] = (Math.log(q2/me2) - 1.)*arg; 
     	deltac[2] = 2*znuc*Math.log(eta)   *arg;
     	arg=(e3-e1)/e3;
     	deltac[3]=-spence(arg);
@@ -401,17 +406,23 @@ public class ElasLibNew {
     	}    	
     }
     
-    public void test2() {
+    public void tsai_table1() {
+    	
+    	Formatter fmt = new Formatter();
+    	DecimalFormat df = new DecimalFormat("#.####");
     	
     	debug=false;
 
-        double[] eb = {17.314, 15.999, 14.649, 13.329, 11.999, 10.723, 6.032, 2.201, 2.206, 1.645};
-    	double[] angle = {35.1, 19.7, 18.8, 17.6, 16.082, 14, 17.186, 38.601, 15.999, 12.0};
+        double[] eb = {17.314, 15.999, 14.649, 13.329, 11.999, 10.723, 6.032, 2.201, 2.206};
+    	double[] angle = {35.1, 19.7, 18.8, 17.6, 16.082, 14, 17.186, 38.601, 15.999};
     	
+    	fmt.format("%10s %10s %8s %8s %10s %10s %10s\n","Ebeam","Angle","Eelec","-q2","Z0","Z1","Z2");
     	for (int i=0; i<eb.length; i++) {
-    		elasrad(eb[i],angle[i],0,0.0058,0.0058,0.0,0,2,1); //wcut=0.1117 for W=1.05 GeV
-    		System.out.println("energy="+eb[i]+" "+angle[i]+" "+z0sum+" "+z1sum+" "+z2sum);
+    		elasrad(eb[i],angle[i],0,0.0058,0.0058,0.0,0,2,1); //wcut=0.1117 for W=1.05 GeV, wcut=0 for Mo&Tsai Table 1   		
+    		fmt.format("%10s %10s %8s %8s %10s %10s %10s\n",
+    				   eb[i],angle[i],df.format(e_prime),df.format(q2),df.format(z0sum),df.format(z1sum),df.format(z2sum));
     	}
+    	System.out.println(fmt);
     }
     
     public void test3() {
@@ -420,8 +431,8 @@ public class ElasLibNew {
     }
     
     public static void main(String[] args) {    	
-    	ElasLibNew elib = new ElasLibNew();
-    	elib.test2();    	
+    	ElasLib elib = new ElasLib();
+    	elib.tsai_table1();    	
     }
 
 }
