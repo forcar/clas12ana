@@ -3,7 +3,7 @@ package org.clas.tools;
 import java.text.DecimalFormat;
 import java.util.Formatter;
 
-public class ElasLib {
+public class MoTsai {
 	
 	double gep;            // electric form factor of proton
 	double gmp;            // magnetic form factor of proton
@@ -15,7 +15,7 @@ public class ElasLib {
 	public SpenceFunction spencefunction = new SpenceFunction();
 	public double q2, e_prime;
  
-    public ElasLib() {
+    public MoTsai() {
 		
     }
         
@@ -431,7 +431,7 @@ public class ElasLib {
     }
     
     public static void main(String[] args) {    	
-    	ElasLib elib = new ElasLib();
+    	MoTsai elib = new MoTsai();
     	elib.tsai_table1();    	
     }
 
