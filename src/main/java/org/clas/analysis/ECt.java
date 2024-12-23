@@ -490,10 +490,6 @@ public class ECt extends DetectorMonitor {
 
     }
   
-    public IndexedTable getVeff() {
-      return (eng.useFADCTime ? fveff : (eng.usePass2Timing ? dveff:veff));
-    }
-    
     public void initCCDB(int runno) {
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
         gain    = cm.getConstants(runno, "/calibration/ec/gain");
@@ -527,7 +523,7 @@ public class ECt extends DetectorMonitor {
        if(!triggerFilter())        return;   	
        if(!pidFilter(event,false)) return;
        
-       if(!dropSummary) processRaw(event);
+       if(!dropSummary) processRaw(event); //process raw timing if ECEngine is rerun
 
        STT = event.getBank("REC::Event").getFloat("startTime", 0);
              
@@ -621,7 +617,7 @@ public class ECt extends DetectorMonitor {
       
     }
     
-    public void processRaw(DataEvent event) { //duplicates ECEngine process flow to check consistency
+    public void processRaw(DataEvent event) { // duplicates ECEngine workflow to check consistency
     	
  	   int  run = getRunNumber();
        triggerPhase  = getTriggerPhase(); 
@@ -724,9 +720,9 @@ public class ECt extends DetectorMonitor {
        
        if (run>=2000) {triggerPhase=0; shiftTV[1]=0;} // Corrections needed until runs<4013 are recooked
        
-       if(!event.hasBank("ECAL::clusters")) return;
+       if(!event.hasBank("ECAL::clusters")) return; // required for calibration
               
-       DataBank bankc = event.getBank("REC::Calorimeter"); //entries ordered by pindex,layer
+       DataBank bankc = event.getBank("REC::Calorimeter"); // entries ordered by pindex,layer
        DataBank bankp = event.getBank("REC::Particle");
        
 //   	   HashMap<Integer,ArrayList<Integer>>  mapPndex = mapByIndex(bankc,"pindex"); //maps part bank index to REC::Calorimeter
@@ -769,7 +765,7 @@ public class ECt extends DetectorMonitor {
              
        DataBank  bank1 = event.getBank("ECAL::clusters"); //entries ordered by sector,layer
        DataBank  bank3 = event.hasBank("ECAL::peaks") ? event.getBank("ECAL::peaks") : null;
-       DataBank  bank4 = event.hasBank("ECAL::calib") ? event.getBank("ECAL::calib") : null;
+       DataBank  bank4 = event.hasBank("ECAL::calib") ? event.getBank("ECAL::calib") : null; 
 
        for(int loop = 0; loop < bank1.rows(); loop++){ //loop over ECAL::clusters
            
@@ -778,10 +774,6 @@ public class ECt extends DetectorMonitor {
                int     il =  bank1.getByte("layer", loop);
                float ener =  bank1.getFloat("energy",loop)*1000;
                float    t =  bank1.getFloat("time",loop);
-
-               Point3D  pc = new Point3D(bank1.getFloat("x",loop),
-            		                     bank1.getFloat("y",loop),
-            		                     bank1.getFloat("z",loop));
                
                iip[0] = (bank1.getInt("coordU", loop)-4)/8+1; //strip number of peak U
                iip[1] = (bank1.getInt("coordV", loop)-4)/8+1; //strip number of peak V
@@ -790,20 +782,7 @@ public class ECt extends DetectorMonitor {
                iid[0] =  bank1.getInt("idU",loop)-1; //peak index U
                iid[1] =  bank1.getInt("idV",loop)-1; //peak index V
                iid[2] =  bank1.getInt("idW",loop)-1; //peak index W	  
-               
-               lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
-               lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
-               lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
-               
-               if(bank4 != null) {
-            	   tid[0] = getTime(bank4,"u",loop);
-            	   tid[1] = getTime(bank4,"v",loop);
-            	   tid[2] = getTime(bank4,"w",loop); 
-               } else {
-            	   tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
-            	   tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
-            	   tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
-               }
+
                
                add[0] = bank3.getFloat("energy",iid[0]); //peak energy U
                add[1] = bank3.getFloat("energy",iid[1]); //peak energy V
@@ -813,9 +792,30 @@ public class ECt extends DetectorMonitor {
                stp[1] = bank3.getShort("status", iid[1]);
                stp[2] = bank3.getShort("status", iid[2]);
                
-               if (pathlist.hasItem(is,il,loop)) { //should always be true unless dropBanks=true            
-                   int    pin = bankc.getShort("pindex", pathlist.getItem(is,il,loop));
-                   float path = bankc.getFloat("path",   pathlist.getItem(is,il,loop)); 
+               if (pathlist.hasItem(is,il,loop)) { //should always be true unless dropBanks=true 
+            	   
+            	   int in = pathlist.getItem(is,il,loop);
+            	   
+                   Point3D  pc = new Point3D(useHxyz ? bankc.getFloat("hx",in):bank1.getFloat("x",loop),
+                		                     useHxyz ? bankc.getFloat("hy",in):bank1.getFloat("y",loop),
+                				             useHxyz ? bankc.getFloat("hz",in):bank1.getFloat("z",loop));
+            	   
+                   lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
+                   lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
+                   lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
+                   
+                   if(bank4 != null) { 
+                	   tid[0] = getTime(bank4,"u",loop);
+                	   tid[1] = getTime(bank4,"v",loop);
+                	   tid[2] = getTime(bank4,"w",loop); 
+                   } else {
+                	   tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
+                	   tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
+                	   tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+                   }
+                   
+                   int    pin = bankc.getShort("pindex",in);
+                   float path = bankc.getFloat("path",  in); 
                    int    pid = bankp.getInt("pid",pin);
                    float beta = bankp.getFloat("beta",pin);                    
                    int status = Math.abs(bankp.getInt("status",pin));
@@ -920,8 +920,16 @@ public class ECt extends DetectorMonitor {
     	}
     	return 0;
     }
+        
+    public IndexedTable getVeff() { //for retrieval of current CCDB table
+      return (eng.useFADCTime ? fveff : (eng.usePass2Timing ? dveff:veff));
+    }
     
-    public float getTime(DataBank bank4, String uvw, int index) {
+    public IndexedTable getTime() { //for retrieval of current CCDB table
+      return (eng.useFADCTime ? ftime : (eng.usePass2Timing ? dtime:time));   	
+    }
+      
+    public float getTime(DataBank bank4, String uvw, int index) { //for retrieval from ECAL::calib bank
     	switch (uvw) {
     	case "u": return eng.useFADCTime ? bank4.getFloat("recFTU",index): bank4.getFloat("recDTU",index); 
     	case "v": return eng.useFADCTime ? bank4.getFloat("recFTV",index): bank4.getFloat("recDTV",index);
@@ -1233,7 +1241,7 @@ public class ECt extends DetectorMonitor {
            for (int il=il1; il<il2; il++) {
               for (int iv=iv1; iv<iv2; iv++) {
                   fitter = new ParallelSliceFitter((H2F)this.getDataGroup().getItem(is,0,10,run).getData(3*il+iv).get(0));
-                  fitter.setRange(-50,50); fitter.fitSlicesY(); 
+                  fitter.setRange(-50,50); fitter.fitSlicesY(); // the fit range can be epoch dependent
                   g1 = sliceToGraph(fitter.getMeanSlices(),il,iv); 
                   g2 = sliceToGraph(fitter.getSigmaSlices(),il,iv);
                   g3 = sliceToGraph(fitter.getMeans(),il,iv);
@@ -1306,7 +1314,7 @@ public class ECt extends DetectorMonitor {
     			float ev = (float) Math.max(10,Math.min(22,y!=0?Math.abs(1/y):17f));
     			float eve = y!=0 && y>=10 && y<=22 ? ye/y/y:0;
         		plot.addPoint(ip+1, ev, 0, eve); 
-        		float ydb = (float) veff.getDoubleValue("veff", is, 3*il+iv+1, ip+1);
+        		float ydb = (float) getVeff().getDoubleValue("veff", is, 3*il+iv+1, ip+1);
         		plotdb.addPoint(ip+1, ydb, 0, 0);
         	}            
             plot.setMarkerColor(1); plot.setLineColor(1); plotdb.setMarkerColor(4); plotdb.setLineColor(4);
@@ -1336,7 +1344,7 @@ public class ECt extends DetectorMonitor {
         for (int iv=0; iv<3; iv++) {
         	GraphErrors plot1 = new GraphErrors(); GraphErrors plot2 = new GraphErrors(); GraphErrors plot3 = new GraphErrors();
         	for (int ip=0; ip<npmt[3*il+iv]; ip++) {
-        		float ydb = (float) time.getDoubleValue("a0", is, 3*il+iv+1, ip+1);        		
+        		float ydb = (float) getTime().getDoubleValue("a0", is, 3*il+iv+1, ip+1);        		
         		float y = 0, ye = 0, y1 = 0, y1e = 0;
         		if(tl.fitData.hasItem(is,3*il+iv+1,ip,getRunNumber())) {
         			y1 =  (float) tl.fitData.getItem(is,3*il+iv+1,ip,getRunNumber()).p0;
