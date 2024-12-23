@@ -231,6 +231,8 @@ public class DetectorMonitor implements ActionListener {
     public Boolean              HiRes = false;
     public Boolean        dbgAnalyzer = false;
     public Boolean      analyzeHistos = false;
+    public Boolean            useHxyz = false;
+
     
     public IndexedList<FitData>            Fits = new IndexedList<FitData>(4);
     public IndexedList<GraphErrors>  FitSummary = new IndexedList<GraphErrors>(4);
