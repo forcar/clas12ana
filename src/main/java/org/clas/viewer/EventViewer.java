@@ -91,7 +91,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JPanel                        mainPanel = null;
     JMenuBar                        menuBar = null;    
     JTabbedPane                  tabbedpane = null;    
-    JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8;   
+    JCheckBoxMenuItem  co0,co1,co2,co3,co4,co4b,co5,co6,co7,co8,co9;   
     JCheckBoxMenuItem   cf,cf0,cf1,cf2,cf3,cf4,cf5,cf6a,cf6b,cf6c,cf6d,cf6e,cf6f,cf6g,cf6h,cf6i,cf6j;
     JCheckBoxMenuItem   cf7,cf8,cf9,cf10a,cf10b,cf10c,cf11,cf12,cf13,cf14,cf15,cf16,cf17,cf18,cf19,cf20;   
     JCheckBoxMenuItem                                   ctr;    
@@ -167,6 +167,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public Boolean          useCC = false;
     public Boolean          useFD = false;
     public Boolean          useCD = false;
+    public Boolean        useHxyz = false;
        
     public JFileChooser      fc = null; 
     
@@ -230,7 +231,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	}
     	} else {
 // 		    monitors[n] = new ECperf("ECperf"); 
-    		monitors[n] = new ECelas("ECelas");
+//    		monitors[n] = new ECelas("ECelas");
 //    		monitors[n] = new ECa("ECa");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECstatus("ECstatus","ECAL");
@@ -238,7 +239,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
- //   	    monitors[n] = new ECt("ECt"); 
+   	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
 //    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
@@ -277,6 +278,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         co6  = new JCheckBoxMenuItem("FiduCuts");      co6.addItemListener(this);       menu.add(co6);
         co7  = new JCheckBoxMenuItem("DropEsect");     co7.addItemListener(this);       menu.add(co7);
         co8  = new JCheckBoxMenuItem("OnlyEsect");     co8.addItemListener(this);       menu.add(co8);
+        co9  = new JCheckBoxMenuItem("UseHxyz");       co9.addItemListener(this);       menu.add(co9);
         menuBar.add(menu);
         
         if(!monitors[0].getDetectorName().equals("ECstatus")) co0.doClick(); //must use .equals here
@@ -468,7 +470,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==co4b){dumpFiles      = sc(e); monitors[0].dumpFiles   = dumpFiles;}
 		if (s==co6) {fiduCuts       = sc(e); monitors[0].fiduCuts    = fiduCuts;}
 		if (s==co7) {dropEsect      = sc(e); monitors[0].dropEsect   = dropEsect;}
-		if (s==co7) {onlyEsect      = sc(e); monitors[0].onlyEsect   = onlyEsect;}
+		if (s==co8) {onlyEsect      = sc(e); monitors[0].onlyEsect   = onlyEsect;}
+		if (s==co9) {useHxyz        = sc(e); monitors[0].useHxyz     = useHxyz;}
 		if (s==cf)  {fitVerbose     = sc(e); monitors[0].fitVerbose  = fitVerbose;}
 		if (s==cf0) {cfitEnable     = sc(e); monitors[0].cfitEnable  = cfitEnable;}
 		if (s==cf1) {sfitEnable     = sc(e); monitors[0].sfitEnable  = sfitEnable;}
