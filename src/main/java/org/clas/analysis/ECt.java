@@ -784,8 +784,9 @@ public class ECt extends DetectorMonitor {
                boolean    goodPID = TRpid==11211 ? Math.abs(pid)==211 && is!=trigger_sect || 
             		                               Math.abs(pid)==11  && is==trigger_sect : //combine e- and pi+/pi-
             		                               Math.abs(pid)==TRpid && goodSector;      //PID from menu selection
+               boolean goodNEUT = pid==22 || pid==2112;
                                       
-               if (goodPID && goodStatus) {
+               if ((goodPID || goodNEUT) && goodStatus) {
             	   
             	   float path = bankc.getFloat("path",  in); 
                    float beta = bankp.getFloat("beta",pin);                    
@@ -865,19 +866,21 @@ public class ECt extends DetectorMonitor {
                        float offset = is==2 && run>3030 && run<3106 ? 30 : 0; //kludge for RGA-Spring18
                                               
                        if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
-                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
+                       if(goodNEUT)          ((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
                        if(pid==11)           ((H1F) this.getDataGroup().getItem(0,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
                        
                        if(Math.abs(t-tu)<0.001) { //Choose U,V,W time tu used for cluster time
                        if(Math.abs(pid)==211)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+3).get(is-1)).fill(mybet);  
-                       if(pid==22||pid==2112)((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
+                       if(goodNEUT)          ((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)+6).get(is-1)).fill(mybet); 
                        if(pid==11)           ((H1F) this.getDataGroup().getItem(1,i,22,run).getData(getDet(il)  ).get(is-1)).fill(mybet); 
                        }
-                                              
-                       ((H1F) this.getDataGroup().getItem(is,0,tlnum,run).getData(il+i-1).get(0)).fill(resid);            // used for timelines
-                       ((H2F) this.getDataGroup().getItem(is,0,   10,run).getData(il+i-1).get(0)).fill(resid+offset, ip); // used for calibration
                        
-                       if (!dropSummary) {  
+                       if(goodPID) {
+                           ((H1F) this.getDataGroup().getItem(is,0,tlnum,run).getData(il+i-1).get(0)).fill(resid);            // used for timelines
+                           ((H2F) this.getDataGroup().getItem(is,0,   10,run).getData(il+i-1).get(0)).fill(resid+offset, ip); // used for calibration
+                       }
+                       
+                       if (!dropSummary && goodPID) {  
                            ((H2F) this.getDataGroup().getItem(is,0,6,run).getData(il+i-1).get(0)).fill(tu+TOFFSET-FTOFFSET, ip); //peak times
                            ((H2F) this.getDataGroup().getItem(is,0,7,run).getData(il+i-1).get(0)).fill(t +TOFFSET-FTOFFSET, ip); //cluster times
                            ((H2F) this.getDataGroup().getItem(is,0,9,run).getData(il+i-1).get(0)).fill(tvcor, ip);      // TVertex corrected time
