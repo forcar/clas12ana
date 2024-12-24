@@ -809,10 +809,10 @@ public class ECt extends DetectorMonitor {
                    stp[1] = bank3.getShort("status", iid[1]);
                    stp[2] = bank3.getShort("status", iid[2]);
             	              	 
-            	   System.out.println(getEventNumber()+" "+is+" "+il+" "+loop+" "+in+" "+pin+" "+pid);
-            	   System.out.println(bankc.getFloat("hx",in)-bank1.getFloat("x",loop));
-            	   System.out.println(bankc.getFloat("hy",in)-bank1.getFloat("y",loop));
-            	   System.out.println(bankc.getFloat("hz",in)-bank1.getFloat("z",loop));
+//            	   System.out.println(getEventNumber()+" "+is+" "+il+" "+loop+" "+in+" "+pin+" "+pid);
+//            	   System.out.println(bankc.getFloat("hx",in)-bank1.getFloat("x",loop));
+//            	   System.out.println(bankc.getFloat("hy",in)-bank1.getFloat("y",loop));
+//            	   System.out.println(bankc.getFloat("hz",in)-bank1.getFloat("z",loop));
             	   
                    Point3D  pc = new Point3D(useHxyz ? bankc.getFloat("hx",in):bank1.getFloat("x",loop),
                 		                     useHxyz ? bankc.getFloat("hy",in):bank1.getFloat("y",loop),
