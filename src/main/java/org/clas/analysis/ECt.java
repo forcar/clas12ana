@@ -217,16 +217,16 @@ public class ECt extends DetectorMonitor {
         plotTDCHistos(10); 
         if(dropSummary) return;
         plotTDCHistos(0);
-        plotTDCHistos(1);    	    	    
-        plotTDCHistos(2);    	    	    
-        plotTDCHistos(3);    	    	    
-        plotTDCHistos(4);    	    	    
-        plotTDCHistos(8);    	    	    
-        plotTDCHistos(5);    	    	    
-        plotTDCHistos(6);    	    	    
-    	plotTDCHistos(7);    	    	    
-        plotTDCHistos(8);    	    	    
-   	    plotTDCHistos(9);    	    	    
+        plotTDCHistos(1);
+        plotTDCHistos(2);
+        plotTDCHistos(3);
+        plotTDCHistos(4);
+        plotTDCHistos(8);
+        plotTDCHistos(5);
+        plotTDCHistos(6);
+    	plotTDCHistos(7);
+        plotTDCHistos(8);
+   	    plotTDCHistos(9);
         plotUVWHistos(11);
         plotUVWHistos(12);
         plotUVWHistos(13);
@@ -243,13 +243,13 @@ public class ECt extends DetectorMonitor {
     public void plotAnalysis(int run) {
         setRunNumber(run);
         if(!isAnalyzeDone) return;
-	    if(isResidualDone) plotResidualSummary(23);
-	    if(isTRESDone)     plotTRESSummary(34);
+        if(isResidualDone) plotResidualSummary(23);
+        if(isTRESDone)     plotTRESSummary(34);
         if(!dropSummary) {
-        	updateFITS(26); updateFITS(27); plotEVSummary(30); plotT0Summary(31);
-        	if(isTMFDone)      plotTMFSummary(24);
-        	if(isGTMFDone)     plotGTMFSummary(25);
-    	}
+            updateFITS(26); updateFITS(27); plotEVSummary(30); plotT0Summary(31);
+            if(isTMFDone)      plotTMFSummary(24);
+            if(isGTMFDone)     plotGTMFSummary(25);
+        }
         if(!isTimeLineFitsDone) return;
         if(!isMC) plotTimeLines(29);
     }
@@ -284,18 +284,17 @@ public class ECt extends DetectorMonitor {
         H2F h;
     	DataGroup dg = new DataGroup(3,6);
 
-    	for(int is=1; is<7; is++) {
-    		for(int im=1; im<4; im++) {
-    			int nx = im==1 ? 68:36;
-    			h = new H2F("STATUS"+is+im, "STATUS"+is+im, nx, 1, nx+1, 3, 1, 4);
-    			h.setTitleX("SECTOR "+is);h.setTitle(is==1 ? det[im-1]:" ");
-    			dg.addDataSet(h, n);n++;
-            }
+        for(int is=1; is<7; is++) {
+        for(int im=1; im<4; im++) {
+    	    int nx = im==1 ? 68:36;
+    	    h = new H2F("STATUS"+is+im, "STATUS"+is+im, nx, 1, nx+1, 3, 1, 4);
+    	    h.setTitleX("SECTOR "+is);h.setTitle(is==1 ? det[im-1]:" ");
+    	    dg.addDataSet(h, n);n++;
+        }
         }      	
         this.getDataGroup().add(dg,0,0,k,run);
     }
-      
-    
+          
     public void createTLHistos(int k, int t1, int t2, int t3, int t4) {
 
         int run = getRunNumber(); 
@@ -305,11 +304,11 @@ public class ECt extends DetectorMonitor {
         DataGroup dg = new DataGroup(6,3);
 
         for (int is=1; is<7; is++) {
-        	h = new H1F("TL1_"+k+"-"+is+"-"+run,"TL1_"+k+"-"+is+"-"+run,200,t1,t2);
-        	h.setTitleX("Sector "+is+" Start Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");
+            h = new H1F("TL1_"+k+"-"+is+"-"+run,"TL1_"+k+"-"+is+"-"+run,200,t1,t2);
+            h.setTitleX("Sector "+is+" Start Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");
             dg.addDataSet(h,is-1);    	
-        	h = new H1F("TL2_"+k+"-"+is+"-"+run,"TL2_"+k+"-"+is+"-"+run,100,t3,t4);
-        	h.setTitleX("Sector "+is+" PCAL U3 Cluster Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");     
+            h = new H1F("TL2_"+k+"-"+is+"-"+run,"TL2_"+k+"-"+is+"-"+run,100,t3,t4);
+            h.setTitleX("Sector "+is+" PCAL U3 Cluster Time-fgo"); h.setTitleY("Counts"); h.setOptStat("1100");     
             dg.addDataSet(h,is+5);
             h2 = new H2F("TL3_"+k+"-"+is+"-"+run,"TL3_"+k+"-"+is+"-"+run,100,-2,2,62,1,63);
             h2.setTitleX("Sector "+is+" F1B Vertex Time"); h2.setTitleY("Paddle"); 
@@ -320,19 +319,20 @@ public class ECt extends DetectorMonitor {
     }
     
     public void createTRESHistos(int k, int xbins, int ybins, double xmin, double xmax, double ymin, double ymax, String xtxt, String ytxt) {
-        H2F h ;  
+
+    	H2F h ;  
         int run = getRunNumber(), n=0;
         float[] emx = {50000,30000,30000,30000,12000,25000,20000,5000,10000};
     	DataGroup dg = new DataGroup(9,6);
     	
         for (int is=1; is<7; is++) { 
-        	for (int il=0; il<3; il++) {
-            	for (int iv=0; iv<3; iv++) {
-            		int i=3*il+iv;
-            		h = new H2F("tres-"+k+"-"+det[il]+"-"+v[iv]+"s"+is+"-"+run,"tres-"+k+"-"+det[il]+"-"+v[iv]+"-s"+is+"-"+run,xbins,xmin,emx[i],ybins,ymin,ymax);
-            		dg.addDataSet(h,n);n++;
-            	}
-        	}
+            for (int il=0; il<3; il++) {
+                for (int iv=0; iv<3; iv++) {
+                    int i=3*il+iv;
+                    h = new H2F("tres-"+k+"-"+det[il]+"-"+v[iv]+"s"+is+"-"+run,"tres-"+k+"-"+det[il]+"-"+v[iv]+"-s"+is+"-"+run,xbins,xmin,emx[i],ybins,ymin,ymax);
+                    dg.addDataSet(h,n);n++;
+                }
+            }
         }
         this.getDataGroup().add(dg,0,0,k,run);
     }
@@ -538,9 +538,9 @@ public class ECt extends DetectorMonitor {
     public boolean eventFilter(DataEvent event) {
         
         boolean goodEvent = event.hasBank("REC::Event")&&
-  		                    event.hasBank("REC::Particle")&&
-  		                    event.hasBank("REC::Calorimeter")&&
-  		                    event.hasBank("ECAL::clusters"); 
+                            event.hasBank("REC::Particle")&&
+                            event.hasBank("REC::Calorimeter")&&
+                            event.hasBank("ECAL::clusters"); 
         return goodEvent;
     }
     
@@ -598,7 +598,7 @@ public class ECt extends DetectorMonitor {
 
                if(tdc>0 && is>0 && is<7) {
                    if(!tdcs.hasItem(is,il,ip)) tdcs.add(new ArrayList<Integer>(),is,il,ip);
-        	           tdcs.getItem(is,il,ip).add(tdc);
+                       tdcs.getItem(is,il,ip).add(tdc);
                    	   float tdcdc = tps*tdc-triggerPhase; // phase corrected time
 //              	   ((H2F) this.getDataGroup().getItem(is,0,0,run).getData(il-1).get(0)).fill(tps*tdc-FTOFFSET-BGOFFSET, ip); 
               	       ((H2F) this.getDataGroup().getItem(is,0,1,run).getData(il-1).get(0)).fill(tdcdc-FTOFFSET,ip); 
@@ -652,9 +652,9 @@ public class ECt extends DetectorMonitor {
                    double dtdcmc = tdc - (float)gtw.getDoubleValue("time_walk",is,il,0)/x - dcorr - da0;
                    double ftdcmc = ftdc_corr - fcorr - fa0;
                    double tdcmc  = dtdcmc;
-          	       ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdc-FTOFFSET,ip);  // matched FADC/TDC
-          	       ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
-          	       ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(dtdcmc-ftdcmc,ip); // calibrated TDC-FADC time
+                   ((H2F) this.getDataGroup().getItem(is,0,3,run).getData(il-1).get(0)).fill(tdc-FTOFFSET,ip);  // matched FADC/TDC
+                   ((H2F) this.getDataGroup().getItem(is,0,4,run).getData(il-1).get(0)).fill(tdcmc-FTOFFSET,ip); // calibrated time
+                   ((H2F) this.getDataGroup().getItem(is,0,5,run).getData(il-1).get(0)).fill(dtdcmc-ftdcmc,ip); // calibrated TDC-FADC time
           	       if(isGoodTL && il==1 && ip==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(tdcmc); 
                }
            }
@@ -684,33 +684,33 @@ public class ECt extends DetectorMonitor {
   	   ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(trigger_sect-1).get(0)).fill(STT-FTOFFSET);
   	   
   	   if(event.hasBank("ECAL::clusters")){       
-  		   DataBank  bank = event.getBank("ECAL::clusters");
-  		   for(int loop = 0; loop < bank.rows(); loop++){
-  			   int is = bank.getByte("sector", loop);
-  			   int il = bank.getByte("layer", loop);
-  			   if (is==trigger_sect && il==1){
-  				   float    t = bank.getFloat("time",loop);
-  				   int iU = (bank.getInt("coordU", loop)-4)/8+1;
-  				   if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET-FTOFFSET);
-  			   }
-  		   }
+  	       DataBank  bank = event.getBank("ECAL::clusters");
+  	       for(int loop = 0; loop < bank.rows(); loop++){
+               int is = bank.getByte("sector", loop);
+               int il = bank.getByte("layer", loop);
+               if (is==trigger_sect && il==1){
+                   float    t = bank.getFloat("time",loop);
+                   int iU = (bank.getInt("coordU", loop)-4)/8+1;
+                   if(iU==3) ((H1F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+5).get(0)).fill(t+TOFFSET-FTOFFSET);
+               }
+           }
        }
   	   
   	   if(event.hasBank("REC::Scintillator")) {
   		   DataBank  bank = event.getBank("REC::Scintillator");
   		   for(int loop = 0; loop < bank.rows(); loop++){  		   
-  			   int is = bank.getByte("sector", loop);
-			   int il = bank.getByte("layer", loop);
-			   int id = bank.getByte("detector", loop);
-	           int     ip = bank.getShort("component",loop);
- 			   if(is==trigger_sect && il==2 && id==12) {
- 				   float  nrg = bank.getFloat("energy", loop);
-  	               float path = bank.getFloat("path", loop);
+               int is = bank.getByte("sector", loop);
+               int il = bank.getByte("layer", loop); 
+               int id = bank.getByte("detector", loop);
+               int ip = bank.getShort("component",loop);
+               if(is==trigger_sect && il==2 && id==12) {
+                   float  nrg = bank.getFloat("energy", loop);
+                   float path = bank.getFloat("path", loop);
   	               float time = bank.getFloat("time", loop);
-	               ((H2F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+11).get(0)).fill(time-STT-path/29.97,ip);
-  			   }
-  		   }
-  	   }
+  	               ((H2F) this.getDataGroup().getItem(0,0,tlnum,run).getData(is+11).get(0)).fill(time-STT-path/29.97,ip);
+               }
+           }
+       }
       
     }  
     
@@ -782,8 +782,8 @@ public class ECt extends DetectorMonitor {
                boolean goodStatus = status>=2000 && status<3000;              
                boolean goodSector = dropEsect ? is!=trigger_sect : is==trigger_sect;                 
                boolean    goodPID = TRpid==11211 ? Math.abs(pid)==211 && is!=trigger_sect || 
-            		                               Math.abs(pid)==11  && is==trigger_sect : //combine e- and pi+/pi-
-            		                               Math.abs(pid)==TRpid && goodSector;      //PID from menu selection
+                                                   Math.abs(pid)==11  && is==trigger_sect : //combine e- and pi+/pi-
+                                                   Math.abs(pid)==TRpid && goodSector;      //PID from menu selection
                boolean goodNEUT = pid==22 || pid==2112;
                                       
                if ((goodPID || goodNEUT) && goodStatus) {
@@ -816,47 +816,47 @@ public class ECt extends DetectorMonitor {
 //            	   System.out.println(bankc.getFloat("hz",in)-bank1.getFloat("z",loop));
             	   
                    Point3D  pc = new Point3D(useHxyz ? bankc.getFloat("hx",in):bank1.getFloat("x",loop),
-                		                     useHxyz ? bankc.getFloat("hy",in):bank1.getFloat("y",loop),
-                				             useHxyz ? bankc.getFloat("hz",in):bank1.getFloat("z",loop));
+                                             useHxyz ? bankc.getFloat("hy",in):bank1.getFloat("y",loop),
+                                             useHxyz ? bankc.getFloat("hz",in):bank1.getFloat("z",loop));
             	   
                    lef[0] = getLeff(pc,getPeakline(iid[0],pc,bank3)); //readout distance U
                    lef[1] = getLeff(pc,getPeakline(iid[1],pc,bank3)); //readout distance V
                    lef[2] = getLeff(pc,getPeakline(iid[2],pc,bank3)); //readout distance W
                    
-                   if(bank4 != null) { 
-                	   tid[0] = getTime(bank4,"u",loop);
-                	   tid[1] = getTime(bank4,"v",loop);
-                	   tid[2] = getTime(bank4,"w",loop); 
+                   if (bank4 != null) { 
+                       tid[0] = getTime(bank4,"u",loop);
+                       tid[1] = getTime(bank4,"v",loop);
+                       tid[2] = getTime(bank4,"w",loop); 
                    } else {
-                	   tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
-                	   tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
-                	   tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
+                       tid[0] = bank3.getFloat("time",iid[0]) - lef[0]/(float)getVeff().getDoubleValue("veff", is,il+0,iip[0]); //readout time subtracted U
+                       tid[1] = bank3.getFloat("time",iid[1]) - lef[1]/(float)getVeff().getDoubleValue("veff", is,il+1,iip[1]); //readout time subtracted V
+                       tid[2] = bank3.getFloat("time",iid[2]) - lef[2]/(float)getVeff().getDoubleValue("veff", is,il+2,iip[2]); //readout time subtracted W
                    }
                    
                    for (int i=0; i<3; i++) { //loop over U,V,W
                 	   
-                	   float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
+                       float tu=0,tdc=0,tdcc=0,tdccc=0,leff=0,adc=0; int ip=0;
                 	   
-                	   if (eng.clusters.size()>0) { // use ECEngine clusters object
+                       if (eng.clusters.size()>0) { // use ECEngine clusters object
                          tu    = (float) eng.clusters.get(loop).getTime(i);
                          ip    =         eng.clusters.get(loop).getPeak(i).getMaxStrip();
                          adc   =         eng.clusters.get(loop).getPeak(i).getMaxECStrip().getADC();
                          tdc   = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getRawTime(true)-TOFFSET;
                          tdcc  = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getTWCTime(); 
                          leff  = (float) eng.clusters.get(loop).getPeak(i).getMaxECStrip().getTdist();
-                	   } else { // use ECAL::clusters and ECAL::peaks  
-                		 tu    = tid[i];
-                		 ip    = iip[i];
-                		 leff  = lef[i];
+                       } else { // use ECAL::clusters and ECAL::peaks  
+                         tu    = tid[i];
+                         ip    = iip[i];
+                         leff  = lef[i];
                          adc   = 10000*add[i]/(float)gain.getDoubleValue("gain", is, il+i, ip);
-                	   }
+                       }
                       
                        float   vel = (Math.abs(pid)==211 || Math.abs(pid)==2212) ? Math.abs(beta*c):c; //use EB beta for pion or proton calibration residuals                                       	   
-                	   float vcorr = STT - triggerPhase + TVOffset;  // phase=0 unless STT is not phase corrected (early engineering runs)
+                       float vcorr = STT - triggerPhase + TVOffset;  // phase=0 unless STT is not phase corrected (early engineering runs)
                        float tvcor = tu  - vcorr;                                             
-                	   float pcorr = path/vel;
+                       float pcorr = path/vel;
                        float resid = tvcor - pcorr;  
-                	   float  radc = (float) Math.sqrt(adc);  
+                       float  radc = (float) Math.sqrt(adc);  
                        float lcorr = leff/(float)getVeff().getDoubleValue("veff", is, il+i, ip);   
                        float mybet = path/tvcor/c; // use ECAL beta for beta distribution plots and neutral residual plots
                       
