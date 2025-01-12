@@ -163,6 +163,10 @@ public class ECCommon {
        	    	
         int run = getRunNumber(event);
         
+        isMC = run<=100;
+        
+        if(isMC) {usePass2Timing = false; useDTCorrections = false; useFTpcal = false;} //needed until GEMC ecal_hitprocess is pass2 compatible
+        
         manager.setVariation(variation);;
       
         IndexedTable   atten1 = manager.getConstants(run, "/calibration/ec/attenuation");
