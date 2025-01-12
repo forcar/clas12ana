@@ -14,12 +14,10 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
@@ -68,10 +66,10 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataEventType;
 import org.jlab.io.evio.EvioDataEvent;
-import org.jlab.io.evio.EvioSource;
+
 import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.io.hipo.HipoDataSource;
-import org.jlab.io.hipo3.Hipo3DataSource;
+
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
@@ -98,15 +96,18 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     JRadioButtonMenuItem                    ct0,ct1,ct2,ct3;  
     JRadioButtonMenuItem ctr0,ctr1,ctr2,ctr3,ctr4,ctr5,ctr6,ctr7; 
     
-    DataSourceProcessorPane  processorPane = null;
+    DataSourceProcessorPane      processorPane = null;
+    private DataSourceProcessor  dataProcessor = null;    
+
     CodaEventDecoder               decoder = new CodaEventDecoder();
     CLASDecoder4               clasDecoder = new CLASDecoder4();
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
+    
     private SchemaFactory    schemaFactory = new SchemaFactory();
        
     private int   canvasUpdateTime = 2000;
-    private int           TVOffset = 0;
-    private float         logParam = 0;
+    public  int           TVOffset = 0;
+    public  float         logParam = 0;
 
     private int analysisUpdateEvnt = 100;
     private int          runNumber = 1;
@@ -179,11 +180,11 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     int    selectedTabIndex = 0;
     String selectedTabName  = " ";
     
-    private DataSourceProcessor  dataProcessor = null;    
-    private java.util.Timer      processTimer  = null;
+//    private java.util.Timer      processTimer  = null;
     private int                  eventDelay    = 0;
    
     public static void main(String[] args){
+    	System.out.println("*** WELCOME TO CLAS12ANA ***\n");
         JFrame frame = new JFrame("CLAS12Ana");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         EventViewer viewer = new EventViewer(args);
@@ -194,7 +195,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public EventViewer(String[] args) {  
-    	System.out.println("*** WELCOME TO CLAS12ANA ***\n");
     	dataProcessor = new DataSourceProcessor();    
     	createMonitors(args);
     	initMonitors();
@@ -239,15 +239,40 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmc1("ECmc1");
 //    		monitors[n] = new ECmc2("ECmc2");
 //    		monitors[n] = new ECmcn("ECmcn");
-   	    monitors[n] = new ECt("ECt"); 
+//  	    monitors[n] = new ECt("ECt"); 
 //          monitors[n] = new ECsf("ECsf"); 
-//    		monitors[n] = new ECcalib("ECcalib"); 
+    		monitors[n] = new ECcalib("ECcalib"); 
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
 //    		monitors[n] = new DCmon("DCmon");
 //
         }
+    }
+        
+    public void initMonitors() {
+    	System.out.println("EventViewer.initMonitors");
+		for(int k=0; k<this.monitors.length; k++) {
+			this.monitors[k].dropBanks   = dropBanks; 
+			this.monitors[k].dropSummary = dropSummary; 
+			this.monitors[k].dumpGraphs  = dumpGraphs;
+			this.monitors[k].dumpFiles   = dumpFiles;
+			this.monitors[k].defaultGain = defaultGain;
+			this.monitors[k].fiduCuts    = fiduCuts;
+			this.monitors[k].dropEsect   = dropEsect;
+			this.monitors[k].autoSave    = autoSave;
+			this.monitors[k].cfitEnable  = cfitEnable;
+			this.monitors[k].sfitEnable  = sfitEnable;
+			this.monitors[k].dfitEnable  = dfitEnable;
+			this.monitors[k].gdfitEnable = gdfitEnable;
+			this.monitors[k].setLogY(yLogEnable);                                                  
+			this.monitors[k].setLogZ(zLogEnable);
+			this.monitors[k].fitVerbose  = fitVerbose;
+			this.monitors[k].TRpid       = TRpid;
+			this.monitors[k].initTimeLine(TLname);
+			this.monitors[k].setTLflag(TLflag);
+			this.monitors[k].setDbgAnalyzer(dbgAnalyzer);
+    	} 
     }
     
     public void createMenuBar() {
@@ -353,7 +378,9 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         ctr4 = new JRadioButtonMenuItem("Muon");     ctr4.addItemListener(this);       group.add(ctr4); menu.add(ctr4);
         ctr5 = new JRadioButtonMenuItem("PC Muon");  ctr5.addItemListener(this);       group.add(ctr5); menu.add(ctr5);
         ctr6 = new JRadioButtonMenuItem("Proton");   ctr6.addItemListener(this);       group.add(ctr6); menu.add(ctr6);
-        ctr7 = new JRadioButtonMenuItem("ElecPion"); ctr7.addItemListener(this);       group.add(ctr7); menu.add(ctr7);      
+        ctr7 = new JRadioButtonMenuItem("ElecPion"); ctr7.addItemListener(this);       group.add(ctr7); menu.add(ctr7); 
+        menuItem = new JMenuItem("Set MC e- Sector"); menuItem.addActionListener(this); menu.add(menuItem);   
+
         menuBar.add(menu);
        
         menu   	= new JMenu("ECstatus");
@@ -448,6 +475,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         this.tabbedpane.addChangeListener(this);	               
         this.processorPane.addEventListener(this);
         this.dataProcessor.addEventListener(this);
+        
         this.setCanvasUpdate(canvasUpdateTime);
         
     }
@@ -537,6 +565,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Set Hit Thresh"):              this.setHitThresh(); break;
           case("Set Peak Thresh"):             this.setPeakThresh(); break;
           case("Set run number"):              this.setRunNumber(e.getActionCommand()); break;
+          case("Set MC e- Sector"):            this.setMCTrigSector(); break;
           case("Open histograms file"):        this.histoChooser(); break;
           case("Save histograms to file"):     this.histoSaver(); break;
           case("Save timelines to file"):      this.timelineSaver(); break;
@@ -546,31 +575,6 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
           case("Reset"):                       for (int k=0;k<monitors.length;k++) this.monitors[k].eventResetTime_current[k] = 0;
         }
         if (e.getActionCommand().substring(0, 5).equals("Reset")) resetHistograms(e.getActionCommand());
-    }
-    
-    public void initMonitors() {
-    	System.out.println("EventViewer.initMonitors");
-		for(int k=0; k<this.monitors.length; k++) {
-			this.monitors[k].dropBanks   = dropBanks; 
-			this.monitors[k].dropSummary = dropSummary; 
-			this.monitors[k].dumpGraphs  = dumpGraphs;
-			this.monitors[k].dumpFiles   = dumpFiles;
-			this.monitors[k].defaultGain = defaultGain;
-			this.monitors[k].fiduCuts    = fiduCuts;
-			this.monitors[k].dropEsect   = dropEsect;
-			this.monitors[k].autoSave    = autoSave;
-			this.monitors[k].cfitEnable  = cfitEnable;
-			this.monitors[k].sfitEnable  = sfitEnable;
-			this.monitors[k].dfitEnable  = dfitEnable;
-			this.monitors[k].gdfitEnable = gdfitEnable;
-			this.monitors[k].setLogY(yLogEnable);                                                  
-			this.monitors[k].setLogZ(zLogEnable);
-			this.monitors[k].fitVerbose  = fitVerbose;
-			this.monitors[k].TRpid       = TRpid;
-			this.monitors[k].initTimeLine(TLname);
-			this.monitors[k].setTLflag(TLflag);
-			this.monitors[k].setDbgAnalyzer(dbgAnalyzer);
-    	} 
     }
     
     public void histoChooser() {
@@ -741,6 +745,26 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
                 JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
             }
             this.setStripThreshold(val);
+        }
+    }
+    
+    public void setMCTrigSector() {
+        String s = (String)JOptionPane.showInputDialog(
+                    null,
+                    "MC Electron Trigger Sector",
+                    " ",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "0");
+        if(s!=null){
+            int val = 5;
+            try { 
+            	val= Integer.parseInt(s);
+            } catch(NumberFormatException e) { 
+                JOptionPane.showMessageDialog(null, "Value must be a positive integer!");
+            }
+            this.setMCTrigSector(val);
         }
     } 
     
@@ -1102,7 +1126,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public void setTVOffset(int time) {
         System.out.println("EventViewer.setTVOffset("+time+")");
-        this.TVOffset = time;
+        TVOffset = time;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setTVOffset(time);
         }
@@ -1110,7 +1134,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     
     public void setLogParam(float val) {
         System.out.println("EventViewer.setLogParam("+val+")");
-        this.logParam = val;
+        logParam = val;
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].eng.setLogParam(val);
         }
@@ -1149,7 +1173,14 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         for(int k=0; k<this.monitors.length; k++) {
             this.monitors[k].setMaxEvents(val);
         }
-    } 
+    }
+    
+    public void setMCTrigSector(int val) {
+        System.out.println("EventViewer.setMCTrigSector("+val+")");
+        for(int k=0; k<this.monitors.length; k++) {
+            this.monitors[k].setMCTrigSector(val);
+        }
+    }
     
     @Override
     public void timerUpdate() {
@@ -1179,20 +1210,20 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         
     }
-    
-    private void startProcessorTimer(){
+/*    
+    private void startProcessorTimer() {
         class CrunchifyReminder extends TimerTask {
             boolean hasFinished = false;
             public void run() {
                 //dataProcessor.processNextEvent(0, DataEventType.EVENT_START);
-                /*if(hasFinished==true){
-                    dataProcessor.processNextEvent(0, DataEventType.EVENT_STOP);
-                    return;
-                }*/
+                // if(hasFinished==true){
+                //    dataProcessor.processNextEvent(0, DataEventType.EVENT_STOP);
+                //    return;
+                //}
                 //System.out.println("running");
                 for (int i=1 ; i<=50 ; i++) {
                     boolean status = dataProcessor.processNextEvent(eventDelay,DataEventType.EVENT_ACCUMULATE);
-                    if(status==false&&hasFinished==false){
+                    if(status==false && hasFinished==false){
                         hasFinished = true;
                         System.out.println("[DataProcessingPane] ----> task is done...");
                     }
@@ -1203,7 +1234,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         processTimer = new java.util.Timer();
         processTimer.schedule(new CrunchifyReminder(),1,1);        
     }    
-
+*/
 	@Override
 	public void processShape(DetectorShape2D arg0) {
 		// TODO Auto-generated method stub
