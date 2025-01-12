@@ -135,7 +135,7 @@ public class DetectorMonitor implements ActionListener {
     public int        bitsec = 0;
     public long      trigger = 0;
     public int  triggerPhase = 0;
-    public int        trigFD = 0;
+    public int        trigFD = 1;
     public int        trigCD = 0;
     public int         TRpid = 11;
     public int         MCpid = 11;
@@ -264,7 +264,6 @@ public class DetectorMonitor implements ActionListener {
     Object[] can = {false, false, 0, 0, 0, 0};
     
     public EngineControl eng = new EngineControl();
-    
     public FTHashCollection rtt = null;
     
     String[]  ccdbTables = new String[]{
@@ -526,7 +525,11 @@ public class DetectorMonitor implements ActionListener {
     }
     
     public void setTestTrigger(boolean test) {
-    	   testTrigger = test;
+ 	   testTrigger = test;
+    }    
+    
+    public void setMCTrigSector(int val) {
+	   trigFD = val;
     }
     
     public int     getFDTrigger()            {return (int)(trigger)&0x000000000ffffffff;}
