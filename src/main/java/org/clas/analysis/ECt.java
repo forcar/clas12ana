@@ -545,7 +545,7 @@ public class ECt extends DetectorMonitor {
     }
     
     public boolean triggerFilter() {
-        int elec_trigger_sect = isMC ? 5 : getElecTriggerSector(shiftTrigBits(getRunNumber()));       
+        int elec_trigger_sect = isMC ? trigFD : getElecTriggerSector(shiftTrigBits(getRunNumber()));       
         int htcc_trigger_sect = getHTCCTriggerSector()-1;
         
         boolean goodECALSector = elec_trigger_sect>0 && elec_trigger_sect<7; 
@@ -897,13 +897,13 @@ public class ECt extends DetectorMonitor {
                            ((H2F) this.getDataGroup().getItem(is,il+i,21,run).getData(ip-1).get(0)).fill(vcorr+TOFFSET+(isMC?50:0),leff); 
                            if(TRESFILL(il+i-1)==ip) ((H2F) this.getDataGroup().getItem(0,0,33,run).getData(il+i-1+(is-1)*9).get(0)).fill(adc,resid);                       
                        }                        
-                   } //loop over U,V,W
+                   } //loop over U,V,W 
                } //PID && STATUS
            } //pathList check
        } //loop over ECAL::clusters   
     }
    
-    public int TRESFILL(int tag) {
+    public int TRESFILL(int tag) { //for each layer choose PMT to use for resolution smearing in GEMC
     	switch (tag) {
     	case 0: return 10;
     	case 1: return 52;
