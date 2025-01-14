@@ -1,7 +1,5 @@
 package org.clas.tools;
 
-import org.clas.lib.Elasgen;
-
 public class KinLib {
 	
 	public double    mp = 0.93828f;
