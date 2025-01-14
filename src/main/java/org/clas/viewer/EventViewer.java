@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
@@ -180,7 +181,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     int    selectedTabIndex = 0;
     String selectedTabName  = " ";
     
-//    private java.util.Timer      processTimer  = null;
+    private java.util.Timer      processTimer  = null;
     private int                  eventDelay    = 0;
    
     public static void main(String[] args){
@@ -1210,7 +1211,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         } 
         
     }
-/*    
+    
     private void startProcessorTimer() {
         class CrunchifyReminder extends TimerTask {
             boolean hasFinished = false;
@@ -1234,7 +1235,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         processTimer = new java.util.Timer();
         processTimer.schedule(new CrunchifyReminder(),1,1);        
     }    
-*/
+
 	@Override
 	public void processShape(DetectorShape2D arg0) {
 		// TODO Auto-generated method stub
