@@ -1445,7 +1445,7 @@ public class ECperf extends DetectorMonitor {
             e_pat    = (float) p.getProperty("path");
     		float en = (float) p.getProperty("energy");   		
     		int  lay = getDet((int) p.getProperty("layer"));    
-    		System.out.println("makeELEC "+lay+" "+en+" "+e_mom+" "+p.px()+" "+p.py()+" "+p.pz()+" "+e_x+" "+e_y);
+//    		System.out.println("makeELEC "+lay+" "+en+" "+e_mom+" "+p.px()+" "+p.py()+" "+p.pz()+" "+e_x+" "+e_y);
     		
     		lU[lay] = p.hasProperty("lu")?(float)p.getProperty("lu"):0;
     		lV[lay] = p.hasProperty("lv")?(float)p.getProperty("lv"):0;
