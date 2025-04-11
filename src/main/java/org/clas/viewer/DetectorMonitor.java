@@ -491,7 +491,7 @@ public class DetectorMonitor implements ActionListener {
         setNumberOfEvents(getNumberOfEvents()+1);
         switch (event.getType())  {
         case EVENT_START:      processEvent(event); break;
-        case EVENT_SINGLE:    {processEvent(event); plotEvent(event);break;}
+        case EVENT_SINGLE:    {processEvent(event); plotEvent(event); analyze(); break;}
         case EVENT_ACCUMULATE: processEvent(event); break;
         case EVENT_STOP:       processEVENT_STOP(event);
 	    }
@@ -1143,7 +1143,8 @@ public class DetectorMonitor implements ActionListener {
        	if (run<=19131) return 10.5322f;
        	if (run<=19659) return 6.39463f;
        	if (run<=19892) return 8.47757f;
-        if (run<=99999) return 10.54726f;
+        if (run<=20525) return 10.54726f;
+        if (run<=99999) return  2.23951f;
     	return 0.0f;
     }
     
@@ -1201,7 +1202,11 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=15491&&run<=15732) return +0.50f;  
     	if (run>=15733&&run<=18417) return -1.0f;
     	if (run>=18419&&run<=19131) return +1.0f;
-    	if (run>19131)              return +1.0f;
+    	if (run>=19132&&run<=19892) return +1.0f;
+    	if (run>=20014&&run<=20507) return -1.0f;
+    	if (run>=20508&&run<=20525) return +1.0f;
+    	if (run>=21000&&run<=99999) return +1.0f;
+        	
     	return 0.00f;
     }
     
@@ -1220,6 +1225,8 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=16043)           return "rgc";
     	if (run>=18127)           return "rgd";
     	if (run>=19209)           return "rgk";
+    	if (run>=20014)           return "rge";
+    	if (run>=21000)           return "rgl";
     	return "rga";
     }
     
