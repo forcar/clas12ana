@@ -154,7 +154,6 @@ public class ECcalib extends DetectorMonitor {
     	Fits.clear();
     	tl.Timeline.clear();
     	runslider.setValue(0);
-        eng.engine.setCCDBGain(!defaultGain);
     }
     
      @Override    
