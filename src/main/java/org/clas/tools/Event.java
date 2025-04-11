@@ -26,7 +26,7 @@ public class Event {
     public long timestamp=0,trigger=0;
     public float starttime=0, RF_TIME=0;
 	
-	private DataEvent      ev = null;
+	private DataEvent      de = null;
 	private DataBank partBank = null;
 	private DataBank caloBank = null;
 	private DataBank ftofBank = null;
@@ -95,7 +95,7 @@ public class Event {
 	}
 	
 	public void init(DataEvent event) {	
-		this.ev = event;
+		this.de = event;
 		trigger = 0;
 		starttime = -100; 
 		part.clear();
@@ -114,47 +114,47 @@ public class Event {
 		peakBank = null;		
 		mcBank   = null;
 
-		hasRUNconfig       = ev.hasBank("RUN::config");
-		hasRECcalorimeter  = ev.hasBank("REC::Calorimeter");
-		hasRECcaloextras   = ev.hasBank("REC::CaloExtras");
-		hasECALclusters    = ev.hasBank("ECAL::clusters");	
-		hasRECevent        = ev.hasBank("REC::Event");
-		hasRECscintillator = ev.hasBank("REC::Scintillator");
-		hasRECcherenkov    = ev.hasBank("REC::Cherenkov");
-		hasECALpeaks       = ev.hasBank("ECAL::peaks");
-		hasECALcalib       = ev.hasBank("ECAL::calib");	
-		hasRECparticle     = ev.hasBank("REC::Particle");
-		hasRECtrack        = ev.hasBank("REC::Track");
-		hasRECtraj         = ev.hasBank("REC::Traj");
-		hasHTCC            = ev.hasBank("HTCC::adc");
-		hasHTCCrec         = ev.hasBank("HTCC::rec");
-		hasMCParticle      = ev.hasBank("MC::Particle");
+		hasRUNconfig       = de.hasBank("RUN::config");
+		hasRECcalorimeter  = de.hasBank("REC::Calorimeter");
+		hasRECcaloextras   = de.hasBank("REC::CaloExtras");
+		hasECALclusters    = de.hasBank("ECAL::clusters");	
+		hasRECevent        = de.hasBank("REC::Event");
+		hasRECscintillator = de.hasBank("REC::Scintillator");
+		hasRECcherenkov    = de.hasBank("REC::Cherenkov");
+		hasECALpeaks       = de.hasBank("ECAL::peaks");
+		hasECALcalib       = de.hasBank("ECAL::calib");	
+		hasRECparticle     = de.hasBank("REC::Particle");
+		hasRECtrack        = de.hasBank("REC::Track");
+		hasRECtraj         = de.hasBank("REC::Traj");
+		hasHTCC            = de.hasBank("HTCC::adc");
+		hasHTCCrec         = de.hasBank("HTCC::rec");
+		hasMCParticle      = de.hasBank("MC::Particle");
 		
+		if(hasRUNconfig) processRUNconfig();						
 		isMC = hasMCParticle;
 	}
 	
-	public boolean isGoodEvent() {
+	private boolean isGoodEvent() {
 		isMuon   =  isMuon() && hasECALpeaks && hasECALcalib;
 		isPhys   = !isMuon && hasRUNconfig && hasRECevent && hasRECparticle;		
 		return isPhys || isMuon;		
 	}
 	
-	public boolean isMuon() { //MCpid (MC data) or cosmic run configuration
+	private boolean isMuon() { //MCpid (MC data) or cosmic run configuration
 		return MCpid==-13 || (hasECALclusters && !hasRECcalorimeter);
 	}
 	
-	public boolean isGoodRows() {
+	private boolean isGoodRows() {
 		return caloBank.rows()==clusBank.rows();
 	}
 	
-	public void fail(int val) {
+	private void fail(int val) {
 		if(val==0) return;
 		System.out.println(" "); System.out.println("EVENT: "+eventNumber+" FAIL "+val);		
 	}
 	
 	public boolean procEvent(DataEvent event) {
 		
-		if(hasRUNconfig)           processRUNconfig();						
         if(hasMCParticle)          processMCparticle();
         
         if(!isGoodEvent()) return false;
@@ -173,8 +173,6 @@ public class Event {
 	    	if(hasRECtrack)        processRECtrack();
 	    	if(hasRECtraj)         processRECtraj();
 	    	if(hasRECparticle)     processRECparticle();
-
-	    	getRECparticle(-11,11,22,2112,2212,-2212,211,-211); //load partmap
 	    	
 			return true;
 		}
@@ -188,7 +186,7 @@ public class Event {
 	    return false;
 	}
 
-	public void initpartmap(int pid) {
+	private void initpartmap(int pid) {
 		partmap.add(new ArrayList<Particle>(),pid);
 		Particle p = new Particle(pid, 0,0,0,0,0,0);                         			
 		p.setProperty("status", 2000);
@@ -236,59 +234,59 @@ public class Event {
 		startTimeCut = val;
 	}
 	
-	public void processRUNconfig() {		
-		storeRUNconfig(ev.getBank("RUN::config"));
+	private void processRUNconfig() {		
+		storeRUNconfig(de.getBank("RUN::config"));
 	}
 	
-	public void processRECevent() {		
-		storeRECevent(ev.getBank("REC::Event"));  	
+	private void processRECevent() {		
+		storeRECevent(de.getBank("REC::Event"));  	
 	}	
 	
-	public void processRECparticle() {		
-	 	storeRECparticle(ev.getBank("REC::Particle"));	 
+	private void processRECparticle() {		
+	 	storeRECparticle(de.getBank("REC::Particle"));	 
 	}
 	
-	public void processRECscintillator() {		
-		storeRECscintillator(ev.getBank("REC::Scintillator"));				
+	private void processRECscintillator() {		
+		storeRECscintillator(de.getBank("REC::Scintillator"));				
 	}	
 	
-	public void processRECcalorimeter() {		
-		storeRECcalorimeter(ev.getBank("REC::Calorimeter"));  		
+	private void processRECcalorimeter() {		
+		storeRECcalorimeter(de.getBank("REC::Calorimeter"));  		
 	}
 	
-	public void processRECcaloextras() {		
-		storeRECcaloextras(ev.getBank("REC::CaloExtras"));  		
+	private void processRECcaloextras() {		
+		storeRECcaloextras(de.getBank("REC::CaloExtras"));  		
 	}
 	
-	public void processRECcherenkov() {		
-		storeRECcherenkov(ev.getBank("REC::Cherenkov"));  		
+	private void processRECcherenkov() {		
+		storeRECcherenkov(de.getBank("REC::Cherenkov"));  		
 	}
 	
-	public void processRECtrack() {		
-		storeRECtrack(ev.getBank("REC::Track"));		
+	private void processRECtrack() {		
+		storeRECtrack(de.getBank("REC::Track"));		
 	}
 	
-	public void processRECtraj() {		
-		storeRECtraj(ev.getBank("REC::Traj"));		
+	private void processRECtraj() {		
+		storeRECtraj(de.getBank("REC::Traj"));		
 	}	
 	
-	public void processECALclusters() {
-		storeECALclusters(ev.getBank("ECAL::clusters"));		
+	private void processECALclusters() {
+		storeECALclusters(de.getBank("ECAL::clusters"));		
 	}	
 	
-	public void processECALcalib() {		
-		storeECALcalib(ev.getBank("ECAL::calib"));		
+	private void processECALcalib() {		
+		storeECALcalib(de.getBank("ECAL::calib"));		
 	}
 	
-	public void processECALpeaks() {		
-		storeECALpeaks(ev.getBank("ECAL::peaks"));		
+	private void processECALpeaks() {		
+		storeECALpeaks(de.getBank("ECAL::peaks"));		
 	}
 	
-	public void processMCparticle() {
-		storeMCParticle(ev.getBank("MC::Particle"));
+	private void processMCparticle() {
+		storeMCParticle(de.getBank("MC::Particle"));
 	}
 	
-	public void storeRUNconfig(DataBank bank) {
+	private void storeRUNconfig(DataBank bank) {
 		this.run       = bank.getInt("run",0);
 		this.event     = bank.getInt("event",0);
 		this.unixtime  = bank.getInt("unixtime",0);
@@ -298,60 +296,61 @@ public class Event {
 		this.spol      = -bank.getFloat("solenoid",0);
 	}
 	
-	public void storeRECevent(DataBank bank) {
+	private void storeRECevent(DataBank bank) {
 		this.starttime = isHipo3Event ? bank.getFloat("STTime", 0):
                                         bank.getFloat("startTime", 0);	
 		this.RF_TIME   = bank.getFloat("RFTime",0);
 	}
 	
-	public void storeRECparticle(DataBank bank) {
+	private void storeRECparticle(DataBank bank) {
 		partBank = bank;
-		getPART();                                    // REC::Particle converted to List<Particle> part
-		partMap  = loadMapByIndex(partBank,"pid");	  // "pid" mapped to REC::Particle index (pindex in detector banks).
+		getPART();                                            // load List<Particle> part from REC::Particle
+		partMap  = loadMapByIndex(partBank,"pid");	          // load partMap which maps pindex to pid from REC::Particle
+    	getRECparticle(0,-11,11,22,2112,2212,-2212,211,-211); // load partmap for all PIDs from partMap
 	}
 	
-	public void storeRECcalorimeter(DataBank bank) {
+	private void storeRECcalorimeter(DataBank bank) {
 		caloBank = bank;
 		caloMap  = loadMapByIndex(caloBank,"pindex"); // "pindex" mapped to REC::Calorimeter index
 	}
 		
-	public void storeRECcherenkov(DataBank bank) {
+	private void storeRECcherenkov(DataBank bank) {
 		htccBank = bank;
 		htccMap  = loadMapByIndex(htccBank,"pindex");
 	}
 	
-	public void storeRECscintillator(DataBank bank) {	
+	private void storeRECscintillator(DataBank bank) {	
 		ftofBank = bank;
 		ftofMap  = loadMapByIndex(ftofBank,"pindex");		
 	}	
 	
-	public void storeRECtrack(DataBank bank) {	
+	private void storeRECtrack(DataBank bank) {	
 		
 	}
 	
-	public void storeRECtraj(DataBank bank) {	
+	private void storeRECtraj(DataBank bank) {	
 		trajBank = bank;
 		trajMap  = loadMapByIndex(trajBank,"pindex");
 		trajDet  = loadMapByIndex(trajBank,"detector");
 	}	
 	
-	public void storeECALclusters(DataBank bank) {	
+	private void storeECALclusters(DataBank bank) {	
 		clusBank = bank;
 	}
 	
-	public void storeRECcaloextras(DataBank bank) {
+	private void storeRECcaloextras(DataBank bank) {
 		caliBank = bank;
 	}
 	
-	public void storeECALcalib(DataBank bank) {	
+	private void storeECALcalib(DataBank bank) {	
 		caliBank = bank;		
 	}
 	
-	public void storeECALpeaks(DataBank bank) {	
+	private void storeECALpeaks(DataBank bank) {	
 		peakBank = bank;		
 	}
 	
-	public void storeMCParticle(DataBank bank) {	
+	private void storeMCParticle(DataBank bank) {	
 		mcBank = bank;		
         pmc.clear(); pmv.clear();
         for (int i=0; i<bank.rows(); i++) {
@@ -362,15 +361,126 @@ public class Event {
             double vy = bank.getFloat("vy",i);
             double vz = bank.getFloat("vz",i);
             int   pid = bank.getInt("pid",i);     
-            if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
+//            if(pid==MCpid) {pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); pmv.add(new Vector3(px,py,pz));}
+            pmc.add(new Particle(pid, px, py, pz, vx, vy, vz)); 
+            pmv.add(new Vector3(px,py,pz));
          }            
+	}
+
+	private void getPART() {
+        for(int i = 0; i < partBank.rows(); i++){           	
+            int      pid = partBank.getInt("pid", i);              
+            float     px = partBank.getFloat("px", i);
+            float     py = partBank.getFloat("py", i);
+            float     pz = partBank.getFloat("pz", i);
+            float     vx = partBank.getFloat("vx", i);
+            float     vy = partBank.getFloat("vy", i);
+            float     vz = partBank.getFloat("vz", i);
+            float   beta = partBank.getFloat("beta", i);
+            float   chi2 = Math.abs(partBank.getFloat("chi2pid", i));
+            float   chrg = partBank.getByte("charge", i);
+            short status = (short) Math.abs(partBank.getShort("status", i));
+                       
+            Particle p = new Particle();
+            
+            if(pid==0) p.initParticleWithMass(0, px, py, pz, vx, vy, vz);
+            if(pid!=0) p.initParticle(      pid, px, py, pz, vx, vy, vz);
+            p.setProperty("chrg", chrg);
+            p.setProperty("ppid", pid);
+            p.setProperty("status", status);
+            p.setProperty("beta", beta);
+            p.setProperty("index",i);                        
+            p.setProperty("chi2pid",chi2);
+            
+            part.add(i,p);     //Lists do not support sparse indices !!!!!            
+        }                		
+	}
+	
+	//returns all entries with momentum > thr and requested pid, status, charge
+    public List<Particle> getPART(int pid, double thr, int ist, int q) { 
+    	List<Particle> olist = new ArrayList<Particle>(); 
+    	for (Particle p : getParticle(pid)) {
+    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
+    		int   chrg = (int) p.getProperty("chrg");
+    		System.out.println("PART"+pid+" status "+status+" chrg "+chrg+" p "+(float)p.p()
+    		+" th "+(float)Math.toDegrees(p.theta())+" ph "+(float)Math.toDegrees((p.phi())));
+    		if(status==ist && p.p()>=thr && chrg==q) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
+	
+	//returns all entries with momentum > thr and requested pid, status
+    public List<Particle> getPART(int pid, double thr, int ist) { 
+    	List<Particle> olist = new ArrayList<Particle>();    
+    	for (Particle p : getParticle(pid)) {
+    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
+    		if(status==ist && p.p()>=thr) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
+    
+    //returns REC::Particle entries with momentum > thr and requested pid
+    public List<Particle> getPART(int pid, double thr) { 
+    	List<Particle> olist = new ArrayList<Particle>();    
+    	for (Particle p : getParticle(pid)) {
+    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
+    		if(status==2 && p.p()>=thr) olist.add(p); 
+    	}          	
+       return olist;    	
+    }
+    
+    //returns REC::Particle entries with requested pid	
+	public List<Particle> getParticle(int ipid) { 
+		List<Particle> olist = new ArrayList<Particle>();
+	    IndexGenerator ig = new IndexGenerator();                
+	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
+	           int pid = ig.getIndex(entry.getKey(), 0);  
+	           if(ipid==pid) for (Particle p : entry.getValue()) olist.add(p);
+	    }	
+	    return olist;
+	}
+
+	//Use partMap to convert REC::Particle to partmap with tpid index. 
+	private void getRECparticle(int...ttpid) {
+		for (int tpid : ttpid) {
+		if(partMap.containsKey(tpid)) {
+			for(int ipart : partMap.get(tpid)){  //retrieve tpid indexed pindex to REC::Particle
+				int      pid = partBank.getInt("pid",  ipart);    
+				float     px = partBank.getFloat("px", ipart);
+				float     py = partBank.getFloat("py", ipart);
+				float     pz = partBank.getFloat("pz", ipart);
+				float     vx = partBank.getFloat("vx", ipart);
+				float     vy = partBank.getFloat("vy", ipart);
+				float     vz = partBank.getFloat("vz", ipart);
+				float   beta = partBank.getFloat("beta", ipart);
+	            float   chi2 = Math.abs(partBank.getFloat("chi2pid", ipart));
+	            float   chrg = partBank.getByte("charge", ipart);
+				short status = (short) Math.abs(partBank.getShort("status", ipart));
+			
+				Particle p = new Particle(); 
+				
+	            if(pid==0) p.initParticleWithMass(0, px, py, pz, vx, vy, vz);
+	            if(pid!=0) p.initParticle(      pid, px, py, pz, vx, vy, vz);
+
+	            p.setProperty("chrg", chrg);
+				p.setProperty("status", status);
+				p.setProperty("pindex", ipart);
+				p.setProperty("beta", beta);
+				p.setProperty("chi2pid", chi2);
+
+				int ip = pid<0 ? Math.abs(pid)+1 : pid;	//index ip must be +			
+				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
+				    partmap.getItem(ip).add(p);
+			}		
+		}
+		}
 	}
 	
 	public void reportElectrons(String tag) {
-		nelec++;System.out.println("Evnt "+eventNumber+" Nelec "+nelec+" "+tag);
+		nelec++; System.out.println("Evnt "+eventNumber+" Nelec "+nelec+" "+tag);
 	}
 	
-	public float getBeta(Particle p) {
+	private float getBeta(Particle p) {
 		double path = p.getProperty("path");
 		double time = p.getProperty("time");
 		return (float) (path/(time-starttime-timeshift)/29.979f);
@@ -419,101 +529,8 @@ public class Event {
 		}		
 		if(tbsum==0||tbsum>1) return false;
 		return true;			
-	}
-
-	//Convert PART bank to List<Particle> with original bank index
-	public void getPART() {
-        for(int i = 0; i < partBank.rows(); i++){           	
-            int      pid = partBank.getInt("pid", i);              
-            float     px = partBank.getFloat("px", i);
-            float     py = partBank.getFloat("py", i);
-            float     pz = partBank.getFloat("pz", i);
-            float     vx = partBank.getFloat("vx", i);
-            float     vy = partBank.getFloat("vy", i);
-            float     vz = partBank.getFloat("vz", i);
-            float   beta = partBank.getFloat("beta", i);
-            float   chi2 = Math.abs(partBank.getFloat("chi2pid", i));
-            short status = (short) Math.abs(partBank.getShort("status", i));
-            
-            
-            Particle p = new Particle(); 
-            if (pid==0) {p.setProperty("ppid", 0); p.setProperty("status", 0); p.setProperty("beta", 0); p.setProperty("index", i); p.setProperty("chi2pid", 0);}             
-            if (pid!=0) {
-            	p.initParticle(pid, px, py, pz, vx, vy, vz); 
-            	p.setProperty("ppid", pid);
-                p.setProperty("status", status);
-                p.setProperty("beta", beta);
-                p.setProperty("index",i);                        
-                p.setProperty("chi2pid",chi2);
-            }
-            part.add(i,p);     //Lists do not support sparse indices !!!!!            
-        }                		
 	}	
-	
-	//returns all entries with energy>thr and requested pid and status
-    public List<Particle> getPART(double thr, int pid, int ist) { 
-    	List<Particle> olist = new ArrayList<Particle>();    
-    	for (Particle p : getParticle(pid)) {
-    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
-    		if(status==ist && p.p()>=thr) olist.add(p); 
-    	}          	
-       return olist;    	
-    }
-    
-    //returns REC::Particle entries with momentum>thr and requested pid
-    public List<Particle> getPART(double thr, int pid) { 
-    	List<Particle> olist = new ArrayList<Particle>();    
-    	for (Particle p : getParticle(pid)) {
-    		int status = (int) (Math.abs(p.getProperty("status"))/1000);
-    		if(status==2 && p.p()>=thr) olist.add(p); 
-    	}          	
-       return olist;    	
-    }
-    
-    //returns REC::Particle entries with requested pid	
-	public List<Particle> getParticle(int ipid) { 
-		List<Particle> olist = new ArrayList<Particle>();
-	    IndexGenerator ig = new IndexGenerator();                
-	    for (Map.Entry<Long,List<Particle>>  entry : partmap.getMap().entrySet()){
-	           int pid = ig.getIndex(entry.getKey(), 0);  
-	           if(ipid==pid) for (Particle p : entry.getValue()) olist.add(p);
-	    }	
-	    return olist;
-	}
-		
-	//Use partMap to convert REC::Particle to partmap with tpid index
-	private void getRECparticle(int...ttpid) {
-		for (int tpid : ttpid) {
-		if(partMap.containsKey(tpid)) {
-			for(int ipart : partMap.get(tpid)){  //retrieve tpid indexed pindex to REC::Particle
-				int      pid = partBank.getInt("pid",  ipart);              
-				float     px = partBank.getFloat("px", ipart);
-				float     py = partBank.getFloat("py", ipart);
-				float     pz = partBank.getFloat("pz", ipart);
-				float     vx = partBank.getFloat("vx", ipart);
-				float     vy = partBank.getFloat("vy", ipart);
-				float     vz = partBank.getFloat("vz", ipart);
-				float   beta = partBank.getFloat("beta", ipart);
-	            float   chi2 = partBank.getFloat("chi2pid", ipart);
-				short status = (short) Math.abs(partBank.getShort("status", ipart));
-			
-				Particle p = new Particle(pid, px, py, pz, vx, vy, vz);                         			
-				p.setProperty("status", status);
-				p.setProperty("pindex", ipart);
-				p.setProperty("beta", beta);
-				p.setProperty("chi2pid", chi2);
-                p.setProperty("sector", status/1000==2 ? caloBank.getByte("sector",ipart):0);
-				p.setProperty("lu",     caloBank.getFloat("lu",ipart));
-				p.setProperty("lv",     caloBank.getFloat("lv",ipart));
-				p.setProperty("lw",     caloBank.getFloat("lw",ipart));
-				int ip = pid<0 ? Math.abs(pid)+1 : pid;	//index ip must be +			
-				if(!partmap.hasItem(ip)) {partmap.add(new ArrayList<Particle>(),ip);} 
-				    partmap.getItem(ip).add(p);
-			}		
-		}
-		}
-	}
-	
+
 	public List<Particle> getFTOF(int ipart) {
 		List<Particle> ftofpart = new ArrayList<Particle>();
 		if(ftofMap.containsKey(ipart)) {
@@ -615,15 +632,31 @@ public class Event {
 		}
 		return out;		
 	}
-	  
-    public IndexedList<List<Particle>> getECALClusters(List<Particle> list) {
+    
+    // returns list of ECAL particle clusters indexed by sector 
+    public IndexedList<List<Particle>> getECALParticles(List<Particle> list) {
+
+    	IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);  
     	
-        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(2);       
+    	for (Particle p : list) {
+    		int ip = (int)p.getProperty("pindex");    		
+    		int is = (int) getECAL(ip).get(0).getProperty("sector"); //only first ECAL cluster mapped to particle is returned
+    		if (!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
+			     olist.getItem(is).add(p);
+    	}
+    	return olist;
+    }
+    
+    // returns list of ECAL particle clusters indexed by sector, layer 
+    public IndexedList<List<Particle>> getECALClusters(List<Particle> list) { 
+    	
+        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(2); //sector,layer 
+        
     	for (Particle p : list) {
     		int ip = (int)p.getProperty("pindex");
-    		for (Particle ec : getECAL(ip)) {
-    			int is = (int) ec.getProperty("sector");
-    			int il = (int) ec.getProperty("layer");
+    		for (Particle ec : getECAL(ip)) { // all ECAL clusters mapped to particle are returned
+    			int   is = (int)   ec.getProperty("sector");
+    			int   il = (int)   ec.getProperty("layer");
     			if (!olist.hasItem(is,il)) olist.add(new ArrayList<Particle>(), is,il); 
     			     olist.getItem(is,il).add(ec);
     		}
@@ -631,17 +664,17 @@ public class Event {
     	return olist;
     }
     
-    public IndexedList<List<Particle>> filterECALClusters(int pid, IndexedList<List<Particle>> list) {
-    	
+    // filter ECAL clusters by PID and multiplicity, indexed by sector
+    public IndexedList<List<Particle>> filterECALClusters(IndexedList<List<Particle>> list, int n, int pid) {                                                                                                     	
         IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);       
 		IndexGenerator ig = new IndexGenerator();
-		
     	for (Map.Entry<Long,List<Particle>>  entry : list.getMap().entrySet()){
 			int is = ig.getIndex(entry.getKey(), 0); 
+			int il = ig.getIndex(entry.getKey(), 1); 
 			int ip = (int) entry.getValue().get(0).getProperty("pindex");
-			if(entry.getValue().size()==1 && Math.abs(part.get(ip).getProperty("ppid"))==pid) {
+			if(entry.getValue().size()>0 && entry.getValue().size()<n && Math.abs(part.get(ip).getProperty("ppid"))==pid) {
 				if(!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
-				    olist.getItem(is).add(entry.getValue().get(0));
+				for (Particle p : entry.getValue()) olist.getItem(is).add(p);
 			}
     	}
     	return olist;    	
