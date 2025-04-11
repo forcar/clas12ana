@@ -23,28 +23,19 @@ import org.jlab.utils.groups.IndexedList.IndexGenerator;
 public class ECmc extends DetectorMonitor {
 	
 	Event          ev = new Event();
-	EBMCEngine  ebmce = new EBMCEngine();
     IndexGenerator ig = new IndexGenerator();
-
-	List<Float>   GEN = new ArrayList<Float>();
-	List<Float>   REC = new ArrayList<Float>(); 
-	
-	IndexedList<List<Particle>> ecphot = new IndexedList<List<Particle>>(1);
-	
-	DataGroup dg = null;
 	   
     float dp1=0.1f, dp2=0.1f; 
     
-    List<Particle> elec = null;
-    List<Particle> phot = null;
-    List<Particle>  pim = null;
+    Boolean isGEMC = true, isGENREC = false;
 		
     public ECmc(String name) {
         super(name);
         
         dgmActive=true; 
-        setDetectorTabNames("GENREC","KINEMATICS","EFFICIENCY");
-//        setDetectorTabNames("GEMC");
+        
+        if(isGENREC) setDetectorTabNames("GENREC","KINEMATICS","EFFICIENCY");
+        if(isGEMC)   setDetectorTabNames("GEMC");
         
         use123Buttons(true);
         useSliderPane(true);
@@ -63,11 +54,7 @@ public class ECmc extends DetectorMonitor {
         eng.engine.setGeomVariation(variation);
         eng.engine.setVariation("default");  
         eng.setEngineConfig("phot");
-        
-        ebmce.getCCDB(10);
-        ebmce.setGeom("2.5");
-        ebmce.isMC = true;
-        
+      
         tl.setFitData(Fits);
     }
     
@@ -89,20 +76,22 @@ public class ECmc extends DetectorMonitor {
     	setRunNumber(run);
     	runlist.add(run);    	
     	histosExist = true; 
-//    	createGEMC(0);
-    	createGENREC(0);
-    	createKINEMATICS(0);
-        for (int i=0; i<3; i++) createEFFICIENCY(i);
+    	if(isGEMC)    createGEMC(0);
+    	if(isGENREC) {createGENREC(0); createKINEMATICS(0); for (int i=0; i<3; i++) createEFFICIENCY(i);}
     }
     
     public void createGEMC(int st) {
     	
-        String[] partname = {"ELECTRON, PROTON, PION+, PHOTON, NEUTRON","PID=0"};
+        String[] partname = {"ELECTRON", "PROTON", "PION+", "PHOTON", "NEUTRON"};
     	switch (st) {        
-        case 0:  
+        case 0: 
+        	dgm.add("GEMC",5,3,0,st,getRunNumber());
         	for (int i=1; i<6; i++) {
-            	dgm.add("GEMC",5,3,0,st,getRunNumber());
-            	dgm.makeH1("g0"+i,50,0,9,-1,partname[i-1],"MC Momentum (GeV)",1,4);
+        		dgm.makeH1("g0"+i,50,0,9,-1,partname[i-1],"MC Momentum (GeV)",1,4,"1000000");
+        		dgm.makeH1("g1"+i,50,0,9,-2,partname[i-1]+" PCAL","MC Momentum (GeV)",1,1,"1000000");
+        		dgm.makeH1("g2"+i,50,0,9,-2,partname[i-1]+" ECIN","MC Momentum (GeV)",1,3,"1000000");
+        		dgm.makeH1("g3"+i,50,0,9,-2,partname[i-1]+" ECOU","MC Momentum (GeV)",1,5,"1000000");
+//        		dgm.makeGE("e1"+i,-1,"","EFF",)
         	}
     	}
     }
@@ -212,25 +201,18 @@ public class ECmc extends DetectorMonitor {
     }
     
     public void plotSummary() {
-//    	plotMCHistos("GEMC");
- //   	plotMCHistos("GENREC","KINEMATICS","EFFICIENCY");
-    	plotMCHistos("GENREC");
-    	plotMCHistos("KINEMATICS");
-    	plotMCHistos("EFFICIENCY");
+    	plotMCHistos();
     }
   
-    public void plotMCHistos(String... options) { 
-    	for (String opt : options) plot(opt); 
-    }    
-    
-    public void plotMCHistos(String opt) { 
-    	plot(opt); 
+    public void plotMCHistos() {
+    	if(isGEMC)   plot("GEMC");
+        if(isGENREC) plot("GENREC"); plot("KINEMATICS"); plot("EFFICIENCY");   
     }
-        
+      
     public void plotAnalysis(int run) {
         setRunNumber(run);
     	if(!isAnalyzeDone) return;
-    	plotHistos(run);
+    	plotMCHistos();
     }
 
     @Override
@@ -241,19 +223,20 @@ public class ECmc extends DetectorMonitor {
     public void analyze() {
     	System.out.println(getDetectorName()+".Analyze() ");  
 //    	fith52(); 
-    	geteff();
+    	if(isGEMC)   geteffGEMC();
+    	if(isGENREC) geteffGENREC();
     	isAnalyzeDone = true;
     }
    
     @Override
-    public void processEvent(DataEvent event) { 
-    	if(!process(event)) return;
-//    	processGEMC(event);  // for debugging new GEMC hitprocess 
-    	processEV(event);    // this works 
-//    	processEBMCE(event); // debugging
+    public void processEvent(DataEvent event) {     	
+    	if(processEV(event)) {
+    	    if(isGEMC)   processGEMC(event);  
+    	    if(isGENREC) processGENREC(event); 
+    	}
     }
 
-    public boolean process(DataEvent event) {
+    public boolean processEV(DataEvent event) {
     	ev.init(event);        	
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
@@ -268,30 +251,33 @@ public class ECmc extends DetectorMonitor {
     	int[] pid = {11,2212,211,22,2112};
         String[] partname = {"ELECTRON", "PROTON", "PION+", "PHOTON", "NEUTRON"};
 
-    	
-    	for (int i=0; i<pid.length; i++) {
+    	for (int i=0; i<pid.length; i++) {int is = i+1, ip=pid[i];
     		Particle mc = ev.pmc.get(i);
-//    		System.out.println(partname[i]);
-    		int is = i+1, ip=pid[i];
-    		for (Map.Entry<Long,List<Particle>>  entry : ev.filterECALClusters(ev.getECALClusters(ev.getPART(0.0,ip)),2,ip).getMap().entrySet()) {
+    		dgm.fill("g0"+is, mc.p());
+    		for (Map.Entry<Long,List<Particle>>  entry :  ev.filterECALClusters(ev.getECALClusters(ev.getPART(ip,0.0)),2,ip).getMap().entrySet()) {
     			int isp = ig.getIndex(entry.getKey(), 0);
-    			 for (Particle rp : entry.getValue()) {				
-                     int il = (int) rp.getProperty("layer");
-                     if(isp==is) dgm.fill("g0"+is, mc.p());
-//    			     System.out.println(is+" "+isp+" "+il+" "+mc.p()+" "+rp.p()+" "+rp.getProperty("energy")+" "+Math.toDegrees(mc.theta())+" "+Math.toDegrees(rp.theta()));
+    			 for (Particle rp : entry.getValue()) {	
+                     int il = (int) rp.getProperty("layer");                     
+                     if(isp==is && il==1) dgm.fill("g1"+is, mc.p());
+                     if(isp==is && il==4) dgm.fill("g2"+is, mc.p());
+                     if(isp==is && il==7) dgm.fill("g3"+is, mc.p());
     			 }
     		}
-        	System.out.println(" ");
-   	}
-
-    	
+    	}   	
     }
 
-    public void processEV(DataEvent event) {
+    public void processGENREC(DataEvent event) {
  
    	    float refE=0,refP=0,refTH=0,refPH=0;
    	    int nelec=0, nphot=0, npim=0;
         float esum=0,dp=0,chi2pid=1000;
+          
+        List<Particle> elec = null;
+        List<Particle> phot = null;
+        List<Particle>  pim = null;
+        
+    	IndexedList<List<Particle>> ecphot = new IndexedList<List<Particle>>(1);
+
         ecphot.clear();
         	            
         refE  = (float) ev.pmc.get(0).e(); 
@@ -299,9 +285,9 @@ public class ECmc extends DetectorMonitor {
         refTH = (float) Math.toDegrees(ev.pmc.get(0).theta());
         refPH = (float) Math.toDegrees(ev.pmc.get(0).phi());
             
-        elec = ev.getPART(0.0, 11);  nelec = elec.size(); dgm.fill("h73a",nelec);     
-        phot = ev.getPART(0.0, 22);  nphot = phot.size(); dgm.fill("h73b",nphot);    
-        pim  = ev.getPART(0.0, 212); npim  = pim.size();  dgm.fill("h73c",npim);   		
+        elec = ev.getPART(11,0,0);  nelec = elec.size(); dgm.fill("h73a",nelec);     
+        phot = ev.getPART(22,0.0);  nphot = phot.size(); dgm.fill("h73b",nphot);    
+        pim  = ev.getPART(212,0.0); npim  = pim.size();  dgm.fill("h73c",npim);   		
         int npart = nelec+nphot+npim;        		        		
 		      
         ecphot = ev.filterECALClusters(ev.getECALClusters(phot),2,22); //used in fillECelec for e-g residuals
@@ -323,8 +309,8 @@ public class ECmc extends DetectorMonitor {
             dp = (float)(ev.pmc.get(0).p()-elec.get(0).p());
                 
             if(npim==0 && chi2pid<3.5)  {
-//                if(refTH>15)                     dgm.fill("effmom6",refE); 
-//                if(refTH>15 && Math.abs(dp)<dp2) dgm.fill("effmom7",refE); 
+                if(refTH>15)                     dgm.fill("effmom6",refE); 
+                if(refTH>15 && Math.abs(dp)<dp2) dgm.fill("effmom7",refE); 
                 if(Math.abs(dp)<dp2)       dgm.fill("eff3a",refE,refTH);
                 dgm.fill("effthe6",refTH); dgm.fill("eff2a",refE,refTH); 	                    
             }
@@ -409,6 +395,12 @@ public class ECmc extends DetectorMonitor {
     
     public void processEBMCE(DataEvent de) { // still debugging this
     	
+    	EBMCEngine  ebmce = new EBMCEngine();
+    	List<Float>   GEN = new ArrayList<Float>();
+    	List<Float>   REC = new ArrayList<Float>(); 
+       
+        ebmce.getCCDB(10);  ebmce.setGeom("2.5"); ebmce.isMC = true;
+	
     	GEN.clear();  REC.clear();
     	
 		boolean goodev = ebmce.readMC(de) && ebmce.pmc.size()==1;   
@@ -501,7 +493,7 @@ public class ECmc extends DetectorMonitor {
         } 
     }
     
-    public void geteff() {
+    public void geteffGENREC() {
 		dgm.geteff("h60a","effmom1","effmom0");
 		dgm.geteff("h60b","effmom2","effmom0");
 		dgm.geteff("h60c","effmom3","effmom0");
@@ -519,6 +511,30 @@ public class ECmc extends DetectorMonitor {
 		dgm.geteff("h71","eff2a","eff1");
 		dgm.geteff("h72","eff3a","eff1");    
     }
+    
+    public void geteffGEMC() {
+    	
+    }    
+    
+    public GraphErrors getEff(int index, int i2, int icol, int ind) {
+		DataGroup dg = this.getDataGroup().getItem(0,1,index,getRunNumber());    	
+    	GraphErrors geff = new GraphErrors(); geff.setMarkerColor(icol); geff.setLineColor(icol);
+    	geff.getAttributes().setTitleX("p_m_m (GeV)");
+    	geff.getAttributes().setTitleY("Efficiency");
+    	GraphErrors g1 = ((H1F)dg.getData(ind).get(0)).getGraph();
+    	GraphErrors g2 = ((H1F)dg.getData(ind).get(i2)).getGraph();
+    	for (int ix=0; ix<g1.getDataSize(0); ix++) {
+    		float x1 = (float) g1.getDataX(ix); float y1 = (float) g1.getDataY(ix);
+    		if(y1>0) {
+        		float   y2 = (float)g2.getDataY(ix);
+    			float  eff = y2/y1;
+//    			float effe = (float) Math.sqrt((y1-1)*eff*(1-eff))/(y1-1); 
+    			float effe = (float) Math.sqrt(eff*(1-eff)/(y1-1)); 
+    			geff.addPoint(x1, eff, 0f, effe);
+    		}
+    	}
+    	return geff;
+    } 
     
     public void plot(String tabname) {     
     	dgm.drawGroup(tabname,0,getActive123(), getRunNumber());
