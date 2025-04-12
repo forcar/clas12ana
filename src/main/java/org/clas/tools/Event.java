@@ -32,6 +32,7 @@ public class Event {
 	private DataBank ftofBank = null;
 	private DataBank clusBank = null;
 	private DataBank caliBank = null;
+	private DataBank caleBank = null;
 	private DataBank htccBank = null;
 	private DataBank peakBank = null;
 	public  DataBank trajBank = null;
@@ -339,7 +340,7 @@ public class Event {
 	}
 	
 	private void storeRECcaloextras(DataBank bank) {
-		caliBank = bank;
+		caleBank = bank;
 	}
 	
 	private void storeECALcalib(DataBank bank) {	
@@ -784,17 +785,17 @@ public class Event {
 				
 //				if(!goodMatch) continue;
 				
-				if(clusBank==null && caliBank!=null) { //use REC::CaloExtras which is column mapped to REC::Calorimeter
+				if(clusBank==null && caleBank!=null) { //use REC::CaloExtras which is column mapped to REC::Calorimeter
 					int  is = (int) p.getProperty("sector");
-					p.setProperty("iu",    (caliBank.getInt("dbstU", imap)/10));
-					p.setProperty("iv",    (caliBank.getInt("dbstV", imap)/10));
-					p.setProperty("iw",    (caliBank.getInt("dbstW", imap)/10));					
-					p.setProperty("raweu", caliBank.getFloat("rawEU", imap)*1e3);
-					p.setProperty("rawev", caliBank.getFloat("rawEV", imap)*1e3);
-					p.setProperty("rawew", caliBank.getFloat("rawEW", imap)*1e3);
-					p.setProperty("receu", caliBank.getFloat("recEU", imap)*1e3);
-					p.setProperty("recev", caliBank.getFloat("recEV", imap)*1e3);
-					p.setProperty("recew", caliBank.getFloat("recEW", imap)*1e3);	
+					p.setProperty("iu",   (caleBank.getInt("dbstU",   imap)/10));
+					p.setProperty("iv",   (caleBank.getInt("dbstV",   imap)/10));
+					p.setProperty("iw",   (caleBank.getInt("dbstW",   imap)/10));					
+					p.setProperty("raweu", caleBank.getFloat("rawEU", imap)*1e3);
+					p.setProperty("rawev", caleBank.getFloat("rawEV", imap)*1e3);
+					p.setProperty("rawew", caleBank.getFloat("rawEW", imap)*1e3);
+					p.setProperty("receu", caleBank.getFloat("recEU", imap)*1e3);
+					p.setProperty("recev", caleBank.getFloat("recEV", imap)*1e3);
+					p.setProperty("recew", caleBank.getFloat("recEW", imap)*1e3);	
 					p.setProperty("leffu", getLeff(is,lay+0,(int)p.getProperty("iu"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance U
 					p.setProperty("leffv", getLeff(is,lay+1,(int)p.getProperty("iv"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance V
 					p.setProperty("leffw", getLeff(is,lay+2,(int)p.getProperty("iw"),p.getProperty("x"),p.getProperty("y"),p.getProperty("z")));//readout distance W
