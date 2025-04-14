@@ -1144,7 +1144,8 @@ public class DetectorMonitor implements ActionListener {
        	if (run<=19659) return 6.39463f;
        	if (run<=19892) return 8.47757f;
         if (run<=20525) return 10.54726f;
-        if (run<=99999) return  2.23951f;
+        if (run<=21418) return  2.23951f;
+        if (run<=99999) return 10.6767f;
     	return 0.0f;
     }
     
@@ -1205,8 +1206,9 @@ public class DetectorMonitor implements ActionListener {
     	if (run>=19132&&run<=19892) return +1.0f;
     	if (run>=20014&&run<=20507) return -1.0f;
     	if (run>=20508&&run<=20525) return +1.0f;
-    	if (run>=21000&&run<=99999) return +1.0f;
-        	
+    	if (run>=21000&&run<=21418) return +1.0f;
+    	if (run>=21419&&run<=99999) return -1.0f;
+    	        	
     	return 0.00f;
     }
     
