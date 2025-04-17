@@ -129,7 +129,7 @@ public class ECperf extends DetectorMonitor {
 	
 //	public IndexedList<List<Float>>  ecal_rad = new IndexedList<List<Float>>(3);
 //	public IndexedList<List<Particle>> ecphot      = new IndexedList<List<Particle>>(2);	
-	public IndexedList<List<Particle>> ecpart      = new IndexedList<List<Particle>>(1);	
+	public IndexedList<List<Particle>> ecphot      = new IndexedList<List<Particle>>(1);	
 	public IndexedList<List<Particle>> ecphot_filt = new IndexedList<List<Particle>>(1);	
 //	public IndexedList<List<Particle>>  ecpim      = new IndexedList<List<Particle>>(2);	
 	public IndexedList<List<Particle>>  ecpim_filt = new IndexedList<List<Particle>>(1);
@@ -226,6 +226,7 @@ public class ECperf extends DetectorMonitor {
     	createECkin(3);
     	createECkin(4);
     	createECkin(5);
+    	createECkin(6);
 //    	createECkin(6); 8/29/2022
     	createECelec(0);
     	createECelec(1);
@@ -245,6 +246,7 @@ public class ECperf extends DetectorMonitor {
     	createECpim(1);
     	createECpim(2);
     	createECpim(3);
+    	createECpim(4);
     	createECpim(5);
     	createECpip(0);
     	createECpip(1);
@@ -277,28 +279,28 @@ public class ECperf extends DetectorMonitor {
     	if(dropBanks) dropBanks(event); // process raw data with ECEngine
         
     	ev.init(event);
-    	ev.setHipoEvent(isHipo3Event);
     	ev.setEventNumber(getEventNumber());
     	ev.requireOneElectron(false);
    	    ev.setElecTriggerSector(ev.getElecTriggerSector(shiftTrigBits(getRunNumber())));
-   	            
+
         fillECtrig(0);   
         
     	if(!ev.procEvent(event)) return;
     	
         fillECtrig(1); 
         
-    	e_ecal    = ev.getPART(0.1, 11);      nE = e_ecal.size();
-    	p_ecal    = ev.getPART(0.1, 12);      nP = p_ecal.size();
-    	pim_ecal  = ev.getPART(0.005, 212); nPIM = pim_ecal.size(); 
-    	pip_ecal  = ev.getPART(0.2, 211);   nPIP = pip_ecal.size();
+    	e_ecal    = ev.getPART(11,0.100);    nE = e_ecal.size();
+    	p_ecal    = ev.getPART(12,0.100);    nP = p_ecal.size();
+    	pim_ecal  = ev.getPART(212,0.005); nPIM = pim_ecal.size(); 
+    	pip_ecal  = ev.getPART(211,0.200); nPIP = pip_ecal.size();
     	
     	goodELEC = makeELEC();
     		    
     	if (nE==1)           {fillECtrig(2);fillECtrig(6);}
     	if (nE==0)            fillECtrig(3);
     	if (nPIM>0 && nE>0)   fillECtrig(4);
-	    if (nPIM>0 && nE==0)  fillECtrig(5);  
+	    if (nPIM>0 && nE==0)  fillECtrig(5); 
+	    
 	    if (nPIM>0)           fillECpim();
 	    if (nPIP>0 && nE>0)  {fillECpip(); fillTrajXY();}  
 	    
@@ -306,16 +308,17 @@ public class ECperf extends DetectorMonitor {
     	
  //  	    System.out.println(e_sect+" "+getElecTriggerSector(0)+" "+getElecTriggerSector(1)+" "+getElecTriggerSector(2));
         
-    	prot_ecal  = ev.getPART(0.200,2212);  nPROT = prot_ecal.size();
-    	pbar_ecal  = ev.getPART(0.200,2213);  nPBAR = pbar_ecal.size();
-    	neut_ecal  = ev.getPART(0.001,2112);  nNEUT = neut_ecal.size(); 
-    	neut2_ecal = ev.getPART(0.001,2112); nNEUT2 = neut2_ecal.size(); 
-    	phot_ecal  = ev.getPART(0.001,22);    nPHOT = phot_ecal.size();    	
-    	phot2_ecal = ev.getPART(0.500,22);   nPHOT2 = phot2_ecal.size();
+    	prot_ecal  = ev.getPART(2212,0.200);  nPROT = prot_ecal.size();
+    	pbar_ecal  = ev.getPART(2213,0.200);  nPBAR = pbar_ecal.size();
+    	neut_ecal  = ev.getPART(2112,0.001);  nNEUT = neut_ecal.size(); 
+    	neut2_ecal = ev.getPART(2112,0.001); nNEUT2 = neut2_ecal.size(); 
+    	phot_ecal  = ev.getPART(22,0.001);    nPHOT = phot_ecal.size();    	
+    	phot2_ecal = ev.getPART(22,0.500);   nPHOT2 = phot2_ecal.size();
 	    
     	neut_ecal.addAll(phot_ecal); //add photons to neutron list to get beta>0.9 neutrons
     	
     	DataGroup ECnm0   = this.getDataGroup().getItem(0,0,getDetectorTabNames().indexOf("ECpi0"),getRunNumber());
+    	
     	if (ev.pmc.size()==2) {
     		double  opa = ev.pmv.get(0).theta(ev.pmv.get(1));
     		Vector3 ggc = ev.pmv.get(0).cross(ev.pmv.get(1));
@@ -334,78 +337,26 @@ public class ECperf extends DetectorMonitor {
     } 
   
     void filterEvent() {
-	    goodP    = nP>0;
-	    goodPIP  = nPIP>0;
-	    goodPIM  = nPIM>0;
-	    goodPROT = nPROT>0;
-	    goodPBAR = nPBAR>0;
-	    goodNEUT = nNEUT>0;
+	    goodP     = nP>0;
+	    goodPIP   = nPIP>0;
+	    goodPIM   = nPIM>0;
+	    goodPROT  = nPROT>0;
+	    goodPBAR  = nPBAR>0;
+	    goodNEUT  = nNEUT>0;
 	    goodNEUT2 = nNEUT2==1;
-	    goodPHOT = nPHOT>0;
+	    goodPHOT  = nPHOT>0;
 	    goodPHOT2 = nPHOT2==1;
 	    
-	    ecpart.clear(); ecphot_filt.clear(); ecpim_filt.clear();
+	    ecphot.clear(); ecphot_filt.clear(); ecpim_filt.clear();
+	    
 	    if(goodP) makePOSI();
 	    if(goodPHOT) {
-	    	ecpart      = getECALParticles(phot_ecal); 
-	    	ecphot_filt = filterECALClusters(getECALClusters(phot_ecal),2,22); //retrieve 1 ECAL photon
+	    	ecphot      = ev.getECALParticles(phot_ecal); //used in fillECnm*	    	
+	    	ecphot_filt = ev.filterECALClusters(ev.getECALClusters(phot_ecal),2,22); //used in fillECelec for e-g residuals
 	    }
-	    if(goodPIM) ecpim_filt = filterECALClusters(getECALClusters(pim_ecal),4,212);
+	    if(goodPIM) ecpim_filt = ev.filterECALClusters(ev.getECALClusters(pim_ecal),4,212);
     } 
-    
-    
-    public IndexedList<List<Particle>> getECALParticles(List<Particle> list) {
-
-    	IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1); //sector  
-    	for (Particle p : list) {
-    		int ip = (int)p.getProperty("pindex");    		
-    		int is = (int) ev.getECAL(ip).get(0).getProperty("sector");
-    		if (!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
-			     olist.getItem(is).add(p);
-    	}
-    	return olist;
-    }
-    
-    //retrieve all ECAL clusters indexed by sector,layer
-    public IndexedList<List<Particle>> getECALClusters(List<Particle> list) { 
-    	
-        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(2); //sector,layer      
-    	for (Particle p : list) {
-    		int ip = (int)p.getProperty("pindex");
-    		for (Particle ec : ev.getECAL(ip)) { //retrieve from REC::Calorimeter
-    			int   is = (int)   ec.getProperty("sector");
-    			int   il = (int)   ec.getProperty("layer");
-    			if (!olist.hasItem(is,il)) olist.add(new ArrayList<Particle>(), is,il); 
-    			     olist.getItem(is,il).add(ec);
-    		}
-    	}
-    	return olist;
-    }
-    
-    //filter ECAL clusters by PID and multiplicity, indexed by sector
-    public IndexedList<List<Particle>> filterECALClusters(IndexedList<List<Particle>> list, int n, int pid) { 
-                                                                                                                  	
-        IndexedList<List<Particle>> olist = new IndexedList<List<Particle>>(1);       
-		IndexGenerator ig = new IndexGenerator();
-		
-    	for (Map.Entry<Long,List<Particle>>  entry : list.getMap().entrySet()){
-			int is = ig.getIndex(entry.getKey(), 0); 
-			int ip = (int) entry.getValue().get(0).getProperty("pindex");
-			if(entry.getValue().size()>0 && entry.getValue().size()<n && Math.abs(ev.part.get(ip).getProperty("ppid"))==pid) {
-				if(!olist.hasItem(is)) olist.add(new ArrayList<Particle>(), is); 
-				Particle p = entry.getValue().get(0);
-//				int   il =   (int) p.getProperty("layer");
-//	    		float en = (float) p.getProperty("energy");
-//	    			System.out.println("Filter "+ip+" "+is+" "+il+" "+en);
-				olist.getItem(is).add(p);
-//				    for (Particle p : olist.getItem(is)) {
-//				    	olist.getItem(is).add(p);
-//				    }
-			}
-    	}
-    	return olist;    	
-    }
-    
+   
 	public void fillHists(){
 				
 		fillECkin();
@@ -451,7 +402,7 @@ public class ECperf extends DetectorMonitor {
         ECpbarPlot("ECpbar");
         ECpipPlot("ECpip");
         ECpimPlot("ECpim");
-        ECpi0Plot("ECpi0");
+//        ECpi0Plot("ECpi0");
         ECetaPlot("ECeta");
         ECneutPlot("ECneut"); 
         ECphotPlot("ECphot");
@@ -544,18 +495,7 @@ public class ECperf extends DetectorMonitor {
 			}
 			this.getDataGroup().add(dg,i,st,k,run);
 		}
-		return;
-		case 6:  
-		dg = new DataGroup(6,6); in=0;	
-		for(int i=0;i<2;i++) { //pcal, ecin
-			for(int j=0; j<3; j++) { //lu,lv,lw	
-				for(int is=1;is<7;is++){  //sector  	
-					tag = is+"-"+j+"-"+i+"-"+st+"-"+k+"-"+run;
-					dg.addDataSet(makeH2(tab+"-1-",tag,70,0,420,npmt[3*i+j],0,npmt[3*i+j]+1,"","S"+is+luvw[j],det[i]+uvw[j]+" STRIP"+luvw[j]), in);in++;  
-				}
-			}
-		}
-		break;
+        break;
 		case 5:
         dg = new DataGroup(6,3);
         for(int is=1;is<7;is++){    		
@@ -1069,7 +1009,9 @@ public class ECperf extends DetectorMonitor {
         f1c = new F1D("ECposi-3+"+run,"[a]/x",0.7,EB*0.9);   f1c.setParameter(0,0.200f);  f1c.setLineWidth(2); f1c.setLineStyle(3);
         f2 = new F1D("H-pim-EC-resid0_f+"+run,"[a]",1,69);  f2.setParameter(0,0f);      f2.setLineWidth(1);
         f3 = new F1D("H-pim-EC-resid0_f+"+run,"[a]",0,1.6); f3.setParameter(0,0f);      f3.setLineWidth(1);
+        
         dg = new DataGroup(6,5);
+        
         for(int is=1;is<7;is++){
 	        tag = is+"-"+st+"-"+k+"-"+run;
 			dg.addDataSet(makeH2(tab+"-1-",tag,60,0,EB*1.01,60,0.0,0.35,"","p (GeV)","E/P"),is-1);         dg.addDataSet(f1a,is-1);dg.addDataSet(f1b,is-1);dg.addDataSet(f1c,is-1);
@@ -1102,8 +1044,18 @@ public class ECperf extends DetectorMonitor {
             dg.addDataSet(makeH2(tab+"-1-",10+"-"+st+"-"+k+"-"+run,100,-400,400,100,-400,400,"","X (CM)","Y (CM)"),10); 
             dg.addDataSet(makeH2(tab+"-1-",11+"-"+st+"-"+k+"-"+run,100,-400,400,100,-400,400,"","X (CM)","Y (CM)"),11); 
  
-        break;		
-        	
+        break;	
+        
+    	case 4:  
+    		dg = new DataGroup(6,3); 	
+    		for(int is=1;is<7;is++){   
+    			tag = is+"-"+st+"-"+k+"-"+run;
+    		    dg.addDataSet(makeH2(tab+"-1-",tag,60,thmin,thmax,60,pmin,pmax,"SECTOR "+is,"#theta neg (deg)","p (GeV)"),is-1);
+    		    dg.addDataSet(makeH2(tab+"-2-",tag,60,thmin,thmax,60,pmin,pmax,"",          "#theta e-  (deg)","p (GeV)"),is-1+6);
+    		    dg.addDataSet(makeH2(tab+"-3-",tag,60,thmin,thmax,60,pmin,pmax,"",          "#theta pi- (deg)","p (GeV)"),is-1+12);
+    		}
+    	break;	
+    		        	
     	case 5: //graphs for alignment fits
             dg = new DataGroup(3,2); GraphErrors g = null;
         	f1 = new F1D("H-pim-EC-zero-f+"+run,"[a]",0,7); 
@@ -1119,8 +1071,7 @@ public class ECperf extends DetectorMonitor {
             	
             }				
     	}
-    	
-    	this.getDataGroup().add(dg,0,st,k,run);      
+   	this.getDataGroup().add(dg,0,st,k,run);      
         
     }
     
@@ -1428,7 +1379,7 @@ public class ECperf extends DetectorMonitor {
         e_mom = (float) epart.p();      
         e_vz  = (float) epart.vz();
         
-        List<Particle> elecECAL = ev.getECAL((int)epart.getProperty("pindex"));
+        List<Particle> elecECAL = ev.getECAL((int)epart.getProperty("pindex")); //list contains particle objects mapped to each associated calorimeter cluster (pcal,ecin,ecou)
     	List<Particle> elecHTCC = ev.getHTCC((int)epart.getProperty("pindex"));
     	
     	for (int i=0; i<3; i++) {hX[i]=0; hY[i]=0; hZ[i]=0; iU[i]=0; iV[i]=0; iW[i]=0; lU[i]=0; lV[i]=0; lW[i]=0; m2U[i]=0; m2V[i]=0; m2W[i]=0;}
@@ -1782,6 +1733,7 @@ public class ECperf extends DetectorMonitor {
 		DataGroup dg0 = this.getDataGroup().getItem(0,0,k,run);				
 		DataGroup dg1 = this.getDataGroup().getItem(0,1,k,run);						
 		DataGroup dg3 = this.getDataGroup().getItem(0,3,k,run);	
+		DataGroup dg6 = this.getDataGroup().getItem(0,6,k,run);	
 		DataGroup dg7 = this.getDataGroup().getItem(0,7,k,run);	
 		
 		((H2F) dg0.getData(e_sect-1   ).get(0)).fill(e_the,e_mom);
@@ -1802,8 +1754,9 @@ public class ECperf extends DetectorMonitor {
 	
 	public void fillECelec() {
 		int run = getRunNumber();
-		int    k = getDetectorTabNames().indexOf("ECelec");//
+		int    k = getDetectorTabNames().indexOf("ECelec");
 		int   k1 = getDetectorTabNames().indexOf("ECkin");
+		int kpim = getDetectorTabNames().indexOf("ECpim");
 		
 		IndexGenerator ig = new IndexGenerator();
 		
@@ -1814,7 +1767,12 @@ public class ECperf extends DetectorMonitor {
 		DataGroup dg02 = this.getDataGroup().getItem(0,2,k1,run);				
 		DataGroup dg04 = this.getDataGroup().getItem(0,4,k1,run);				
 //		DataGroup dg07 = this.getDataGroup().getItem(0,7,k1,run);				
-//		DataGroup dg06 = this.getDataGroup().getItem(0,6,k1,run);	
+//		DataGroup dg06 = this.getDataGroup().getItem(0,6,k1,run);
+		
+		DataGroup dgpim = this.getDataGroup().getItem(0,4,kpim,run);
+		((H2F) dgpim.getData(e_sect-1+ 6).get(0)).fill(e_the,e_mom);
+		((H2F) dgpim.getData(e_sect-1   ).get(0)).fill(e_the,e_mom);
+
 		
 		// Forward tracking residuals
 		
@@ -2141,7 +2099,11 @@ public class ECperf extends DetectorMonitor {
 				if(eop>0.05/mom&&eop<0.2/mom) ((H2F) dg3.getData(11).get(0)).fill(-xc,yc);
 				}
 			}
-
+			
+			DataGroup dg4 = this.getDataGroup().getItem(0,4,k,run);
+			((H2F) dg4.getData(e_sect-1+12).get(0)).fill(the,mom);
+			((H2F) dg4.getData(e_sect-1   ).get(0)).fill(the,mom);
+			
 		}
 			
 	}
@@ -2311,7 +2273,7 @@ public class ECperf extends DetectorMonitor {
     	
  		DataGroup ECnm2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf(name),run);    	
 
-        NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(3.0);
+        NeutralMeson nm = new NeutralMeson(ecphot); nm.setThresh(3.0);
    	
     	for (int is=1; is<7; is++) {
     		if (!nm.ilist.hasItem(is)) continue;
@@ -2336,7 +2298,7 @@ public class ECperf extends DetectorMonitor {
     	
  		DataGroup ECnm3 = this.getDataGroup().getItem(0,3,getDetectorTabNames().indexOf(name),run);    	
 
-        NeutralMeson nm = new NeutralMeson(ecpart); nm.setThresh(1.0);
+        NeutralMeson nm = new NeutralMeson(ecphot); nm.setThresh(1.0);
    	
     	for (int is=1; is<7; is++) {
     		if (!nm.ilist.hasItem(is)) continue;
@@ -2590,53 +2552,53 @@ public class ECperf extends DetectorMonitor {
     }
     
     public void fillECphot0() {
-		int run = getRunNumber(); 
-		int k = getDetectorTabNames().indexOf("ECphot");	
+        int run = getRunNumber(); 
+        int k = getDetectorTabNames().indexOf("ECphot");	
 
-		int [][][] pid = new int[6][3][6];
-		pid = ev.getECALPID(e_sect);
+        int [][][] pid = new int[6][3][6];
+        pid = ev.getECALPID(e_sect);
 		
-		for (int il=0; il<3; il++) {
-			DataGroup dg = this.getDataGroup().getItem(il,0,k,run);				
-			for (int id=0; id<4; id++) { int iid = id<2?4:5;
-				for (int is=0; is<6; is++) {
-					((H1F) dg.getData(is+id*6).get(0)).fill(pid[iid][il][is]);
-					((H1F) dg.getData(is+id*6).get(1)).fill(pid[id][il][is]);
-				}
-			}
-		}
+        for (int il=0; il<3; il++) {
+            DataGroup dg = this.getDataGroup().getItem(il,0,k,run);				
+            for (int id=0; id<4; id++) { int iid = id<2?4:5;
+               for (int is=0; is<6; is++) {
+                    ((H1F) dg.getData(is+id*6).get(0)).fill(pid[iid][il][is]);
+                    ((H1F) dg.getData(is+id*6).get(1)).fill(pid[id][il][is]);
+               }
+            }
+        }
     }
        
     public void fillECphot1() {
     	
-		int run = getRunNumber();
-		DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECphot"),run);
+        int run = getRunNumber();
+        DataGroup dg1 = this.getDataGroup().getItem(0,1,getDetectorTabNames().indexOf("ECphot"),run);
 		
-    	int pin = -1;
+        int pin = -1;
     	
-    	for (Particle p : phot_ecal) {
+        for (Particle p : phot_ecal) {
     		
-    		List<Particle> photECAL = ev.getECAL((int)p.getProperty("pindex"));            
-    		ecal_phot_sec  = (int)   photECAL.get(0).getProperty("sector");
-    		ecal_phot_beta = (float) photECAL.get(0).getProperty("beta");   
+            List<Particle> photECAL = ev.getECAL((int)p.getProperty("pindex"));            
+            ecal_phot_sec  = (int)   photECAL.get(0).getProperty("sector");
+            ecal_phot_beta = (float) photECAL.get(0).getProperty("beta");   
             ecal_phot_esum[0] = 0;
             
             for (Particle pp : photECAL) ecal_phot_esum[0] += pp.getProperty("energy");
             
-    		int pindex     = (int)   p.getProperty("pindex"); 
-        	if (pindex!=pin) {
-        		ecal_phot_the  = (float) Math.toDegrees(p.theta());
-        		ecal_phot_phi  = (float) Math.toDegrees(p.phi());
-        		pin = pindex;
-        		if(ecal_phot_sec == e_sect) ((H2F)dg1.getData(0).get(0)).fill(ecal_phot_esum[0],ecal_phot_the);
-        	}
-    	}
+            int pindex     = (int)   p.getProperty("pindex"); 
+            if (pindex!=pin) {
+                ecal_phot_the  = (float) Math.toDegrees(p.theta());
+                ecal_phot_phi  = (float) Math.toDegrees(p.phi());
+                pin = pindex;
+                if(ecal_phot_sec == e_sect) ((H2F)dg1.getData(0).get(0)).fill(ecal_phot_esum[0],ecal_phot_the);
+            }
+        }
     }
     
     public void fillECphot2() {
     	
-		int run = getRunNumber();
-		DataGroup dg2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECphot"),run);
+        int run = getRunNumber();
+        DataGroup dg2 = this.getDataGroup().getItem(0,2,getDetectorTabNames().indexOf("ECphot"),run);
 		
         for (Particle p: neut_ecal) {
             List<Particle> neutECAL = ev.getECAL((int)p.getProperty("pindex"));            
@@ -2650,54 +2612,52 @@ public class ECperf extends DetectorMonitor {
 	
 	public void fillECphot345() {
 		
-		int run = getRunNumber();
-		int   k = getDetectorTabNames().indexOf("ECphot");
+        int run = getRunNumber();
+        int   k = getDetectorTabNames().indexOf("ECphot");
 		
-		IndexGenerator ig = new IndexGenerator();
+        IndexGenerator ig = new IndexGenerator();
 		
-		DataGroup dg3 = this.getDataGroup().getItem(0,3,k,run);				
-		DataGroup dg4 = this.getDataGroup().getItem(0,4,k,run);
-		DataGroup dg5 = this.getDataGroup().getItem(0,5,k,run);				
+        DataGroup dg3 = this.getDataGroup().getItem(0,3,k,run);				
+        DataGroup dg4 = this.getDataGroup().getItem(0,4,k,run);
+        DataGroup dg5 = this.getDataGroup().getItem(0,5,k,run);				
 		
-		float eref = EB*6.5f/10.6f;
+        float eref = EB*6.5f/10.6f;
 		
-    	for (Map.Entry<Long,List<Particle>>  entry : ecphot_filt.getMap().entrySet()){
-			int is = ig.getIndex(entry.getKey(), 0);
-    		if(is==e_sect) {
-            	for (Particle ec : entry.getValue()) {			
-            		int    il = getDet((int) ec.getProperty("layer"));
-            		float nrg =      (float) ec.getProperty("energy");
-            		int    iu =        (int) ec.getProperty("iu");
-            		int    iv =        (int) ec.getProperty("iv");
-            		int    iw =        (int) ec.getProperty("iw");
-            		float   t =      (float) ec.getProperty("time");
-            		float newt=      (float) ec.getProperty("newtime");
-            		float pat =      (float) ec.getProperty("path");
-            		float   x =      (float) ec.getProperty("x");
-            		float   y =      (float) ec.getProperty("y");
-            		int cstat =        (int) ec.getProperty("cstat");
+        for (Map.Entry<Long,List<Particle>>  entry : ecphot_filt.getMap().entrySet()){
+        	int is = ig.getIndex(entry.getKey(), 0);
+            if(is==e_sect) {
+                for (Particle ec : entry.getValue()) {			
+                    int    il = getDet((int) ec.getProperty("layer"));
+                    float nrg =      (float) ec.getProperty("energy");
+                    int    iu =        (int) ec.getProperty("iu");
+                    int    iv =        (int) ec.getProperty("iv");
+                    int    iw =        (int) ec.getProperty("iw");
+                    float   t =      (float) ec.getProperty("time");
+                    float newt=      (float) ec.getProperty("newtime");
+                    float pat =      (float) ec.getProperty("path");
+                    float   x =      (float) ec.getProperty("x");
+                    float   y =      (float) ec.getProperty("y");
+                    int cstat =        (int) ec.getProperty("cstat");
             		
-            		float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*ev.tpol;
-            		float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*ev.spol;
-            		float  tdif = (float)((ECCommon.useUnsharedTime?newt:t)-ev.starttime-pat/29.97);
-            		float  udif = iu-iU[il], vdif = iv-iV[il], wdif = iw-iW[il];			
+                    float thdif = (float)(e_the-Math.toDegrees(ec.theta()))*ev.tpol;
+                    float phdif = (float)(e_phi-Math.toDegrees(ec.phi()))*ev.spol;
+                    float  tdif = (float)((ECCommon.useUnsharedTime ? newt:t)-ev.starttime-pat/29.97);
+                    float  udif = iu-iU[il], vdif = iv-iV[il], wdif = iw-iW[il];			
             		
-            		if(dbgAnalyzer) {
-            		  if(nrg/1e3<0.05) System.out.println(il+" "+t+" "+" "+newt+" "+tdif+" "+" "+udif+" "+vdif+" "+wdif+" "+cstat);
-            		}
+                    if(dbgAnalyzer) {
+                        if(nrg/1e3<0.05) System.out.println(il+" "+t+" "+" "+newt+" "+tdif+" "+" "+udif+" "+vdif+" "+wdif+" "+cstat);
+                    }
             		
-            		if(Math.abs(thdif)>0.3)     ((H2F)dg3.getData(is-1+0+il*6).get(0)).fill(tdif,nrg/1e3);
-            		if(        Math.abs(e_mom-eref)<0.5) ((H2F)dg4.getData(is-1+0+il*12).get(0)).fill(tdif,thdif);
-            		if(        Math.abs(e_mom-eref)<0.5) ((H2F)dg4.getData(is-1+6+il*12).get(0)).fill(tdif,phdif);
-            		if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il  ).get(0)).fill(-x,y);            		
-            		if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il+2).get(0)).fill(-x,y,tdif);            		
-               		if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il+4).get(0)).fill(-x,y,nrg/1e3);            		
-            	}
-			}
-		}
-//    	System.out.println(" ");
-		
-	}
+                    if(Math.abs(thdif)>0.3)     ((H2F)dg3.getData(is-1+0+il*6).get(0)).fill(tdif,nrg/1e3);
+                    if(        Math.abs(e_mom-eref)<0.5) ((H2F)dg4.getData(is-1+0+il*12).get(0)).fill(tdif,thdif);
+                    if(        Math.abs(e_mom-eref)<0.5) ((H2F)dg4.getData(is-1+6+il*12).get(0)).fill(tdif,phdif);
+                    if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il  ).get(0)).fill(-x,y);            		
+                    if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il+2).get(0)).fill(-x,y,tdif);            		
+                    if(il<2 && Math.abs(e_mom-eref)<0.5) ((H2F)dg5.getData(il+4).get(0)).fill(-x,y,nrg/1e3);            		
+                }
+           }
+        }
+    }
 	
     public float newPhi(float phi) {
     	float newphi=phi;
@@ -3257,10 +3217,6 @@ public class ECperf extends DetectorMonitor {
     	for (int i=0; i<6; i++) g2.addPoint(i,counter[i][1],0f,0f);
     	for (int i=0; i<6; i++) g3.addPoint(i,counter[i][2],0f,0f);	
     }
-	
-
-    
-
 	
     public double Vangle(Vector3 v1, Vector3 v2){
         double res = 0;
