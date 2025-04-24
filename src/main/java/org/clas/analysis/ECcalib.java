@@ -69,7 +69,7 @@ public class ECcalib extends DetectorMonitor {
     IndexedList<H1F>            VarSummary = new IndexedList<H1F>(4);
     List<Float>                       pmap = new ArrayList<Float>();	
     List<Particle>                    part = new ArrayList<Particle>();    
-    IndexedTable time=null, offset=null, goffset=null, gain=null, shift=null, veff=null, atten2=null, atten=null;;       
+    IndexedTable time=null, offset=null, goffset=null, r2gain=null, gain=null, shift=null, veff=null, atten2=null, atten=null;;       
 	IndexGenerator                      ig = new IndexGenerator();  
 	
     List<ECALdet>                    e = new ArrayList<ECALdet>(); 
@@ -597,7 +597,7 @@ public class ECcalib extends DetectorMonitor {
     public void initCCDB(int runno) {
     	if(dropSummary) return;
     	System.out.println(getDetectorName()+".initCCDB("+runno+")");
-        gain    = cm.getConstants(runno, "/calibration/ec/gain");       
+        gain    = cm.getConstants(defaultGain ? 2:runno, "/calibration/ec/gain");
         time    = cm.getConstants(runno, "/calibration/ec/timing");
         veff    = cm.getConstants(runno, "/calibration/ec/effective_velocity");
         offset  = cm.getConstants(runno, "/calibration/ec/fadc_offset");

@@ -252,7 +252,7 @@ public class ECCommon {
             
             double ccdbGain =   gain.getDoubleValue("gain", sector,layer,component)*ggs.getDoubleValue("gain_shift",sector,layer,0);
             double run2Gain = r2gain.getDoubleValue("gain", sector,layer,component);  
-                        
+
             strip.setGain(useCCDBGain ? ccdbGain : run2Gain);             
             strip.setDtimeGlobalTimeWalk(gtw.getDoubleValue("time_walk",sector,layer,0)); 
             

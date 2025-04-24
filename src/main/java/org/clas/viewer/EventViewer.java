@@ -40,6 +40,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
 
 import org.clas.analysis.DCmon;
+import org.clas.analysis.DCeff;
 import org.clas.analysis.ECa;
 import org.clas.analysis.ECelas;
 import org.clas.analysis.ECmc;
@@ -227,7 +228,8 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
         	     case    "ECmc2": monitors[n++]=new ECmc2(s);  break;
         	     case "ECstatus": monitors[n++]=new ECstatus(s,"ECAL"); break;
         	     case   "ECelas": monitors[n++]=new ECelas(s); break; 
-        	     case    "DCmon": monitors[n++]=new DCmon(s); 
+        	     case    "DCmon": monitors[n++]=new DCmon(s); break;
+        	     case    "DCeff": monitors[n++]=new DCeff(s); 
         	   }
         	}
     	} else {
@@ -246,7 +248,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 //    		monitors[n] = new ECmon("ECmon"); 
 //    		monitors[n] = new ECmip("ECmip"); 
 //    		monitors[n] = new ECpi0("ECpi0"); 
-//    		monitors[n] = new DCmon("DCmon");
+//    		monitors[n] = new DCeff("DCeff");
 //
         }
     }
@@ -508,7 +510,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
 		if (s==cf3) {gdfitEnable    = sc(e); monitors[0].gdfitEnable = gdfitEnable;}
 		if (s==cf4) {yLogEnable     = sc(e); monitors[0].setLogY(yLogEnable);} 
 		if (s==cf5) {zLogEnable     = sc(e); monitors[0].setLogZ(zLogEnable);}
-		if (s==co5) {defaultGain    = sc(e); monitors[0].eng.setDefaultGain(defaultGain);}		
+		if (s==co5) {defaultGain    = sc(e); monitors[0].setDefaultGain(defaultGain);}		
 		if (s==cf6a){unsharedTime   = sc(e); monitors[0].eng.setUseUnsharedTime(unsharedTime);} 
 		if (s==cf6b){unsharedEnergy = sc(e); monitors[0].eng.setUseUnsharedEnergy(unsharedEnergy);}
 		if (s==cf6c){useFADCTime    = sc(e); monitors[0].eng.setUseFADCTime(useFADCTime);}
@@ -587,6 +589,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     public void histoSaver() {
 //      DateFormat df = new SimpleDateFormat("MM-dd-yyyy_hh.mm.ss_aa");
         String fileName = "CLAS12Ana_run_" + this.runNumber + "_" + monitors[0].getDetectorName() + ".hipo";
+        if(defaultGain) fileName = fileName+".defgain";
         if(autoSave) {this.saveHistosToFile(workDir+fileName);return;}
         JFileChooser fc = new JFileChooser(new File(workDir));
         fc.setSelectedFile(new File(fileName));

@@ -264,6 +264,7 @@ public class DetectorMonitor implements ActionListener {
     Object[] can = {false, false, 0, 0, 0, 0};
     
     public EngineControl eng = new EngineControl();
+    
     public FTHashCollection rtt = null;
     
     String[]  ccdbTables = new String[]{
@@ -1093,6 +1094,11 @@ public class DetectorMonitor implements ActionListener {
     
     public void setYIndex(int num) {
     	yIndex = num;
+    }
+    
+    public void setDefaultGain(boolean val) {
+    	defaultGain = val;
+    	eng.setDefaultGain(defaultGain);
     }
     
     public int getEventNumber() {
