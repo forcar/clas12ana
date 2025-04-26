@@ -1,5 +1,6 @@
 package org.clas.analysis;
 
+import org.clas.lib.Elasgen;
 import org.clas.tools.EBMCEngine;
 import org.clas.tools.Event;
 import org.clas.tools.KinLib;
@@ -23,6 +24,7 @@ public class ECelas extends DetectorMonitor {
 	EBMCEngine  ebmce = new EBMCEngine();
     Event          ev = new Event();
 	KinLib        kin = new KinLib();
+	Elasgen egen      = new Elasgen();
 	
 	double kinqw[] = null, EB, beamEnergy, mp = kin.mp;
 	boolean isMC = false;
@@ -189,6 +191,13 @@ public class ECelas extends DetectorMonitor {
     	}
     }
     
+    public void createRCOR(int st) {
+    	switch (st) {
+    	case 0:
+    		dgm.add("RCOR",6,4,0,st,getRunNumber());
+    	}
+    }
+    
     public void createXSEC(int st) {
     	switch (st) {
     	case 0:
@@ -223,18 +232,12 @@ public class ECelas extends DetectorMonitor {
     	
     	epart.clear(); ppart2.clear(); ppart4.clear();
     	
-    	epart  = makePART(11,  2,0.1f);
-    	ppart2 = makePART(2212,2,0.1f);
-    	ppart4 = makePART(2212,4,0.1f);
+    	epart  = ev.getPART(11,  0.1f,2);
+    	ppart2 = ev.getPART(2212,0.1f,2);
+    	ppart4 = ev.getPART(2212,0.1f,4);
     	
     	fillHists();
 
-    }
-    
-    public List<Particle> makePART(int pid, int stat, float pmin) {
-    	List<Particle> olist = new ArrayList<Particle>();        
-        for (Particle p : ev.getPART(pmin,pid,stat)) olist.add(p);
-        return olist;    	
     }
 
     public Point3D squeeze(Point3D xyz, int det, int e_sect) {        
@@ -289,8 +292,8 @@ public class ECelas extends DetectorMonitor {
 //        	y2 = (float) pxyz.y();
 //        }  
         
-        boolean trig = s == getElecTriggerSector(shiftTrigBits(getRunNumber())); 
-        
+        boolean trig = s == ev.trigger_sect; 
+               
         double phie = (ephi<-20 ? 360+ephi : ephi)-(s-1)*60;
         
         if(true && lv>19 && lw>19) {
