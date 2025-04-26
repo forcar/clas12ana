@@ -86,12 +86,7 @@ public class DCeff extends DetectorMonitor {
     public void plot(String tabname) {     
     	dgm.drawGroup(tabname,10*getActiveSector()+getActivePC(),0,getRunNumber());
     }
-    
-    public List<Particle> makePART(int pid, int stat, int chrg, float pmin) {
-    	List<Particle> olist = new ArrayList<Particle>();        
-        for (Particle p : ev.getPART(pmin,pid,stat)) olist.add(p);
-        return olist;    	
-    }
+
   
     @Override    
     public void processEvent(DataEvent event) {  
@@ -102,27 +97,31 @@ public class DCeff extends DetectorMonitor {
     	ev.requireOneElectron(false);
     	ev.setElecTriggerSector(ev.getElecTriggerSector(shiftTrigBits(getRunNumber())));
 	    
-    	if(!ev.procEvent(event)) return;
+    	if(!ev.procEvent(event)) return;    	
     	
-    	System.out.println("Trigger Sector = "+ev.trigger_sect);
+    	System.out.println("Trigger Sector = "+ev.trigger_sect+" Event = "+getEventNumber());
     	
-    	for (int i=0; i<4; i++) part[i].clear(); 
+//   	for (int i=0; i<4; i++) part[i].clear(); 
     	
-     	part[0]  = makePART(0,   4,-1,0.1f); //
-    	part[1]  = makePART(212, 2,-1,0.1f);
-    	part[2]  = makePART(11,  2,-1,0.1f);
-    	part[3]  = makePART(2212,2,+1,0.1f);
+     	part[0]  = ev.getPART(   0, 1.0f, 2, -1); 
+    	part[1]  = ev.getPART( 212, 1.0f, 2, -1);
+    	part[2]  = ev.getPART(  11, 1.0f, 2, -1);
+    	part[3]  = ev.getPART(  22, 0.1f, 2,  0);
     	
     	for (int i=0; i<4; i++) {
     		if(part[i].size()>0) output(i);
     	}
+    	
+    	System.out.println(" ");
     }
     
     public void output(int i) {
     	for (Particle p : part[i]) {
-    		System.out.println("i:"+i+" "+p.pid()+" "+p.p()+" "+p.charge()+" "+p.getProperty("status"));
-    	}
-    	
+    		List<Particle> e = ev.getECAL((int)p.getProperty("pindex"));
+    		for (Particle ecal : e) {
+    			System.out.println("i:"+i+" "+(int)ecal.getProperty("sector")+" "+(int)ecal.getProperty("layer")+" "+ecal.pid()+" "+(float)Math.toDegrees(ecal.theta())+" "+(float)ecal.p()+" "+ecal.charge());
+    		}
+    	}  	
     }
 
 }
