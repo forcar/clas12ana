@@ -785,9 +785,9 @@ public class ECcalib extends DetectorMonitor {
             	v13mag = (float)  v3.mag();
             	v23mag = (float) v23.mag();
             	
-            	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==3;
-            	Boolean pixeci = ev.isMuon? e.get(1).wpix : e.get(1).wsum==3||e.get(1).wsum==3;
-            	Boolean pixeco = ev.isMuon? e.get(2).wpix : e.get(2).wsum==3||e.get(2).wsum==3; 
+            	Boolean  pixpc = ev.isMuon? e.get(0).wpix : e.get(0).wsum==3||e.get(0).wsum==4;
+            	Boolean pixeci = ev.isMuon? e.get(1).wpix : e.get(1).wsum==3||e.get(1).wsum==4;
+            	Boolean pixeco = ev.isMuon? e.get(2).wpix : e.get(2).wsum==3||e.get(2).wsum==4; 
             	            	
             	if (ev.isPhys) {
                 	int ip = e.get(0).ip;
@@ -2301,16 +2301,50 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void makeSlots() {
-    	int mhv=0,mfa=0,imhv=0,imfa=0;
-    	hvslots.clear(); faslots.clear();
-    	for (int id=0; id<3; id++) { //pcal,ecin,ecou
-    		if(id==1) {mhv=mfa=imhv=imfa=0;}
-    		for (int il=0; il<3; il++) { //u,v,w
-    			for (int ip=0; ip<npmt[id*3+il]; ip++) {imhv++;imfa++;
-    			    if(3*id+il==5 && ip==35) imfa=0; // last 4 fADC channels skipped between ECIN,ECOU
-    				if (imhv%24==1) mhv++; if (imfa%16==1) mfa++; 
-//    				System.out.println(3*id+il+" "+ip+" "+mhv+" "+mfa);
+    	makeHVslots();
+    	makeFAslots();
+    }
+
+    
+    public void makeHVslots() {
+    	int mhv=0,imhv=0;
+    	hvslots.clear();
+
+    	//HVFTOF*
+		for (int id=0; id<1; id++) { //pcal
+			for (int il=0; il<3; il++) { //u,v,w
+    			for (int ip=0; ip<npmt[id*3+il]; ip++) {imhv++;
+    				if (imhv%24==1) mhv++; 
+    				System.out.println("HVFTOF "+(3*id+il)+" "+ip+" "+mhv);
     				hvslots.add(mhv,id,il,ip+1);
+    			}
+    		}
+    	}
+
+		//HVECAL*
+    	mhv=imhv=0;
+    	for (int il=0; il<3; il++) { //u,v,w
+    		for (int id=1; id<3; id++) { //ecin, ecou
+    			for (int ip=0; ip<npmt[id*3+il]; ip++) {imhv++;
+    				if (imhv%24==1) mhv++;
+    				System.out.println("HVECAL "+(3*id+il)+" "+ip+" "+mhv);
+    				hvslots.add(mhv,id,il,ip+1);
+    			}	    			
+    		}
+    	}    	
+    }
+    
+    public void makeFAslots() {
+    	int mfa=0,imfa=0;
+    	faslots.clear();
+    	
+    	for (int id=0; id<3; id++) { //pcal,ecin,ecou
+    		if(id==1) {mfa=imfa=0;} //ADCPCAL*, ADCECAL*
+    		for (int il=0; il<3; il++) { //u,v,w
+    			for (int ip=0; ip<npmt[id*3+il]; ip++) {imfa++;
+    			    if(3*id+il==5 && ip==35) imfa=0; // last 4 fADC channels skipped between ECIN,ECOU
+    				if (imfa%16==1) mfa++; 
+    				System.out.println("FADC "+(3*id+il)+" "+ip+" "+mfa);
     				faslots.add(mfa,id,il,ip+1);
     			}
     		}
