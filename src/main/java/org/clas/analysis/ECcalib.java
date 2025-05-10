@@ -1820,9 +1820,10 @@ public class ECcalib extends DetectorMonitor {
         c.clear(); c.divide(2, 6);
         for (int is=1; is<7; is++) {
         	for (int ih=hv?0:1; ih<(hv?3:4); ih+=2) {
-        		c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); n++;
-        		c.draw(FitSummary.getItem(is,10000+ih,0,getRunNumber()));
-        		c.draw(FitSummary.getItem(is,10000+ih,1,getRunNumber()),"same");
+        		c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
+                c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
+        		n++; c.draw(FitSummary.getItem(is,10000+ih,0,getRunNumber())); //Truncated Mean is more stable with low statistics
+//        		c.draw(FitSummary.getItem(is,10000+ih,1,getRunNumber()),"same"); //Fitted mean 
                 F1D f1 = new F1D("p0","[a]",0.,np[ih]+1); f1.setParameter(0,1);
                 f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         	}
