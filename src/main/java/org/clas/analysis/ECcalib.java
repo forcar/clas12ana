@@ -1485,15 +1485,16 @@ public class ECcalib extends DetectorMonitor {
         	ymean[i]  =  fd.mean;
         	yMean[i]  =  fd.getMean();
         	ymeane[i] =  fd.meane;
-            GraphErrors  mean = new GraphErrors("SLOT1-"+is+"-"+ih,x,ymean,xe,ymeane);                   
-            GraphErrors  Mean = new GraphErrors("SLOT5-"+is+"-"+ih,x,yMean,xe,ymeane); 
-            if(is==1) mean.setTitle(slnam[ih]+" SECTORS 1-6");
-            mean.setTitleY("MEAN / MIP");
-            mean.getAttributes().setMarkerColor(1); 
-            mean.getAttributes().setMarkerSize(4); Mean.getAttributes().setMarkerSize(4);
-            FitSummary.add(mean,is,10000+ih,0,run);
-            FitSummary.add(Mean,is,10000+ih,1,run);
         }
+        
+        GraphErrors  mean = new GraphErrors("SLOT1-"+is+"-"+ih,x,ymean,xe,ymeane);                   
+        GraphErrors  Mean = new GraphErrors("SLOT5-"+is+"-"+ih,x,yMean,xe,ymeane); 
+        if(is==1) Mean.setTitle(slnam[ih]+" SECTORS 1-6");
+        Mean.setTitleY("MEAN / MIP");
+        mean.getAttributes().setMarkerColor(1); 
+        mean.getAttributes().setMarkerSize(4); Mean.getAttributes().setMarkerSize(4);
+        FitSummary.add(mean,is,10000+ih,0,run);
+        FitSummary.add(Mean,is,10000+ih,1,run); //Use this one for slots        
     }
     
     
@@ -1822,8 +1823,8 @@ public class ECcalib extends DetectorMonitor {
         	for (int ih=hv?0:1; ih<(hv?3:4); ih+=2) {
         		c.cd(n); c.getPad(n).getAxisY().setRange(ymin, ymax); 
                 c.getPad(n).setAxisTitleFontSize(14); c.getPad(n).setTitleFontSize(16);
-        		n++; c.draw(FitSummary.getItem(is,10000+ih,0,getRunNumber())); //Truncated Mean is more stable with low statistics
-//        		c.draw(FitSummary.getItem(is,10000+ih,1,getRunNumber()),"same"); //Fitted mean 
+        		n++; c.draw(FitSummary.getItem(is,10000+ih,1,getRunNumber())); //Truncated Mean is more stable with low statistics
+//        		c.draw(FitSummary.getItem(is,10000+ih,0,getRunNumber()),"same"); //Fitted mean 
                 F1D f1 = new F1D("p0","[a]",0.,np[ih]+1); f1.setParameter(0,1);
                 f1.setLineColor(3); f1.setLineWidth(2); c.draw(f1,"same");
         	}
