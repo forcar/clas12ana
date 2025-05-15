@@ -122,7 +122,7 @@ public class ECcalib extends DetectorMonitor {
                             "ATTFIT",
                             "SFPCEC");
         
-        useRDIFButtons(true);
+        useSLOTButtons(true);
         usePCCheckBox(true);
         useCALUVWSECButtons(true);
         useSliderPane(true);
@@ -1286,7 +1286,7 @@ public class ECcalib extends DetectorMonitor {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
     	GraphErrors g = null;
         
-        int    is = getActiveSector();
+        int is = getActiveSector();
         
         c.divide(3, 5);
         
@@ -1469,8 +1469,7 @@ public class ECcalib extends DetectorMonitor {
     
     public void storeSlots(int is, int ih, int run) {
         FitData fd=null;
-        String[] slnam = {"HVFTOF","ADCPCAL","HVECAL","ADCECAL"};
-        int[]    slmax = {8,12,9,14};
+        
         int np = slmax[ih];
     	
         double[]      x = new double[np]; double[]  ymean = new double[np]; double[] yrms = new double[np];
@@ -1832,7 +1831,6 @@ public class ECcalib extends DetectorMonitor {
    	
     }
     
-
     public void plotMeanHWSummary(int index) {
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
@@ -1878,11 +1876,11 @@ public class ECcalib extends DetectorMonitor {
         }        
     }   
     
-    public void printGraph(GraphErrors g) {
-    	for (int i=0; i<g.getDataSize(1); i++) {
-    		System.out.println(g.getDataX(i)+" "+g.getDataY(i));
-    	}
-    }
+//    public void printGraph(GraphErrors g) {
+//    	for (int i=0; i<g.getDataSize(1); i++) {
+//    		System.out.println(g.getDataX(i)+" "+g.getDataY(i));
+//    	}
+//    }
     
     public void plotRmsSummary(int index) {
     	
@@ -2103,9 +2101,9 @@ public class ECcalib extends DetectorMonitor {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),pc,index,getRunNumber()));
     }
     
-    public void plotSLOTS(int index) {
-      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,getRunNumber()));    	
-    }
+//    public void plotSLOTS(int index) {
+//      	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(getActiveSector(),0,index,getRunNumber()));    	
+//    }
         
     public void plotPIDSummary(int index) {
       	drawGroup(getDetectorCanvas().getCanvas(getDetectorTabNames().get(index)),getDataGroup().getItem(0,0,index,getRunNumber()));
@@ -2138,6 +2136,30 @@ public class ECcalib extends DetectorMonitor {
     	tl.createTimeLineHisto( 7,"ECOU U Peak Mean/MIP","Sector",TLmax,6,1,7);
     	tl.createTimeLineHisto( 8,"ECOU V Peak Mean/MIP","Sector",TLmax,6,1,7);
     	tl.createTimeLineHisto( 9,"ECOU W Peak Mean/MIP","Sector",TLmax,6,1,7);
+    	
+    	for (int ih=0; ih<4; ih++) {
+    		for (int is=1; is<8; is++) {
+    			int nb=is<7 ? slmax[ih]:slmax[ih]*6;
+    			tl.createTimeLineHisto((ih+1)*100+is,slnam[ih]+(is<7?is:"")+" Mean/MIP","Slot",TLmax,nb,1,nb+1);
+    		}
+    	}
+/*    	
+    	tl.createTimeLineHisto(101,"HVFTOF1 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(102,"HVFTOF2 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(103,"HVFTOF3 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(104,"HVFTOF4 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(105,"HVFTOF5 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(106,"HVFTOF6 Mean/MIP","Slot",TLmax,8,1,9);
+    	tl.createTimeLineHisto(301,"HVECAL1 Mean/MIP","Slot",TLmax,9,1,10);
+    	tl.createTimeLineHisto(302,"HVECAL2 Mean/MIP","Slot",TLmax,9,1,10);
+    	tl.createTimeLineHisto(303,"HVECAL3 Mean/MIP","Slot",TLmax,9,1,10);
+    	tl.createTimeLineHisto(304,"HVECAL4 Mean/MIP","Slot",TLmax,9,1,10);
+    	tl.createTimeLineHisto(305,"HVECAL5 Mean/MIP","Slot",TLmax,9,1,10);
+    	tl.createTimeLineHisto(306,"HVECAL6 Mean/MIP","Slot",TLmax,9,1,10);
+    	
+    	tl.createTimeLineHisto(107,"HVFTOF Mean/MIP","Slot",TLmax,48,1,49);
+    	tl.createTimeLineHisto(307,"HVECAL Mean/MIP","Slot",TLmax,54,1,55);
+*/
     }
     
     public void fillTimeLineHisto() {    	
@@ -2162,6 +2184,21 @@ public class ECcalib extends DetectorMonitor {
 	        }
 		  }
 		}
+		
+		//slots
+        int[] n = {0,0,0,0};
+        for (int is=1; is<7; is++) { //SECTOR
+		  for (int ih=0; ih<4; ih++) { //HVFTOF ADCPCAL HVECAL ADCECAL 
+            for (int i=0; i<slmax[ih]; i++) { //slots
+                float  y = (float) tl.fitData.getItem(is,10000+ih,i+1,getRunNumber()).getMean();
+                float ye = (float) tl.fitData.getItem(is,10000+ih,i+1,getRunNumber()).meane;
+                ((H2F)tl.Timeline.getItem((ih+1)*100+is,0)).fill(runIndex,i+1,y);
+                ((H2F)tl.Timeline.getItem((ih+1)*100+is,1)).fill(runIndex,i+1,ye);
+                ((H2F)tl.Timeline.getItem((ih+1)*100+ 7,0)).fill(runIndex,n[ih]+1,y);
+                ((H2F)tl.Timeline.getItem((ih+1)*100+ 7,1)).fill(runIndex,n[ih]+1,ye);n[ih]++;
+            }
+          }  
+        }
 		runIndex++;
     }
         
@@ -2179,12 +2216,29 @@ public class ECcalib extends DetectorMonitor {
     	saveTimeLine(7,12,0,"ECOUmipU","MIP");
     	saveTimeLine(8,22,0,"ECOUmipV","MIP");
     	saveTimeLine(9,32,0,"ECOUmipW","MIP");
-
+    }
+    
+    public void saveSlotTimelines() {
+    	System.out.println(getDetectorName()+".saveSlotTimelines()");
+    	saveSlotTimeLine(101,0,1,"HVFTOF1","SLOT");
+    	saveSlotTimeLine(102,0,2,"HVFTOF2","SLOT");
+    	saveSlotTimeLine(103,0,3,"HVFTOF3","SLOT");
+    	saveSlotTimeLine(104,0,4,"HVFTOF4","SLOT");
+    	saveSlotTimeLine(105,0,5,"HVFTOF5","SLOT");
+    	saveSlotTimeLine(106,0,6,"HVFTOF6","SLOT");
+    	saveSlotTimeLine(301,3,1,"HVECAL1","SLOT");
+    	saveSlotTimeLine(302,3,2,"HVECAL2","SLOT");
+    	saveSlotTimeLine(303,3,3,"HVECAL3","SLOT");
+    	saveSlotTimeLine(304,3,4,"HVECAL4","SLOT");
+    	saveSlotTimeLine(305,3,5,"HVECAL5","SLOT");
+    	saveSlotTimeLine(306,3,6,"HVECAL6","SLOT");
     }
     
     public void plotTimeLines(int index) {    
     	if(TLflag) {plotSectorTimeLines(index); } else {
-    	if (getActivePC()==2) {plotPeakTimeLines(index);} else {plotClusterTimeLines(index);}}
+    	if (getActivePC()==2) plotPeakTimeLines(index);
+    	if (getActivePC()==1) plotClusterTimeLines(index);
+    	if (getActivePC()==0) plotSlotTimeLines(index);}
     }
     
     public void plotClusterTimeLines(int index) {
@@ -2271,7 +2325,28 @@ public class ECcalib extends DetectorMonitor {
     
     public void plotSlotTimeLines(int index) {
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        int is = getActiveSector(); 
+
+        c.clear(); c.divide(2,2);
+    	int n=0;
     	
+        for (int ih=getActiveSLOT(); ih<4; ih+=2) { 
+        	DataLine line1 = new DataLine(runIndexSlider,  (is-1)*slmax[ih]+1,runIndexSlider+1,(is-1)*slmax[ih]+1); line1.setLineColor(5); line1.setLineWidth(3);
+        	DataLine line2 = new DataLine(runIndexSlider,   is   *slmax[ih]+1,runIndexSlider+1, is   *slmax[ih]+1); line2.setLineColor(5); line2.setLineWidth(3);
+        	DataLine line3 = new DataLine(runIndexSlider,  (is-1)*slmax[ih]+1,runIndexSlider,   is   *slmax[ih]+1); line3.setLineColor(5); line3.setLineWidth(3);
+        	DataLine line4 = new DataLine(runIndexSlider+1,(is-1)*slmax[ih]+1,runIndexSlider+1, is   *slmax[ih]+1); line4.setLineColor(5); line4.setLineWidth(3);
+            double min=0.99f,max=1.01f; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
+
+		    c.cd(n); c.getPad(n).setAxisRange(0,runIndex,1,6*slmax[ih]+1); c.getPad(n).setTitleFontSize(18); c.getPad(n).getAxisZ().setRange(min,max);
+		    c.draw((H2F)tl.Timeline.getItem((ih+1)*100+7,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4); n++;
+
+		    c.cd(n); c.getPad(n).setAxisRange(-0.5,runIndex,min,max); c.getPad(n).setTitleFontSize(18); 
+		    DataLine line5 = new DataLine(-0.5,1,runIndex,1); line5.setLineColor(3); line5.setLineWidth(2); c.draw(line5);
+		    DataLine line6 = new DataLine(runIndexSlider,min,runIndexSlider,max);    line6.setLineColor(5); c.draw(line6);
+		    GraphErrors[] gl = getSlotTimeLine((ih+1)*100+is,ih,slnam[ih]+is);
+		    for (int nn=0; nn<gl.length; nn++) c.draw(gl[nn],nn==0 ? " ":"same"); n++;
+        }
+   
     }
 
 /*  
@@ -2444,7 +2519,7 @@ public class ECcalib extends DetectorMonitor {
 			for (int il=0; il<3; il++) { //u,v,w
     			for (int ip=0; ip<npmt[id*3+il]; ip++) {imhv++;
     				if (imhv%24==1) mhv++; 
-    				System.out.println("HVFTOF "+(3*id+il)+" "+ip+" "+mhv);
+//    				System.out.println("HVFTOF "+(3*id+il)+" "+ip+" "+mhv);
     				hvslots.add(mhv,id,il,ip+1);
     			}
     		}
@@ -2456,7 +2531,7 @@ public class ECcalib extends DetectorMonitor {
     		for (int id=1; id<3; id++) { //ecin, ecou
     			for (int ip=0; ip<npmt[id*3+il]; ip++) {imhv++;
     				if (imhv%24==1) mhv++;
-    				System.out.println("HVECAL "+(3*id+il)+" "+ip+" "+mhv);
+//    				System.out.println("HVECAL "+(3*id+il)+" "+ip+" "+mhv);
     				hvslots.add(mhv,id,il,ip+1);
     			}	    			
     		}
@@ -2473,7 +2548,7 @@ public class ECcalib extends DetectorMonitor {
     			for (int ip=0; ip<npmt[id*3+il]; ip++) {imfa++;
     			    if(3*id+il==5 && ip==35) imfa=0; // last 4 fADC channels skipped between ECIN,ECOU
     				if (imfa%16==1) mfa++; 
-    				System.out.println("FADC "+(3*id+il)+" "+ip+" "+mfa);
+//    				System.out.println("FADC "+(3*id+il)+" "+ip+" "+mfa);
     				faslots.add(mfa,id,il,ip+1);
     			}
     		}

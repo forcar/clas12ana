@@ -111,6 +111,7 @@ public class DetectorMonitor implements ActionListener {
     private int                    detectorActive123 = 1;
     private int                   detectorActiveSCAL = 0;
     private int                   detectorActiveRDIF = 0;
+    private int                   detectorActiveSLOT = 0;
     private Boolean                     detectorLogY = false;
     private Boolean                     detectorLogZ = true;
     private Boolean                             isTB = false;
@@ -122,6 +123,7 @@ public class DetectorMonitor implements ActionListener {
     private Boolean                           useCAL = false;
     private Boolean                           useSEC = false;
     private Boolean                          useRDIF = false;
+    private Boolean 	                     useSLOT = false;
     private Boolean                        useEBCCDB = false;
     public  Boolean                            useFD = false;
     public  Boolean                            useCD = false;
@@ -184,8 +186,11 @@ public class DetectorMonitor implements ActionListener {
     int     nctof[] = {48,48};
     int      ncnd[] = {2,2,2};
     int     nband[] = {24,24,24,24,24,24,24,24,20,20};
-    int     necal[] = {68,62,62,36,36,36,36,36,36};  
+    int     necal[] = {68,62,62,36,36,36,36,36,36};
     
+    public String[]  slnam = {"HVFTOF","ADCPCAL","HVECAL","ADCECAL"};
+    public int[]     slmax = {8,12,9,14};
+ 
     public TreeMap<String,String[]> layMap = new TreeMap<String,String[]>();
     public TreeMap<String,int[]>   nlayMap = new TreeMap<String,int[]>();  
     
@@ -652,6 +657,10 @@ public class DetectorMonitor implements ActionListener {
     	useRDIF = flag;
     } 
     
+    public void useSLOTButtons(boolean flag) {
+    	useSLOT = flag;
+    }
+    
     public void useCALButtons(boolean flag) {
     	useCAL = flag;
     }
@@ -708,6 +717,10 @@ public class DetectorMonitor implements ActionListener {
     	return detectorActiveRDIF;
     }
     
+    public int getActiveSLOT() {
+    	return detectorActiveSLOT;
+    }
+        
     public int getNumberOfEvents() {
         return numberOfEvents;
     }
@@ -767,11 +780,18 @@ public class DetectorMonitor implements ActionListener {
         bRO = new ButtonGroup(); bRO.add(b0); bRO.add(b1); 
         b1.setSelected(true);        	
         }
+        
+        if(useSLOT) {
+        b0 = new JRadioButton("HV");   buttonPane.add(b0); b0.setActionCommand("0"); b0.addActionListener(this); 
+        b1 = new JRadioButton("FADC"); buttonPane.add(b1); b1.setActionCommand("1"); b1.addActionListener(this); 
+        bRO = new ButtonGroup(); bRO.add(b0); bRO.add(b1); 
+        b0.setSelected(true); b0.doClick();       	
+        }
                 
         if(usePC) {
         bP = new JRadioButton("P"); buttonPane.add(bP); bP.setActionCommand("2"); bP.addActionListener(this);
         bC = new JRadioButton("C"); buttonPane.add(bC); bC.setActionCommand("1"); bC.addActionListener(this); 
-        bT = new JRadioButton("T"); buttonPane.add(bT); bT.setActionCommand("0"); bT.addActionListener(this);
+        bT = new JRadioButton("S"); buttonPane.add(bT); bT.setActionCommand("0"); bT.addActionListener(this);
         bG0 = new ButtonGroup(); bG0.add(bP); bG0.add(bC); bG0.add(bT); 
         bT.setSelected(true); bT.doClick();
         }
@@ -962,6 +982,7 @@ public class DetectorMonitor implements ActionListener {
         if(bG4!=null) detectorActive123    = Integer.parseInt(bG4.getSelection().getActionCommand());
         if(bG5!=null) detectorActiveSCAL   = Integer.parseInt(bG5.getSelection().getActionCommand());
         if(bRO!=null) detectorActiveRDIF   = Integer.parseInt(bRO.getSelection().getActionCommand());
+        if(bRO!=null) detectorActiveSLOT   = Integer.parseInt(bRO.getSelection().getActionCommand());        
         plotScalers(getRunNumber());
         plotHistos(getRunNumber());
     } 
@@ -1525,33 +1546,75 @@ public class DetectorMonitor implements ActionListener {
     	DataLine line = new DataLine(-0.5,norm,runIndex,norm); line.setLineColor(3); line.setLineWidth(2);
         
 		for (int ii=1; ii<gglist.size(); ii++) {    
-    		gglist.get(ii).setTitleX("Run Index"); gglist.get(ii).setTitleY(title); 
+    		gglist.get(ii).setTitleX("Run "+runlist.get(runIndexSlider)); gglist.get(ii).setTitleY(title); 
 			c.draw(gglist.get(ii),(ii==1)?" ":"same"); c.draw(line);
 		}
 		
 		g2 = new GraphErrors(); g2.setMarkerSize(5); g2.setMarkerColor(4); g2.setLineColor(2);
-		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");    	
+		g2.addPoint(runIndexSlider,gglist.get(0).getDataY(runIndexSlider),0,0); c.draw(g2,"same");  //blue marker for selected run  	
     }
     
     
     public List<GraphErrors> getGraph(H2F h2a, H2F h2b, int ybin) {
 	    int[] col = {1,1,2,5,6,7,8};
+
+	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); 
+	    glist.clear(); glist.add(g,0);
+	    
 	    H1F h1a = h2a.getSlicesY().get(ybin); H1F h1b = h2b.getSlicesY().get(ybin); 
-	    glist.clear();
-	    GraphErrors g = new GraphErrors() ; g.setLineColor(col[0]); g.setMarkerColor(col[0]); g.setMarkerSize(3); glist.add(g,0);
-	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
+
 	    for (int i=0; i<runlist.size(); i++) {
 	    	int it = getTorusPolarity(runlist.get(i)); int im = getRGIndex(getRunGroup(runlist.get(i)));
 	    	glist.getItem(0).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i)); 
 	    	if (!glist.hasItem(it)) {g = new GraphErrors() ; g.setLineColor(col[it]); g.setMarkerStyle(im); g.setMarkerColor(col[it]); g.setMarkerSize(3); glist.add(g,it);} 
 	    	glist.getItem(it).addPoint(h1a.getDataX(i)-0.5, h1a.getDataY(i),0, h1b.getDataY(i));
-	    }   
-	    for (int i=0; i<6; i++) if(glist.hasItem(i)) gglist.add(glist.getItem(i));	    
+	    }  
+	    
+	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
+	    for (int i=0; i<6; i++) if(glist.hasItem(i)) gglist.add(glist.getItem(i));	   
+	    
 	    return gglist;
     }
     
-    public void saveTimelines() {
-    	
+    public GraphErrors[] getSlotTimeLine(int i, int ih, String tit) {
+	     
+		 GraphErrors g[]= new GraphErrors[slmax[ih]];
+		 
+		 for (int sl=0; sl<slmax[ih]; sl++) g[sl] = new GraphErrors("slot"+(sl+1));	
+		 
+		 H2F h2a = (H2F) tl.Timeline.getItem(i,0); H2F h2b = (H2F) tl.Timeline.getItem(i,1);
+		 for (int ir=0; ir<runlist.size(); ir++) {
+			 for (int sl=0; sl<slmax[ih]; sl++) {
+				 g[sl].setTitle(tit); g[sl].setLineColor(sl+1);
+				 g[sl].setMarkerColor(sl+1); g[sl].setMarkerSize(4); g[sl].setTitleX("Run "+runlist.get(runIndexSlider));
+				 g[sl].addPoint(ir,h2a.getSlicesY().get(sl).getDataY(ir),0,h2b.getSlicesY().get(sl).getDataY(ir));				  			 
+			 }			 
+		 }
+		 
+		 return g;
+	     
+    }
+    
+    public void saveSlotTimeLine(int i, int ih, int is, String fname, String tag) {
+		 TDirectory dir = new TDirectory();
+		 GraphErrors g[]= new GraphErrors[slmax[ih]];
+		 for (int sl=0; sl<slmax[ih]; sl++) g[sl] = new GraphErrors("slot"+(sl+1));		 
+		 H2F h2a = (H2F) tl.Timeline.getItem(i,0); H2F h2b = (H2F) tl.Timeline.getItem(i,1);
+		 for (int ir=0; ir<runlist.size(); ir++) {
+			 dir.mkdir("/"+runlist.get(ir)); dir.cd("/"+runlist.get(ir));
+			 for (int sl=0; sl<slmax[ih]; sl++) {
+				 g[sl].addPoint(runlist.get(ir),h2a.getSlicesY().get(sl).getDataY(ir),0,h2b.getSlicesY().get(sl).getDataY(ir));				  			 
+		         FitData fd = tl.fitData.getItem(is,10000+ih,i+1,runlist.get(ir));
+		         H1F h1 = fd.getHist(); h1.setTitle("hslot"+(sl+1)); h1.setName(tag+" Slot "+(sl+1));
+		         F1D f1 = new F1D("fit:"+h1.getName()); f1 = (F1D) fd.graph.getFunction(); f1.setName("fit:"+h1.getName());
+		         dir.addDataSet(h1); dir.addDataSet(f1);
+			 }
+			 
+		 }
+		 dir.mkdir("/timelines");  dir.cd("/timelines");
+		 for (int sl=0; sl<slmax[ih]; sl++) dir.addDataSet(g[sl]);
+   	     System.out.println("Saving slot timeline to "+tlPath+fname+".hipo");
+		 dir.writeFile(tlPath+fname+".hipo");
     }
     
     public void saveTimeLine(int i, int il, int ip, String fname, String tag) {
