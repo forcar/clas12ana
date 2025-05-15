@@ -2143,23 +2143,7 @@ public class ECcalib extends DetectorMonitor {
     			tl.createTimeLineHisto((ih+1)*100+is,slnam[ih]+(is<7?is:"")+" Mean/MIP","Slot",TLmax,nb,1,nb+1);
     		}
     	}
-/*    	
-    	tl.createTimeLineHisto(101,"HVFTOF1 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(102,"HVFTOF2 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(103,"HVFTOF3 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(104,"HVFTOF4 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(105,"HVFTOF5 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(106,"HVFTOF6 Mean/MIP","Slot",TLmax,8,1,9);
-    	tl.createTimeLineHisto(301,"HVECAL1 Mean/MIP","Slot",TLmax,9,1,10);
-    	tl.createTimeLineHisto(302,"HVECAL2 Mean/MIP","Slot",TLmax,9,1,10);
-    	tl.createTimeLineHisto(303,"HVECAL3 Mean/MIP","Slot",TLmax,9,1,10);
-    	tl.createTimeLineHisto(304,"HVECAL4 Mean/MIP","Slot",TLmax,9,1,10);
-    	tl.createTimeLineHisto(305,"HVECAL5 Mean/MIP","Slot",TLmax,9,1,10);
-    	tl.createTimeLineHisto(306,"HVECAL6 Mean/MIP","Slot",TLmax,9,1,10);
-    	
-    	tl.createTimeLineHisto(107,"HVFTOF Mean/MIP","Slot",TLmax,48,1,49);
-    	tl.createTimeLineHisto(307,"HVECAL Mean/MIP","Slot",TLmax,54,1,55);
-*/
+
     }
     
     public void fillTimeLineHisto() {    	
