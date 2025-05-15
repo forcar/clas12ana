@@ -597,7 +597,7 @@ public class EventViewer implements IDataEventListener, DetectorListener, Action
     }
     
     public void timelineSaver() {
-        for(int k=0; k<this.monitors.length; k++) this.monitors[k].saveTimelines();	
+//        for(int k=0; k<this.monitors.length; k++) this.monitors[k].saveTimelines();	
     }
 
     public void setUpdateInterval() {
