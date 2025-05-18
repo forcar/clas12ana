@@ -1368,6 +1368,7 @@ public class ECcalib extends DetectorMonitor {
         if(!dropSummary) analyzeGraphs();
         if(!isAnalyzeDone) createTimeLineHistos();
         fillTimeLineHisto();
+        makeSlotTimeLine();
         System.out.println("Finished");
         isAnalyzeDone = true;
     }
@@ -2247,8 +2248,7 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(il+1),1f,"Sector "+is+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il,0,getRunNumber()); H1F h = fd.getHist().histClone("");
-    		
+    		fd = tl.fitData.getItem(is,il,0,getRunNumber()); H1F h = fd.getHist().histClone("");    		
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             h.getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mipc[il],-50,mipc[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
@@ -2281,8 +2281,7 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,3*il+iv+1,1f,"Sector "+is+v[iv]+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()); H1F h = fd.getHist().histClone("");
-    		
+    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()); H1F h = fd.getHist().histClone("");   		
     		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
             h.getAttributes().setOptStat("1000100");
             DataLine line6 = new DataLine(mipp[il],-50,mipp[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
@@ -2291,15 +2290,17 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void plotSectorTimeLines(int index) {
+    	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
-//        int pc = getActivePC()==2 ? 1 : getActivePC();
         int pc = getActivePC()==2 ? 1:0;
         int iv = getActiveView();
         int il = getActiveLayer();
+        
        	String  v[] = {" U "," V "," W "};
        	String  l[] = {" PCAL "," ECIN "," ECOU "};
         
         c.clear(); c.divide(3, 2);
+        
     	for (int is=1; is<7; is++) {
     		double min=0.99 ; double max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
@@ -2308,6 +2309,7 @@ public class ECcalib extends DetectorMonitor {
     }
     
     public void plotSlotTimeLines(int index) {
+    	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         int is = getActiveSector(); 
 
@@ -2325,10 +2327,10 @@ public class ECcalib extends DetectorMonitor {
 		    c.draw((H2F)tl.Timeline.getItem((ih+1)*100+7,0));c.draw(line1);c.draw(line2);c.draw(line3);c.draw(line4); n++;
 
 		    c.cd(n); c.getPad(n).setAxisRange(-0.5,runIndex,min,max); c.getPad(n).setTitleFontSize(18); 
-		    DataLine line5 = new DataLine(-0.5,1,runIndex,1); line5.setLineColor(3); line5.setLineWidth(2); c.draw(line5);
+		    DataLine line5 = new DataLine(-0.5,1,runIndex,1); line5.setLineWidth(2); line5.setLineColor(3); c.draw(line5);
 		    DataLine line6 = new DataLine(runIndexSlider,min,runIndexSlider,max);    line6.setLineColor(5); c.draw(line6);
-		    GraphErrors[] gl = getSlotTimeLine((ih+1)*100+is,ih,slnam[ih]+is);
-		    for (int nn=0; nn<gl.length; nn++) c.draw(gl[nn],nn==0 ? " ":"same"); n++;
+		    GraphErrors[] gl = tl.Graph.getItem(ih,is);
+		    for (int nn=0; nn<gl.length; nn++) {gl[nn].setTitleX("Run "+runlist.get(runIndexSlider));c.draw(gl[nn],nn==0 ? " ":"same");} n++;
         }
    
     }
