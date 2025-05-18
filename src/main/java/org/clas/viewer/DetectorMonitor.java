@@ -1571,28 +1571,29 @@ public class DetectorMonitor implements ActionListener {
 	    }  
 	    
 	    List<GraphErrors> gglist = new ArrayList<GraphErrors>();
-	    for (int i=0; i<6; i++) if(glist.hasItem(i)) gglist.add(glist.getItem(i));	   
+	    for (int i=0; i<6; i++) if(glist.hasItem(i)) gglist.add(glist.getItem(i));	 
 	    
 	    return gglist;
     }
-    
-    public GraphErrors[] getSlotTimeLine(int i, int ih, String tit) {
-	     
-		 GraphErrors g[]= new GraphErrors[slmax[ih]];
-		 
-		 for (int sl=0; sl<slmax[ih]; sl++) g[sl] = new GraphErrors("slot"+(sl+1));	
-		 
-		 H2F h2a = (H2F) tl.Timeline.getItem(i,0); H2F h2b = (H2F) tl.Timeline.getItem(i,1);
-		 for (int ir=0; ir<runlist.size(); ir++) {
-			 for (int sl=0; sl<slmax[ih]; sl++) {
-				 g[sl].setTitle(tit); g[sl].setLineColor(sl+1);
-				 g[sl].setMarkerColor(sl+1); g[sl].setMarkerSize(4); g[sl].setTitleX("Run "+runlist.get(runIndexSlider));
-				 g[sl].addPoint(ir,h2a.getSlicesY().get(sl).getDataY(ir),0,h2b.getSlicesY().get(sl).getDataY(ir));				  			 
-			 }			 
-		 }
-		 
-		 return g;
-	     
+
+    public void makeSlotTimeLine() {
+        for (int is=1; is<7; is++) { //SECTOR
+		  for (int ih=0; ih<4; ih++) { //HVFTOF ADCPCAL HVECAL ADCECAL 
+             int i = (ih+1)*100+is;
+             H2F h2a = (H2F) tl.Timeline.getItem(i,0); 
+             H2F h2b = (H2F) tl.Timeline.getItem(i,1);
+             GraphErrors g[]= new GraphErrors[slmax[ih]];
+             for (int sl=0; sl<slmax[ih]; sl++) g[sl] = new GraphErrors("slot"+(sl+1));
+             for (int ir=0; ir<runlist.size(); ir++) {
+                 for (int sl=0; sl<slmax[ih]; sl++) { //SLOTS                   
+                   g[sl].setTitle(slnam[ih]+is); 
+                   g[sl].setMarkerSize(4); g[sl].setMarkerColor(sl+1); g[sl].setLineColor(sl+1);  
+                   g[sl].addPoint(ir,h2a.getSlicesY().get(sl).getDataY(ir),0,h2b.getSlicesY().get(sl).getDataY(ir));
+			     }
+		      }
+		      tl.Graph.add(g,ih,is);
+          }
+        }     
     }
     
     public void saveSlotTimeLine(int i, int ih, int is, String fname, String tag) {
