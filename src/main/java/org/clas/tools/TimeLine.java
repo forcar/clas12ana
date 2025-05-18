@@ -1,11 +1,9 @@
 package org.clas.tools;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
@@ -13,10 +11,11 @@ import org.jlab.utils.groups.IndexedList;
 
 public class TimeLine {
 	
-	 public IndexedList<IDataSet> Timeline = new IndexedList<IDataSet>(2);
-	 public IndexedList<FitData>   fitData = new IndexedList<FitData>(4);
-	 private Map<Integer,Integer>   NYbins = new HashMap<Integer,Integer>();  
-	 private TDirectory                dir = null;
+	 public IndexedList<IDataSet>   Timeline = new IndexedList<IDataSet>(2);
+	 public IndexedList<FitData>     fitData = new IndexedList<FitData>(4);
+	 public IndexedList<GraphErrors[]> Graph = new IndexedList<GraphErrors[]>(2);
+	 private Map<Integer,Integer>     NYbins = new HashMap<Integer,Integer>();  
+	 private TDirectory                  dir = null;
 	 
 	 static void Timeline() {
 		 
