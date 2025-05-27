@@ -1199,7 +1199,7 @@ public class ECcalib extends DetectorMonitor {
     	
     }
 
-    private void updateUVW(int index) {
+    private void updateUVW(int index) { //peak(u,v,w),cluster fits
         
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
         c.clear(); c.divide(4, 3);
@@ -1207,13 +1207,16 @@ public class ECcalib extends DetectorMonitor {
         String det[] = {" PCAL"," ECIN"," ECOU"}, uvw[] = {" U "," V "," W "};
         int is = getActiveSector();
         
-        for (int i=0; i<3; i++) {
-        for (int j=0; j<4; j++) {
-            c.cd(4*i+j); c.getPad(4*i+j).getAxisY().setLog(false);
-            fd = tl.fitData.getItem(is,i+10*(j==3?0:1)*(j+1),0,getRunNumber()); h = fd.getHist(); 
-            h.setFillColor(j==3?0:j+2); h.setTitleX("Sector "+is+det[i]+(j<3?uvw[j]:" ")+(j<3?"Peak":"Cluster")+" Energy (MeV)");
+        for (int il=0; il<3; il++) {
+        for (int iv=0; iv<4; iv++) {
+            c.cd(4*il+iv); c.getPad(4*il+iv).getAxisY().setLog(false);
+            fd = tl.fitData.getItem(is,il+10*(iv==3?0:1)*(iv+1),0,getRunNumber()); 
+            h = fd.getHist(); 
+            //h.setFillColor(iv==3?0:iv+2); 
+            h.setTitleX("Sector "+is+det[il]+(iv<3?uvw[iv]:" ")+(iv<3?"Peak":"Cluster")+" Energy (MeV)");
             h.setOptStat("100"); fd.getGraph().getFunction().setOptStat("1100");
-            c.draw(h); c.draw(fd.getGraph(),"same");
+            c.draw(h); c.draw(fd.getMeanHist(),"same"); c.draw(fd.getGraph(),"same");
+//          c.draw(h); c.draw(fd.getGraph(),"same");
         }
         }
         
@@ -1233,26 +1236,25 @@ public class ECcalib extends DetectorMonitor {
     	if(getActivePC()==0) updateSLOTFITS(index);
     }
     
-    public void updateFITS2(int index) {
+    public void updateFITS2(int index) { //sector,peak(u,v,w),cluster,pmt fits
        
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
                
-        int pc = getActivePC()==2 ? 1:0;       
-//        int    pc = getActivePC()==2 ? 1 : getActivePC();
+        int    pc = getActivePC()==2 ? 1:0;       
         int    is = getActiveSector(); 
-        int     i = getActiveLayer();
-        int     j = getActiveView();
+        int    il = getActiveLayer();
+        int    iv = getActiveView();
         
-        int    np = npmt[i*3+j];
+        int    np = npmt[il*3+iv];
         
         c.clear();
         if (np==36) c.divide(6,6); if (np==68) c.divide(9,8); if (np==62) c.divide(8,8); 
         
         for (int ip=0; ip<np ; ip++) {
             c.cd(ip); c.getPad(ip).getAxisY().setLog(false);
-            c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getHist());
-            c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getMeanHist(),"same");
-            c.draw(tl.fitData.getItem(is,i+10*(pc+1)*(pc+1)*(j+1),ip+1,getRunNumber()).getGraph(),"same");
+            c.draw(tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,getRunNumber()).getHist());
+            c.draw(tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,getRunNumber()).getMeanHist(),"same");
+            c.draw(tl.fitData.getItem(is,il+10*(pc+1)*(pc+1)*(iv+1),ip+1,getRunNumber()).getGraph(),"same");
        }
 
     }
@@ -1260,6 +1262,7 @@ public class ECcalib extends DetectorMonitor {
     public void updateSLOTFITS(int index) {
     	
         EmbeddedCanvas c = getDetectorCanvas().getCanvas(getDetectorTabNames().get(index));
+        
         int is = getActiveSector(); 
         int il = getActiveLayer();
         int  n = 0, off=0;
@@ -1269,6 +1272,7 @@ public class ECcalib extends DetectorMonitor {
         c.clear(); 
         if(il==0)  c.divide(8,3);
         if(il>0)  {c.divide(9,3); off=2;} 
+        
         for (int ih=0+off; ih<2+off; ih++) {
         	for (int i=0; i<np[ih]; i++) {
         		c.cd(n);
@@ -1401,9 +1405,10 @@ public class ECcalib extends DetectorMonitor {
                     if(TLname=="HV Slot")   {h2a = rebinY(h2,TimeSlice.get(TLname));} 
                     int nb = h2a.getYAxis().getNBins();
             	    tl.setNYbins(id, nb);
-                    for (int il=0; il<((pc==0)?1:nb); il++) {
-                     	fd = fitEngine(h2a.sliceY(il),0,min,max,min,max); //Sector+UVW slices
-                     	if(TLname=="UVW") fd.hist.getAttributes().setTitleX(((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0)).getTitleX()); 
+                    for (int il=0; il<((pc==0)?1:nb); il++) { //Sector+UVW slices for timelines
+//                      	fd = fitEngine(h2a.sliceY(il),0,min,max,min,max); 
+                      	fd = fitEngine(h2a.sliceY(il),0,hmax); 
+                        if(TLname=="UVW") fd.hist.getAttributes().setTitleX(((H2F) this.getDataGroup().getItem(is,ipc,0,run).getData(id*3+il).get(0)).getTitleX()); 
                 	    tl.fitData.add(fd,is,id+10*pc*(il+1),0,run); 
                     }
                     for (int il=il1; il<il2; il++) { //PMT slices USED FOR MIP CALIBRATION GAIN CONSTANTS!              	
@@ -2149,9 +2154,9 @@ public class ECcalib extends DetectorMonitor {
     
     public void fillTimeLineHisto() {    	
     	//clusters
-		for (int is=1; is<7; is++) {
-		  for (int il=0; il<3; il++) {
-			  float  y = (float) tl.fitData.getItem(is,il,0,getRunNumber()).mean/mipc[il];
+		for (int is=1; is<7; is++) { //SECTOR
+		  for (int il=0; il<3; il++) { //PCAL ECIN ECOU
+			  float  y = (float) tl.fitData.getItem(is,il,0,getRunNumber()).getMeanHist().getMean()/mipc[il];
 			  float ye = (float) tl.fitData.getItem(is,il,0,getRunNumber()).meane/mipc[il];
 			  ((H2F)tl.Timeline.getItem((il+1)*10,0)).fill(runIndex,is,y);
 			  ((H2F)tl.Timeline.getItem((il+1)*10,1)).fill(runIndex,is,ye);			  
@@ -2159,10 +2164,10 @@ public class ECcalib extends DetectorMonitor {
 		}
 	
 		//peaks
-		for (int is=1; is<7; is++) {
-		  for (int il=0; il<3; il++) {	
-	        for (int iv=0; iv<3; iv++) {
-			    float  y = (float) tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()).mean/mipp[il];
+		for (int is=1; is<7; is++) { //SECTOR
+		  for (int il=0; il<3; il++) { //PCAL ECIN ECOU
+	        for (int iv=0; iv<3; iv++) { //U V W
+			    float  y = (float) tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()).getMeanHist().getMean()/mipp[il];
 			    float ye = (float) tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()).meane/mipp[il];
 			    ((H2F)tl.Timeline.getItem(3*il+iv+1,0)).fill(runIndex,is,y);	
 			    ((H2F)tl.Timeline.getItem(3*il+iv+1,1)).fill(runIndex,is,ye);	
@@ -2232,6 +2237,8 @@ public class ECcalib extends DetectorMonitor {
         int           is = getActiveSector(); 
         
         FitData       fd = null;
+        
+        String det[] = {" PCAL"," ECIN"," ECOU"}, v[] = {" U "," V "," W "};
        
     	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                   line1.setLineColor(5);
     	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                 line2.setLineColor(5);
@@ -2248,11 +2255,13 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,10*(il+1),1f,"Sector "+is+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il,0,getRunNumber()); H1F h = fd.getHist().histClone("");    		
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
-            h.getAttributes().setOptStat("1000100");
+    		fd = tl.fitData.getItem(is,il,0,getRunNumber()); H1F h = fd.getMeanHist().histClone("");    		
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);      		
+            h.setTitleX("Sector "+is+det[il]+" Cluster Energy (MeV)");
+            h.setOptStat("100"); fd.getGraph().getFunction().setOptStat("1100");
+
             DataLine line6 = new DataLine(mipc[il],-50,mipc[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);            
-            c.draw(h); c.draw(fd.getGraph(),"same");  c.draw(line6);            
+            c.draw(h); c.draw(fd.getMeanHist(),"same"); c.draw(fd.getGraph(),"same");  c.draw(line6);            
         }
     }
      
@@ -2264,7 +2273,7 @@ public class ECcalib extends DetectorMonitor {
         
         FitData       fd = null;
         
-    	String  v[] = {" U "," V "," W "};
+        String det[] = {" PCAL"," ECIN"," ECOU"}, v[] = {" U "," V "," W "};
         
     	DataLine line1 = new DataLine(0,is,  runIndex+1,is);                     line1.setLineColor(5);
     	DataLine line2 = new DataLine(0,is+1,runIndex+1,is+1);                   line2.setLineColor(5);
@@ -2281,11 +2290,13 @@ public class ECcalib extends DetectorMonitor {
     		c.cd(i3+1); c.getPad(i3+1).setAxisRange(-0.5,runIndex,min,max); c.getPad(i3+1).setTitleFontSize(18);
     		drawTimeLine(c,is,3*il+iv+1,1f,"Sector "+is+v[iv]+" Mean/MIP" );
     		
-    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()); H1F h = fd.getHist().histClone("");   		
-    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);  
-            h.getAttributes().setOptStat("1000100");
+    		fd = tl.fitData.getItem(is,il+10*(iv+1),0,getRunNumber()); H1F h = fd.getMeanHist().histClone("");   		
+    		c.cd(i3+2); c.getPad(i3+2).setAxisRange(0.,h.getXaxis().max(),0.,fd.getGraph().getMax()*1.1);      		
+            h.setTitleX("Sector "+is+det[il]+v[iv]+" Peak Energy (MeV)");
+            h.setOptStat("100"); fd.getGraph().getFunction().setOptStat("1100");
+
             DataLine line6 = new DataLine(mipp[il],-50,mipp[il],fd.getGraph().getMax()*1.5); line6.setLineColor(3); line6.setLineWidth(2);
-            c.draw(h); c.draw(fd.getGraph(),"same");  c.draw(line6);       
+            c.draw(h); c.draw(fd.getMeanHist(),"same"); c.draw(fd.getGraph(),"same");  c.draw(line6);       
         }    	
     }
     
@@ -2296,15 +2307,14 @@ public class ECcalib extends DetectorMonitor {
         int iv = getActiveView();
         int il = getActiveLayer();
         
-       	String  v[] = {" U "," V "," W "};
-       	String  l[] = {" PCAL "," ECIN "," ECOU "};
+        String det[] = {" PCAL"," ECIN"," ECOU"}, v[] = {" U "," V "," W "};
         
         c.clear(); c.divide(3, 2);
         
     	for (int is=1; is<7; is++) {
     		double min=0.99 ; double max=1.01; if(doAutoRange){min=min*lMin/250; max=max*lMax/250;}
     		c.cd(is-1); c.getPad(is-1).setAxisRange(-0.5,runIndex,min,max); c.getPad(is-1).setTitleFontSize(18);
-    		drawTimeLine(c,is,(pc==0)?10*(il+1):3*il+iv+1,1f,"Sector "+is+((pc==0)?l[il]+" Mean/MIP":l[il]+v[iv]+" Mean/MIP"));
+    		drawTimeLine(c,is,(pc==0)?10*(il+1):3*il+iv+1,1f,"Sector "+is+((pc==0)?det[il]+" Mean/MIP":det[il]+v[iv]+" Mean/MIP"));
     	}
     }
     
@@ -2331,8 +2341,7 @@ public class ECcalib extends DetectorMonitor {
 		    DataLine line6 = new DataLine(runIndexSlider,min,runIndexSlider,max);    line6.setLineColor(5); c.draw(line6);
 		    GraphErrors[] gl = tl.Graph.getItem(ih,is);
 		    for (int nn=0; nn<gl.length; nn++) {gl[nn].setTitleX("Run "+runlist.get(runIndexSlider));c.draw(gl[nn],nn==0 ? " ":"same");} n++;
-        }
-   
+        }  
     }
 
 /*  
