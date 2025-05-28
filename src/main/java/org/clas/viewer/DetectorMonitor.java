@@ -1606,7 +1606,7 @@ public class DetectorMonitor implements ActionListener {
 			 for (int sl=0; sl<slmax[ih]; sl++) {
 				 g[sl].addPoint(runlist.get(ir),h2a.getSlicesY().get(sl).getDataY(ir),0,h2b.getSlicesY().get(sl).getDataY(ir));				  			 
 		         FitData fd = tl.fitData.getItem(is,10000+ih,i+1,runlist.get(ir));
-		         H1F h1 = fd.getHist(); h1.setTitle("hslot"+(sl+1)); h1.setName(tag+" Slot "+(sl+1));
+		         H1F h1 = fd.getMeanHist(); h1.setTitle("hslot"+(sl+1)); h1.setName(tag+" Slot "+(sl+1));
 		         F1D f1 = new F1D("fit:"+h1.getName()); f1 = (F1D) fd.graph.getFunction(); f1.setName("fit:"+h1.getName());
 		         dir.addDataSet(h1); dir.addDataSet(f1);
 			 }
@@ -1628,7 +1628,7 @@ public class DetectorMonitor implements ActionListener {
 			 for (int is=0; is<6; is++) {
 				 g[is].addPoint(runlist.get(ir),h2a.getSlicesY().get(is).getDataY(ir),0,h2b.getSlicesY().get(is).getDataY(ir));				  			 
 		         FitData fd = tl.fitData.getItem(is+1,il,ip,runlist.get(ir));
-		         H1F h1 = fd.getHist(); h1.setTitle("hsec"+(is+1)); h1.setName(tag+" Sector "+(is+1));
+		         H1F h1 = fd.getMeanHist(); h1.setTitle("hsec"+(is+1)); h1.setName(tag+" Sector "+(is+1));
 		         F1D f1 = new F1D("fit:"+h1.getName()); f1 = (F1D) fd.graph.getFunction(); f1.setName("fit:"+h1.getName());
 		         dir.addDataSet(h1); dir.addDataSet(f1);
 			 }
